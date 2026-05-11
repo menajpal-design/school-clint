@@ -339,4 +339,15 @@ export const api = {
     create: (data: any) => apiClient.post('/backup', data),
     restore: (id: string) => apiClient.post(`/backup/${id}/restore`),
   },
+
+  // Messages & Email
+  messages: {
+    getInbox: () => apiClient.get('/messages/inbox'),
+    getSent: () => apiClient.get('/messages/sent'),
+    getById: (id: string) => apiClient.get(`/messages/${id}`),
+    send: (data: any) => apiClient.post('/messages/send', data),
+    markAsRead: (id: string) => apiClient.patch(`/messages/${id}/read`),
+    delete: (id: string) => apiClient.delete(`/messages/${id}`),
+    getUnreadCount: () => apiClient.get('/messages/stats/unread'),
+  },
 };
