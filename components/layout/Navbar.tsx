@@ -24,6 +24,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('lang') : null;
@@ -37,7 +38,24 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
         setUnreadCount(list.filter((n) => !n.isRead).length);
       } catch (e) {}
     };
+
+    const loadMessages = async () => {
+      try {
+        const res: any = await api.messages.getUnreadCount();
+        setUnreadMessages(res.unreadCount || 0);
+      } catch (e) {}
+    };
+
     loadNotices();
+    loadMessages();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(() => {
+      loadNotices();
+      loadMessages();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {
@@ -102,6 +120,30 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
 
         {/* Right Section */}
         <div className="flex items-center gap-2 lg:gap-4">
+          {/* Messages Button */}
+          <Link href="/messages" title="Messages">
+            <button className="relative rounded-lg p-2 hover:bg-gray-100">
+              <svg
+                className="h-5 w-5 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+              </svg>
+              {unreadMessages > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
+                  {unreadMessages > 99 ? '99+' : unreadMessages}
+                </span>
+              )}
+            </button>
+          </Link>
+
           {/* Notifications Dropdown */}
           <div className="relative">
             <button onClick={async () => {
