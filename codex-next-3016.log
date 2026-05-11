@@ -75,3 +75,12 @@
  ✓ Compiled in 2.2s (2439 modules)
  ✓ Compiled in 1742ms (2439 modules)
  ✓ Compiled in 1615ms (2439 modules)
+ ✓ Compiled in 15.4s (2439 modules)
+ ✓ Compiled in 6.2s (2425 modules)
+ ✓ Compiled in 6.3s (2425 modules)
+ ✓ Compiled in 7.8s (2425 modules)
+ ✓ Compiled in 39.3s (2439 modules)
+ ✓ Compiled in 8.4s (2439 modules)
+   Reload env: .env.local
+ ✓ Compiled in 35.3s (2439 modules)
+ ✓ Compiled in 14.5s (2439 modules)

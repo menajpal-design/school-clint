@@ -47,3 +47,4 @@
  ✓ Compiled in 14.1s (1705 modules)
  ✓ Compiled in 17.3s (1705 modules)
  ✓ Compiled in 10.9s (1705 modules)
+   Reload env: .env.local

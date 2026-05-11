@@ -64,3 +64,11 @@
  ✓ Compiled in 2s (2400 modules)
  ✓ Compiled in 1989ms (2400 modules)
  ✓ Compiled in 1256ms (2400 modules)
+ ✓ Compiled in 16s (2400 modules)
+ ✓ Compiled in 7.2s (2386 modules)
+ ✓ Compiled in 7.5s (2386 modules)
+ ✓ Compiled in 6.5s (2386 modules)
+ ✓ Compiled in 43.6s (2400 modules)
+   Reload env: .env.local
+ ✓ Compiled in 50.8s (2400 modules)
+ ✓ Compiled in 18.4s (2400 modules)
