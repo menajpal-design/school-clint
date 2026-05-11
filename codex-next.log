@@ -1,0 +1,70 @@
+
+> drms-client@0.1.0 dev
+> next dev
+
+   ▲ Next.js 14.0.4
+   - Local:        http://localhost:3000
+
+ ✓ Ready in 3.3s
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 16s (4456 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 4.1s (4440 modules)
+ ○ Compiling /not-found ...
+ ✓ Compiled /not-found in 797ms (4444 modules)
+ ○ Compiling /id-cards/my-card ...
+ ✓ Compiled /id-cards/my-card in 4.8s (4943 modules)
+ ○ Compiling /id-cards/generate ...
+ ✓ Compiled /id-cards/generate in 1549ms (4966 modules)
+ ○ Compiling /id-cards/bulk-generate ...
+ ✓ Compiled /id-cards/bulk-generate in 760ms (4958 modules)
+ ○ Compiling /id-cards/templates ...
+ ✓ Compiled /id-cards/templates in 2.9s (4961 modules)
+ ○ Compiling /id-cards/reports ...
+ ✓ Compiled /id-cards/reports in 654ms (4969 modules)
+ ○ Compiling /id-cards/renewal ...
+ ✓ Compiled /id-cards/renewal in 720ms (4975 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1251ms (2574 modules)
+ ○ Compiling /register ...
+ ✓ Compiled /register in 4.7s (4994 modules)
+ ✓ Compiled in 11.7s (4980 modules)
+ ✓ Compiled in 3.9s (4980 modules)
+ ✓ Compiled in 518ms (2413 modules)
+ ✓ Compiled in 280ms (2413 modules)
+ ✓ Compiled in 2.9s (4980 modules)
+ ✓ Compiled in 1421ms (4980 modules)
+ ✓ Compiled in 1751ms (4980 modules)
+ ✓ Compiled in 1384ms (4980 modules)
+ ✓ Compiled in 1744ms (4980 modules)
+ ✓ Compiled in 2.7s (4980 modules)
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 6.9s (4971 modules)
+ ✓ Compiled in 18s (4980 modules)
+ ○ Compiling /not-found ...
+ ✓ Compiled /not-found in 13.3s (4985 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 37.7s (5130 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 19.3s (2621 modules)
+ ✓ Compiled in 7.2s (5125 modules)
+ ✓ Compiled in 1811ms (5125 modules)
+ ○ Compiling /not-found ...
+ ✓ Compiled /not-found in 1376ms (5130 modules)
+ ✓ Compiled in 19.5s (5139 modules)
+ ✓ Compiled in 20.1s (5125 modules)
+ ✓ Compiled in 3.5s (5139 modules)
+ ✓ Compiled in 20.1s (5123 modules)
+ ✓ Compiled in 16.3s (5109 modules)
+ ✓ Compiled in 46.1s (5123 modules)
+ ✓ Compiled in 31.7s (5123 modules)
+ ✓ Compiled in 23.5s (5123 modules)
+ ✓ Compiled in 5s (2536 modules)
+ ✓ Compiled in 659ms (2536 modules)
+ ✓ Compiled in 7.5s (2536 modules)
+ ✓ Compiled in 17.3s (5131 modules)
+ ✓ Compiled in 5.1s (5117 modules)
+ ✓ Compiled in 12.4s (5127 modules)
+ ✓ Compiled in 30.9s (5127 modules)
+ ✓ Compiled in 2s (2537 modules)
+[?25h

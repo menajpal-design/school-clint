@@ -1,0 +1,68 @@
+
+> drms-client@0.1.0 build
+> next build
+
+   ▲ Next.js 14.0.4
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/42) ...
+   Generating static pages (10/42) 
+   Generating static pages (20/42) 
+   Generating static pages (31/42) 
+ ✓ Generating static pages (42/42) 
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    229 B          82.4 kB
+├ ○ /_not-found                          875 B          83.1 kB
+├ ○ /academic                            229 B          82.4 kB
+├ ○ /academic/classes                    229 B          82.4 kB
+├ ○ /academic/exams                      229 B          82.4 kB
+├ ○ /academic/report-card                229 B          82.4 kB
+├ ○ /academic/results                    229 B          82.4 kB
+├ ○ /academic/subjects                   229 B          82.4 kB
+├ ○ /attendance                          229 B          82.4 kB
+├ ○ /attendance/mark                     229 B          82.4 kB
+├ ○ /attendance/my-attendance            229 B          82.4 kB
+├ ○ /attendance/reports                  229 B          82.4 kB
+├ ○ /committee                           229 B          82.4 kB
+├ ○ /dashboard                           109 kB          214 kB
+├ ○ /documents                           229 B          82.4 kB
+├ ○ /documents/manage                    229 B          82.4 kB
+├ ○ /documents/upload                    229 B          82.4 kB
+├ ○ /finance                             229 B          82.4 kB
+├ ○ /finance/collections                 229 B          82.4 kB
+├ ○ /finance/fees                        229 B          82.4 kB
+├ ○ /finance/my-fees                     229 B          82.4 kB
+├ ○ /finance/reports                     229 B          82.4 kB
+├ ○ /finance/salary                      229 B          82.4 kB
+├ ○ /id-cards                            180 B          89.2 kB
+├ ○ /id-cards/bulk-generate              2.42 kB        91.4 kB
+├ ○ /id-cards/generate                   1.18 kB         324 kB
+├ ○ /id-cards/my-card                    1.59 kB         302 kB
+├ ○ /id-cards/renewal                    3.77 kB         116 kB
+├ ○ /id-cards/reports                    2.39 kB         115 kB
+├ ○ /id-cards/templates                  229 B          82.4 kB
+├ ○ /login                               3.63 kB         139 kB
+├ ○ /notices                             229 B          82.4 kB
+├ ○ /parent-portal                       229 B          82.4 kB
+├ ○ /profile                             229 B          82.4 kB
+├ ○ /profile/change-password             229 B          82.4 kB
+├ ○ /register                            3.52 kB         139 kB
+├ ○ /settings                            228 B          82.4 kB
+├ ○ /users-roles                         229 B          82.4 kB
+├ ○ /users-roles/all                     229 B          82.4 kB
+└ ○ /users-roles/permissions             229 B          82.4 kB
++ First Load JS shared by all            82.2 kB
+  ├ chunks/4938-d1ca70e2ede8f405.js      26.8 kB
+  ├ chunks/fd9d1056-1dc39924e4290d91.js  53.3 kB
+  ├ chunks/main-app-586f1c952c49d07c.js  227 B
+  └ chunks/webpack-eda9c5bd2b439cb4.js   1.89 kB
+
+
+○  (Static)  prerendered as static content
+

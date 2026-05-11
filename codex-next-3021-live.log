@@ -1,0 +1,11 @@
+
+> drms-client@0.1.0 dev
+> next dev -p 3021
+
+   ▲ Next.js 14.0.4
+   - Local:        http://localhost:3021
+
+ ✓ Ready in 3.9s
+ ○ Compiling / ...
+ ✓ Compiled / in 7.1s (696 modules)
+[?25h

@@ -1,0 +1,26 @@
+export const routes = {
+  public: {
+    login: '/login',
+  },
+  protected: {
+    dashboard: '/dashboard',
+    idCards: '/id-cards',
+    idCardsMyCard: '/id-cards/my-card',
+    idCardsGenerate: '/id-cards/generate',
+    idCardsBulkGenerate: '/id-cards/bulk-generate',
+    idCardsTemplates: '/id-cards/templates',
+    idCardsReports: '/id-cards/reports',
+    idCardsRenewal: '/id-cards/renewal',
+    institution: '/institution',
+    academic: '/academic',
+    attendance: '/attendance',
+    finance: '/finance',
+    documents: '/documents',
+    usersRoles: '/users-roles',
+    committee: '/committee',
+    parentPortal: '/parent-portal',
+    notices: '/notices',
+    profile: '/profile',
+    settings: '/settings',
+  },
+} as const;

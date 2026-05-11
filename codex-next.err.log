@@ -1,0 +1,9 @@
+ ⨯ ./components/RoutePage.tsx
+Error: Failed to read source code from C:\New folder\school_n\client\components\RoutePage.tsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/RoutePage.tsx
+./app/settings/page.tsx
