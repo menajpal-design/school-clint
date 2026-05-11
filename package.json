@@ -6,9 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
-      "heroku-postbuild": "npm run build",
-    },
+    "lint": "next lint",
+    "heroku-postbuild": "npm run build"
+  },
   "dependencies": {
     "@hookform/resolvers": "^3.3.3",
     "@radix-ui/react-avatar": "^1.0.4",
@@ -50,9 +50,8 @@
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
     "typescript": "^5"
-    },
-    "engines": {
-      "node": "18.x"
-    }
+  },
+  "engines": {
+    "node": "18.x"
   }
 }
