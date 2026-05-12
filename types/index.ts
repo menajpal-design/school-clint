@@ -25,7 +25,7 @@ export type UserRole =
   | 'committee_member';
 
 export interface LoginRequest {
-  email: string;
+  identifier: string;
   password: string;
 }
 

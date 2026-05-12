@@ -75,7 +75,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const payload = {
-        email: data.identifier,
+        identifier: data.identifier,
         password: data.password,
       };
       const response = await api.auth.login(payload) as { token: string; user: User };
