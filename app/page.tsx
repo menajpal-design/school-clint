@@ -50,7 +50,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex flex-col sm:flex-row sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-2 sm:gap-0 py-3 sm:py-0">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
               D
@@ -60,21 +60,21 @@ export default function Home() {
               <p className="mt-1 text-xs text-slate-500">School/Madrasah Management</p>
             </div>
           </Link>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button asChild variant="ghost" size="sm" className="w-full sm:w-auto">
               <Link href="/downloads">Download App</Link>
             </Button>
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm" className="w-full sm:w-auto">
               <Link href="/login">Login</Link>
             </Button>
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="w-full sm:w-auto">
               <Link href="/register">Register</Link>
             </Button>
           </div>
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
         <div className="flex flex-col justify-center">
           <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
@@ -86,29 +86,37 @@ export default function Home() {
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
             A professional dashboard for academics, attendance, finance, ID cards, documents, notices, parents and staff operations.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row flex-wrap">
+            <Button asChild size="lg" className="w-full sm:w-auto">
               <Link href="/login">
                 Login to dashboard
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link href="/register">Register institution</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link href="/admission">Apply for admission</Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link href="/result">Check result</Link>
             </Button>
-            <Button asChild variant="ghost" size="lg">
+            <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto">
               <Link href="/downloads">Download Android app</Link>
             </Button>
           </div>
+
+          {/* Quick action tiles for mobile */}
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:hidden">
+            <Link href="/id-cards/generate" className="rounded-md bg-white border p-3 text-center text-sm font-medium shadow-sm hover:bg-slate-50">Generate ID</Link>
+            <Link href="/attendance/mark" className="rounded-md bg-white border p-3 text-center text-sm font-medium shadow-sm hover:bg-slate-50">Scan & Mark</Link>
+            <Link href="/documents/upload" className="rounded-md bg-white border p-3 text-center text-sm font-medium shadow-sm hover:bg-slate-50">Upload Doc</Link>
+            <Link href="/finance/collections" className="rounded-md bg-white border p-3 text-center text-sm font-medium shadow-sm hover:bg-slate-50">Collect Fees</Link>
+          </div>
         </div>
 
-        <Card className="border-slate-200 bg-white shadow-sm">
+          <Card className="border-slate-200 bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <UsersRound className="h-5 w-5 text-blue-600" />
@@ -116,22 +124,24 @@ export default function Home() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <div key={feature.title} className="rounded-lg border border-slate-200 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-lg bg-slate-100 p-2 text-slate-700">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h2 className="font-semibold text-slate-900">{feature.title}</h2>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">{feature.description}</p>
+            <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-2">
+              {features.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={feature.title} className="rounded-lg border border-slate-200 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-lg bg-slate-100 p-2 text-slate-700">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h2 className="font-semibold text-slate-900">{feature.title}</h2>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">{feature.description}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       </section>

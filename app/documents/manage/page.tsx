@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, FileCog, Search, Trash2, UploadCloud } from "lucide-react";
+import { Download, Eye, FileCog, Search, Trash2, UploadCloud, Ticket } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +97,37 @@ export default function DocumentsManagePage() {
     }
   };
 
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+
+  const generateAdmitAndDownload = async (document: SchoolDocument) => {
+    const owner = getOwnerMeta(document);
+    const ownerType = owner.ownerType as 'student' | 'teacher' | 'staff' | string;
+    const personId = typeof document.userId === 'string' ? document.userId : (document.userId as any)?._id;
+    if (!personId) {
+      alert('No person associated with this document.');
+      return;
+    }
+
+    try {
+      setGeneratingId(document._id);
+      // Use generic generate endpoint which supports ownerType
+      const data = await api.idCards.generate({ ownerType: ownerType, ownerId: personId, options: { qr: true } }) as any;
+      const card = data?.card;
+      if (!card || !card._id) {
+        alert('Failed to generate card.');
+        return;
+      }
+      // Build download URL and open in new tab
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'https://school-server-b264c1a1fac6.herokuapp.com/api').replace(/\/$/, '');
+      const downloadUrl = `${apiBase.replace(/\/api\/?$/, '')}/api/id-cards/${card._id}/download?format=pdf`;
+      window.open(downloadUrl, '_blank');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to generate card.');
+    } finally {
+      setGeneratingId(null);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -165,6 +196,18 @@ export default function DocumentsManagePage() {
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="outline" size="icon" onClick={() => preview(document)} title="Preview"><Eye className="h-4 w-4" /></Button>
                       <Button type="button" variant="outline" size="icon" onClick={() => download(document)} title="Download"><Download className="h-4 w-4" /></Button>
+                      {['student','teacher','staff'].includes(getOwnerMeta(document).ownerType) && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => generateAdmitAndDownload(document)}
+                          title="Generate Admit Card"
+                          disabled={generatingId === document._id}
+                        >
+                          <Ticket className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button type="button" variant="destructive" size="icon" disabled={deletingId === document._id} onClick={() => deleteDocument(document)} title="Delete"><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </TableCell>
