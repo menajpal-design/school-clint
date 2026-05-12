@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, Globe2, ImagePlus, Save, Server, Settings2 } from 'lucide-react';
+import { Building2, Globe2, ImagePlus, Save, Server } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
