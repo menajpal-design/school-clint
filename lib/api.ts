@@ -26,6 +26,12 @@ class ApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+        if (typeof window !== 'undefined') {
+          const selectedInstitutionId = localStorage.getItem('selectedInstitutionId');
+          if (selectedInstitutionId) {
+            config.headers['x-institution-id'] = selectedInstitutionId;
+          }
+        }
         return config;
       },
       (error) => Promise.reject(error)
@@ -205,6 +211,13 @@ export const api = {
     profile: () => apiClient.get('/institution/profile'),
     updateProfile: (data: any) => apiClient.put('/institution/profile', data),
     recordPayment: (data: any) => apiClient.post('/institution/billing/payment', data),
+  },
+
+  admin: {
+    schools: (params?: any) => apiClient.get('/admin/schools', params ? { params } : undefined),
+    updateSchool: (id: string, data: any) => apiClient.patch(`/admin/schools/${id}`, data),
+    selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`),
+    users: (params?: any) => apiClient.get('/admin/users', params ? { params } : undefined),
   },
 
   // Attendance

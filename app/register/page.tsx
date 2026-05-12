@@ -24,6 +24,9 @@ const registerSchema = z.object({
   phone: z.string().optional(),
   role: z.enum(['head']).default('head'),
   planCode: z.string().optional(),
+  paymentTrxId: z.string().optional(),
+  paymentSenderNumber: z.string().optional(),
+  receivedAmount: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -44,7 +47,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: 'head', planCode: 'students_100' },
+    defaultValues: { role: 'head', planCode: 'students_100', paymentTrxId: '', paymentSenderNumber: '', receivedAmount: '' },
   });
 
   useEffect(() => {
@@ -52,6 +55,8 @@ export default function RegisterPage() {
     const planCode = params.get('plan') || 'students_100';
     setSelectedPlanCode(planCode);
     setValue('planCode', planCode);
+    setValue('paymentTrxId', params.get('trxId') || '');
+    setValue('paymentSenderNumber', params.get('sender') || '');
   }, [setValue]);
 
   const onSubmit = async (data: RegisterForm) => {
@@ -65,6 +70,10 @@ export default function RegisterPage() {
         role: data.role,
         planCode: data.planCode || selectedPlanCode,
         institutionName: data.institutionName,
+        paymentGateway: 'bkash',
+        paymentTrxId: data.paymentTrxId,
+        paymentSenderNumber: data.paymentSenderNumber,
+        receivedAmount: Number(data.receivedAmount || 0),
         ...(DEFAULT_INSTITUTION_ID ? { institutionId: DEFAULT_INSTITUTION_ID } : {}),
       }) as { token?: string; user?: User; data?: { token: string; user: User } };
 
@@ -108,6 +117,26 @@ export default function RegisterPage() {
           <input type="hidden" {...register('planCode')} />
           <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
             Selected plan: <span className="font-semibold">{getPlanByCode(selectedPlanCode).name}</span>. Payment is not required during registration.
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+            <div>
+              <div className="font-semibold text-gray-800">Payment</div>
+              <p className="text-sm text-gray-600">Pay to bKash 0179007328, then add transaction details. Admin can activate after verification.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Transaction ID</label>
+              <input {...register('paymentTrxId')} placeholder="DDR0KZ5CDU" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sender Number</label>
+                <input {...register('paymentSenderNumber')} placeholder="01XXXXXXXXX" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
+                <input {...register('receivedAmount')} type="number" placeholder="300" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+              </div>
+            </div>
           </div>
 
           {/* Name */}

@@ -10,6 +10,18 @@ interface MenuItemConfig {
 
 export const menuConfig: MenuItemConfig[] = [
   {
+    label: 'Admin',
+    href: '/admin',
+    roles: ['admin', 'super_admin'],
+    icon: 'ShieldCheck',
+    children: [
+      { label: 'Overview', href: '/admin', roles: ['admin', 'super_admin'] },
+      { label: 'School Manage', href: '/admin/schools', roles: ['admin', 'super_admin'] },
+      { label: 'Select School', href: '/admin/select-school', roles: ['admin', 'super_admin'] },
+      { label: 'Manage Users', href: '/admin/users', roles: ['admin', 'super_admin'] },
+    ],
+  },
+  {
     label: 'Dashboard',
     href: '/dashboard',
     roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent'],

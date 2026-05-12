@@ -23,6 +23,7 @@ const iconMap: { [key: string]: any } = {
   Bell: Icons.Bell,
   User: Icons.User,
   Settings: Icons.Settings,
+  ShieldCheck: Icons.ShieldCheck,
 };
 
 interface SidebarProps {

@@ -1,15 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Database, MessageSquare, ShieldCheck, UsersRound } from "lucide-react";
+import { ArrowRight, CreditCard, Database, MessageSquare, ShieldCheck, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { easySchoolStorageMonthlyPrice, schoolPlans } from "@/lib/plans";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const money = (value: number) => `BDT ${value.toLocaleString()}`;
 
 export default function PricingPage() {
+  const [payPlan, setPayPlan] = useState<any>(null);
+  const [trxId, setTrxId] = useState("");
+  const [senderNumber, setSenderNumber] = useState("");
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <header className="border-b bg-white">
@@ -50,12 +57,18 @@ export default function PricingPage() {
                   <div className="flex items-center gap-2"><MessageSquare className="h-4 w-4" /> {plan.monthlySmsLimit} SMS/month</div>
                   <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> {plan.yearlyDiscountPercent}% yearly discount</div>
                 </div>
-                <Button asChild className="w-full">
-                  <Link href={`/register?plan=${plan.code}`}>
-                    Sign up
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+                <div className="grid gap-2">
+                  <Button className="w-full" onClick={() => setPayPlan(plan)}>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Pay Now
+                  </Button>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href={`/register?plan=${plan.code}`}>
+                      Sign up
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -77,7 +90,52 @@ export default function PricingPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="mt-6 border-slate-200 bg-white">
+          <CardHeader>
+            <CardTitle>Payment automation documentation</CardTitle>
+            <CardDescription>GatewayFlow compatible manual and SMS-sync payment process.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-3">
+            {[
+              ["01", "Account Login", "Register or login from the portal."],
+              ["02", "Brand Payment", "Send opening/subscription charge to bKash/Nagad and submit TrxID."],
+              ["03", "Auto Approval", "Gateway SMS TrxID and submitted TrxID can be matched for approval."],
+              ["04", "Android App", "Install the Android app and allow SMS permission for sync."],
+              ["05", "SMS Sender", "Add bKash, Nagad, Rocket or required sender rules."],
+              ["06", "Payment Verify", "Verify by transaction ID, sender number and amount."],
+            ].map(([step, title, text]) => (
+              <div key={step} className="rounded-md border p-4">
+                <div className="text-xs font-semibold text-slate-500">{step}</div>
+                <div className="mt-1 font-semibold">{title}</div>
+                <div className="mt-1 text-sm text-slate-600">{text}</div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </section>
+
+      <Dialog open={!!payPlan} onOpenChange={(open) => !open && setPayPlan(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pay for {payPlan?.name}</DialogTitle>
+            <DialogDescription>Send payment to bKash 0179007328, then continue signup with your TrxID and sender number.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="rounded-lg border bg-slate-50 p-4 text-sm">
+              Monthly amount: <span className="font-semibold">{money(payPlan?.monthlyPrice || 0)}</span>. Easy School storage adds {money(easySchoolStorageMonthlyPrice)}/month if selected after signup.
+            </div>
+            <Input value={trxId} onChange={(e) => setTrxId(e.target.value)} placeholder="Transaction ID" />
+            <Input value={senderNumber} onChange={(e) => setSenderNumber(e.target.value)} placeholder="Sender number" />
+            <Button asChild className="w-full">
+              <Link href={`/register?plan=${payPlan?.code || "students_100"}&trxId=${encodeURIComponent(trxId)}&sender=${encodeURIComponent(senderNumber)}`}>
+                Continue Signup
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
