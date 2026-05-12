@@ -14,6 +14,9 @@ export { StaffIDCard } from './StaffIDCard'
 export { IDCardPreview } from './IDCardPreview'
 export type { PreviewProps } from './IDCardPreview'
 
+// Webcam Scanner Component
+export { WebcamScanner } from './WebcamScanner'
+
 // Utility Components
 export { QRCodePreview } from './QRCodePreview'
 export { BarcodePreview } from './BarcodePreview'

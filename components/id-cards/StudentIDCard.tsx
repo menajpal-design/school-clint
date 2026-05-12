@@ -10,6 +10,7 @@ export type IDCardProps = {
   className?: string
   photoUrl?: string
   studentClass?: string
+  headName?: string
   institution?: {
     name?: string
     logoUrl?: string
@@ -27,6 +28,7 @@ export function StudentIDCard({
   className = '',
   photoUrl,
   studentClass,
+  headName,
   institution,
   validity,
   qrData,
@@ -100,7 +102,7 @@ export function StudentIDCard({
         <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200 pt-3 text-xs">
           <div>
             <div className="font-semibold text-slate-700">Head</div>
-            <div className="text-slate-500 text-sm">{institution?.headName || 'Head Name'}</div>
+            <div className="text-sm text-slate-500">{headName || institution?.headName || 'Head Name'}</div>
           </div>
           <div className="text-right">
             <div className="font-semibold text-slate-700">Seal</div>

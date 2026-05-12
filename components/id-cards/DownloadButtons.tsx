@@ -8,9 +8,26 @@ import { Download, FileText, Printer, Mail } from 'lucide-react'
 import { api } from '@/lib/api'
 
 export function DownloadButtons({ targetRef, filename = 'id-card', cardId }: { targetRef: React.RefObject<HTMLElement> | null; filename?: string; cardId?: string }) {
+  const captureElement = async () => {
+    if (!targetRef?.current) return null
+
+    await document.fonts?.ready?.catch(() => undefined)
+    return html2canvas(targetRef.current, {
+      scale: 3,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      allowTaint: true,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      windowWidth: targetRef.current.scrollWidth,
+      windowHeight: targetRef.current.scrollHeight,
+    })
+  }
+
   const downloadPNG = async () => {
-    if (!targetRef?.current) return
-    const canvas = await html2canvas(targetRef.current, { scale: 2 })
+    const canvas = await captureElement()
+    if (!canvas) return
+
     const dataUrl = canvas.toDataURL('image/png')
     const link = document.createElement('a')
     link.href = dataUrl
@@ -19,8 +36,9 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId }: { t
   }
 
   const downloadPDF = async () => {
-    if (!targetRef?.current) return
-    const canvas = await html2canvas(targetRef.current, { scale: 2 })
+    const canvas = await captureElement()
+    if (!canvas) return
+
     const imgData = canvas.toDataURL('image/png')
     const pdf = new jsPDF({ unit: 'px', format: [canvas.width, canvas.height] })
     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height)
@@ -29,16 +47,37 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId }: { t
 
   const print = () => {
     if (!targetRef?.current) return
-    const popup = window.open('', '_blank')
+
+    const popup = window.open('', '_blank', 'width=1200,height=900')
     if (!popup) return
-    popup.document.write('<html><head><title>Print ID Card</title>')
-    popup.document.write('<style>body{margin:0;padding:20px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial}</style>')
-    popup.document.write('</head><body>')
-    popup.document.write(targetRef.current.innerHTML)
-    popup.document.write('</body></html>')
+
+    const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((node) => node.outerHTML)
+      .join('')
+
+    popup.document.open()
+    popup.document.write(`
+      <html>
+        <head>
+          <title>Print ID Card</title>
+          ${styleTags}
+          <style>
+            @page { size: auto; margin: 12mm; }
+            html, body { margin: 0; padding: 0; background: #f8fafc; }
+            body { display: flex; justify-content: center; align-items: flex-start; padding: 20px; }
+          </style>
+        </head>
+        <body>
+          ${targetRef.current.outerHTML}
+        </body>
+      </html>
+    `)
     popup.document.close()
     popup.focus()
-    popup.print()
+    setTimeout(() => {
+      popup.print()
+      popup.close()
+    }, 250)
   }
 
   const email = async () => {

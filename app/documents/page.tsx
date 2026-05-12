@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { FileText, FolderKanban, Settings2, UploadCloud } from "lucide-react";
+import { FileText, FolderKanban, Settings2, Ticket, UploadCloud } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
@@ -42,6 +42,7 @@ export default function DocumentsPage() {
         description="Browse document categories, recent uploads and the fastest paths to upload or manage files."
         icon={FolderKanban}
         actions={[
+          { label: "Admit Card", href: "/documents/admit-cards", icon: Ticket },
           { label: "Upload", href: "/documents/upload", icon: UploadCloud },
           { label: "Manage", href: "/documents/manage", icon: Settings2 },
         ]}
@@ -109,6 +110,7 @@ export default function DocumentsPage() {
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="font-semibold text-slate-950">Quick Links</h2>
           <div className="mt-4 space-y-3">
+            <Button asChild className="w-full justify-start"><Link href="/documents/admit-cards"><Ticket className="mr-2 h-4 w-4" />Generate Admit Card</Link></Button>
             <Button asChild className="w-full justify-start"><Link href="/documents/upload"><UploadCloud className="mr-2 h-4 w-4" />Upload Document</Link></Button>
             <Button asChild variant="outline" className="w-full justify-start"><Link href="/documents/manage"><Settings2 className="mr-2 h-4 w-4" />Manage Documents</Link></Button>
           </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Camera, ClipboardCheck, Save } from "lucide-react";
 
+import { WebcamScanner } from "@/components/id-cards/WebcamScanner";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,12 +71,20 @@ export default function AttendanceMarkPage() {
     }
   };
 
-  const scan = async () => {
+  const scan = async (code?: string) => {
+    const codeToScan = code || scanCode;
+    if (!codeToScan) {
+      setMessage("Please enter or scan a card code.");
+      return;
+    }
     try {
-      const data = await api.attendance.scanIdCard({ code: scanCode }) as { student?: Student };
-      if (data.student) setOne(data.student._id, "present");
-      setScanOpen(false);
-      setScanCode("");
+      const data = await api.attendance.scanIdCard({ code: codeToScan }) as { student?: Student };
+      if (data.student) {
+        setOne(data.student._id, "present");
+        setScanOpen(false);
+        setScanCode("");
+        setMessage(`✓ ${data.student.userId?.name} marked as present.`);
+      }
     } catch (err: any) {
       setMessage(err?.message || "Scan failed.");
     }
@@ -129,11 +138,17 @@ export default function AttendanceMarkPage() {
       </section>
 
       <Dialog open={scanOpen} onOpenChange={setScanOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>ID Card Scan</DialogTitle><DialogDescription>Enter scanned card number or QR data. Webcam capture can be attached to this modal when a scanner package is available.</DialogDescription></DialogHeader>
-          <Input value={scanCode} onChange={(event) => setScanCode(event.target.value)} placeholder="Scan or enter ID card code" />
-          <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-500">Webcam preview</div>
-          <DialogFooter><Button variant="outline" onClick={() => setScanOpen(false)}>Cancel</Button><Button onClick={scan}>Mark Present</Button></DialogFooter>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>ID Card Scan</DialogTitle><DialogDescription>Use your device camera to scan ID card QR codes, or enter the code manually.</DialogDescription></DialogHeader>
+          <WebcamScanner enabled={scanOpen} onScan={(code) => {
+            setScanCode(code);
+            scan(code);
+          }} />
+          <div className="mt-4 space-y-2 border-t pt-4">
+            <label className="text-sm font-medium text-slate-700">Manual Entry</label>
+            <Input value={scanCode} onChange={(event) => setScanCode(event.target.value)} placeholder="Or paste ID card code here" />
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setScanOpen(false)}>Cancel</Button><Button onClick={() => scan()}>Mark Present</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

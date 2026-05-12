@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CreditCard, Printer, ScanLine, Search } from "lucide-react";
 
+import { WebcamScanner } from "@/components/id-cards/WebcamScanner";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,6 +47,11 @@ export default function CollectionsPage() {
       <Card><CardContent className="space-y-3 p-5"><Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} /><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}><option value="cash">Cash</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="rocket">Rocket</option><option value="card">Card</option><option value="bank_transfer">Bank transfer</option></select><Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Note" /><Button onClick={collect}>Collect Payment</Button></CardContent></Card>
     </div>}
     {receipt && <Card><CardContent className="p-5"><div className="flex items-start justify-between"><div><h2 className="text-xl font-semibold">Receipt Preview</h2><p className="text-sm text-slate-500">{receipt.receiptNumber}</p></div><Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" />Print Receipt</Button></div><div className="mt-4 grid gap-2 text-sm md:grid-cols-2"><p>Student: {receipt.studentId?.userId?.name}</p><p>Amount: {formatCurrency(receipt.amount || 0)}</p><p>Method: {receipt.paymentMethod}</p><p>Date: {formatDate(receipt.paymentDate)}</p></div></CardContent></Card>}
-    <Dialog open={scanOpen} onOpenChange={setScanOpen}><DialogContent><DialogHeader><DialogTitle>Scan ID Card</DialogTitle></DialogHeader><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Scan card number" /><DialogFooter><Button variant="outline" onClick={() => setScanOpen(false)}>Cancel</Button><Button onClick={() => { setScanOpen(false); load(); }}>Search</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={scanOpen} onOpenChange={setScanOpen}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Scan ID Card</DialogTitle></DialogHeader><WebcamScanner enabled={scanOpen} onScan={(code) => {
+      setSearch(code);
+      setScanOpen(false);
+      // Trigger search after setting the code
+      setTimeout(() => load(), 100);
+    }} /></DialogContent></Dialog>
   </div>;
 }

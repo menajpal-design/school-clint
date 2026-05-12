@@ -48,3 +48,84 @@
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+ ⨯ ./components/id-cards/AdmitCard.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4mC:\New folder\school_n\client\components\id-cards\AdmitCard.tsx[0m:63:1]
+ [2m63[0m |     const displayIssueDate = formatDisplayDate(new Date().toISOString())
+ [2m64[0m | 
+ [2m65[0m |     return (
+ [2m66[0m |       <div ref={ref} className={`w-full max-w-md ${className}`}>
+    : [31;1m       ^^^[0m
+ [2m67[0m |         <div className="relative overflow-hidden rounded-[32px] border border-amber-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+ [2m68[0m |           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-emerald-700 via-green-600 to-teal-600" />
+ [2m68[0m |           <div className="pointer-events-none absolute -right-10 top-12 h-28 w-28 rounded-full bg-white/15 blur-2xl" />
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/id-cards/AdmitCard.tsx
+./app/id-cards/templates/page.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+ ⨯ ./components/id-cards/AdmitCard.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4mC:\New folder\school_n\client\components\id-cards\AdmitCard.tsx[0m:63:1]
+ [2m63[0m |     const displayIssueDate = formatDisplayDate(new Date().toISOString())
+ [2m64[0m | 
+ [2m65[0m |     return (
+ [2m66[0m |       <div ref={ref} className={`w-full max-w-md ${className}`}>
+    : [31;1m       ^^^[0m
+ [2m67[0m |         <div className="relative overflow-hidden rounded-[32px] border border-amber-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+ [2m68[0m |           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-emerald-700 via-green-600 to-teal-600" />
+ [2m68[0m |           <div className="pointer-events-none absolute -right-10 top-12 h-28 w-28 rounded-full bg-white/15 blur-2xl" />
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/id-cards/AdmitCard.tsx
+./app/id-cards/templates/page.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+ ⨯ ./components/id-cards/AdmitCard.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4mC:\New folder\school_n\client\components\id-cards\AdmitCard.tsx[0m:63:1]
+ [2m63[0m |     const displayIssueDate = formatDisplayDate(new Date().toISOString())
+ [2m64[0m | 
+ [2m65[0m |     return (
+ [2m66[0m |       <div ref={ref} className={`w-full max-w-md ${className}`}>
+    : [31;1m       ^^^[0m
+ [2m67[0m |         <div className="relative overflow-hidden rounded-[32px] border border-amber-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+ [2m68[0m |           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-emerald-700 via-green-600 to-teal-600" />
+ [2m68[0m |           <div className="pointer-events-none absolute -right-10 top-12 h-28 w-28 rounded-full bg-white/15 blur-2xl" />
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/id-cards/AdmitCard.tsx
+./app/id-cards/templates/page.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
