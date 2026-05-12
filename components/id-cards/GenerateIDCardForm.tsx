@@ -11,6 +11,8 @@ import { ProfessionalIDCard } from './ProfessionalIDCard'
 import { AdmitCard } from './AdmitCard'
 import DownloadButtons from './DownloadButtons'
 
+const toDateInputValue = (date: Date) => date.toISOString().split('T')[0]
+
 const schema = z.object({
   cardType: z.enum(['student-id', 'teacher-id', 'staff-id', 'admit-card']).default('student-id'),
   name: z.string().min(1, 'Name is required'),
@@ -40,7 +42,7 @@ export function GenerateIDCardForm() {
       cardType: 'student-id',
       institutionName: 'Educational Institution',
       headName: 'Dr. Principal',
-      validityDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+      validityDate: toDateInputValue(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
     },
   })
 
@@ -225,6 +227,7 @@ export function GenerateIDCardForm() {
                       fatherName={data.fatherName || undefined}
                       admissionNumber={data.admissionNumber || undefined}
                       registrationNumber={data.registrationNumber || undefined}
+                      stream={data.stream || undefined}
                     />
                   )}
                 </>

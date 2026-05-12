@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
 import { QRCodeCanvas } from 'qrcode.react'
 
 export type IDCardProps = {
@@ -10,6 +9,7 @@ export type IDCardProps = {
   role?: string
   className?: string
   photoUrl?: string
+  studentClass?: string
   institution?: {
     name?: string
     logoUrl?: string
@@ -26,71 +26,97 @@ export function StudentIDCard({
   role = 'Student',
   className = '',
   photoUrl,
+  studentClass,
   institution,
   validity,
   qrData,
   barcode,
 }: IDCardProps) {
+  const qrPayload =
+    qrData ||
+    JSON.stringify({
+      name,
+      id,
+      role,
+      studentClass,
+      institution: institution?.name || 'My Institution',
+      validity: validity || '2026-12-31',
+    })
+
   return (
-    <div className={`max-w-xs w-[320px] p-4 bg-white border shadow-sm ${className}`}>
-      <div className="flex items-center justify-between mb-2">
+    <div
+      className={`relative w-[340px] max-w-xs overflow-hidden rounded-[28px] border border-sky-200 bg-gradient-to-br from-white via-sky-50 to-cyan-100 p-4 shadow-[0_24px_60px_rgba(15,23,42,0.18)] ${className}`}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-sky-700 via-cyan-600 to-teal-500" />
+      <div className="pointer-events-none absolute -right-10 top-8 h-28 w-28 rounded-full bg-white/25 blur-2xl" />
+      <div className="relative flex items-center justify-between text-white">
         <div className="flex items-center space-x-2">
           {institution?.logoUrl ? (
             // next/image requires remote config; fallback to img
             // eslint-disable-next-line @next/next/no-img-element
             <img src={institution.logoUrl} alt="logo" className="h-10 w-10 object-contain" />
           ) : (
-            <div className="h-10 w-10 bg-slate-100 rounded flex items-center justify-center text-sm">Logo</div>
+            <div className="h-10 w-10 rounded bg-white/20 flex items-center justify-center text-sm font-semibold backdrop-blur">
+              Logo
+            </div>
           )}
           <div>
-            <div className="text-sm font-semibold">{institution?.name || 'My Institution'}</div>
-            <div className="text-xs text-muted-foreground">ID Card</div>
+            <div className="text-sm font-semibold text-white">{institution?.name || 'My Institution'}</div>
+            <div className="text-xs text-white/80">Student ID Card</div>
           </div>
         </div>
-        <div className="text-xs text-right">
-          <div className="font-semibold">Validity</div>
-          <div className="text-sm">{validity || '2026-12-31'}</div>
+        <div className="text-right text-xs">
+          <div className="font-semibold text-white/80">Validity</div>
+          <div className="text-sm font-semibold text-white">{validity || '2026-12-31'}</div>
         </div>
       </div>
 
-      <div className="flex items-center space-x-3">
-        <div className="h-20 w-16 bg-slate-100 flex items-center justify-center overflow-hidden">
+      <div className="relative mt-4 rounded-[22px] bg-white/90 p-3 shadow-sm ring-1 ring-sky-100 backdrop-blur">
+        <div className="flex items-start space-x-3">
+          <div className="h-22 w-18 overflow-hidden rounded-2xl border border-sky-200 bg-slate-100">
           {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photoUrl} alt={name} className="object-cover h-full w-full" />
           ) : (
-            <div className="text-xs text-center">Photo</div>
+            <div className="flex h-full w-full items-center justify-center text-xs text-center text-slate-500">
+              Photo
+            </div>
           )}
         </div>
-        <div className="flex-1">
-          <div className="text-sm font-bold">{name}</div>
-          <div className="text-xs text-muted-foreground">{role}</div>
-          <div className="text-xs mt-2">ID: {id}</div>
-          <div className="text-xs">Class: { ("className" in ({} as any)) ? '' : ''}</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-sky-600">Identity profile</div>
+            <div className="mt-1 truncate text-base font-bold text-slate-900">{name}</div>
+            <div className="text-xs font-medium text-slate-500">{role}</div>
+            <div className="mt-2 text-xs text-slate-600">ID: <span className="font-semibold text-slate-900">{id}</span></div>
+            <div className="text-xs text-slate-600">
+              Class: <span className="font-semibold text-slate-900">{studentClass || role || 'General'}</span>
+            </div>
+          </div>
+          <div className="shrink-0 rounded-2xl border border-sky-100 bg-white p-2 shadow-sm">
+            <QRCodeCanvas value={qrPayload} size={64} />
+          </div>
         </div>
-        <div>
-          {qrData ? (
-            <QRCodeCanvas value={qrData} size={64} />
-          ) : (
-            <div className="h-16 w-16 bg-slate-100" />
-          )}
+
+        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200 pt-3 text-xs">
+          <div>
+            <div className="font-semibold text-slate-700">Head</div>
+            <div className="text-slate-500 text-sm">{institution?.headName || 'Head Name'}</div>
+          </div>
+          <div className="text-right">
+            <div className="font-semibold text-slate-700">Seal</div>
+            <div className="ml-auto mt-1 inline-flex h-8 w-12 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-[10px] font-semibold text-sky-700">
+              Official
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 rounded-2xl bg-sky-950 px-3 py-2 text-center text-[11px] text-white/85">
+          This card is the property of the institution
+        </div>
+
+        <div className="mt-2 border-t border-dashed border-sky-200 pt-2 text-center text-xs font-mono text-slate-500">
+          {barcode ? barcode : '|| ||| |||||'}
         </div>
       </div>
-
-      <div className="mt-3 flex items-center justify-between">
-        <div className="text-xs">
-          <div className="font-semibold">Head</div>
-          <div className="text-muted-foreground text-sm">{institution?.headName || 'Head Name'}</div>
-        </div>
-        <div className="text-xs text-right">
-          <div className="font-semibold">Seal</div>
-          <div className="h-8 w-12 bg-slate-100 inline-block" />
-        </div>
-      </div>
-
-      <div className="mt-2 text-center text-xs text-muted-foreground">This card is the property of the institution</div>
-
-      <div className="mt-2 pt-2 border-t text-center text-xs">{barcode ? barcode : '|| ||| |||||'}</div>
     </div>
   )
 }

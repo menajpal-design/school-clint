@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Layers, Download, Eye } from 'lucide-react'
+import { Layers, Eye } from 'lucide-react'
 
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Badge } from '@/components/ui/badge'
@@ -68,7 +68,7 @@ export default function TemplatesPage() {
   const currentTemplate = cardTemplates.find((t) => t.id === selectedTemplate)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title="ID Card Templates"
         description="Professional card templates with QR code integration. Preview and customize for your institution."
@@ -77,20 +77,20 @@ export default function TemplatesPage() {
       />
 
       {/* Template Selection */}
-      <section className="grid gap-3 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-4">
         {cardTemplates.map((template) => (
           <Card
             key={template.id}
-            className={`cursor-pointer transition-all ${
+            className={`cursor-pointer overflow-hidden rounded-3xl border bg-white/90 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
               selectedTemplate === template.id
-                ? 'border-blue-500 ring-2 ring-blue-200'
-                : 'border-slate-200 hover:border-blue-300'
+                ? 'border-cyan-500 ring-2 ring-cyan-200'
+                : 'border-slate-200 hover:border-cyan-300'
             }`}
             onClick={() => setSelectedTemplate(template.id)}
           >
             <CardHeader className="pb-3">
               <CardTitle className="text-base">{template.name}</CardTitle>
-              <CardDescription className="text-xs">{template.description}</CardDescription>
+              <CardDescription className="text-xs leading-5">{template.description}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <Button
@@ -126,7 +126,7 @@ export default function TemplatesPage() {
       </div>
 
       {/* Preview */}
-      <Card className="bg-gradient-to-br from-slate-50 to-slate-100">
+      <Card className="overflow-hidden border-slate-200 bg-gradient-to-br from-slate-50 via-white to-cyan-50 shadow-lg">
         <CardHeader>
           <CardTitle>{currentTemplate?.name} Preview</CardTitle>
           <CardDescription>
@@ -153,6 +153,7 @@ export default function TemplatesPage() {
                   fatherName={sampleData.fatherName}
                   admissionNumber={sampleData.admissionNumber}
                   registrationNumber={sampleData.registrationNumber}
+                  stream={sampleData.stream}
                 />
               )}
               {selectedTemplate === 'teacher' && (
@@ -206,36 +207,36 @@ export default function TemplatesPage() {
 
       {/* Features */}
       <section className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-slate-200 bg-white/90 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">✨ Professional Design</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-600">
-              Modern gradient backgrounds with role-specific colors. Clean typography and professional layout suitable
-              for institutional use.
+              Layered gradients, refined spacing, and stronger typography make the cards feel closer to printed ID
+              images instead of plain form output.
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-slate-200 bg-white/90 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">🔲 QR Code Verified</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-600">
-              Every card includes an integrated QR code containing student/staff details for secure verification and
-              digital access.
+              Every card now carries a QR payload with identity and exam metadata for faster verification and cleaner
+              digital handoff.
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-slate-200 bg-white/90 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">📋 Complete Information</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-600">
-              All required fields including photo, institutional branding, validity dates, head signature, and official
-              seal.
+              All required fields including photo, institutional branding, validity dates, head signature, official
+              seal, and class or stream details where relevant.
             </p>
           </CardContent>
         </Card>
