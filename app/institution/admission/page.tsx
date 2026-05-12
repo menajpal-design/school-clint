@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type React from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, CreditCard, UserPlus } from 'lucide-react';
@@ -45,6 +45,7 @@ const steps = ['Student personal info', 'Academic info', 'Parent/guardian info',
 export default function InstitutionAdmissionPage() {
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState('');
+  const [applications, setApplications] = useState<any[]>([]);
   const form = useForm<AdmissionValues>({
     resolver: zodResolver(admissionSchema),
     defaultValues: {
@@ -70,6 +71,12 @@ export default function InstitutionAdmissionPage() {
     },
   });
 
+  const loadApplications = () => {
+    api.admissions.getAll().then((data: any) => setApplications(data.applications || [])).catch(() => setApplications([]));
+  };
+
+  useEffect(loadApplications, []);
+
   const next = async () => {
     const fields: (keyof AdmissionValues)[][] = [
       ['name', 'email', 'dateOfBirth', 'address'],
@@ -89,6 +96,7 @@ export default function InstitutionAdmissionPage() {
       setStatus('Student admitted. Parent account and ID card actions were processed as selected.');
       form.reset();
       setStep(0);
+      loadApplications();
     } catch (error: any) {
       setStatus(error?.message || 'Admission API failed.');
     }
@@ -235,6 +243,34 @@ export default function InstitutionAdmissionPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Public Admission Applications</CardTitle>
+          <CardDescription>Teacher or higher role can accept. Accepted applicants receive username and password by SMS.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {applications.map((application) => (
+            <div key={application._id} className="grid gap-3 rounded-md border p-4 md:grid-cols-[1fr_auto] md:items-center">
+              <div>
+                <div className="font-medium">{application.studentName} · Class {application.requestedClass}</div>
+                <div className="text-sm text-muted-foreground">{application.guardianName} · {application.guardianPhone}</div>
+                <div className="text-sm text-muted-foreground">Previous: {application.previousSchool || 'N/A'} · Result: {application.previousResult || 'N/A'} · Status: {application.status}</div>
+              </div>
+              {application.status === 'pending' && (
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={async () => {
+                    const result = await api.admissions.accept(application._id, { className: application.requestedClass }) as any;
+                    setStatus(`Accepted. Username: ${result.credentials?.username}, Password: ${result.credentials?.password}`);
+                    loadApplications();
+                  }}>Accept</Button>
+                  <Button size="sm" variant="outline" onClick={async () => { await api.admissions.reject(application._id); loadApplications(); }}>Reject</Button>
+                </div>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }

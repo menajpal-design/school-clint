@@ -17,7 +17,7 @@ import { User, UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
 
 const loginSchema = z.object({
-  identifier: z.string().min(3, "Email or mobile number is required"),
+  identifier: z.string().min(2, "Username, email or mobile number is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   rememberMe: z.boolean().default(true),
 });
@@ -155,19 +155,19 @@ export default function LoginPage() {
         <Card className="w-full max-w-md border-slate-200 bg-white shadow-sm">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl">Login to DRMS</CardTitle>
-            <CardDescription>Use your email or mobile number and password to continue.</CardDescription>
+            <CardDescription>Use your username, email or mobile number and password to continue.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <label className="space-y-1 text-sm font-medium text-slate-700">
-                <span>Email or mobile</span>
+                <span>Username, email or mobile</span>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                   <Input
                     {...register("identifier")}
                     type="text"
                     autoComplete="username"
-                    placeholder="you@example.com or 01XXXXXXXXX"
+                    placeholder="username, you@example.com or 01XXXXXXXXX"
                     className="pl-9"
                   />
                 </div>

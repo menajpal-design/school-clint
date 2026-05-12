@@ -96,6 +96,9 @@ export default function Home() {
             <Button asChild variant="outline" size="lg">
               <Link href="/register">Register institution</Link>
             </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/admission">Apply for admission</Link>
+            </Button>
             <Button asChild variant="ghost" size="lg">
               <Link href="/downloads">Download Android app</Link>
             </Button>

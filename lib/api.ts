@@ -143,6 +143,14 @@ export const api = {
     changePassword: (data: any) => apiClient.post('/auth/change-password', data),
   },
 
+  admissions: {
+    schools: (params?: any) => apiClient.get('/admissions/public/schools', params ? { params } : undefined),
+    apply: (data: any) => apiClient.post('/admissions/public/apply', data),
+    getAll: () => apiClient.get('/admissions'),
+    accept: (id: string, data?: any) => apiClient.post(`/admissions/${id}/accept`, data),
+    reject: (id: string) => apiClient.post(`/admissions/${id}/reject`),
+  },
+
   // Users
   users: {
     getAll: () => apiClient.get('/users'),

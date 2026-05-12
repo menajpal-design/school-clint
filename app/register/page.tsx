@@ -21,7 +21,7 @@ const registerSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
   phone: z.string().optional(),
-  role: z.enum(['head', 'student', 'parent', 'subject_teacher', 'staff']),
+  role: z.enum(['head']).default('head'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -40,6 +40,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    defaultValues: { role: 'head' },
   });
 
   const onSubmit = async (data: RegisterForm) => {
@@ -156,12 +157,7 @@ export default function RegisterPage() {
               {...register('role')}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
             >
-              <option value="">Select Role</option>
               <option value="head">Institution Head</option>
-              <option value="student">Student</option>
-              <option value="parent">Parent</option>
-              <option value="subject_teacher">Teacher</option>
-              <option value="staff">Staff</option>
             </select>
             {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>}
           </div>
