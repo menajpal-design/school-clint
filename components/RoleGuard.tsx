@@ -16,8 +16,8 @@ export function RoleGuard({ roles, permissions, fallback = null, children }: Pro
 
   if (!user) return null
 
-  // Head bypass
-  if (user.role === 'head') return <>{children}</>
+  // School head and platform admins bypass permission checks.
+  if (['admin', 'super_admin', 'head'].includes(user.role)) return <>{children}</>
 
   if (roles && roles.length > 0 && hasRole(user, roles as any)) return <>{children}</>
 

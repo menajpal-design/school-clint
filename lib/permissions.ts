@@ -12,7 +12,7 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Dashboard',
     href: '/dashboard',
-    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent'],
+    roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent'],
     icon: 'LayoutGrid',
   },
   {
@@ -96,12 +96,12 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Users & Roles',
     href: '/users-roles',
-    roles: ['head', 'assistant_head'],
+    roles: ['admin', 'super_admin', 'head'],
     icon: 'Users',
     children: [
-      { label: 'Overview', href: '/users-roles', roles: ['head', 'assistant_head'] },
-      { label: 'All Users', href: '/users-roles/all', roles: ['head', 'assistant_head'] },
-      { label: 'Roles & Permissions', href: '/users-roles/permissions', roles: ['head'] },
+      { label: 'Overview', href: '/users-roles', roles: ['admin', 'super_admin', 'head'] },
+      { label: 'All Users', href: '/users-roles/all', roles: ['admin', 'super_admin', 'head'] },
+      { label: 'Roles & Permissions', href: '/users-roles/permissions', roles: ['admin', 'super_admin', 'head'] },
     ],
   },
   {
@@ -125,17 +125,17 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Profile & Auth',
     href: '/profile',
-    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'],
+    roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'],
     icon: 'User',
     children: [
-      { label: 'My Profile', href: '/profile', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
-      { label: 'Change Password', href: '/profile/change-password', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
+      { label: 'My Profile', href: '/profile', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
+      { label: 'Change Password', href: '/profile/change-password', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
     ],
   },
   {
     label: 'Settings',
     href: '/settings',
-    roles: ['head', 'assistant_head'],
+    roles: ['admin', 'super_admin', 'head', 'assistant_head'],
     icon: 'Settings',
   },
 ];
@@ -146,6 +146,8 @@ export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
 
 // Role -> permissions mapping
 export const rolePermissions: Record<UserRole, string[]> = {
+  admin: ['*'],
+  super_admin: ['*'],
   head: ['*'],
   assistant_head: [
     'manage:assignedArea',
@@ -168,14 +170,14 @@ export const rolePermissions: Record<UserRole, string[]> = {
 export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
   if (!user) return false;
   if (!roles) return true;
-  if (user.role === 'head') return true;
+  if (['admin', 'super_admin', 'head'].includes(user.role)) return true;
   if (Array.isArray(roles)) return roles.includes(user.role);
   return user.role === roles;
 }
 
 export function hasPermission(user?: User | null, permission?: string) {
   if (!user || !permission) return false;
-  if (user.role === 'head') return true;
+  if (['admin', 'super_admin', 'head'].includes(user.role)) return true;
   const rolePerms = rolePermissions[user.role] || [];
   if (rolePerms.includes('*')) return true;
   if (rolePerms.includes(permission)) return true;
@@ -185,8 +187,6 @@ export function hasPermission(user?: User | null, permission?: string) {
 
 export function getMenuForUser(user?: User | null) {
   if (!user) return [];
-  // Head gets all
-  if (user.role === 'head') return menuConfig;
   return menuConfig
     .filter((item) => item.roles.includes(user.role))
     .map((item) => ({

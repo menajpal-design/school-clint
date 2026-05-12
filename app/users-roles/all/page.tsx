@@ -14,7 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 
-const roles = ["head", "assistant_head", "class_teacher", "subject_teacher", "finance_officer", "staff", "student", "parent", "committee_member"];
+const allRoles = ["admin", "super_admin", "head", "assistant_head", "class_teacher", "subject_teacher", "teacher", "finance_officer", "staff", "student", "parent", "committee_member"];
+const schoolManagedRoles = ["assistant_head", "class_teacher", "subject_teacher", "teacher", "finance_officer", "staff", "student", "parent", "committee_member"];
+const platformRoles = ["admin", "super_admin"];
 
 export default function UsersAllPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -22,12 +24,19 @@ export default function UsersAllPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [selected, setSelected] = useState<any>(null);
   const [role, setRole] = useState("");
+  const [profile, setProfile] = useState<any>(null);
 
   const load = async () => {
-    const data = await api.users.getAllUsers() as any;
-    setUsers(data.users || []);
+    const [usersData, profileData] = await Promise.all([api.users.getAllUsers(), api.auth.profile()]) as any[];
+    setUsers(usersData.users || []);
+    setProfile(profileData.user || profileData);
   };
   useEffect(() => { load().catch(() => undefined); }, []);
+
+  const roleOptions = useMemo(() => {
+    if (platformRoles.includes(profile?.role)) return allRoles;
+    return schoolManagedRoles;
+  }, [profile?.role]);
 
   const filtered = useMemo(() => users.filter((user) => {
     const q = search.toLowerCase();
@@ -59,7 +68,7 @@ export default function UsersAllPage() {
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-[1fr_240px]">
           <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email or role" /></div>
-          <Select value={roleFilter} onValueChange={setRoleFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All roles</SelectItem>{roles.map((item) => <SelectItem key={item} value={item}>{item.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select>
+          <Select value={roleFilter} onValueChange={setRoleFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All roles</SelectItem>{roleOptions.map((item) => <SelectItem key={item} value={item}>{item.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select>
         </div>
       </section>
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -70,7 +79,7 @@ export default function UsersAllPage() {
               <TableCell className="capitalize">{user.role?.replace(/_/g, " ")}</TableCell>
               <TableCell><div className="flex items-center gap-2"><Switch checked={user.isActive !== false} onCheckedChange={(checked) => changeStatus(user, checked)} /><Badge variant="outline">{user.isActive !== false ? "Active" : "Inactive"}</Badge></div></TableCell>
               <TableCell>{user.lastLogin ? formatDate(user.lastLogin) : "Never"}</TableCell>
-              <TableCell><div className="flex justify-end gap-2"><Button size="sm" variant="outline" onClick={() => { setSelected(user); setRole(user.role); }}><UserCog className="mr-2 h-4 w-4" />Role</Button><Button size="sm" variant="outline" onClick={() => resetPassword(user)}><KeyRound className="mr-2 h-4 w-4" />Reset</Button></div></TableCell>
+              <TableCell><div className="flex justify-end gap-2"><Button size="sm" variant="outline" disabled={!platformRoles.includes(profile?.role) && (platformRoles.includes(user.role) || user.role === "head")} onClick={() => { setSelected(user); setRole(roleOptions.includes(user.role) ? user.role : roleOptions[0]); }}><UserCog className="mr-2 h-4 w-4" />Role</Button><Button size="sm" variant="outline" onClick={() => resetPassword(user)}><KeyRound className="mr-2 h-4 w-4" />Reset</Button></div></TableCell>
             </TableRow>
           ))}
         </TableBody></Table>
@@ -78,7 +87,7 @@ export default function UsersAllPage() {
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Assign Role</DialogTitle></DialogHeader>
-          <Select value={role} onValueChange={setRole}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{roles.map((item) => <SelectItem key={item} value={item}>{item.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select>
+          <Select value={role} onValueChange={setRole}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{roleOptions.map((item) => <SelectItem key={item} value={item}>{item.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select>
           <DialogFooter><Button onClick={saveRole}>Save Role</Button></DialogFooter>
         </DialogContent>
       </Dialog>
