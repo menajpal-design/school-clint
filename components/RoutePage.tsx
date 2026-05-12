@@ -253,7 +253,6 @@ function getPageConfig(pathname: string, title: string): PageConfig {
       actions: [
         { label: "Fees", href: "/finance/fees", icon: CreditCard },
         { label: "Collections", href: "/finance/collections", icon: CheckCircle2 },
-        { label: "Salary", href: "/finance/salary", icon: Users },
         { label: "Reports", href: "/finance/reports", icon: BarChart3 },
       ],
       columns: [

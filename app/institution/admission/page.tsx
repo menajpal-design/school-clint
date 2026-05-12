@@ -18,7 +18,9 @@ import { api } from '@/lib/api';
 
 const admissionSchema = z.object({
   name: z.string().min(2, 'Student name is required'),
-  email: z.string().email('Valid email is required'),
+  email: z.string().trim().optional().refine((v) => !v || v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
+    message: 'Valid email is required',
+  }),
   phone: z.string().optional(),
   dateOfBirth: z.string().min(1, 'Date of birth is required'),
   bloodGroup: z.string().optional(),
@@ -29,18 +31,16 @@ const admissionSchema = z.object({
   admissionDate: z.string().min(1, 'Admission date is required'),
   guardianName: z.string().min(2, 'Guardian name is required'),
   guardianPhone: z.string().min(5, 'Guardian phone is required'),
-  guardianEmail: z.string().email('Valid guardian email is required'),
-  admissionFee: z.coerce.number().min(0),
-  monthlyFee: z.coerce.number().min(0),
-  scholarshipType: z.string(),
-  scholarshipAmount: z.coerce.number().min(0),
+  guardianEmail: z.string().trim().optional().refine((v) => !v || v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
+    message: 'Valid guardian email is required',
+  }),
   autoParentAccount: z.boolean(),
   autoIdCard: z.boolean(),
 });
 
 type AdmissionValues = z.infer<typeof admissionSchema>;
 
-const steps = ['Student personal info', 'Academic info', 'Parent/guardian info', 'Fee and scholarship setup', 'Auto account and ID card'];
+const steps = ['Student personal info', 'Academic info', 'Parent/guardian info', 'Auto account and ID card'];
 
 export default function InstitutionAdmissionPage() {
   const [step, setStep] = useState(0);
@@ -62,10 +62,6 @@ export default function InstitutionAdmissionPage() {
       guardianName: '',
       guardianPhone: '',
       guardianEmail: '',
-      admissionFee: 0,
-      monthlyFee: 0,
-      scholarshipType: 'none',
-      scholarshipAmount: 0,
       autoParentAccount: true,
       autoIdCard: true,
     },
@@ -79,10 +75,9 @@ export default function InstitutionAdmissionPage() {
 
   const next = async () => {
     const fields: (keyof AdmissionValues)[][] = [
-      ['name', 'email', 'dateOfBirth', 'address'],
+      ['name', 'dateOfBirth', 'address'],
       ['className', 'sectionName', 'rollNumber', 'admissionDate'],
       ['guardianName', 'guardianPhone', 'guardianEmail'],
-      ['admissionFee', 'monthlyFee', 'scholarshipType', 'scholarshipAmount'],
       ['autoParentAccount', 'autoIdCard'],
     ];
     const valid = await form.trigger(fields[step]);
@@ -92,8 +87,18 @@ export default function InstitutionAdmissionPage() {
   const onSubmit = async (data: AdmissionValues) => {
     setStatus('Submitting admission...');
     try {
-      await api.students.create(data);
-      setStatus('Student admitted. Parent account and ID card actions were processed as selected.');
+      const payload = {
+        ...data,
+        email: data.email?.trim() || undefined,
+      };
+      const result = await api.students.create(payload) as any;
+      const username = result?.credentials?.username;
+      const password = result?.credentials?.password;
+      setStatus(
+        username && password
+          ? `Student admitted. Auto username/password generated: ${username} / ${password}`
+          : 'Student admitted. Username and password were generated automatically.'
+      );
       form.reset();
       setStep(0);
       loadApplications();
@@ -146,7 +151,7 @@ export default function InstitutionAdmissionPage() {
                 {step === 0 && (
                   <div className="grid gap-4 md:grid-cols-2">
                     <Field form={form} name="name" label="Student Name" />
-                    <Field form={form} name="email" label="Student Email" type="email" />
+                    <Field form={form} name="email" label="Student Email (Optional)" type="email" />
                     <Field form={form} name="phone" label="Phone" />
                     <Field form={form} name="dateOfBirth" label="Date of Birth" type="date" />
                     <FormField control={form.control} name="bloodGroup" render={({ field }) => (
@@ -184,34 +189,11 @@ export default function InstitutionAdmissionPage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <Field form={form} name="guardianName" label="Guardian Name" />
                     <Field form={form} name="guardianPhone" label="Guardian Phone" />
-                    <Field form={form} name="guardianEmail" label="Guardian Email" type="email" />
+                    <Field form={form} name="guardianEmail" label="Guardian Email (Optional)" type="email" />
                   </div>
                 )}
 
                 {step === 3 && (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field form={form} name="admissionFee" label="Admission Fee" type="number" />
-                    <Field form={form} name="monthlyFee" label="Monthly Fee" type="number" />
-                    <FormField control={form.control} name="scholarshipType" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Scholarship</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="merit">Merit</SelectItem>
-                            <SelectItem value="need">Need Based</SelectItem>
-                            <SelectItem value="full">Full Scholarship</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <Field form={form} name="scholarshipAmount" label="Scholarship Amount" type="number" />
-                  </div>
-                )}
-
-                {step === 4 && (
                   <div className="grid gap-4 md:grid-cols-2">
                     <ToggleField form={form} name="autoParentAccount" label="Auto parent account generation" icon={<UserPlus className="h-5 w-5" />} />
                     <ToggleField form={form} name="autoIdCard" label="Auto ID card generation" icon={<CreditCard className="h-5 w-5" />} />
@@ -247,7 +229,7 @@ export default function InstitutionAdmissionPage() {
       <Card>
         <CardHeader>
           <CardTitle>Public Admission Applications</CardTitle>
-          <CardDescription>Teacher or higher role can accept. Accepted applicants receive username and password by SMS.</CardDescription>
+          <CardDescription>Teacher or higher role can accept. Student admission auto-generates username and password after submission.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {applications.map((application) => (

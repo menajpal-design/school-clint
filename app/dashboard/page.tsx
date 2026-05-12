@@ -195,7 +195,6 @@ function getQuickActions(role?: UserRole) {
     ],
     finance_officer: [
       { label: "Collect Fees", href: "/finance/collections", icon: CreditCard },
-      { label: "Salary", href: "/finance/salary", icon: Landmark },
       { label: "Finance Reports", href: "/finance/reports", icon: FileText },
     ],
     student: [

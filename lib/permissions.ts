@@ -77,7 +77,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Overview', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'Fees', href: '/finance/fees', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'Collections', href: '/finance/collections', roles: ['head', 'assistant_head', 'finance_officer'] },
-      { label: 'Salary', href: '/finance/salary', roles: ['head', 'assistant_head', 'finance_officer'] },
+      { label: 'Salary', href: '/finance/salary', roles: ['head'] },
       { label: 'Reports', href: '/finance/reports', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'My Fees', href: '/finance/my-fees', roles: ['student', 'parent'] },
     ],
