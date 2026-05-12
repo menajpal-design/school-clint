@@ -54,6 +54,13 @@ export default function AdminSchoolsPage() {
     await load();
   };
 
+  const verifyPayment = async (school: any) => {
+    setStatus('Verifying payment...');
+    const result = await api.admin.verifyPayment(school._id) as any;
+    setStatus(result.message || 'Payment verification finished.');
+    await load();
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -87,10 +94,12 @@ export default function AdminSchoolsPage() {
                 <div className="rounded-md border bg-slate-50 p-3 text-sm">
                   <div className="font-medium">{school.billing?.planName || 'No plan'}</div>
                   <div className="text-muted-foreground">{school.billing?.billingCycle || 'monthly'} · {money(school.billing?.dueAmount)} due · paid {money(school.billing?.receivedAmount)}</div>
+                  <div className="text-muted-foreground">SMS {Number(school.billing?.smsUsed || 0).toLocaleString()}/{Number(school.billing?.monthlySmsLimit || 0).toLocaleString()} · Exp {school.billing?.subscriptionExpiresAt ? new Date(school.billing.subscriptionExpiresAt).toLocaleDateString() : 'N/A'}</div>
                   <div className="text-muted-foreground">TrxID {school.billing?.paymentTrxId || 'N/A'} · Sender {school.billing?.paymentSenderNumber || 'N/A'}</div>
                 </div>
                 <div className="flex flex-wrap gap-2 lg:justify-end">
                   <Button variant="outline" onClick={() => openBilling(school)}><CreditCard className="mr-2 h-4 w-4" />Subscription</Button>
+                  <Button variant="outline" onClick={() => verifyPayment(school)}>Verify Pay</Button>
                   <Button variant={school.isActive ? 'destructive' : 'default'} onClick={() => quickStatus(school, school.isActive ? 'suspend' : 'activate')}>
                     {school.isActive ? <X className="mr-2 h-4 w-4" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
                     {school.isActive ? 'Suspend' : 'Activate'}

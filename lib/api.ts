@@ -216,6 +216,7 @@ export const api = {
   admin: {
     schools: (params?: any) => apiClient.get('/admin/schools', params ? { params } : undefined),
     updateSchool: (id: string, data: any) => apiClient.patch(`/admin/schools/${id}`, data),
+    verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`),
     selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`),
     users: (params?: any) => apiClient.get('/admin/users', params ? { params } : undefined),
   },

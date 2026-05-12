@@ -22,6 +22,8 @@ type Profile = {
     dueAmount?: number;
     billingStatus?: string;
     monthlySmsLimit?: number;
+    smsUsed?: number;
+    subscriptionExpiresAt?: string;
   };
 };
 
@@ -122,7 +124,7 @@ export default function InstitutionPage() {
             <CardContent>
               <div className="text-2xl font-bold">{loading ? '...' : item.value}</div>
               {item.label === 'Storage Usage' && <div className="mt-3 h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-primary" style={{ width: `${storageUsage.percent}%` }} /></div>}
-              {item.label === 'Plan' && <p className="mt-2 text-xs text-muted-foreground">Due BDT {Number(profile?.billing?.dueAmount || 0).toLocaleString()} · {profile?.billing?.monthlySmsLimit || 0} SMS/month</p>}
+              {item.label === 'Plan' && <p className="mt-2 text-xs text-muted-foreground">Due BDT {Number(profile?.billing?.dueAmount || 0).toLocaleString()} · SMS {Number(profile?.billing?.smsUsed || 0).toLocaleString()}/{profile?.billing?.monthlySmsLimit || 0}</p>}
             </CardContent>
           </Card>
         ))}
@@ -143,6 +145,7 @@ export default function InstitutionPage() {
               ['Email', profile?.email],
               ['Address', profile?.address],
               ['Billing Status', profile?.billing?.billingStatus || (profile?.isActive ? 'active' : 'pending')],
+              ['Subscription Expiry', profile?.billing?.subscriptionExpiresAt ? new Date(profile.billing.subscriptionExpiresAt).toLocaleDateString() : 'Not active'],
             ].map(([label, value]) => (
               <div key={label} className="rounded-md border p-4">
                 <div className="text-xs font-medium uppercase text-muted-foreground">{label}</div>

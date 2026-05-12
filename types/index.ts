@@ -146,6 +146,9 @@ export interface Institution {
     billingStatus?: string;
     paymentTrxId?: string;
     paymentSenderNumber?: string;
+    subscriptionExpiresAt?: string;
+    smsUsed?: number;
+    monthlySmsLimit?: number;
   };
 }
 
