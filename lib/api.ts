@@ -1,4 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import { getDemoMode } from './demo-store';
+import { demoRequest } from './demo-api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://school-server-b264c1a1fac6.herokuapp.com/api';
 
@@ -80,6 +82,9 @@ class ApiClient {
 
   async get<T>(url: string, config?: any): Promise<T> {
     try {
+      if (getDemoMode()) {
+        return await demoRequest('GET', url, undefined) as T;
+      }
       const response = await this.client.get<T>(url, config);
       return response.data;
     } catch (error) {
@@ -89,6 +94,9 @@ class ApiClient {
 
   async post<T>(url: string, data?: any, config?: any): Promise<T> {
     try {
+      if (getDemoMode()) {
+        return await demoRequest('POST', url, data) as T;
+      }
       const response = await this.client.post<T>(url, data, config);
       return response.data;
     } catch (error) {
@@ -98,6 +106,9 @@ class ApiClient {
 
   async put<T>(url: string, data?: any, config?: any): Promise<T> {
     try {
+      if (getDemoMode()) {
+        return await demoRequest('PUT', url, data) as T;
+      }
       const response = await this.client.put<T>(url, data, config);
       return response.data;
     } catch (error) {
@@ -107,6 +118,9 @@ class ApiClient {
 
   async patch<T>(url: string, data?: any, config?: any): Promise<T> {
     try {
+      if (getDemoMode()) {
+        return await demoRequest('PATCH', url, data) as T;
+      }
       const response = await this.client.patch<T>(url, data, config);
       return response.data;
     } catch (error) {
@@ -116,6 +130,9 @@ class ApiClient {
 
   async delete<T>(url: string, config?: any): Promise<T> {
     try {
+      if (getDemoMode()) {
+        return await demoRequest('DELETE', url, undefined) as T;
+      }
       const response = await this.client.delete<T>(url, config);
       return response.data;
     } catch (error) {
@@ -125,6 +142,11 @@ class ApiClient {
 
   async getBlob(url: string, config?: any): Promise<Blob> {
     try {
+      if (getDemoMode()) {
+        const result = await demoRequest('GET', url, undefined);
+        if (result instanceof Blob) return result;
+        return new Blob([typeof result === 'string' ? result : JSON.stringify(result)], { type: 'application/octet-stream' });
+      }
       const response = await this.client.get(url, {
         ...config,
         responseType: 'blob',

@@ -1,4 +1,5 @@
 import { UserRole, User } from '@/types';
+import { getDemoMode } from './demo-store';
 
 interface MenuItemConfig {
   label: string;
@@ -183,6 +184,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
 
 export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
   if (!user) return false;
+  if (getDemoMode()) return true;
   if (!roles) return true;
   if (['admin', 'super_admin', 'head'].includes(user.role)) return true;
   if (Array.isArray(roles)) return roles.includes(user.role);
@@ -191,6 +193,7 @@ export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
 
 export function hasPermission(user?: User | null, permission?: string) {
   if (!user || !permission) return false;
+  if (getDemoMode()) return true;
   if (['admin', 'super_admin', 'head'].includes(user.role)) return true;
   const rolePerms = rolePermissions[user.role] || [];
   if (rolePerms.includes('*')) return true;

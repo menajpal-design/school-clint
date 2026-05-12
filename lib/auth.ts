@@ -1,5 +1,6 @@
 import { User } from '@/types';
 import { apiClient } from './api';
+import { clearDemoSession, getDemoMode, getDemoUser, setDemoUser } from './demo-store';
 
 class AuthManager {
   private user: User | null = null;
@@ -12,6 +13,14 @@ class AuthManager {
   }
 
   getUser(): User | null {
+    if (getDemoMode()) {
+      const demoUser = getDemoUser();
+      if (demoUser) {
+        this.user = demoUser;
+        return demoUser;
+      }
+    }
+
     if (this.user) return this.user;
     
     if (typeof window !== 'undefined') {
@@ -32,6 +41,10 @@ class AuthManager {
     const user = this.getUser();
     const token = apiClient.getToken();
     return !!user && !!token;
+  }
+
+  isDemoMode(): boolean {
+    return getDemoMode();
   }
 
   hasRole(role: string | string[]): boolean {
@@ -55,9 +68,17 @@ class AuthManager {
   clear() {
     this.user = null;
     apiClient.clearToken();
+    clearDemoSession();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user');
+      localStorage.removeItem('token');
     }
+  }
+
+  setDemoUser(user: User) {
+    this.user = user;
+    setDemoUser(user);
+    apiClient.setToken(`demo-${user.role}-${user.id}`);
   }
 }
 

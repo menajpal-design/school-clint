@@ -16,6 +16,21 @@ import { authManager } from "@/lib/auth";
 import { User, UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
 
+const demoRoles: UserRole[] = [
+  'admin',
+  'super_admin',
+  'head',
+  'assistant_head',
+  'class_teacher',
+  'subject_teacher',
+  'teacher',
+  'finance_officer',
+  'staff',
+  'student',
+  'parent',
+  'committee_member',
+];
+
 const loginSchema = z.object({
   identifier: z.string().min(2, "Username, email or mobile number is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -54,6 +69,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [demoRole, setDemoRole] = useState<UserRole>('head');
 
   useEffect(() => {
     const user = authManager.getUser();
@@ -112,6 +128,27 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const startDemoSession = () => {
+    const user: User = {
+      id: `demo-${demoRole}`,
+      name: `${demoRole.replace(/_/g, ' ')} Demo`,
+      email: `${demoRole}@demo.local`,
+      role: demoRole,
+      isActive: true,
+      permissions: ['*'],
+      institutionId: 'demo-institution',
+    };
+
+    authManager.setDemoUser(user);
+    addToast({
+      title: 'Demo mode enabled',
+      message: 'All data will stay in your browser only.',
+      type: 'success',
+      duration: 1800,
+    });
+    router.replace(getLoginRedirect(user));
   };
 
   if (isChecking) {
@@ -237,6 +274,28 @@ export default function LoginPage() {
               <Link href="/register" className="font-semibold text-slate-950 hover:underline">
                 Register here
               </Link>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
+              <div className="mb-3">
+                <p className="text-sm font-semibold text-slate-900">Demo login</p>
+                <p className="text-xs text-slate-500">No server, no SMS, no mail, all data stays local.</p>
+              </div>
+              <label className="space-y-1 text-sm font-medium text-slate-700">
+                <span>Demo role</span>
+                <select
+                  value={demoRole}
+                  onChange={(event) => setDemoRole(event.target.value as UserRole)}
+                  className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
+                >
+                  {demoRoles.map((role) => (
+                    <option key={role} value={role}>{role.replace(/_/g, ' ')}</option>
+                  ))}
+                </select>
+              </label>
+              <Button type="button" onClick={startDemoSession} className="mt-3 w-full" variant="secondary">
+                Enter demo mode
+              </Button>
             </div>
           </CardContent>
         </Card>

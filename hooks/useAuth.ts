@@ -13,6 +13,13 @@ export function useAuth() {
   useEffect(() => {
     const loadUser = async () => {
       try {
+        if (authManager.isDemoMode()) {
+          const demoUser = authManager.getUser();
+          setUser(demoUser);
+          setIsLoading(false);
+          return;
+        }
+
         // First check if we have a token and stored user
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         if (token) {

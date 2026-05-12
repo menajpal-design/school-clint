@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
 import { hasPermission, hasRole } from '@/lib/permissions'
+import { getDemoMode } from '@/lib/demo-store'
 
 type Props = React.ComponentProps<typeof Button> & {
   permission?: string
@@ -16,6 +17,7 @@ export function PermissionButton({ permission, roles, hideIfUnauthorized = true,
 
   const allowed = React.useMemo(() => {
     if (!user) return false
+    if (getDemoMode()) return true
     if (user.role === 'head') return true
     if (roles && roles.length > 0 && hasRole(user, roles as any)) return true
     if (permission && hasPermission(user, permission)) return true
