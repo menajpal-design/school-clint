@@ -57,7 +57,7 @@ export function formatFileSize(size = 0) {
 export function getDocumentUrl(fileUrl?: string) {
   if (!fileUrl) return "";
   if (/^https?:\/\//i.test(fileUrl) || fileUrl.startsWith("blob:") || fileUrl.startsWith("data:")) return fileUrl;
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://school-server-b264c1a1fac6.herokuapp.com/api";
   return `${apiBase.replace(/\/api\/?$/, "")}${fileUrl.startsWith("/") ? fileUrl : `/${fileUrl}`}`;
 }
 
