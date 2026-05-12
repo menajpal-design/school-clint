@@ -65,6 +65,9 @@ export default function Home() {
               <Link href="/downloads">Download App</Link>
             </Button>
             <Button asChild variant="ghost" size="sm" className="w-full sm:w-auto">
+              <Link href="/pricing">Pricing</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="w-full sm:w-auto">
               <Link href="/login">Login</Link>
             </Button>
             <Button asChild size="sm" className="w-full sm:w-auto">
@@ -94,7 +97,7 @@ export default function Home() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-              <Link href="/register">Register institution</Link>
+              <Link href="/pricing">See plans</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link href="/admission">Apply for admission</Link>

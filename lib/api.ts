@@ -201,8 +201,10 @@ export const api = {
   },
 
   institution: {
+    plans: () => apiClient.get('/institution/plans'),
     profile: () => apiClient.get('/institution/profile'),
     updateProfile: (data: any) => apiClient.put('/institution/profile', data),
+    recordPayment: (data: any) => apiClient.post('/institution/billing/payment', data),
   },
 
   // Attendance

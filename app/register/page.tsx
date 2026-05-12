@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,8 +11,9 @@ import { api, apiClient } from '@/lib/api';
 import { authManager } from '@/lib/auth';
 import { useToast } from '@/hooks/useToast';
 import { User } from '@/types';
+import { getPlanByCode } from '@/lib/plans';
 
-const DEFAULT_INSTITUTION_ID = process.env.NEXT_PUBLIC_DEFAULT_INSTITUTION_ID || '6a02bd07535ddb19281c62c9';
+const DEFAULT_INSTITUTION_ID = process.env.NEXT_PUBLIC_DEFAULT_INSTITUTION_ID || '';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -22,6 +23,7 @@ const registerSchema = z.object({
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
   phone: z.string().optional(),
   role: z.enum(['head']).default('head'),
+  planCode: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -33,15 +35,24 @@ export default function RegisterPage() {
   const router = useRouter();
   const { addToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedPlanCode, setSelectedPlanCode] = useState('students_100');
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: 'head' },
+    defaultValues: { role: 'head', planCode: 'students_100' },
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const planCode = params.get('plan') || 'students_100';
+    setSelectedPlanCode(planCode);
+    setValue('planCode', planCode);
+  }, [setValue]);
 
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
@@ -52,7 +63,9 @@ export default function RegisterPage() {
         password: data.password,
         phone: data.phone || '',
         role: data.role,
-        institutionId: DEFAULT_INSTITUTION_ID,
+        planCode: data.planCode || selectedPlanCode,
+        institutionName: data.institutionName,
+        ...(DEFAULT_INSTITUTION_ID ? { institutionId: DEFAULT_INSTITUTION_ID } : {}),
       }) as { token?: string; user?: User; data?: { token: string; user: User } };
 
       const token = response.token || response.data?.token;
@@ -92,6 +105,10 @@ export default function RegisterPage() {
         {/* Content */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-4">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Create Account</h2>
+          <input type="hidden" {...register('planCode')} />
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
+            Selected plan: <span className="font-semibold">{getPlanByCode(selectedPlanCode).name}</span>. Payment is not required during registration.
+          </div>
 
           {/* Name */}
           <div>

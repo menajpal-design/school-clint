@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, Globe2, ImagePlus, Save, Server } from 'lucide-react';
+import { Building2, CreditCard, Globe2, ImagePlus, Save, Server } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
+import { calculatePlanDue, schoolPlans } from '@/lib/plans';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Institution name is required'),
@@ -33,6 +34,14 @@ const profileSchema = z.object({
   logo: z.string().optional(),
   seal: z.string().optional(),
   headSignature: z.string().optional(),
+  planCode: z.string().optional(),
+  billingCycle: z.enum(['monthly', 'yearly']).default('monthly'),
+  useEasySchoolStorage: z.boolean().default(true),
+  isActive: z.boolean().default(false),
+  isPaymentReceived: z.boolean().default(false),
+  receivedAmount: z.string().optional(),
+  paymentGateway: z.string().optional(),
+  paymentTrxId: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -69,6 +78,14 @@ export default function InstitutionProfilePage() {
       logo: '',
       seal: '',
       headSignature: '',
+      planCode: 'students_100',
+      billingCycle: 'monthly',
+      useEasySchoolStorage: true,
+      isActive: false,
+      isPaymentReceived: false,
+      receivedAmount: '',
+      paymentGateway: 'bkash',
+      paymentTrxId: '',
     },
   });
 
@@ -76,6 +93,7 @@ export default function InstitutionProfilePage() {
     api.institution.profile()
       .then((data: any) => {
         const institution = data.institution || {};
+        const billing = institution.billing || {};
         form.reset({
           name: institution.name || '',
           eiin: institution.eiin || '',
@@ -98,12 +116,24 @@ export default function InstitutionProfilePage() {
           logo: institution.logo || '',
           seal: institution.seal || '',
           headSignature: institution.headSignature || '',
+          planCode: billing.planCode || 'students_100',
+          billingCycle: billing.billingCycle || 'monthly',
+          useEasySchoolStorage: billing.useEasySchoolStorage !== false,
+          isActive: institution.isActive === true,
+          isPaymentReceived: billing.isPaymentReceived === true,
+          receivedAmount: billing.receivedAmount ? String(billing.receivedAmount) : '',
+          paymentGateway: billing.paymentGateway || 'bkash',
+          paymentTrxId: billing.paymentTrxId || '',
         });
       })
       .catch(() => setStatus('Profile endpoint is ready, but no profile was returned yet.'));
   }, [form]);
 
   const values = form.watch();
+  const billingDue = useMemo(
+    () => calculatePlanDue(values.planCode, values.billingCycle, values.useEasySchoolStorage),
+    [values.planCode, values.billingCycle, values.useEasySchoolStorage]
+  );
   const assets = useMemo(
     () => [
       { name: 'logo' as const, label: 'Logo', value: values.logo },
@@ -140,6 +170,16 @@ export default function InstitutionProfilePage() {
         logo: data.logo,
         seal: data.seal,
         headSignature: data.headSignature,
+        isActive: data.isActive,
+        billing: {
+          planCode: data.planCode,
+          billingCycle: data.billingCycle,
+          useEasySchoolStorage: data.useEasySchoolStorage,
+          isPaymentReceived: data.isPaymentReceived,
+          receivedAmount: Number(data.receivedAmount || 0),
+          paymentGateway: data.paymentGateway,
+          paymentTrxId: data.paymentTrxId,
+        },
         settings: {
           mongodbUri: data.mongodbUri,
           imgbbApiKey: data.imgbbApiKey,
@@ -278,6 +318,93 @@ export default function InstitutionProfilePage() {
                     </CardContent>
                   </Card>
                 </div>
+
+                <Card className="border-dashed">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base"><CreditCard className="h-4 w-4" /> Billing and Activation</CardTitle>
+                    <CardDescription>Activate the school after received payment is recorded.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 md:grid-cols-2">
+                    <FormField control={form.control} name="planCode" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Plan</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {schoolPlans.map((plan) => (
+                              <SelectItem key={plan.code} value={plan.code}>{plan.name} - BDT {plan.monthlyPrice}/mo</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="billingCycle" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Billing Cycle</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="yearly">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="useEasySchoolStorage" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Storage</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(value === 'true')} value={String(field.value)}>
+                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="true">Easy School storage - BDT 100/month</SelectItem>
+                            <SelectItem value="false">Own MongoDB URI and ImgBB API - no extra cost</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="isActive" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>School Status</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(value === 'true')} value={String(field.value)}>
+                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="true">Active</SelectItem>
+                            <SelectItem value="false">Pending</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="isPaymentReceived" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Received Money</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(value === 'true')} value={String(field.value)}>
+                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="true">Received</SelectItem>
+                            <SelectItem value="false">Not received</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="receivedAmount" render={({ field }) => (
+                      <FormItem><FormLabel>Received Amount</FormLabel><FormControl><Input type="number" placeholder={String(billingDue.total)} {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="paymentGateway" render={({ field }) => (
+                      <FormItem><FormLabel>Gateway</FormLabel><FormControl><Input placeholder="bkash" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="paymentTrxId" render={({ field }) => (
+                      <FormItem><FormLabel>TrxID</FormLabel><FormControl><Input placeholder="Payment transaction ID" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <div className="md:col-span-2 rounded-md border bg-muted/40 p-4 text-sm">
+                      Plan due: BDT {billingDue.baseAmount.toLocaleString()} + storage BDT {billingDue.storageAmount.toLocaleString()} = <span className="font-semibold">BDT {billingDue.total.toLocaleString()}</span>. Yearly discount: {billingDue.plan.yearlyDiscountPercent}%.
+                    </div>
+                  </CardContent>
+                </Card>
 
                 <div className="grid gap-4 md:grid-cols-3">
                   {assets.map((asset) => (

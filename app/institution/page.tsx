@@ -16,6 +16,13 @@ type Profile = {
   phone?: string;
   email?: string;
   logo?: string;
+  isActive?: boolean;
+  billing?: {
+    planName?: string;
+    dueAmount?: number;
+    billingStatus?: string;
+    monthlySmsLimit?: number;
+  };
 };
 
 type BackupConfig = {
@@ -91,6 +98,7 @@ export default function InstitutionPage() {
             <Badge variant="secondary">{profile?.type || 'institution'}</Badge>
             <Badge variant="outline">EIIN {profile?.eiin || 'Not set'}</Badge>
             <Badge variant="outline">{profile?.phone || 'Phone not set'}</Badge>
+            <Badge variant={profile?.isActive ? 'default' : 'secondary'}>{profile?.isActive ? 'Active school' : 'Pending activation'}</Badge>
           </div>
         </div>
         <Button asChild>
@@ -104,7 +112,7 @@ export default function InstitutionPage() {
           { label: 'Teachers', value: teachers, icon: Users },
           { label: 'Staff', value: staff, icon: UserRoundCog },
           { label: 'Storage Usage', value: storageUsage.used, icon: HardDrive },
-          { label: 'Backup Status', value: activeBackup ? 'Scheduled' : 'Not set', icon: ShieldCheck },
+          { label: 'Plan', value: profile?.billing?.planName || 'Not selected', icon: ShieldCheck },
         ].map((item) => (
           <Card key={item.label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -114,7 +122,7 @@ export default function InstitutionPage() {
             <CardContent>
               <div className="text-2xl font-bold">{loading ? '...' : item.value}</div>
               {item.label === 'Storage Usage' && <div className="mt-3 h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-primary" style={{ width: `${storageUsage.percent}%` }} /></div>}
-              {item.label === 'Backup Status' && <p className="mt-2 text-xs text-muted-foreground">{activeBackup?.frequency || 'Create a schedule'} {activeBackup?.location ? `to ${activeBackup.location.replace('_', ' ')}` : ''}</p>}
+              {item.label === 'Plan' && <p className="mt-2 text-xs text-muted-foreground">Due BDT {Number(profile?.billing?.dueAmount || 0).toLocaleString()} · {profile?.billing?.monthlySmsLimit || 0} SMS/month</p>}
             </CardContent>
           </Card>
         ))}
@@ -134,6 +142,7 @@ export default function InstitutionPage() {
               ['Phone', profile?.phone],
               ['Email', profile?.email],
               ['Address', profile?.address],
+              ['Billing Status', profile?.billing?.billingStatus || (profile?.isActive ? 'active' : 'pending')],
             ].map(([label, value]) => (
               <div key={label} className="rounded-md border p-4">
                 <div className="text-xs font-medium uppercase text-muted-foreground">{label}</div>
