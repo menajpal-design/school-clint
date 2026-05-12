@@ -12,6 +12,8 @@ import { authManager } from '@/lib/auth';
 import { useToast } from '@/hooks/useToast';
 import { User } from '@/types';
 
+const DEFAULT_INSTITUTION_ID = process.env.NEXT_PUBLIC_DEFAULT_INSTITUTION_ID || '6a02bd07535ddb19281c62c9';
+
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   institutionName: z.string().min(2, 'Institution name is required'),
@@ -45,11 +47,11 @@ export default function RegisterPage() {
     try {
       const response = await api.auth.register({
         name: data.name,
-        institutionName: data.institutionName,
         email: data.email,
         password: data.password,
         phone: data.phone || '',
         role: data.role,
+        institutionId: DEFAULT_INSTITUTION_ID,
       }) as { token?: string; user?: User; data?: { token: string; user: User } };
 
       const token = response.token || response.data?.token;
