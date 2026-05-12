@@ -9,6 +9,7 @@ export interface User {
   isActive: boolean;
   permissions: string[];
   institutionId: string;
+  institution?: Institution;
   lastLogin?: Date;
 }
 
@@ -135,6 +136,17 @@ export interface Institution {
   email: string;
   logo?: string;
   website?: string;
+  isActive?: boolean;
+  billing?: {
+    planCode?: string;
+    planName?: string;
+    billingCycle?: 'monthly' | 'yearly';
+    dueAmount?: number;
+    receivedAmount?: number;
+    billingStatus?: string;
+    paymentTrxId?: string;
+    paymentSenderNumber?: string;
+  };
 }
 
 // Class

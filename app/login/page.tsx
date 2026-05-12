@@ -42,6 +42,12 @@ function getRoleRedirect(role?: UserRole) {
   return roleRedirects[role] || "/dashboard";
 }
 
+function getLoginRedirect(user?: User | null) {
+  if (!user) return "/dashboard";
+  if (user.institution?.isActive === false && user.role === "head") return "/billing";
+  return getRoleRedirect(user.role);
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { addToast } = useToast();
@@ -52,7 +58,7 @@ export default function LoginPage() {
   useEffect(() => {
     const user = authManager.getUser();
     if (authManager.isAuthenticated()) {
-      router.replace(getRoleRedirect(user?.role));
+      router.replace(getLoginRedirect(user));
       return;
     }
     setIsChecking(false);
@@ -95,7 +101,7 @@ export default function LoginPage() {
         duration: 1800,
       });
 
-      router.replace(getRoleRedirect(response.user?.role));
+      router.replace(getLoginRedirect(response.user));
     } catch (error: any) {
       addToast({
         title: "Login failed",

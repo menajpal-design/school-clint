@@ -37,7 +37,6 @@ const profileSchema = z.object({
   planCode: z.string().optional(),
   billingCycle: z.enum(['monthly', 'yearly']).default('monthly'),
   useEasySchoolStorage: z.boolean().default(true),
-  isActive: z.boolean().default(false),
   isPaymentReceived: z.boolean().default(false),
   receivedAmount: z.string().optional(),
   paymentGateway: z.string().optional(),
@@ -81,7 +80,6 @@ export default function InstitutionProfilePage() {
       planCode: 'students_100',
       billingCycle: 'monthly',
       useEasySchoolStorage: true,
-      isActive: false,
       isPaymentReceived: false,
       receivedAmount: '',
       paymentGateway: 'bkash',
@@ -119,7 +117,6 @@ export default function InstitutionProfilePage() {
           planCode: billing.planCode || 'students_100',
           billingCycle: billing.billingCycle || 'monthly',
           useEasySchoolStorage: billing.useEasySchoolStorage !== false,
-          isActive: institution.isActive === true,
           isPaymentReceived: billing.isPaymentReceived === true,
           receivedAmount: billing.receivedAmount ? String(billing.receivedAmount) : '',
           paymentGateway: billing.paymentGateway || 'bkash',
@@ -170,7 +167,6 @@ export default function InstitutionProfilePage() {
         logo: data.logo,
         seal: data.seal,
         headSignature: data.headSignature,
-        isActive: data.isActive,
         billing: {
           planCode: data.planCode,
           billingCycle: data.billingCycle,
@@ -365,19 +361,10 @@ export default function InstitutionProfilePage() {
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={form.control} name="isActive" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>School Status</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(value === 'true')} value={String(field.value)}>
-                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            <SelectItem value="true">Active</SelectItem>
-                            <SelectItem value="false">Pending</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
+                    <div className="rounded-md border bg-muted/40 p-4 text-sm">
+                      <div className="font-medium">School Status</div>
+                      <p className="mt-1 text-muted-foreground">Only platform admin can activate or suspend a school.</p>
+                    </div>
                     <FormField control={form.control} name="isPaymentReceived" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Received Money</FormLabel>
