@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, ImagePlus, Save } from 'lucide-react';
+import { Building2, Globe2, ImagePlus, Save, Server, Settings2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,16 @@ const profileSchema = z.object({
   address: z.string().min(5, 'Address is required'),
   phone: z.string().min(5, 'Phone is required'),
   email: z.string().email('Valid email is required'),
+  website: z.string().optional(),
+  domainsText: z.string().optional(),
+  mongodbUri: z.string().optional(),
+  imgbbApiKey: z.string().optional(),
+  smsEnabled: z.boolean().default(true),
+  smsProvider: z.string().optional(),
+  smsApiUrl: z.string().optional(),
+  smsApiKey: z.string().optional(),
+  activeAcademicYear: z.string().optional(),
+  academicYearsText: z.string().optional(),
   logo: z.string().optional(),
   seal: z.string().optional(),
   headSignature: z.string().optional(),
@@ -46,6 +56,16 @@ export default function InstitutionProfilePage() {
       address: '',
       phone: '',
       email: '',
+      website: '',
+      domainsText: '',
+      mongodbUri: '',
+      imgbbApiKey: '',
+      smsEnabled: true,
+      smsProvider: 'anoncify',
+      smsApiUrl: '',
+      smsApiKey: '',
+      activeAcademicYear: '',
+      academicYearsText: '',
       logo: '',
       seal: '',
       headSignature: '',
@@ -63,6 +83,18 @@ export default function InstitutionProfilePage() {
           address: institution.address || '',
           phone: institution.phone || '',
           email: institution.email || '',
+          website: institution.website || '',
+          domainsText: (institution.domains || []).join('\n'),
+          mongodbUri: institution.settings?.mongodbUri || '',
+          imgbbApiKey: institution.settings?.imgbbApiKey || '',
+          smsEnabled: institution.settings?.smsEnabled !== false,
+          smsProvider: institution.settings?.smsProvider || 'anoncify',
+          smsApiUrl: institution.settings?.smsApiUrl || '',
+          smsApiKey: institution.settings?.smsApiKey || '',
+          activeAcademicYear: institution.settings?.activeAcademicYear || '',
+          academicYearsText: (institution.settings?.academicYears || [])
+            .map((item: any) => [item.year, item.mongodbUri, item.imgbbApiKey].filter(Boolean).join(' | '))
+            .join('\n'),
           logo: institution.logo || '',
           seal: institution.seal || '',
           headSignature: institution.headSignature || '',
@@ -89,7 +121,36 @@ export default function InstitutionProfilePage() {
   const onSubmit = async (data: ProfileFormValues) => {
     setStatus('Saving...');
     try {
-      await api.institution.updateProfile(data);
+      const academicYears = String(data.academicYearsText || '')
+        .split('\n')
+        .map((line) => {
+          const [year, mongodbUri, imgbbApiKey] = line.split('|').map((part) => part.trim());
+          return year ? { year, mongodbUri, imgbbApiKey, isActive: year === data.activeAcademicYear } : null;
+        })
+        .filter(Boolean);
+      await api.institution.updateProfile({
+        name: data.name,
+        eiin: data.eiin,
+        type: data.type,
+        address: data.address,
+        phone: data.phone,
+        email: data.email,
+        website: data.website,
+        domains: String(data.domainsText || '').split('\n').map((item) => item.trim()).filter(Boolean),
+        logo: data.logo,
+        seal: data.seal,
+        headSignature: data.headSignature,
+        settings: {
+          mongodbUri: data.mongodbUri,
+          imgbbApiKey: data.imgbbApiKey,
+          smsEnabled: data.smsEnabled,
+          smsProvider: data.smsProvider,
+          smsApiUrl: data.smsApiUrl,
+          smsApiKey: data.smsApiKey,
+          activeAcademicYear: data.activeAcademicYear,
+          academicYears,
+        },
+      });
       setStatus('Institution profile saved.');
     } catch (error: any) {
       setStatus(error?.message || 'Profile API placeholder is ready, but saving failed.');
@@ -154,6 +215,13 @@ export default function InstitutionProfilePage() {
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <FormField control={form.control} name="website" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Website</FormLabel>
+                      <FormControl><Input placeholder="https://www.easyschool.live" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                   <FormField control={form.control} name="address" render={({ field }) => (
                     <FormItem className="md:col-span-2">
                       <FormLabel>Address</FormLabel>
@@ -161,6 +229,74 @@ export default function InstitutionProfilePage() {
                       <FormMessage />
                     </FormItem>
                   )} />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card className="border-dashed">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base"><Globe2 className="h-4 w-4" /> Domains</CardTitle>
+                      <CardDescription>One domain per line. Public result lookup can resolve school data from these domains.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <FormField control={form.control} name="domainsText" render={({ field }) => (
+                        <FormItem>
+                          <FormControl><Textarea rows={4} placeholder={'school.example.com\nwww.school.example.com'} {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </CardContent>
+                  </Card>
+                  <Card className="border-dashed">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base"><Server className="h-4 w-4" /> Storage</CardTitle>
+                      <CardDescription>Save this school&apos;s MongoDB URI and ImgBB key for institution-specific storage settings.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <FormField control={form.control} name="mongodbUri" render={({ field }) => (
+                        <FormItem><FormLabel>MongoDB URI</FormLabel><FormControl><Input type="password" placeholder="mongodb+srv://..." {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="imgbbApiKey" render={({ field }) => (
+                        <FormItem><FormLabel>ImgBB API Key</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card className="border-dashed">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base"><Settings2 className="h-4 w-4" /> SMS</CardTitle>
+                      <CardDescription>SMS is enabled when the server has API credentials. These values are saved per school.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <FormField control={form.control} name="smsEnabled" render={({ field }) => (
+                        <FormItem><FormLabel>SMS Enabled</FormLabel><FormControl><Select value={String(field.value)} onValueChange={(value) => field.onChange(value === 'true')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="true">Enabled</SelectItem><SelectItem value="false">Disabled</SelectItem></SelectContent></Select></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="smsProvider" render={({ field }) => (
+                        <FormItem><FormLabel>Provider</FormLabel><FormControl><Input placeholder="anoncify" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="smsApiUrl" render={({ field }) => (
+                        <FormItem><FormLabel>SMS API URL</FormLabel><FormControl><Input placeholder="https://anoncify.xyz/api/sms" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                    </CardContent>
+                  </Card>
+                  <Card className="border-dashed">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Year Settings</CardTitle>
+                      <CardDescription>Use one line per year: year | mongodb uri | imgbb api key</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <FormField control={form.control} name="activeAcademicYear" render={({ field }) => (
+                        <FormItem><FormLabel>Active Academic Year</FormLabel><FormControl><Input placeholder="2026" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="academicYearsText" render={({ field }) => (
+                        <FormItem><FormLabel>Year-wise Storage</FormLabel><FormControl><Textarea rows={4} placeholder={'2026 | mongodb+srv://... | imgbb-key\n2027 | mongodb+srv://... | imgbb-key'} {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="smsApiKey" render={({ field }) => (
+                        <FormItem><FormLabel>SMS API Key</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
+                      )} />
+                    </CardContent>
+                  </Card>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">

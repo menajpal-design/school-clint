@@ -151,6 +151,12 @@ export const api = {
     reject: (id: string) => apiClient.post(`/admissions/${id}/reject`),
   },
 
+  publicResults: {
+    schools: (params?: any) => apiClient.get('/academic/public/results/schools', params ? { params } : undefined),
+    options: (params?: any) => apiClient.get('/academic/public/results/options', params ? { params } : undefined),
+    lookup: (params: any) => apiClient.get('/academic/public/results', { params }),
+  },
+
   // Users
   users: {
     getAll: () => apiClient.get('/users'),
