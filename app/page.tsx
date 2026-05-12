@@ -62,6 +62,9 @@ export default function Home() {
           </Link>
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">
+              <Link href="/downloads">Download App</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
               <Link href="/login">Login</Link>
             </Button>
             <Button asChild size="sm">
@@ -92,6 +95,9 @@ export default function Home() {
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="/register">Register institution</Link>
+            </Button>
+            <Button asChild variant="ghost" size="lg">
+              <Link href="/downloads">Download Android app</Link>
             </Button>
           </div>
         </div>

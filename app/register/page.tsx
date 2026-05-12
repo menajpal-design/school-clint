@@ -7,16 +7,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api, apiClient } from '@/lib/api';
+import { authManager } from '@/lib/auth';
 import { useToast } from '@/hooks/useToast';
+import { User } from '@/types';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
+  institutionName: z.string().min(2, 'Institution name is required'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
   phone: z.string().optional(),
-  role: z.enum(['student', 'parent', 'teacher', 'staff']),
+  role: z.enum(['head', 'student', 'parent', 'subject_teacher', 'staff']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -42,24 +45,31 @@ export default function RegisterPage() {
     try {
       const response = await api.auth.register({
         name: data.name,
+        institutionName: data.institutionName,
         email: data.email,
         password: data.password,
         phone: data.phone || '',
         role: data.role,
-        institutionId: '', // Will be set by server
-      });
+      }) as { token?: string; user?: User; data?: { token: string; user: User } };
+
+      const token = response.token || response.data?.token;
+      const user = response.user || response.data?.user;
+      if (token && user) {
+        apiClient.setToken(token);
+        authManager.setUser(user);
+      }
 
       addToast({
         title: 'Success',
-        message: 'Account created successfully. Please login.',
+        message: 'Account created successfully.',
         type: 'success',
       });
 
-      router.push('/login');
+      router.push('/dashboard');
     } catch (error: any) {
       addToast({
         title: 'Error',
-        message: error?.response?.data?.message || 'Registration failed',
+        message: error?.message || 'Registration failed',
         type: 'error',
       });
     } finally {
@@ -92,6 +102,20 @@ export default function RegisterPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
             />
             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Institution Name
+            </label>
+            <input
+              {...register('institutionName')}
+              type="text"
+              placeholder="Your school or madrasah"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+            />
+            {errors.institutionName && <p className="text-red-500 text-sm mt-1">{errors.institutionName.message}</p>}
           </div>
 
           {/* Email */}
@@ -131,9 +155,10 @@ export default function RegisterPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
             >
               <option value="">Select Role</option>
+              <option value="head">Institution Head</option>
               <option value="student">Student</option>
               <option value="parent">Parent</option>
-              <option value="teacher">Teacher</option>
+              <option value="subject_teacher">Teacher</option>
               <option value="staff">Staff</option>
             </select>
             {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>}

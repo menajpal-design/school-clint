@@ -380,3 +380,897 @@
 <w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
 <w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
 <w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/permissions/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/permissions/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/permissions/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/permissions/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/permissions/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/permissions/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/all/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\all\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/all/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/all/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\all\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/settings/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\settings\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/settings/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/settings/page (expected C:\New folder\school_n\client\.next\server\app\settings\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/documents/manage/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\documents\manage\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/documents/manage/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/documents/manage/page (expected C:\New folder\school_n\client\.next\server\app\documents\manage\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/permissions/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/permissions/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/permissions/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/permissions/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/permissions/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/permissions/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/permissions/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/permissions/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/permissions/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/all/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\all\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/all/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/all/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\all\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/settings/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\settings\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/settings/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/settings/page (expected C:\New folder\school_n\client\.next\server\app\settings\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/documents/manage/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\documents\manage\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/documents/manage/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/documents/manage/page (expected C:\New folder\school_n\client\.next\server\app\documents\manage\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/permissions/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/permissions/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/permissions/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/permissions/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/permissions/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/permissions/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/permissions/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/permissions/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/permissions/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\permissions\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/settings/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\settings\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/settings/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/settings/page (expected C:\New folder\school_n\client\.next\server\app\settings\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/users-roles/all/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\users-roles\all\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/users-roles/all/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/users-roles/all/page (expected C:\New folder\school_n\client\.next\server\app\users-roles\all\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\New folder\school_n\client\.next\server\app\profile\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/profile/page' in C:\New folder\school_n\client\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\app\profile\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/profile/page' in 'C:\New folder\school_n\client\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/profile/page (expected C:\New folder\school_n\client\.next\server\app\profile\page.js)
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../webpack-runtime' in C:\New folder\school_n\client\.next\server\app\documents\upload for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\webpack-runtime.js', but to 'Error: Can't resolve '../../../webpack-runtime' in 'C:\New folder\school_n\client\.next\server\app\documents\upload'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../webpack-runtime (expected C:\New folder\school_n\client\.next\server\webpack-runtime.js)
+<w>  at file dependencies C:\New folder\school_n\client\.next\server\app\documents\upload\page.js
+<w>  at file C:\New folder\school_n\client\.next\server\app\documents\upload\page.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../webpack-runtime' in C:\New folder\school_n\client\.next\server\app\documents for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\webpack-runtime.js', but to 'Error: Can't resolve '../../webpack-runtime' in 'C:\New folder\school_n\client\.next\server\app\documents'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../webpack-runtime (expected C:\New folder\school_n\client\.next\server\webpack-runtime.js)
+<w>  at file dependencies C:\New folder\school_n\client\.next\server\app\documents\page.js
+<w>  at file C:\New folder\school_n\client\.next\server\app\documents\page.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../webpack-runtime' in C:\New folder\school_n\client\.next\server\app\documents\manage for build dependencies doesn't lead to expected result 'C:\New folder\school_n\client\.next\server\webpack-runtime.js', but to 'Error: Can't resolve '../../../webpack-runtime' in 'C:\New folder\school_n\client\.next\server\app\documents\manage'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../webpack-runtime (expected C:\New folder\school_n\client\.next\server\webpack-runtime.js)
+<w>  at file dependencies C:\New folder\school_n\client\.next\server\app\documents\manage\page.js
+<w>  at file C:\New folder\school_n\client\.next\server\app\documents\manage\page.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at file C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w>  at resolve commonjs C:\New folder\school_n\client\node_modules\next\dist\build\webpack\loaders\next-barrel-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
