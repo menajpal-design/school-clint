@@ -23,6 +23,7 @@ export const menuConfig: MenuItemConfig[] = [
     children: [
       { label: 'My Card', href: '/id-cards/my-card', roles: ['student', 'teacher', 'staff'] },
       { label: 'Generate Card', href: '/id-cards/generate', roles: ['head', 'assistant_head', 'staff'] },
+      { label: 'Admit Card', href: '/id-cards/admit-card', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Bulk Generate', href: '/id-cards/bulk-generate', roles: ['head', 'assistant_head'] },
       { label: 'Templates', href: '/id-cards/templates', roles: ['head', 'assistant_head'] },
       { label: 'Reports', href: '/id-cards/reports', roles: ['head', 'assistant_head'] },

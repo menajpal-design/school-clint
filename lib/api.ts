@@ -140,6 +140,7 @@ export const api = {
     login: (data: any) => apiClient.post('/auth/login', data),
     register: (data: any) => apiClient.post('/auth/register', data),
     profile: () => apiClient.get('/auth/profile'),
+    updateProfile: (data: any) => apiClient.put('/auth/profile', data),
     changePassword: (data: any) => apiClient.post('/auth/change-password', data),
   },
 

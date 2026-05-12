@@ -11,12 +11,35 @@ import { api } from "@/lib/api";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [avatar, setAvatar] = useState("");
 
   useEffect(() => {
-    api.auth.profile().then((data: any) => setUser(data.user || data)).catch(() => undefined);
+    api.auth.profile().then((data: any) => {
+      const next = data.user || data;
+      setUser(next);
+      setName(next.name || "");
+      setPhone(next.phone || "");
+      setAvatar(next.avatar || "");
+    }).catch(() => undefined);
   }, []);
 
   const institution = user?.institution || {};
+
+  const uploadAvatar = (file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setAvatar(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const saveProfile = async () => {
+    const data = await api.auth.updateProfile({ name, phone, avatar }) as any;
+    setUser((current: any) => ({ ...current, ...(data.user || {}), avatar }));
+    setEditing(false);
+  };
 
   return (
     <div className="space-y-5">
@@ -34,11 +57,27 @@ export default function ProfilePage() {
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
         <section className="rounded-lg border border-slate-200 bg-white p-5 text-center shadow-sm">
           <div className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-slate-100">
-            {user?.avatar ? <img src={user.avatar} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-12 w-12 text-slate-500" />}
+            {(editing ? avatar : user?.avatar) ? <img src={editing ? avatar : user.avatar} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-12 w-12 text-slate-500" />}
           </div>
-          <h2 className="mt-4 text-xl font-semibold text-slate-950">{user?.name || "User"}</h2>
+          {editing ? (
+            <div className="mt-4 space-y-3 text-left">
+              <input className="h-10 w-full rounded-md border px-3 text-sm" value={name} onChange={(event) => setName(event.target.value)} placeholder="Full name" />
+              <input className="h-10 w-full rounded-md border px-3 text-sm" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Phone" />
+              <label className="block">
+                <span className="text-sm font-medium text-slate-700">Profile image</span>
+                <input className="mt-2 block w-full text-sm" type="file" accept="image/*" onChange={(event) => uploadAvatar(event.target.files?.[0])} />
+              </label>
+              <div className="flex gap-2">
+                <Button type="button" onClick={saveProfile}>Save</Button>
+                <Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <h2 className="mt-4 text-xl font-semibold text-slate-950">{user?.name || "User"}</h2>
+          )}
           <p className="mt-1 text-sm capitalize text-slate-500">{String(user?.role || "").replace(/_/g, " ")}</p>
           <div className="mt-5 grid gap-2">
+            <Button type="button" variant="outline" onClick={() => setEditing(true)}><Edit className="mr-2 h-4 w-4" />Edit Profile</Button>
             <Button asChild><Link href="/id-cards/my-card"><CreditCard className="mr-2 h-4 w-4" />My ID Card</Link></Button>
             <Button asChild variant="outline"><Link href="/profile/change-password"><KeyRound className="mr-2 h-4 w-4" />Change Password</Link></Button>
           </div>

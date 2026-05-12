@@ -56,10 +56,10 @@ export default function AttendanceReportsPage() {
 
   const exportCsv = () => {
     const rows = [["Date","Name","Roll","Class","Section","Status"], ...reports.map((item) => [formatDate(item.date), item.studentId?.userId?.name || "", item.studentId?.rollNumber || "", item.classId?.name || "", item.sectionId?.name || "", item.status])];
-    const blob = new Blob([rows.map((row) => row.join(",")).join("\n")], { type: "text/csv" });
+    const blob = new Blob([rows.map((row) => row.join("\t")).join("\n")], { type: "application/vnd.ms-excel" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "attendance-report.csv";
+    link.download = "attendance-report.xls";
     link.click();
   };
 

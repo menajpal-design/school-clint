@@ -35,6 +35,7 @@ export default function IDCardsIndex() {
       <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         {[
           ["Generate", "/id-cards/generate"],
+          ["Admit Card", "/id-cards/admit-card"],
           ["Bulk Generate", "/id-cards/bulk-generate"],
           ["My Card", "/id-cards/my-card"],
           ["Templates", "/id-cards/templates"],
