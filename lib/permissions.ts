@@ -102,6 +102,7 @@ export const menuConfig: MenuItemConfig[] = [
     icon: 'FileText',
     children: [
       { label: 'Overview', href: '/documents', roles: ['head', 'assistant_head', 'staff'] },
+      { label: 'Memo', href: '/documents/memo', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Upload', href: '/documents/upload', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Management', href: '/documents/manage', roles: ['head', 'assistant_head'] },
     ],

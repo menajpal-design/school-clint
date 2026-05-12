@@ -200,6 +200,7 @@ function getQuickActions(role?: UserRole) {
     student: [
       { label: "My Attendance", href: "/attendance/my-attendance", icon: CalendarCheck },
       { label: "My Fees", href: "/finance/my-fees", icon: CreditCard },
+      { label: "Admit Card", href: "/documents/admit-cards", icon: Download },
       { label: "My ID Card", href: "/id-cards/my-card", icon: BadgeCheck },
     ],
     parent: [

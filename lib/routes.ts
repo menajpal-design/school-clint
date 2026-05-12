@@ -16,6 +16,8 @@ export const routes = {
     attendance: '/attendance',
     finance: '/finance',
     documents: '/documents',
+    documentsMemo: '/documents/memo',
+    documentsAdmitCards: '/documents/admit-cards',
     usersRoles: '/users-roles',
     committee: '/committee',
     parentPortal: '/parent-portal',

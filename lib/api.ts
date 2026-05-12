@@ -123,6 +123,18 @@ class ApiClient {
     }
   }
 
+  async getBlob(url: string, config?: any): Promise<Blob> {
+    try {
+      const response = await this.client.get(url, {
+        ...config,
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   private handleError(error: any): ApiError {
     if (axios.isAxiosError(error)) {
       return {
@@ -263,7 +275,7 @@ export const api = {
     generateStudent: (studentId: string) => apiClient.get(`/id-cards/student/${studentId}`),
     generateTeacher: (teacherId: string) => apiClient.get(`/id-cards/teacher/${teacherId}`),
     generateStaff: (staffId: string) => apiClient.get(`/id-cards/staff/${staffId}`),
-    download: (id: string, format = 'pdf') => apiClient.get(`/id-cards/${id}/download?format=${format}`),
+    download: (id: string, format = 'pdf') => apiClient.getBlob(`/id-cards/${id}/download?format=${format}`),
     email: (id: string, data: any) => apiClient.post(`/id-cards/${id}/email`, data),
     bulkGenerate: (data: any) => apiClient.post('/id-cards/bulk', data),
     verify: (code: string) => apiClient.post('/id-cards/verify', { code }),

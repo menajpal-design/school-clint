@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Download, FileText, Printer, Mail } from 'lucide-react'
 import { api } from '@/lib/api'
 
-export function DownloadButtons({ targetRef, filename = 'id-card', cardId }: { targetRef: React.RefObject<HTMLElement> | null; filename?: string; cardId?: string }) {
+export function DownloadButtons({ targetRef, filename = 'id-card', cardId, printTitle = 'Print ID Card', emailSubject = 'ID Card' }: { targetRef: React.RefObject<HTMLElement> | null; filename?: string; cardId?: string; printTitle?: string; emailSubject?: string }) {
   const captureElement = async () => {
     if (!targetRef?.current) return null
 
@@ -59,7 +59,7 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId }: { t
     popup.document.write(`
       <html>
         <head>
-          <title>Print ID Card</title>
+          <title>${printTitle}</title>
           ${styleTags}
           <style>
             @page { size: auto; margin: 12mm; }
@@ -92,13 +92,13 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId }: { t
         return
       }
       // Fallback: open mailto (attachments not supported) — instruct user
-      const subject = encodeURIComponent('ID Card')
-      const body = encodeURIComponent('Please find the ID card attached. (Attach the generated PNG from the download option)')
+      const subject = encodeURIComponent(emailSubject)
+      const body = encodeURIComponent('Please find the attached file. (Attach the generated PNG from the download option)')
       window.location.href = `mailto:?subject=${subject}&body=${body}`
     } catch (err) {
       // fallback
-      const subject = encodeURIComponent('ID Card')
-      const body = encodeURIComponent('Please find the ID card attached. (Attach the generated PNG from the download option)')
+      const subject = encodeURIComponent(emailSubject)
+      const body = encodeURIComponent('Please find the attached file. (Attach the generated PNG from the download option)')
       window.location.href = `mailto:?subject=${subject}&body=${body}`
     }
   }

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
+import { downloadBlob } from "@/lib/utils";
 import {
   DOCUMENT_TYPES,
   OWNER_TYPES,
@@ -117,10 +118,9 @@ export default function DocumentsManagePage() {
         alert('Failed to generate card.');
         return;
       }
-      // Build download URL and open in new tab
-      const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'https://school-server-b264c1a1fac6.herokuapp.com/api').replace(/\/$/, '');
-      const downloadUrl = `${apiBase.replace(/\/api\/?$/, '')}/api/id-cards/${card._id}/download?format=pdf`;
-      window.open(downloadUrl, '_blank');
+      const blob = await api.idCards.download(card._id, 'pdf');
+      const fileName = `${document.fileName || document.title || 'id-card'}.pdf`;
+      downloadBlob(blob, fileName);
     } catch (err: any) {
       alert(err?.message || 'Failed to generate card.');
     } finally {
