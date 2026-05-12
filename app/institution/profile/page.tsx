@@ -265,23 +265,6 @@ export default function InstitutionProfilePage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base"><Settings2 className="h-4 w-4" /> SMS</CardTitle>
-                      <CardDescription>SMS is enabled when the server has API credentials. These values are saved per school.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <FormField control={form.control} name="smsEnabled" render={({ field }) => (
-                        <FormItem><FormLabel>SMS Enabled</FormLabel><FormControl><Select value={String(field.value)} onValueChange={(value) => field.onChange(value === 'true')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="true">Enabled</SelectItem><SelectItem value="false">Disabled</SelectItem></SelectContent></Select></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="smsProvider" render={({ field }) => (
-                        <FormItem><FormLabel>Provider</FormLabel><FormControl><Input placeholder="anoncify" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="smsApiUrl" render={({ field }) => (
-                        <FormItem><FormLabel>SMS API URL</FormLabel><FormControl><Input placeholder="https://anoncify.xyz/api/sms" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                    </CardContent>
-                  </Card>
-                  <Card className="border-dashed">
-                    <CardHeader className="pb-3">
                       <CardTitle className="text-base">Year Settings</CardTitle>
                       <CardDescription>Use one line per year: year | mongodb uri | imgbb api key</CardDescription>
                     </CardHeader>
@@ -291,9 +274,6 @@ export default function InstitutionProfilePage() {
                       )} />
                       <FormField control={form.control} name="academicYearsText" render={({ field }) => (
                         <FormItem><FormLabel>Year-wise Storage</FormLabel><FormControl><Textarea rows={4} placeholder={'2026 | mongodb+srv://... | imgbb-key\n2027 | mongodb+srv://... | imgbb-key'} {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="smsApiKey" render={({ field }) => (
-                        <FormItem><FormLabel>SMS API Key</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
                     </CardContent>
                   </Card>
