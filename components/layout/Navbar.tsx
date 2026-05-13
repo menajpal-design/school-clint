@@ -80,13 +80,14 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
   }, []);
 
   return (
-    <nav className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white">
+    <nav className="sticky top-0 z-40 w-full border-b border-border bg-background">
       <div className="flex h-16 items-center justify-between px-4 lg:px-6">
         {/* Left Section */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="rounded-lg p-2 hover:bg-gray-100 lg:hidden"
+            className="rounded-lg p-2 hover:bg-muted lg:hidden"
+            aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
               <X className="h-5 w-5" />
@@ -97,30 +98,30 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
 
           {/* Logo and Institution Name */}
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center">
               <span className="text-white font-bold text-sm">E</span>
             </div>
-            <span className="hidden font-bold text-gray-800 sm:inline-block">EASY SCHOOL</span>
+            <span className="hidden font-bold text-foreground sm:inline-block">EASY SCHOOL</span>
           </Link>
         </div>
 
         {/* Center - Global Search */}
-        <div className="hidden flex-1 max-w-md lg:flex">
+          <div className="hidden flex-1 max-w-md lg:flex">
           <input
             type="search"
             placeholder="Search..."
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-sm focus:border-blue-500 focus:bg-white focus:outline-none"
+              className="w-full rounded-lg border border-border bg-muted px-4 py-2 text-sm focus:border-primary focus:bg-background focus:outline-none"
           />
         </div>
 
         {/* mobile search */}
-        <div className="lg:hidden">
+          <div className="lg:hidden">
           <button
             onClick={() => setShowMobileSearch(!showMobileSearch)}
-            className="rounded-lg p-2 hover:bg-gray-100"
+            className="rounded-lg p-2 hover:bg-muted"
             aria-label="Toggle search"
           >
-            <Globe className="h-5 w-5 text-gray-600" />
+            <Globe className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
 
@@ -128,9 +129,9 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
         <div className="flex items-center gap-2 lg:gap-4">
           {/* Messages Button */}
           <Link href="/messages" title="Messages">
-            <button className="relative rounded-lg p-2 hover:bg-gray-100">
+            <button className="relative rounded-lg p-2 hover:bg-muted">
               <svg
-                className="h-5 w-5 text-gray-600"
+                className="h-5 w-5 text-muted-foreground"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -142,7 +143,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
                   d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                 />
               </svg>
-              {unreadMessages > 0 && (
+                {unreadMessages > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
                   {unreadMessages > 99 ? '99+' : unreadMessages}
                 </span>
@@ -162,8 +163,8 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
                   setUnreadCount(list.filter((n) => !n.isRead).length);
                 } catch (e) {}
               }
-            }} className="relative rounded-lg p-2 hover:bg-gray-100" title="Notifications">
-              <Bell className="h-5 w-5 text-gray-600" />
+            }} className="relative rounded-lg p-2 hover:bg-muted" title="Notifications">
+              <Bell className="h-5 w-5 text-muted-foreground" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
                   {unreadCount}
@@ -171,17 +172,17 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
               )}
             </button>
 
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 max-w-xs rounded-lg border border-gray-200 bg-white shadow-lg">
+              {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 max-w-xs rounded-lg border border-border bg-popover shadow-lg">
                 <div className="flex items-center justify-between px-3 py-2">
                   <div className="text-sm font-medium">Notifications</div>
-                  <button className="text-xs text-blue-600" onClick={async () => { try { await api.notifications.markAll(); setNotifications((prev)=>prev.map(n=>({ ...n, isRead: true }))); setUnreadCount(0); } catch(e){} }}>Mark all</button>
+                  <button className="text-xs text-primary" onClick={async () => { try { await api.notifications.markAll(); setNotifications((prev)=>prev.map(n=>({ ...n, isRead: true }))); setUnreadCount(0); } catch(e){} }}>Mark all</button>
                 </div>
                 <div className="max-h-64 overflow-auto">
                   {notifications.length === 0 && <div className="p-3 text-sm text-muted-foreground">No notifications</div>}
                   {notifications.map((n) => (
-                    <div key={n._id} className={"flex items-start gap-2 px-3 py-2 border-t last:border-b cursor-pointer " + (n.isRead ? 'bg-white' : 'bg-blue-50')} onClick={async () => { try { await api.notifications.markRead(n._id); setNotifications((prev)=>prev.map(x=>x._id===n._id?{...x,isRead:true}:x)); setUnreadCount((c)=>Math.max(0,c-1)); if (n.link) window.location.href = n.link; } catch(e){} }}>
-                      <div className="h-8 w-8 shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-sm font-semibold">N</div>
+                    <div key={n._id} className={"flex items-start gap-2 px-3 py-2 border-t last:border-b cursor-pointer " + (n.isRead ? 'bg-popover' : 'bg-blue-50')} onClick={async () => { try { await api.notifications.markRead(n._id); setNotifications((prev)=>prev.map(x=>x._id===n._id?{...x,isRead:true}:x)); setUnreadCount((c)=>Math.max(0,c-1)); if (n.link) window.location.href = n.link; } catch(e){} }}>
+                      <div className="h-8 w-8 shrink-0 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">N</div>
                       <div className="flex-1">
                         <div className="text-sm font-medium">{n.title}</div>
                         {n.body && <div className="text-xs text-muted-foreground">{n.body}</div>}
@@ -195,10 +196,10 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           </div>
 
           {/* ID Card Shortcut */}
-          {can('download:idcard') && (
+            {can('download:idcard') && (
             <Link href="/id-cards/my-card">
-              <button className="hidden rounded-lg p-2 hover:bg-gray-100 md:block">
-                <span className="text-xs font-semibold text-gray-600">ID Card</span>
+              <button className="hidden rounded-lg p-2 hover:bg-muted md:block">
+                <span className="text-xs font-semibold text-muted-foreground">ID Card</span>
               </button>
             </Link>
           )}
@@ -207,7 +208,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           <select
             value={language}
             onChange={(e) => { setLanguage(e.target.value); if (typeof window !== 'undefined') localStorage.setItem('lang', e.target.value); }}
-            className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs focus:outline-none"
+            className="rounded-lg border border-border bg-background px-2 py-1 text-xs focus:outline-none"
             aria-label="Language"
           >
             <option value="en">EN</option>
@@ -218,31 +219,32 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted"
+              aria-haspopup="true"
             >
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
                 {user?.name?.charAt(0) || 'U'}
               </div>
-              <span className="hidden text-sm font-medium text-gray-700 lg:inline">
+              <span className="hidden text-sm font-medium text-foreground lg:inline">
                 {user?.name || 'User'}
               </span>
             </button>
 
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
+              <div className="absolute right-0 mt-2 w-48 rounded-lg border border-border bg-popover shadow-lg">
                 <Link href="/profile">
-                  <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                  <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted">
                     <User className="h-4 w-4" />
                     My Profile
                   </button>
                 </Link>
                 <Link href="/settings">
-                  <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                  <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted">
                     <Settings className="h-4 w-4" />
                     Settings
                   </button>
                 </Link>
-                <hr className="my-1" />
+                <hr className="my-1 border-border" />
                 <button
                   onClick={handleLogout}
                   className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
