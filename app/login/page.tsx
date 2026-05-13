@@ -175,10 +175,10 @@ export default function LoginPage() {
       <section className="hidden border-r border-slate-200 bg-white px-10 py-12 lg:flex lg:flex-col lg:justify-between">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
-            D
+            E
           </div>
           <div>
-            <p className="font-semibold leading-none text-slate-950">DRMS</p>
+            <p className="font-semibold leading-none text-slate-950">easy school</p>
             <p className="mt-1 text-xs text-slate-500">School/Madrasah Management</p>
           </div>
         </Link>
@@ -208,7 +208,7 @@ export default function LoginPage() {
       <section className="flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md border-slate-200 bg-white shadow-sm">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl">Login to DRMS</CardTitle>
+            <CardTitle className="text-2xl">Login to easy school</CardTitle>
             <CardDescription>Use your username, email or mobile number and password to continue.</CardDescription>
           </CardHeader>
           <CardContent>

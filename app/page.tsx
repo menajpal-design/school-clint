@@ -53,10 +53,10 @@ export default function Home() {
         <div className="mx-auto flex flex-col sm:flex-row sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-2 sm:gap-0 py-3 sm:py-0">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
-              D
+              E
             </div>
             <div>
-              <p className="text-sm font-semibold leading-none">DRMS</p>
+              <p className="text-sm font-semibold leading-none">easy school</p>
               <p className="mt-1 text-xs text-slate-500">School/Madrasah Management</p>
             </div>
           </Link>
@@ -84,7 +84,7 @@ export default function Home() {
             Role-based school operations
           </div>
           <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            DRMS School/Madrasah Management System
+            easy school - School/Madrasah Management System
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
             A professional dashboard for academics, attendance, finance, ID cards, documents, notices, parents and staff operations.
