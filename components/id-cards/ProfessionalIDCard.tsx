@@ -81,7 +81,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
     }[role]
 
     return (
-      <div ref={ref} className={`w-full max-w-[430px] bg-white ${className}`}>
+      <div ref={ref} className={`w-full max-w-[430px] space-y-4 bg-white ${className}`}>
         <div className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
           <div className={`${roleColor} px-5 py-4 text-white`}>
             <div className="flex items-center justify-between gap-3">
@@ -201,6 +201,77 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
 
           <div className="border-t border-slate-200 bg-slate-50 px-6 py-2 text-center text-xs font-medium text-slate-600">
             This card is the official property of {institutionName}. Loss must be reported immediately.
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
+          <div className={`${roleColor} px-5 py-3 text-white`}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold">{institutionName}</p>
+                <p className="text-xs text-white/85">Card Back Side</p>
+              </div>
+              <p className="rounded-md border border-white/35 px-2 py-1 text-[10px] font-semibold uppercase text-white/90">
+                Verify Before Service
+              </p>
+            </div>
+          </div>
+
+          <div className="px-5 py-4">
+            <div className="grid grid-cols-[1fr_96px] gap-4">
+              <div className="space-y-3">
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[11px] font-bold uppercase text-slate-500">Terms of Use</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-700">
+                    <li>This card is non-transferable and must be carried inside campus.</li>
+                    <li>Loss or damage must be reported to the institution office immediately.</li>
+                    <li>Finder is requested to return this card to the issuing institution.</li>
+                  </ul>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-md border border-slate-200 p-2">
+                    <p className="font-semibold uppercase text-slate-500">Card No.</p>
+                    <p className="mt-1 font-mono font-bold text-slate-900">{idNumber}</p>
+                  </div>
+                  <div className="rounded-md border border-slate-200 p-2">
+                    <p className="font-semibold uppercase text-slate-500">Valid Until</p>
+                    <p className="mt-1 font-bold text-slate-900">{displayValidityDate || validityDate}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-slate-200 bg-white p-2 text-center shadow-sm">
+                <QRCodeSVG value={qrData} size={80} level="M" includeMargin={false} />
+                <p className="mt-2 text-[10px] font-semibold text-slate-500">Scan to Verify</p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end gap-3 border-t border-slate-200 pt-3 text-xs text-slate-700">
+              <div>
+                <p className="font-semibold uppercase text-slate-500">Issued By</p>
+                <p className="text-sm font-semibold text-slate-950">{headName}</p>
+                <p className="text-slate-500">Institution Head</p>
+              </div>
+              <div className="text-center">
+                {institutionSeal ? (
+                  <img src={institutionSeal} alt="Seal" className="mx-auto h-14 w-14 rounded-full object-contain" />
+                ) : (
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-400 bg-slate-50 text-[10px] font-semibold text-slate-600">Seal</div>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="font-semibold uppercase text-slate-500">Signature</p>
+                {headSignature ? (
+                  <img src={headSignature} alt="Signature" className="ml-auto mt-1 h-8 max-w-[120px] object-contain" />
+                ) : (
+                  <div className="ml-auto mt-4 h-px w-28 bg-slate-400" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200 bg-slate-50 px-5 py-2 text-center text-[11px] font-medium text-slate-600">
+            If found, please return to {institutionName}.
           </div>
         </div>
       </div>
