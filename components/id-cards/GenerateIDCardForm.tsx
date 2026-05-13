@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfessionalIDCard } from './ProfessionalIDCard'
 import { AdmitCard } from './AdmitCard'
 import DownloadButtons from './DownloadButtons'
+import { api } from '@/lib/api'
+import { authManager } from '@/lib/auth'
 
 const toDateInputValue = (date: Date) => date.toISOString().split('T')[0]
 
@@ -36,19 +38,42 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export function GenerateIDCardForm() {
-  const { register, handleSubmit, watch } = useForm<FormValues>({
+  const { register, handleSubmit, watch, setValue } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       cardType: 'student-id',
       institutionName: 'Educational Institution',
-      headName: 'Dr. Principal',
+      headName: 'Institution Head',
       validityDate: toDateInputValue(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
     },
   })
 
   const [data, setData] = useState<FormValues | null>(null)
+  const [institutionProfile, setInstitutionProfile] = useState<any>(null)
   const previewRef = useRef<HTMLDivElement | null>(null)
   const cardType = watch('cardType')
+  const formIsAdmitCard = cardType === 'admit-card'
+
+  useEffect(() => {
+    const user = authManager.getUser()
+    const institutionFromSession = user?.institution as any
+    if (institutionFromSession?.name) setValue('institutionName', institutionFromSession.name)
+    if (user?.role === 'head' && user.name) setValue('headName', user.name)
+
+    api.institution.profile()
+      .then((response: any) => {
+        const institution = response?.institution
+        if (!institution) return
+        setInstitutionProfile(institution)
+        const head = institution.headId
+        const headName = typeof head === 'object' ? head?.name : undefined
+
+        if (institution.name) setValue('institutionName', institution.name)
+        if (institution.logo) setValue('institutionLogo', institution.logo)
+        if (headName) setValue('headName', headName)
+      })
+      .catch(() => undefined)
+  }, [setValue])
 
   const onSubmit = (vals: FormValues) => {
     setData(vals)
@@ -91,7 +116,7 @@ export function GenerateIDCardForm() {
                   <label className="text-sm">ID / Roll Number</label>
                   <Input
                     {...register('idNumber')}
-                    placeholder={isAdmitCard ? 'e.g., A-101' : 'e.g., STU-2024-001'}
+                  placeholder={formIsAdmitCard ? 'e.g., A-101' : 'e.g., STU-2024-001'}
                   />
                 </div>
                 <div>
@@ -121,7 +146,7 @@ export function GenerateIDCardForm() {
               </div>
 
               {/* Card-Specific Fields */}
-              {isAdmitCard ? (
+              {formIsAdmitCard ? (
                 <div className="space-y-3 border-t pt-4">
                   <h3 className="font-semibold text-sm">Examination Information</h3>
                   <div>
@@ -198,6 +223,8 @@ export function GenerateIDCardForm() {
                       photoUrl={data.photoUrl || undefined}
                       institutionName={data.institutionName}
                       institutionLogo={data.institutionLogo || undefined}
+                      institutionSeal={institutionProfile?.seal}
+                      headSignature={institutionProfile?.headSignature}
                       examName={data.examName}
                       examDate={data.examDate}
                       examCenter={data.examCenter}
@@ -221,6 +248,8 @@ export function GenerateIDCardForm() {
                       photoUrl={data.photoUrl || undefined}
                       institutionName={data.institutionName}
                       institutionLogo={data.institutionLogo || undefined}
+                      institutionSeal={institutionProfile?.seal}
+                      headSignature={institutionProfile?.headSignature}
                       validityDate={data.validityDate}
                       headName={data.headName}
                       dateOfBirth={data.dateOfBirth || undefined}

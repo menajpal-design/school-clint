@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { BadgeCheck, Download, Search } from "lucide-react";
 
 import DownloadButtons from "@/components/id-cards/DownloadButtons";
-import { IDCardPreview } from "@/components/id-cards/IDCardPreview";
+import { ProfessionalIDCard } from "@/components/id-cards/ProfessionalIDCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { authManager } from "@/lib/auth";
 
 type OwnerType = "student" | "teacher" | "staff";
 
@@ -19,13 +20,21 @@ export default function GeneratePage() {
   const [people, setPeople] = useState<any[]>([]);
   const [selected, setSelected] = useState<any>(null);
   const [card, setCard] = useState<any>(null);
-  const [options, setOptions] = useState({ logo: true, watermark: true, qr: true, barcode: true });
+  const [institution, setInstitution] = useState<any>(null);
+  const [options, setOptions] = useState({ logo: true, watermark: true });
 
   const load = async () => {
     const data = await api.idCards.searchOwners({ type: ownerType, search }) as any;
     setPeople(data.people || []);
   };
   useEffect(() => { load().catch(() => undefined); }, [ownerType]);
+  useEffect(() => {
+    const sessionInstitution = (authManager.getUser() as any)?.institution;
+    if (sessionInstitution) setInstitution(sessionInstitution);
+    api.institution.profile()
+      .then((response: any) => setInstitution(response?.institution || sessionInstitution || null))
+      .catch(() => undefined);
+  }, []);
 
   const generate = async () => {
     if (!selected) return;
@@ -35,6 +44,9 @@ export default function GeneratePage() {
 
   const previewName = card?.ownerId?.name || selected?.userId?.name || "Select person";
   const previewId = card?.cardNumber || selected?.rollNumber || selected?.employeeId || "ID";
+  const headName = institution?.headId?.name || (authManager.getUser()?.role === "head" ? authManager.getUser()?.name : undefined) || "Institution Head";
+  const role = ownerType === "teacher" ? "teacher" : ownerType === "staff" ? "staff" : "student";
+  const className = selected?.classId?.name || selected?.className || selected?.designation || selected?.department || "";
 
   return (
     <div className="space-y-5">
@@ -48,7 +60,20 @@ export default function GeneratePage() {
         </section>
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-3 font-semibold">4. Preview card</div>
-          <div ref={previewRef}><IDCardPreview type={ownerType} name={previewName} id={previewId} qrData={options.qr ? previewId : ""} barcode={options.barcode ? previewId : ""} /></div>
+          <div ref={previewRef} className="flex justify-center">
+            <ProfessionalIDCard
+              role={role}
+              name={previewName}
+              idNumber={previewId}
+              institutionName={institution?.name || "Educational Institution"}
+              institutionLogo={options.logo ? institution?.logo : undefined}
+              institutionSeal={institution?.seal}
+              headSignature={institution?.headSignature}
+              headName={headName}
+              stream={className}
+              validityDate={card?.validityEnd || undefined}
+            />
+          </div>
           <div className="mt-4"><DownloadButtons targetRef={previewRef} filename={`id-${previewId}`} cardId={card?._id} /></div>
         </section>
       </div>
