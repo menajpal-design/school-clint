@@ -8,6 +8,8 @@ import { IDCardPreview } from "@/components/id-cards/IDCardPreview";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import DownloadButtons from '@/components/id-cards/DownloadButtons'
+import { useRef } from 'react'
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
@@ -15,6 +17,9 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState("");
+  const previewRef = useRef<HTMLDivElement | null>(null);
+  const [card, setCard] = useState<any>(null);
+  const [cardErr, setCardErr] = useState("");
 
   useEffect(() => {
     api.auth.profile().then((data: any) => {
@@ -24,6 +29,8 @@ export default function ProfilePage() {
       setPhone(next.phone || "");
       setAvatar(next.avatar || "");
     }).catch(() => undefined);
+    // load my id card if exists
+    api.idCards.getMine().then((c: any) => setCard(c)).catch((e: any) => setCardErr(e?.message || 'No card'))
   }, []);
 
   const institution = user?.institution || {};
@@ -104,7 +111,12 @@ export default function ProfilePage() {
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="mb-4 font-semibold text-slate-950">ID Card Section</h2>
-            <IDCardPreview type={user?.role === "staff" ? "staff" : user?.role?.includes("teacher") ? "teacher" : "student"} name={user?.name || "User"} id={user?.id || "ID"} qrData={user?.id || ""} barcode={user?.id || ""} />
+            <div ref={previewRef}>
+              <IDCardPreview type={user?.role === "staff" ? "staff" : user?.role?.includes("teacher") ? "teacher" : "student"} name={user?.name || "User"} id={user?.id || "ID"} qrData={user?.id || ""} barcode={user?.id || ""} />
+            </div>
+            <div className="mt-3">
+              <DownloadButtons targetRef={previewRef} filename={card?.cardNumber || `id-${user?.id || 'me'}`} cardId={card?._id} />
+            </div>
           </div>
         </section>
       </div>
