@@ -54,13 +54,6 @@ export default function AdminSchoolsPage() {
     await load();
   };
 
-  const verifyPayment = async (school: any) => {
-    setStatus('Verifying payment...');
-    const result = await api.admin.verifyPayment(school._id) as any;
-    setStatus(result.message || 'Payment verification finished.');
-    await load();
-  };
-
   return (
     <div className="space-y-6 p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -99,7 +92,6 @@ export default function AdminSchoolsPage() {
                 </div>
                 <div className="flex flex-wrap gap-2 lg:justify-end">
                   <Button variant="outline" onClick={() => openBilling(school)}><CreditCard className="mr-2 h-4 w-4" />Subscription</Button>
-                  <Button variant="outline" onClick={() => verifyPayment(school)}>Verify Pay</Button>
                   <Button variant={school.isActive ? 'destructive' : 'default'} onClick={() => quickStatus(school, school.isActive ? 'suspend' : 'activate')}>
                     {school.isActive ? <X className="mr-2 h-4 w-4" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
                     {school.isActive ? 'Suspend' : 'Activate'}

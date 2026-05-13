@@ -81,14 +81,6 @@ export default function AdminSubscriptionsPage() {
     await load();
   };
 
-  const verifyPayment = async (school = selected) => {
-    if (!school) return;
-    setMessage('Verifying payment...');
-    const result = await api.admin.verifyPayment(school._id) as any;
-    setMessage(result.message || 'Payment verification finished.');
-    await load();
-  };
-
   const setSchoolStatus = async (school: any, action: 'activate' | 'suspend') => {
     await api.admin.updateSchool(school._id, { statusAction: action });
     await load();
@@ -99,7 +91,7 @@ export default function AdminSubscriptionsPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Subscriptions</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Handle school plan, payment verification, due amount, SMS limit and access status.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Handle school plan, paid amount, due amount, SMS limit and access status.</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -156,7 +148,6 @@ export default function AdminSubscriptionsPage() {
               </div>
               <div className="flex flex-wrap gap-2 xl:justify-end">
                 <Button onClick={() => openSubscription(school)}><CreditCard className="mr-2 h-4 w-4" />Handle</Button>
-                <Button variant="outline" onClick={() => verifyPayment(school)}>Verify Pay</Button>
                 <Button variant={school.isActive ? 'destructive' : 'secondary'} onClick={() => setSchoolStatus(school, school.isActive ? 'suspend' : 'activate')}>
                   {school.isActive ? 'Suspend' : 'Give Access'}
                 </Button>
@@ -216,10 +207,7 @@ export default function AdminSubscriptionsPage() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">{message}</p>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => verifyPayment()}>Verify Pay</Button>
-              <Button onClick={saveSubscription}>Save and Apply</Button>
-            </div>
+            <Button onClick={saveSubscription}>Save and Apply</Button>
           </div>
         </DialogContent>
       </Dialog>
