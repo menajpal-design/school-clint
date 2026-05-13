@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { printHtml } from "@/lib/export-utils";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function CollectionsPage() {
@@ -35,6 +36,24 @@ export default function CollectionsPage() {
   };
 
   const choose = (student: any) => { setSelected(student); setAmount(student.dueAmount || 0); };
+  const printReceipt = () => {
+    if (!receipt) return;
+    printHtml("Fee Receipt", `
+      <main class="print-card">
+        <p class="print-title">Fee Receipt</p>
+        <p class="print-muted">Receipt No: ${receipt.receiptNumber || "-"}</p>
+        <div class="print-grid">
+          <div class="print-row"><strong>Student</strong>${receipt.studentId?.userId?.name || selected?.userId?.name || "-"}</div>
+          <div class="print-row"><strong>Roll</strong>${receipt.studentId?.rollNumber || selected?.rollNumber || "-"}</div>
+          <div class="print-row"><strong>Amount</strong>${formatCurrency(receipt.amount || 0)}</div>
+          <div class="print-row"><strong>Method</strong>${receipt.paymentMethod || "-"}</div>
+          <div class="print-row"><strong>Date</strong>${formatDate(receipt.paymentDate || new Date())}</div>
+          <div class="print-row"><strong>Note</strong>${receipt.notes || notes || "-"}</div>
+        </div>
+        <div class="signature"><div>Collected By</div><div>Guardian Signature</div></div>
+      </main>
+    `);
+  };
 
   return <div className="space-y-5">
     <PageHeader title="Fee Collection" description="Search students, collect dues and generate receipts." icon={CreditCard} actions={[{ label: "Scan ID Card", icon: ScanLine, onClick: () => setScanOpen(true) }]} />
@@ -46,7 +65,7 @@ export default function CollectionsPage() {
       <Card><CardContent className="p-5"><h2 className="font-semibold">{selected.userId?.name}</h2><p className="mt-1 text-sm text-slate-500">Roll {selected.rollNumber} · {selected.classId?.name} · Section {selected.sectionId?.name}</p><p className="mt-4 text-2xl font-semibold">{formatCurrency(selected.dueAmount || 0)}</p><p className="text-sm text-slate-500">Due amount</p></CardContent></Card>
       <Card><CardContent className="space-y-3 p-5"><Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} /><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}><option value="cash">Cash</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="rocket">Rocket</option><option value="card">Card</option><option value="bank_transfer">Bank transfer</option></select><Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Note" /><Button onClick={collect}>Collect Payment</Button></CardContent></Card>
     </div>}
-    {receipt && <Card><CardContent className="p-5"><div className="flex items-start justify-between"><div><h2 className="text-xl font-semibold">Receipt Preview</h2><p className="text-sm text-slate-500">{receipt.receiptNumber}</p></div><Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" />Print Receipt</Button></div><div className="mt-4 grid gap-2 text-sm md:grid-cols-2"><p>Student: {receipt.studentId?.userId?.name}</p><p>Amount: {formatCurrency(receipt.amount || 0)}</p><p>Method: {receipt.paymentMethod}</p><p>Date: {formatDate(receipt.paymentDate)}</p></div></CardContent></Card>}
+    {receipt && <Card><CardContent className="p-5"><div className="flex items-start justify-between"><div><h2 className="text-xl font-semibold">Receipt Preview</h2><p className="text-sm text-slate-500">{receipt.receiptNumber}</p></div><Button variant="outline" onClick={printReceipt}><Printer className="mr-2 h-4 w-4" />Print Receipt</Button></div><div className="mt-4 grid gap-2 text-sm md:grid-cols-2"><p>Student: {receipt.studentId?.userId?.name || selected?.userId?.name}</p><p>Amount: {formatCurrency(receipt.amount || 0)}</p><p>Method: {receipt.paymentMethod}</p><p>Date: {formatDate(receipt.paymentDate || new Date())}</p></div></CardContent></Card>}
     <Dialog open={scanOpen} onOpenChange={setScanOpen}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Scan ID Card</DialogTitle></DialogHeader><WebcamScanner enabled={scanOpen} onScan={(code) => {
       setSearch(code);
       setScanOpen(false);

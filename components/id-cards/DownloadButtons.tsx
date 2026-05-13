@@ -2,10 +2,11 @@
 
 import React from 'react'
 import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
 import { Button } from '@/components/ui/button'
 import { Download, FileText, Printer, Mail } from 'lucide-react'
 import { api } from '@/lib/api'
+import { downloadBlob } from '@/lib/utils'
+import { downloadElementPdf, printElement } from '@/lib/export-utils'
 
 export function DownloadButtons({ targetRef, filename = 'id-card', cardId, printTitle = 'Print ID Card', emailSubject = 'ID Card' }: { targetRef: React.RefObject<HTMLElement> | null; filename?: string; cardId?: string; printTitle?: string; emailSubject?: string }) {
   const captureElement = async () => {
@@ -29,55 +30,16 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
     if (!canvas) return
 
     const dataUrl = canvas.toDataURL('image/png')
-    const link = document.createElement('a')
-    link.href = dataUrl
-    link.download = `${filename}.png`
-    link.click()
+    const response = await fetch(dataUrl)
+    downloadBlob(await response.blob(), `${filename}.png`)
   }
 
   const downloadPDF = async () => {
-    const canvas = await captureElement()
-    if (!canvas) return
-
-    const imgData = canvas.toDataURL('image/png')
-    const pdf = new jsPDF({ unit: 'px', format: [canvas.width, canvas.height] })
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height)
-    pdf.save(`${filename}.pdf`)
+    await downloadElementPdf(targetRef?.current || null, `${filename}.pdf`)
   }
 
   const print = () => {
-    if (!targetRef?.current) return
-
-    const popup = window.open('', '_blank', 'width=1200,height=900')
-    if (!popup) return
-
-    const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-      .map((node) => node.outerHTML)
-      .join('')
-
-    popup.document.open()
-    popup.document.write(`
-      <html>
-        <head>
-          <title>${printTitle}</title>
-          ${styleTags}
-          <style>
-            @page { size: auto; margin: 12mm; }
-            html, body { margin: 0; padding: 0; background: #f8fafc; }
-            body { display: flex; justify-content: center; align-items: flex-start; padding: 20px; }
-          </style>
-        </head>
-        <body>
-          ${targetRef.current.outerHTML}
-        </body>
-      </html>
-    `)
-    popup.document.close()
-    popup.focus()
-    setTimeout(() => {
-      popup.print()
-      popup.close()
-    }, 250)
+    printElement(targetRef?.current || null, printTitle)
   }
 
   const email = async () => {

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { downloadElementPdf, printElement } from "@/lib/export-utils";
 
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
 type StudentItem = { _id: string; rollNumber: string; userId?: { name: string; avatar?: string }; sectionId?: { _id: string; name: string } };
@@ -89,15 +90,7 @@ export default function ReportCardPage() {
   useEffect(() => { loadReportCard(); }, [studentId, examId]);
 
   const downloadPdf = async () => {
-    if (!previewRef.current) return;
-    const html2canvas = (await import("html2canvas")).default;
-    const jsPDF = (await import("jspdf")).default;
-    const canvas = await html2canvas(previewRef.current, { scale: 2 });
-    const pdf = new jsPDF("p", "mm", "a4");
-    const width = pdf.internal.pageSize.getWidth();
-    const height = (canvas.height * width) / canvas.width;
-    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, width, height);
-    pdf.save(`${reportCard?.studentName || "report-card"}.pdf`);
+    await downloadElementPdf(previewRef.current, `${reportCard?.studentName || "report-card"}.pdf`);
   };
 
   return (
@@ -109,7 +102,7 @@ export default function ReportCardPage() {
         status={<Badge variant="outline">{reportCard?.grade || "Preview"}</Badge>}
         actions={[
           { label: "Download PDF", icon: Download, onClick: downloadPdf },
-          { label: "Print", icon: Printer, onClick: () => window.print() },
+          { label: "Print", icon: Printer, onClick: () => printElement(previewRef.current, "Report Card") },
         ]}
       />
 
