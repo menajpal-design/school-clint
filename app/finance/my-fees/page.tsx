@@ -37,7 +37,13 @@ export default function MyFeesPage() {
         </div>
         <div class="signature"><div>Accounts Office</div><div>Guardian Signature</div></div>
       </main>
-    `);
+    `, "", JSON.stringify({
+      type: "fee_receipt",
+      receiptNumber: payment.receiptNumber,
+      student: payment.studentId?.userId?.name || child?.userId?.name || child?.name,
+      amount: payment.amount,
+      date: payment.paymentDate || new Date(),
+    }));
   };
   return <div className="space-y-5">
     <PageHeader title="My Fees" description="View dues, paid amount, next payment date and receipts." icon={WalletCards} />

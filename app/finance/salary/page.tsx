@@ -43,7 +43,14 @@ export default function SalaryPage() {
         </div>
         <div class="signature"><div>Prepared By</div><div>Employee Signature</div></div>
       </main>
-    `);
+    `, "", JSON.stringify({
+      type: "salary_slip",
+      employee: employee.userId?.name,
+      employeeType: employee.employeeType,
+      month,
+      year,
+      netSalary: net,
+    }));
   };
   return (
     <RoleGuard roles={["head"]} fallback={<div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Salary information is visible to the Head only.</div>}>

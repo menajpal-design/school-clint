@@ -52,7 +52,13 @@ export default function CollectionsPage() {
         </div>
         <div class="signature"><div>Collected By</div><div>Guardian Signature</div></div>
       </main>
-    `);
+    `, "", JSON.stringify({
+      type: "fee_receipt",
+      receiptNumber: receipt.receiptNumber,
+      student: receipt.studentId?.userId?.name || selected?.userId?.name,
+      amount: receipt.amount,
+      date: receipt.paymentDate || new Date(),
+    }));
   };
 
   return <div className="space-y-5">

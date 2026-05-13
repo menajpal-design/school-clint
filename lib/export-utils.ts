@@ -2,6 +2,32 @@
 
 import { downloadFile } from "@/lib/utils";
 
+const qrPayload = (title: string, extra?: string) => {
+  const timestamp = new Date().toISOString();
+  const location = typeof window !== "undefined" ? window.location.href : "";
+  return JSON.stringify({ title, location, timestamp, extra });
+};
+
+export async function makeQrDataUrl(value: string, width = 128) {
+  const QRCode = await import("qrcode");
+  return QRCode.toDataURL(value, {
+    width,
+    margin: 1,
+    errorCorrectionLevel: "M",
+    color: {
+      dark: "#0f172a",
+      light: "#ffffff",
+    },
+  });
+}
+
+const qrBlock = (qrDataUrl?: string, label = "Scan to verify") => qrDataUrl ? `
+  <div class="print-qr">
+    <img src="${qrDataUrl}" alt="Verification QR" />
+    <span>${label}</span>
+  </div>
+` : "";
+
 const pageShell = (title: string, body: string, styles = "") => `
   <!doctype html>
   <html>
@@ -23,6 +49,10 @@ const pageShell = (title: string, body: string, styles = "") => `
         .print-row strong { display: inline-block; min-width: 120px; }
         .signature { margin-top: 48px; display: flex; justify-content: space-between; gap: 40px; font-size: 12px; }
         .signature div { flex: 1; border-top: 1px solid #334155; padding-top: 6px; text-align: center; }
+        .print-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+        .print-qr { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; color: #475569; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        .print-qr img { width: 82px; height: 82px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px; background: #fff; }
+        .print-footer { margin-top: 16px; display: flex; justify-content: flex-end; }
         ${styles}
       </style>
     </head>
@@ -42,8 +72,24 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   const html2canvas = (await import("html2canvas")).default;
   const jsPDF = (await import("jspdf")).default;
   await document.fonts?.ready?.catch(() => undefined);
+  const qrDataUrl = await makeQrDataUrl(qrPayload(filename), 128);
+  const captureTarget = document.createElement("div");
+  captureTarget.style.position = "fixed";
+  captureTarget.style.left = "-10000px";
+  captureTarget.style.top = "0";
+  captureTarget.style.width = `${target.scrollWidth || target.offsetWidth || 900}px`;
+  captureTarget.style.background = "#ffffff";
+  captureTarget.style.padding = "16px";
+  captureTarget.appendChild(target.cloneNode(true));
+  const qrFooter = document.createElement("div");
+  qrFooter.style.display = "flex";
+  qrFooter.style.justifyContent = "flex-end";
+  qrFooter.style.marginTop = "16px";
+  qrFooter.innerHTML = qrBlock(qrDataUrl);
+  captureTarget.appendChild(qrFooter);
+  document.body.appendChild(captureTarget);
 
-  const canvas = await html2canvas(target, {
+  const canvas = await html2canvas(captureTarget, {
     scale: 2,
     backgroundColor: "#ffffff",
     useCORS: true,
@@ -51,6 +97,7 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
     scrollX: 0,
     scrollY: -window.scrollY,
   });
+  document.body.removeChild(captureTarget);
 
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
@@ -74,15 +121,16 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   pdf.save(filename);
 }
 
-export function printElement(target: HTMLElement | null, title = "Print") {
+export async function printElement(target: HTMLElement | null, title = "Print") {
   if (!target) return;
+  const qrDataUrl = await makeQrDataUrl(qrPayload(title), 128);
   const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
     .map((node) => node.outerHTML)
     .join("");
   const popup = window.open("", "_blank", "width=1200,height=900");
   if (!popup) return;
   popup.document.open();
-  popup.document.write(pageShell(title, `${styleTags}<main style="padding:20px">${target.outerHTML}</main>`));
+  popup.document.write(pageShell(title, `${styleTags}<main style="padding:20px">${target.outerHTML}<div class="print-footer">${qrBlock(qrDataUrl)}</div></main>`));
   popup.document.close();
   popup.focus();
   setTimeout(() => {
@@ -91,11 +139,15 @@ export function printElement(target: HTMLElement | null, title = "Print") {
   }, 300);
 }
 
-export function printHtml(title: string, bodyHtml: string, styles = "") {
+export async function printHtml(title: string, bodyHtml: string, styles = "", qrValue?: string) {
+  const qrDataUrl = await makeQrDataUrl(qrValue || qrPayload(title), 128);
   const popup = window.open("", "_blank", "width=900,height=900");
   if (!popup) return;
+  const bodyWithQr = bodyHtml
+    .replace('<main class="print-card">', '<main class="print-card"><div class="print-heading"><div>')
+    .replace('<div class="print-grid"', `</div>${qrBlock(qrDataUrl)}</div><div class="print-grid"`);
   popup.document.open();
-  popup.document.write(pageShell(title, bodyHtml, styles));
+  popup.document.write(pageShell(title, bodyWithQr, styles));
   popup.document.close();
   popup.focus();
   setTimeout(() => {
