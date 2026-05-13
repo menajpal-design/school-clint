@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -95,6 +96,7 @@ export default function SubjectsPage() {
   const [editingSubject, setEditingSubject] = useState<SubjectItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SubjectItem | null>(null);
   const [form, setForm] = useState<SubjectForm>(emptyForm);
+  const [bulkLines, setBulkLines] = useState("");
 
   const filteredSubjects = useMemo(() => {
     return subjects.filter((subject) => {
@@ -135,6 +137,7 @@ export default function SubjectsPage() {
   const openAddModal = () => {
     setEditingSubject(null);
     setForm({ ...emptyForm(), classId: classes[0]?._id || "" });
+    setBulkLines("");
     setFormOpen(true);
   };
 
@@ -153,6 +156,27 @@ export default function SubjectsPage() {
     setFormOpen(true);
   };
 
+  const parseBulkSubjects = () => {
+    return bulkLines
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [name = "", code = "", type = "", classId = "", teacherId = ""] = line.split("|").map((item) => item.trim());
+        return {
+          name,
+          code: code || name.toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 10) || `SUB${Date.now().toString().slice(-4)}`,
+          type: (type as SubjectForm["type"]) || form.type,
+          classId: classId || form.classId,
+          teacherId: teacherId || form.teacherId,
+          description: form.description,
+          creditHours: form.creditHours,
+          isActive: form.isActive,
+        };
+      })
+      .filter((item) => item.name && item.classId);
+  };
+
   const submitForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaving(true);
@@ -162,7 +186,8 @@ export default function SubjectsPage() {
       if (editingSubject) {
         await api.academic.subjects.update(editingSubject._id, form);
       } else {
-        await api.academic.subjects.create(form);
+        const bulkItems = parseBulkSubjects();
+        await api.academic.subjects.create(bulkItems.length > 0 ? { items: bulkItems } : form);
       }
       setFormOpen(false);
       await loadData();
@@ -332,6 +357,8 @@ export default function SubjectsPage() {
         classes={classes}
         teachers={teachers}
         saving={saving}
+        bulkLines={bulkLines}
+        setBulkLines={setBulkLines}
         onOpenChange={setFormOpen}
         onSubmit={submitForm}
         onFormChange={setForm}
@@ -366,6 +393,8 @@ function SubjectFormDialog({
   classes,
   teachers,
   saving,
+  bulkLines,
+  setBulkLines,
   onOpenChange,
   onSubmit,
   onFormChange,
@@ -376,6 +405,8 @@ function SubjectFormDialog({
   classes: ClassOption[];
   teachers: TeacherOption[];
   saving: boolean;
+  bulkLines: string;
+  setBulkLines: (value: string) => void;
   onOpenChange: (open: boolean) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onFormChange: (form: SubjectForm) => void;
@@ -488,6 +519,19 @@ function SubjectFormDialog({
               <Input value={form.description} onChange={(event) => onFormChange({ ...form, description: event.target.value })} />
             </Field>
           </div>
+
+          {!editing && (
+            <div className="space-y-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm font-semibold text-slate-950">Bulk create subjects</div>
+              <p className="text-xs text-slate-500">One subject per line. Format: name | code | type | class id | teacher id. Missing fields use the values above.</p>
+              <Textarea
+                value={bulkLines}
+                onChange={(event) => setBulkLines(event.target.value)}
+                placeholder={"Bangla | BGL | core\nMath | MTH | core\nScience | SCI | core"}
+                rows={5}
+              />
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

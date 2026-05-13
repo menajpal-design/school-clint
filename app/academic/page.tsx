@@ -26,27 +26,11 @@ type AcademicSummary = {
   results: any[];
 };
 
-const mockAcademic: AcademicSummary = {
-  classes: [
-    { name: "Class Six", section: "A", students: 48, status: "active" },
-    { name: "Class Seven", section: "B", students: 44, status: "active" },
-    { name: "Class Eight", section: "A", students: 51, status: "active" },
-  ],
-  subjects: [
-    { name: "Mathematics", code: "MATH", type: "core" },
-    { name: "English", code: "ENG", type: "core" },
-    { name: "Science", code: "SCI", type: "core" },
-    { name: "ICT", code: "ICT", type: "optional" },
-  ],
-  exams: [
-    { name: "Weekly Test", type: "weekly", status: "upcoming" },
-    { name: "Half-yearly Exam", type: "term", status: "scheduled" },
-  ],
-  results: [
-    { exam: "Weekly Test", status: "draft" },
-    { exam: "Monthly Test", status: "review" },
-    { exam: "Class Test", status: "published" },
-  ],
+const emptyAcademic: AcademicSummary = {
+  classes: [],
+  subjects: [],
+  exams: [],
+  results: [],
 };
 
 const quickLinks = [
@@ -89,10 +73,10 @@ const quickLinks = [
 
 function normalizeAcademic(data: any): AcademicSummary {
   return {
-    classes: Array.isArray(data?.classes) ? data.classes : mockAcademic.classes,
-    subjects: Array.isArray(data?.subjects) ? data.subjects : mockAcademic.subjects,
-    exams: Array.isArray(data?.exams) ? data.exams : mockAcademic.exams,
-    results: Array.isArray(data?.results) ? data.results : mockAcademic.results,
+    classes: Array.isArray(data?.classes) ? data.classes : [],
+    subjects: Array.isArray(data?.subjects) ? data.subjects : [],
+    exams: Array.isArray(data?.exams) ? data.exams : [],
+    results: Array.isArray(data?.results) ? data.results : [],
   };
 }
 
@@ -101,25 +85,26 @@ function getStatusCount(items: any[], status: string) {
 }
 
 export default function AcademicPage() {
-  const [summary, setSummary] = useState<AcademicSummary>(mockAcademic);
+  const [summary, setSummary] = useState<AcademicSummary>(emptyAcademic);
   const [loading, setLoading] = useState(true);
-  const [usingFallback, setUsingFallback] = useState(false);
+  const [dataSource, setDataSource] = useState<'loading' | 'live' | 'empty'>('loading');
 
   useEffect(() => {
     let mounted = true;
 
     async function loadAcademic() {
       setLoading(true);
-      setUsingFallback(false);
+      setDataSource('loading');
 
       try {
         const data = await apiClient.get("/academic");
         if (!mounted) return;
         setSummary(normalizeAcademic(data));
+        setDataSource('live');
       } catch {
         if (!mounted) return;
-        setSummary(mockAcademic);
-        setUsingFallback(true);
+        setSummary(emptyAcademic);
+        setDataSource('empty');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -182,7 +167,7 @@ export default function AcademicPage() {
         title="Academic Overview"
         description="Manage classes, subjects, exams, results and report card workflows from one academic control center."
         icon={LayoutList}
-        status={usingFallback ? <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Mock fallback</Badge> : <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">Live academic data</Badge>}
+        status={<Badge variant="outline" className={dataSource === 'live' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : dataSource === 'empty' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-blue-200 bg-blue-50 text-blue-700'}>{dataSource === 'live' ? 'Live academic data' : dataSource === 'empty' ? 'No live academic data yet' : 'Loading live academic data'}</Badge>}
         actions={[
           { label: "Classes", href: "/academic/classes", icon: GraduationCap },
           { label: "Subjects", href: "/academic/subjects", icon: BookOpen },
@@ -256,17 +241,21 @@ export default function AcademicPage() {
             <CardDescription>Exam and result workflow updates.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentActivity.map((item, index) => (
-              <div key={`${item.title}-${index}`} className="rounded-lg border border-slate-200 p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">{item.meta}</p>
+            {recentActivity.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 p-3 text-sm text-slate-500">No academic activity has been synced from the live system yet.</div>
+            ) : (
+              recentActivity.map((item, index) => (
+                <div key={`${item.title}-${index}`} className="rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">{item.title}</p>
+                      <p className="mt-1 text-xs text-slate-500">{item.meta}</p>
+                    </div>
+                    <Badge variant="outline" className="capitalize">{item.status}</Badge>
                   </div>
-                  <Badge variant="outline" className="capitalize">{item.status}</Badge>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
       </section>

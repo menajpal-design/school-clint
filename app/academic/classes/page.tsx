@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -91,6 +92,7 @@ export default function ClassesPage() {
   const [editingClass, setEditingClass] = useState<ClassItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClassItem | null>(null);
   const [form, setForm] = useState<ClassForm>(emptyForm);
+  const [bulkLines, setBulkLines] = useState("");
 
   const sectionCount = useMemo(
     () => classes.reduce((total, classItem) => total + (classItem.sections?.filter((section) => section.isActive !== false).length || 0), 0),
@@ -126,6 +128,7 @@ export default function ClassesPage() {
   const openAddModal = () => {
     setEditingClass(null);
     setForm(emptyForm());
+    setBulkLines("");
     setFormOpen(true);
   };
 
@@ -149,6 +152,26 @@ export default function ClassesPage() {
         : [{ name: "A", capacity: 30, currentStudents: 0, isActive: true }],
     });
     setFormOpen(true);
+  };
+
+  const parseBulkClasses = () => {
+    return bulkLines
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [name = "", grade = "", academicYear = "", shift = "", classTeacherId = ""] = line.split("|").map((item) => item.trim());
+        return {
+          name,
+          grade: grade || name.match(/\d+/)?.[0] || name,
+          academicYear: academicYear || form.academicYear,
+          shift: (shift as ClassForm["shift"]) || form.shift,
+          classTeacherId: classTeacherId || form.classTeacherId,
+          isActive: form.isActive,
+          sections: form.sections.filter((section) => section.name.trim()),
+        };
+      })
+      .filter((item) => item.name);
   };
 
   const updateSection = (index: number, value: Partial<SectionItem>) => {
@@ -188,7 +211,8 @@ export default function ClassesPage() {
       if (editingClass) {
         await api.academic.classes.update(editingClass._id, payload);
       } else {
-        await api.academic.classes.create(payload);
+        const bulkItems = parseBulkClasses();
+        await api.academic.classes.create(bulkItems.length > 0 ? { items: bulkItems } : payload);
       }
       setFormOpen(false);
       await loadData();
@@ -329,6 +353,8 @@ export default function ClassesPage() {
         form={form}
         teachers={teachers}
         saving={saving}
+        bulkLines={bulkLines}
+        setBulkLines={setBulkLines}
         onOpenChange={setFormOpen}
         onSubmit={submitForm}
         onFormChange={setForm}
@@ -374,6 +400,8 @@ function ClassFormDialog({
   form,
   teachers,
   saving,
+  bulkLines,
+  setBulkLines,
   onOpenChange,
   onSubmit,
   onFormChange,
@@ -386,6 +414,8 @@ function ClassFormDialog({
   form: ClassForm;
   teachers: TeacherItem[];
   saving: boolean;
+  bulkLines: string;
+  setBulkLines: (value: string) => void;
   onOpenChange: (open: boolean) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onFormChange: (form: ClassForm) => void;
@@ -528,6 +558,19 @@ function ClassFormDialog({
               ))}
             </div>
           </div>
+
+          {!editing && (
+            <div className="space-y-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4">
+              <div className="text-sm font-semibold text-slate-950">Bulk create classes</div>
+              <p className="text-xs text-slate-500">One class per line. Format: name | grade | academic year | shift | teacher id. Missing fields use the values above.</p>
+              <Textarea
+                value={bulkLines}
+                onChange={(event) => setBulkLines(event.target.value)}
+                placeholder={"Class 6 | 6\nClass 7 | 7\nClass 8 | 8"}
+                rows={5}
+              />
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

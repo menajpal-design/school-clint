@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CreditCard, Edit, Plus, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { api } from '@/lib/api';
 
@@ -31,8 +32,10 @@ type TeacherForm = {
   employeeId: string;
   designation: string;
   department: string;
-  assignedClasses: string;
-  subjects: string;
+  assignedClasses: string[];
+  newAssignedClasses: string;
+  subjects: string[];
+  newSubjects: string;
   salary: string;
   joiningDate: string;
   qualification: string;
@@ -48,8 +51,10 @@ const emptyForm: TeacherForm = {
   employeeId: '',
   designation: 'Teacher',
   department: '',
-  assignedClasses: '',
-  subjects: '',
+  assignedClasses: [],
+  newAssignedClasses: '',
+  subjects: [],
+  newSubjects: '',
   salary: '',
   joiningDate: new Date().toISOString().slice(0, 10),
   qualification: '',
@@ -68,20 +73,50 @@ const fileToDataUrl = (file: File) =>
 
 export default function InstitutionTeachersPage() {
   const [teachers, setTeachers] = useState<TeacherRecord[]>([]);
+  const [classes, setClasses] = useState<{ _id: string; name?: string }[]>([]);
+  const [subjects, setSubjects] = useState<{ _id: string; name?: string }[]>([]);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<TeacherForm>(emptyForm);
   const [status, setStatus] = useState('');
 
+  const nameList = (value: string) => value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean);
+  const unique = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
+
   const loadTeachers = () => {
     api.teachers.getAll().then((data: any) => setTeachers(data.teachers || [])).catch(() => setTeachers([]));
   };
 
-  useEffect(loadTeachers, []);
+  const loadAcademicOptions = () => {
+    Promise.all([
+      api.academic.classes.getAll() as Promise<{ classes: { _id: string; name?: string }[] }>,
+      api.academic.subjects.getAll() as Promise<{ subjects: { _id: string; name?: string }[] }>,
+    ])
+      .then(([classData, subjectData]) => {
+        setClasses(classData.classes || []);
+        setSubjects(subjectData.subjects || []);
+      })
+      .catch(() => {
+        setClasses([]);
+        setSubjects([]);
+      });
+  };
+
+  useEffect(() => {
+    loadTeachers();
+    loadAcademicOptions();
+  }, []);
 
   const update = (key: keyof TeacherForm, value: string | boolean) => setForm((current) => ({ ...current, [key]: value }));
 
+  const classNameById = useMemo(() => new Map(classes.map((item) => [item._id, item.name || ''])), [classes]);
+  const classIdByName = useMemo(() => new Map(classes.map((item) => [item.name || '', item._id])), [classes]);
+  const subjectNameById = useMemo(() => new Map(subjects.map((item) => [item._id, item.name || ''])), [subjects]);
+  const subjectIdByName = useMemo(() => new Map(subjects.map((item) => [item.name || '', item._id])), [subjects]);
+
   const openEdit = (teacher: TeacherRecord) => {
+    const selectedClasses = (teacher.assignedClasses || []).map((item) => classIdByName.get(item.name || '') || '').filter(Boolean);
+    const selectedSubjects = (teacher.subjects || []).map((item) => subjectIdByName.get(item.name || '') || '').filter(Boolean);
     setEditingId(teacher._id || null);
     setForm({
       ...emptyForm,
@@ -92,8 +127,10 @@ export default function InstitutionTeachersPage() {
       employeeId: teacher.employeeId || '',
       designation: teacher.designation || '',
       department: teacher.department || '',
-      assignedClasses: (teacher.assignedClasses || []).map((item) => item.name).filter(Boolean).join(', '),
-      subjects: (teacher.subjects || []).map((item) => item.name).filter(Boolean).join(', '),
+      assignedClasses: selectedClasses,
+      newAssignedClasses: '',
+      subjects: selectedSubjects,
+      newSubjects: '',
       salary: String(teacher.salary || ''),
       joiningDate: teacher.joiningDate ? teacher.joiningDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
       qualification: teacher.qualification || '',
@@ -105,13 +142,28 @@ export default function InstitutionTeachersPage() {
   const submit = async () => {
     setStatus('Saving teacher...');
     try {
-      if (editingId) await api.teachers.update(editingId, form);
-      else await api.teachers.create(form);
+      const assignedClasses = unique([
+        ...form.assignedClasses.map((id) => classNameById.get(id) || id),
+        ...nameList(form.newAssignedClasses),
+      ]);
+      const resolvedSubjects = unique([
+        ...form.subjects.map((id) => subjectNameById.get(id) || id),
+        ...nameList(form.newSubjects),
+      ]);
+      const payload = {
+        ...form,
+        assignedClasses: assignedClasses.join(', '),
+        subjects: resolvedSubjects.join(', '),
+      };
+
+      if (editingId) await api.teachers.update(editingId, payload);
+      else await api.teachers.create(payload);
       setStatus('Teacher saved.');
       setOpen(false);
       setForm(emptyForm);
       setEditingId(null);
       loadTeachers();
+      loadAcademicOptions();
     } catch (error: any) {
       setStatus(error?.message || 'Teacher API failed.');
     }
@@ -131,7 +183,7 @@ export default function InstitutionTeachersPage() {
               Add Teacher
             </Button>
           </DialogTrigger>
-          <TeacherDialog form={form} update={update} submit={submit} editing={!!editingId} />
+          <TeacherDialog form={form} update={update} submit={submit} editing={!!editingId} classes={classes} subjects={subjects} />
         </Dialog>
       </div>
 
@@ -187,7 +239,7 @@ export default function InstitutionTeachersPage() {
   );
 }
 
-function TeacherDialog({ form, update, submit, editing }: { form: TeacherForm; update: (key: keyof TeacherForm, value: string | boolean) => void; submit: () => void; editing: boolean }) {
+function TeacherDialog({ form, update, submit, editing, classes, subjects }: { form: TeacherForm; update: (key: keyof TeacherForm, value: string | boolean) => void; submit: () => void; editing: boolean; classes: { _id: string; name?: string }[]; subjects: { _id: string; name?: string }[]; }) {
   const upload = async (file?: File) => {
     if (file) update('photo', await fileToDataUrl(file));
   };
@@ -205,8 +257,24 @@ function TeacherDialog({ form, update, submit, editing }: { form: TeacherForm; u
         <TextInput form={form} update={update} name="employeeId" label="Employee ID" />
         <TextInput form={form} update={update} name="designation" label="Designation" />
         <TextInput form={form} update={update} name="department" label="Department" />
-        <TextInput form={form} update={update} name="assignedClasses" label="Assigned Classes" placeholder="Class 6, Class 7" />
-        <TextInput form={form} update={update} name="subjects" label="Subjects" placeholder="Bangla, Math" />
+        <MultiSelectField
+          label="Assigned Classes"
+          options={classes}
+          value={form.assignedClasses}
+          onChange={(value) => update('assignedClasses', value as any)}
+          placeholder="Select existing classes"
+        />
+        <FieldNote>Choose existing classes above, then type any new class names below to create them automatically.</FieldNote>
+        <TextInput form={form} update={update} name="newAssignedClasses" label="New Classes" placeholder="Class 6, Class 7" />
+        <MultiSelectField
+          label="Subjects"
+          options={subjects}
+          value={form.subjects}
+          onChange={(value) => update('subjects', value as any)}
+          placeholder="Select existing subjects"
+        />
+        <FieldNote>Choose existing subjects above, then type any new subject names below to create them automatically.</FieldNote>
+        <TextInput form={form} update={update} name="newSubjects" label="New Subjects" placeholder="Bangla, Math" />
         <TextInput form={form} update={update} name="salary" label="Salary" type="number" />
         <TextInput form={form} update={update} name="joiningDate" label="Joining Date" type="date" />
         <TextInput form={form} update={update} name="qualification" label="Qualification" />
@@ -235,4 +303,41 @@ function TextInput({ form, update, name, label, type = 'text', placeholder }: { 
       <Input type={type} placeholder={placeholder} value={String(form[name] || '')} onChange={(event) => update(name, event.target.value)} />
     </div>
   );
+}
+
+function MultiSelectField({
+  label,
+  options,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  options: { _id: string; name?: string }[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <select
+        multiple
+        className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        value={value}
+        onChange={(event) => onChange(Array.from(event.target.selectedOptions).map((option) => option.value))}
+      >
+        {options.length === 0 ? <option value="">{placeholder}</option> : null}
+        {options.map((item) => (
+          <option key={item._id} value={item._id}>
+            {item.name || item._id}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function FieldNote({ children }: { children: ReactNode }) {
+  return <p className="-mt-2 text-xs text-slate-500 md:col-span-2">{children}</p>;
 }

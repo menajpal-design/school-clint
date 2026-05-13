@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Layers, Eye } from 'lucide-react'
 
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -9,6 +9,22 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProfessionalIDCard } from '@/components/id-cards/ProfessionalIDCard'
 import { AdmitCard } from '@/components/id-cards/AdmitCard'
+import { useAuth } from '@/hooks/useAuth'
+import { api } from '@/lib/api'
+
+type InstitutionProfile = {
+  _id?: string
+  name?: string
+  logo?: string
+  seal?: string
+  headSignature?: string
+  billing?: {
+    subscriptionExpiresAt?: string
+  }
+  headId?: {
+    name?: string
+  }
+}
 
 const cardTemplates = [
   {
@@ -41,37 +57,51 @@ const cardTemplates = [
   },
 ]
 
-const sampleData = {
-  name: 'Arjun Kumar Singh',
-  idNumber: 'STU-2024-001',
-  photoUrl: 'https://via.placeholder.com/100x120?text=Photo',
-  institutionName: 'Modern Public School',
-  institutionLogo: 'https://via.placeholder.com/50x50?text=Logo',
-  validityDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-  headName: 'Dr. Ramesh Sharma',
-  dateOfBirth: '2008-05-15',
-  fatherName: 'Mr. Rajesh Kumar Singh',
-  admissionNumber: 'ADM/2023/1001',
-  registrationNumber: 'REG/2023/001',
-  stream: 'Science (PCM)',
-  rollNumber: 'A-101',
-  examName: 'Annual Examination 2024',
-  examDate: '2024-02-15',
-  examCenter: 'School Campus, Hall A',
-  centerCode: 'CENTER-001',
-}
-
 export default function TemplatesPage() {
+  const { user } = useAuth()
   const [selectedTemplate, setSelectedTemplate] = useState('student')
   const [previewMode, setPreviewMode] = useState<'grid' | 'full'>('grid')
+  const [institution, setInstitution] = useState<InstitutionProfile | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const currentTemplate = cardTemplates.find((t) => t.id === selectedTemplate)
+
+  useEffect(() => {
+    let mounted = true
+
+    api.institution.profile()
+      .then((data: any) => {
+        if (!mounted) return
+        setInstitution(data?.institution || null)
+      })
+      .catch(() => {
+        if (!mounted) return
+        setInstitution(null)
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const institutionName = institution?.name || user?.institution?.name || 'Live Institution Preview'
+  const institutionLogo = institution?.logo || user?.institution?.logo
+  const institutionSeal = institution?.seal
+  const headName = institution?.headId?.name || user?.name || ''
+  const liveIdentity = user?.name || institutionName
+  const liveIdNumber = user?.id || institution?._id || ''
+  const validityDate = institution?.billing?.subscriptionExpiresAt || new Date().toISOString()
+  const examLabel = institutionName ? `${institutionName} Examination` : 'Live Examination'
+  const livePhotoUrl = user?.avatar
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="ID Card Templates"
-        description="Professional card templates with QR code integration. Preview and customize for your institution."
+        description="Professional card templates with QR code integration. Preview data is pulled from the live institution profile and current user."
         icon={Layers}
         status={<Badge variant="outline">Professional Templates</Badge>}
       />
@@ -130,74 +160,78 @@ export default function TemplatesPage() {
         <CardHeader>
           <CardTitle>{currentTemplate?.name} Preview</CardTitle>
           <CardDescription>
-            This template includes all required information, institutional branding, and integrated QR code for
-            verification.
+            This template uses live profile data where available, so the preview reflects the current institution.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {loading && (
+            <div className="mb-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+              Loading live profile data...
+            </div>
+          )}
           <div
             className={`flex ${previewMode === 'full' ? 'justify-center' : 'overflow-x-auto'}`}
           >
             <div className={previewMode === 'full' ? '' : 'min-w-max pr-4'}>
               {selectedTemplate === 'student' && (
                 <ProfessionalIDCard
-                  name={sampleData.name}
-                  idNumber={sampleData.idNumber}
+                  name={liveIdentity}
+                  idNumber={liveIdNumber || liveIdentity}
                   role="student"
-                  photoUrl={sampleData.photoUrl}
-                  institutionName={sampleData.institutionName}
-                  institutionLogo={sampleData.institutionLogo}
-                  validityDate={sampleData.validityDate}
-                  headName={sampleData.headName}
-                  dateOfBirth={sampleData.dateOfBirth}
-                  fatherName={sampleData.fatherName}
-                  admissionNumber={sampleData.admissionNumber}
-                  registrationNumber={sampleData.registrationNumber}
-                  stream={sampleData.stream}
+                  photoUrl={livePhotoUrl}
+                  institutionName={institutionName}
+                  institutionLogo={institutionLogo}
+                  institutionSeal={institutionSeal}
+                  headName={headName}
+                  validityDate={validityDate}
+                  stream={user?.role ? user.role.replace(/_/g, ' ') : institutionName}
                 />
               )}
               {selectedTemplate === 'teacher' && (
                 <ProfessionalIDCard
-                  name="Dr. Arun Kumar Verma"
-                  idNumber="FAC-2024-042"
+                  name={liveIdentity}
+                  idNumber={liveIdNumber || liveIdentity}
                   role="teacher"
-                  photoUrl={sampleData.photoUrl}
-                  institutionName={sampleData.institutionName}
-                  institutionLogo={sampleData.institutionLogo}
-                  validityDate={sampleData.validityDate}
-                  headName={sampleData.headName}
-                  fatherName="Mr. Vikram Verma"
-                  admissionNumber="DEPT/SCIENCE/001"
-                  registrationNumber="REG/FACULTY/042"
+                  photoUrl={livePhotoUrl}
+                  institutionName={institutionName}
+                  institutionLogo={institutionLogo}
+                  institutionSeal={institutionSeal}
+                  headName={headName}
+                  validityDate={validityDate}
+                  fatherName={user?.email}
+                  admissionNumber={institution?.name}
+                  registrationNumber={institution?._id}
                 />
               )}
               {selectedTemplate === 'staff' && (
                 <ProfessionalIDCard
-                  name="Ms. Sharma"
-                  idNumber="STAFF-2024-015"
+                  name={liveIdentity}
+                  idNumber={liveIdNumber || liveIdentity}
                   role="staff"
-                  photoUrl={sampleData.photoUrl}
-                  institutionName={sampleData.institutionName}
-                  institutionLogo={sampleData.institutionLogo}
-                  validityDate={sampleData.validityDate}
-                  headName={sampleData.headName}
+                  photoUrl={livePhotoUrl}
+                  institutionName={institutionName}
+                  institutionLogo={institutionLogo}
+                  institutionSeal={institutionSeal}
+                  headName={headName}
+                  validityDate={validityDate}
                 />
               )}
               {selectedTemplate === 'admit' && (
                 <AdmitCard
-                  name={sampleData.name}
-                  rollNumber={sampleData.rollNumber}
-                  photoUrl={sampleData.photoUrl}
-                  institutionName={sampleData.institutionName}
-                  institutionLogo={sampleData.institutionLogo}
-                  examName={sampleData.examName}
-                  examDate={sampleData.examDate}
-                  examCenter={sampleData.examCenter}
-                  centerCode={sampleData.centerCode}
-                  headName={sampleData.headName}
-                  dateOfBirth={sampleData.dateOfBirth}
-                  fatherName={sampleData.fatherName}
-                  stream={sampleData.stream}
+                  name={liveIdentity}
+                  rollNumber={liveIdNumber || liveIdentity}
+                  photoUrl={livePhotoUrl}
+                  institutionName={institutionName}
+                  institutionLogo={institutionLogo}
+                  institutionSeal={institutionSeal}
+                  examName={examLabel}
+                  examDate={validityDate}
+                  examCenter={institutionName}
+                  centerCode={institution?._id}
+                  headName={headName}
+                  dateOfBirth={user?.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : undefined}
+                  fatherName={user?.email}
+                  stream={user?.role ? user.role.replace(/_/g, ' ') : institutionName}
                 />
               )}
             </div>

@@ -53,58 +53,36 @@ type NoticeItem = {
   createdAt?: string;
 };
 
-const mockSummary: DashboardSummary = {
-  totalStudents: 845,
-  totalTeachers: 42,
-  totalStaff: 18,
-  todayAttendanceCount: 791,
-  monthlyFeeCollection: 428500,
-  activeNotices: 7,
-  idCardsIssued: 904,
+const emptySummary: DashboardSummary = {
+  totalStudents: 0,
+  totalTeachers: 0,
+  totalStaff: 0,
+  todayAttendanceCount: 0,
+  monthlyFeeCollection: 0,
+  activeNotices: 0,
+  idCardsIssued: 0,
 };
 
-const mockComposition = [
-  { name: "Students", value: 845, color: "#2563eb" },
-  { name: "Teachers", value: 42, color: "#059669" },
-  { name: "Staff", value: 18, color: "#f59e0b" },
-];
-
-const mockAttendance = [
-  { name: "Present", value: 791 },
-  { name: "Absent", value: 42 },
-  { name: "Late", value: 12 },
-  { name: "Leave", value: 8 },
-];
-
-const mockFeeTrend = [
-  { name: "Jan", value: 310000 },
-  { name: "Feb", value: 345000 },
-  { name: "Mar", value: 382000 },
-  { name: "Apr", value: 401000 },
-  { name: "May", value: 428500 },
-];
-
-const mockNotices: NoticeItem[] = [
-  { id: "mock-1", title: "Half-yearly exam routine published", category: "Academic", priority: "high" },
-  { id: "mock-2", title: "ID card renewal window opens this week", category: "ID Cards", priority: "medium" },
-  { id: "mock-3", title: "Monthly fee collection report is ready", category: "Finance", priority: "normal" },
-];
+const emptyComposition: CompositionPoint[] = [];
+const emptyAttendance: ChartPoint[] = [];
+const emptyFeeTrend: ChartPoint[] = [];
+const emptyNotices: NoticeItem[] = [];
 
 function normalizeSummary(data: any): DashboardSummary {
   return {
-    totalStudents: Number(data?.totalStudents ?? mockSummary.totalStudents),
-    totalTeachers: Number(data?.totalTeachers ?? mockSummary.totalTeachers),
-    totalStaff: Number(data?.totalStaff ?? mockSummary.totalStaff),
-    todayAttendanceCount: Number(data?.todayAttendanceCount ?? data?.todayAttendance ?? mockSummary.todayAttendanceCount),
-    monthlyFeeCollection: Number(data?.monthlyFeeCollection ?? data?.monthlyFees ?? mockSummary.monthlyFeeCollection),
-    activeNotices: Number(data?.activeNotices ?? mockSummary.activeNotices),
-    idCardsIssued: Number(data?.idCardsIssued ?? data?.issuedIdCards ?? mockSummary.idCardsIssued),
+    totalStudents: Number(data?.totalStudents ?? 0),
+    totalTeachers: Number(data?.totalTeachers ?? 0),
+    totalStaff: Number(data?.totalStaff ?? 0),
+    todayAttendanceCount: Number(data?.todayAttendanceCount ?? data?.todayAttendance ?? 0),
+    monthlyFeeCollection: Number(data?.monthlyFeeCollection ?? data?.monthlyFees ?? 0),
+    activeNotices: Number(data?.activeNotices ?? 0),
+    idCardsIssued: Number(data?.idCardsIssued ?? data?.issuedIdCards ?? 0),
   };
 }
 
 function normalizeComposition(data: any): CompositionPoint[] {
   const source = Array.isArray(data) ? data : Array.isArray(data?.composition) ? data.composition : [];
-  if (!source.length) return mockComposition;
+  if (!source.length) return emptyComposition;
   return source.map((item: any, index: number) => ({
     name: item.name || item._id || item.type || `Group ${index + 1}`,
     value: Number(item.value || item.count || item.total || 0),
@@ -119,7 +97,7 @@ function normalizeAttendance(data: any): ChartPoint[] {
       : Array.isArray(data?.attendanceOverview)
         ? data.attendanceOverview
         : [];
-  if (!source.length) return mockAttendance;
+  if (!source.length) return emptyAttendance;
   return source.map((item: any, index: number) => ({
     name: item.name || item.status || item._id || item.class || `Item ${index + 1}`,
     value: Number(item.value || item.count || item.present || item.percentage || 0),
@@ -136,7 +114,7 @@ function normalizeFeeTrend(data: any): ChartPoint[] {
         : Array.isArray(data?.charts?.feeTrend)
           ? data.charts.feeTrend
           : [];
-  if (!source.length) return mockFeeTrend;
+  if (!source.length) return emptyFeeTrend;
   return source.map((item: any, index: number) => ({
     name: item.name || item.month || item._id || `M${index + 1}`,
     value: Number(item.value || item.total || item.amount || item.collection || 0),
@@ -145,7 +123,7 @@ function normalizeFeeTrend(data: any): ChartPoint[] {
 
 function normalizeNotices(data: any): NoticeItem[] {
   const source = Array.isArray(data) ? data : Array.isArray(data?.notices) ? data.notices : [];
-  if (!source.length) return mockNotices;
+  if (!source.length) return emptyNotices;
   return source.slice(0, 5).map((item: any) => ({
     _id: item._id,
     id: item.id,
@@ -219,20 +197,20 @@ function getQuickActions(role?: UserRole) {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [summary, setSummary] = useState<DashboardSummary>(mockSummary);
-  const [composition, setComposition] = useState<CompositionPoint[]>(mockComposition);
-  const [attendance, setAttendance] = useState<ChartPoint[]>(mockAttendance);
-  const [feeTrend, setFeeTrend] = useState<ChartPoint[]>(mockFeeTrend);
-  const [notices, setNotices] = useState<NoticeItem[]>(mockNotices);
+  const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
+  const [composition, setComposition] = useState<CompositionPoint[]>(emptyComposition);
+  const [attendance, setAttendance] = useState<ChartPoint[]>(emptyAttendance);
+  const [feeTrend, setFeeTrend] = useState<ChartPoint[]>(emptyFeeTrend);
+  const [notices, setNotices] = useState<NoticeItem[]>(emptyNotices);
   const [loading, setLoading] = useState(true);
-  const [usingFallback, setUsingFallback] = useState(false);
+  const [dataSource, setDataSource] = useState<'loading' | 'live' | 'empty'>('loading');
 
   useEffect(() => {
     let mounted = true;
 
     async function loadDashboard() {
       setLoading(true);
-      setUsingFallback(false);
+      setDataSource('loading');
 
       try {
         const [summaryData, chartsData, compositionData, noticesData] = await Promise.all([
@@ -248,14 +226,15 @@ export default function Dashboard() {
         setAttendance(normalizeAttendance(chartsData));
         setFeeTrend(normalizeFeeTrend(chartsData));
         setNotices(normalizeNotices(noticesData));
+        setDataSource('live');
       } catch {
         if (!mounted) return;
-        setSummary(mockSummary);
-        setComposition(mockComposition);
-        setAttendance(mockAttendance);
-        setFeeTrend(mockFeeTrend);
-        setNotices(mockNotices);
-        setUsingFallback(true);
+        setSummary(emptySummary);
+        setComposition(emptyComposition);
+        setAttendance(emptyAttendance);
+        setFeeTrend(emptyFeeTrend);
+        setNotices(emptyNotices);
+        setDataSource('empty');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -290,11 +269,12 @@ export default function Dashboard() {
           <h1 className="text-4xl font-bold text-slate-900">Dashboard</h1>
           <p className="mt-2 text-lg text-slate-600">Welcome{user?.name ? `, ${user.name}` : ""}. Role-based overview for {roleLabel(user?.role as UserRole | undefined)} operations.</p>
           <div className="mt-4 flex justify-center">
-            {usingFallback ? (
-              <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 px-4 py-2">Mock fallback</Badge>
-            ) : (
-              <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-2">Live dashboard</Badge>
-            )}
+            <Badge
+              variant="outline"
+              className={`px-4 py-2 ${dataSource === 'live' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : dataSource === 'empty' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-blue-200 bg-blue-50 text-blue-700'}`}
+            >
+              {dataSource === 'live' ? 'Live dashboard' : dataSource === 'empty' ? 'No live data yet' : 'Loading live data'}
+            </Badge>
           </div>
         </div>
 
@@ -366,19 +346,25 @@ export default function Dashboard() {
               <CardDescription className="text-slate-600">Latest announcements from the institution</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {notices.map((notice) => (
-                <div key={notice._id || notice.id || notice.title} className="rounded-lg border border-slate-200 bg-white/60 p-4 shadow-sm backdrop-blur-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{notice.title}</p>
-                      <p className="mt-1 text-xs text-slate-500">{notice.category || "General"}</p>
-                    </div>
-                    <Badge variant="outline" className={`capitalize ${notice.priority === 'high' ? 'border-red-200 bg-red-50 text-red-700' : notice.priority === 'medium' ? 'border-yellow-200 bg-yellow-50 text-yellow-700' : 'border-green-200 bg-green-50 text-green-700'}`}>
-                      {notice.priority || "normal"}
-                    </Badge>
-                  </div>
+              {notices.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-200 bg-white/60 p-4 text-sm text-slate-500 shadow-sm backdrop-blur-sm">
+                  No recent notices are available from the live system yet.
                 </div>
-              ))}
+              ) : (
+                notices.map((notice) => (
+                  <div key={notice._id || notice.id || notice.title} className="rounded-lg border border-slate-200 bg-white/60 p-4 shadow-sm backdrop-blur-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{notice.title}</p>
+                        <p className="mt-1 text-xs text-slate-500">{notice.category || "General"}</p>
+                      </div>
+                      <Badge variant="outline" className={`capitalize ${notice.priority === 'high' ? 'border-red-200 bg-red-50 text-red-700' : notice.priority === 'medium' ? 'border-yellow-200 bg-yellow-50 text-yellow-700' : 'border-green-200 bg-green-50 text-green-700'}`}>
+                        {notice.priority || "normal"}
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </section>
