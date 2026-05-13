@@ -112,10 +112,36 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   captureTarget.style.width = `${target.scrollWidth || target.offsetWidth || 900}px`;
   captureTarget.style.background = "#ffffff";
   captureTarget.style.padding = "16px";
+  
   const header = document.createElement("div");
   header.innerHTML = institutionHeader();
   captureTarget.appendChild(header);
-  captureTarget.appendChild(target.cloneNode(true));
+  
+  // Clone and inline computed styles to fix color rendering
+  const clonedTarget = target.cloneNode(true) as HTMLElement;
+  const walk = (el: HTMLElement, original: Element) => {
+    const computed = window.getComputedStyle(original);
+    el.style.color = computed.color;
+    el.style.backgroundColor = computed.backgroundColor;
+    el.style.borderColor = computed.borderColor;
+    el.style.borderWidth = computed.borderWidth;
+    el.style.borderStyle = computed.borderStyle;
+    el.style.borderRadius = computed.borderRadius;
+    el.style.padding = computed.padding;
+    el.style.margin = computed.margin;
+    el.style.fontSize = computed.fontSize;
+    el.style.fontWeight = computed.fontWeight;
+    
+    const childEls = Array.from(el.children) as HTMLElement[];
+    const origChildEls = Array.from(original.children) as Element[];
+    childEls.forEach((child, idx) => {
+      if (origChildEls[idx]) walk(child, origChildEls[idx]);
+    });
+  };
+  
+  walk(clonedTarget, target);
+  captureTarget.appendChild(clonedTarget);
+  
   const qrFooter = document.createElement("div");
   qrFooter.style.display = "flex";
   qrFooter.style.justifyContent = "flex-end";
@@ -130,7 +156,7 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
     useCORS: true,
     allowTaint: true,
     scrollX: 0,
-    scrollY: -window.scrollY,
+    scrollY: 0,
   });
   document.body.removeChild(captureTarget);
 
@@ -159,13 +185,40 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
 export async function printElement(target: HTMLElement | null, title = "Print") {
   if (!target) return;
   const qrDataUrl = await makeQrDataUrl(qrPayload(title), 128);
+  
+  // Clone and inline computed styles for print consistency
+  const cloned = target.cloneNode(true) as HTMLElement;
+  const walk = (el: HTMLElement, original: Element) => {
+    const computed = window.getComputedStyle(original);
+    el.style.color = computed.color;
+    el.style.backgroundColor = computed.backgroundColor;
+    el.style.borderColor = computed.borderColor;
+    el.style.borderWidth = computed.borderWidth;
+    el.style.borderStyle = computed.borderStyle;
+    el.style.borderRadius = computed.borderRadius;
+    el.style.padding = computed.padding;
+    el.style.margin = computed.margin;
+    el.style.fontSize = computed.fontSize;
+    el.style.fontWeight = computed.fontWeight;
+    el.style.textAlign = computed.textAlign;
+    el.style.display = computed.display;
+    
+    const childEls = Array.from(el.children) as HTMLElement[];
+    const origChildEls = Array.from(original.children) as Element[];
+    childEls.forEach((child, idx) => {
+      if (origChildEls[idx]) walk(child, origChildEls[idx]);
+    });
+  };
+  walk(cloned, target);
+  
   const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
     .map((node) => node.outerHTML)
     .join("");
+  
   const popup = window.open("", "_blank", "width=1200,height=900");
   if (!popup) return;
   popup.document.open();
-  popup.document.write(pageShell(title, `${styleTags}<main style="padding:20px">${institutionHeader()}${target.outerHTML}<div class="print-footer">${qrBlock(qrDataUrl)}</div></main>`));
+  popup.document.write(pageShell(title, `${styleTags}<main style="padding:20px">${institutionHeader()}${cloned.outerHTML}<div class="print-footer">${qrBlock(qrDataUrl)}</div></main>`));
   popup.document.close();
   popup.focus();
   setTimeout(() => {

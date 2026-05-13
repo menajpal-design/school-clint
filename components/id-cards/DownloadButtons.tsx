@@ -12,6 +12,7 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
   const captureElement = async () => {
     if (!targetRef?.current) return null
     await document.fonts?.ready?.catch(() => undefined)
+    
     // Inline remote images to data URLs to avoid CORS tainting
     const inlineImages = async (root: HTMLElement) => {
       const imgs = Array.from(root.querySelectorAll('img')) as HTMLImageElement[]
@@ -38,16 +39,55 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
 
     await inlineImages(targetRef.current)
 
-    return html2canvas(targetRef.current, {
+    // Create a wrapper div and clone with computed styles inlined
+    const wrapper = document.createElement('div')
+    wrapper.style.position = 'fixed'
+    wrapper.style.left = '-9999px'
+    wrapper.style.top = '0'
+    wrapper.style.background = 'white'
+    
+    const cloned = targetRef.current.cloneNode(true) as HTMLElement
+    
+    // Walk through all elements and copy computed styles
+    const walk = (el: HTMLElement, original: Element) => {
+      const computed = window.getComputedStyle(original)
+      el.style.color = computed.color
+      el.style.backgroundColor = computed.backgroundColor
+      el.style.borderColor = computed.borderColor
+      el.style.borderWidth = computed.borderWidth
+      el.style.borderStyle = computed.borderStyle
+      el.style.borderRadius = computed.borderRadius
+      el.style.padding = computed.padding
+      el.style.margin = computed.margin
+      el.style.fontSize = computed.fontSize
+      el.style.fontWeight = computed.fontWeight
+      el.style.textAlign = computed.textAlign
+      el.style.display = computed.display
+      
+      const childEls = Array.from(el.children) as HTMLElement[]
+      const origChildEls = Array.from(original.children) as Element[]
+      childEls.forEach((child, idx) => {
+        if (origChildEls[idx]) walk(child, origChildEls[idx])
+      })
+    }
+    
+    walk(cloned, targetRef.current)
+    wrapper.appendChild(cloned)
+    document.body.appendChild(wrapper)
+
+    const canvas = await html2canvas(wrapper, {
       scale: 3,
       backgroundColor: '#ffffff',
       useCORS: true,
       allowTaint: true,
       scrollX: 0,
-      scrollY: -window.scrollY,
-      windowWidth: targetRef.current.scrollWidth,
-      windowHeight: targetRef.current.scrollHeight,
+      scrollY: 0,
+      windowWidth: wrapper.scrollWidth,
+      windowHeight: wrapper.scrollHeight,
     })
+    
+    document.body.removeChild(wrapper)
+    return canvas
   }
 
   const downloadPNG = async () => {
