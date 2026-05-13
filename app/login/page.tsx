@@ -17,8 +17,6 @@ import { User, UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
 
 const demoRoles: UserRole[] = [
-  'admin',
-  'super_admin',
   'head',
   'assistant_head',
   'class_teacher',
@@ -131,6 +129,17 @@ export default function LoginPage() {
   };
 
   const startDemoSession = () => {
+    if (demoRole === 'admin' || demoRole === 'super_admin') {
+      setDemoRole('head');
+      addToast({
+        title: 'Demo role not available',
+        message: 'Admin and Super Admin are not available in demo mode.',
+        type: 'warning',
+        duration: 2500,
+      });
+      return;
+    }
+
     const user: User = {
       id: `demo-${demoRole}`,
       name: `${demoRole.replace(/_/g, ' ')} Demo`,
