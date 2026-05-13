@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
-import { makeQrDataUrl } from "@/lib/export-utils";
+import { getPrintInstitution, makeQrDataUrl } from "@/lib/export-utils";
 import { downloadFile, formatDate } from "@/lib/utils";
 
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
@@ -78,8 +78,10 @@ export default function AttendanceReportsPage() {
 
   const exportPdf = async () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    const institution = getPrintInstitution();
     const qrDataUrl = await makeQrDataUrl(JSON.stringify({
       title: "Attendance Report",
+      institution: institution.name,
       startDate,
       endDate,
       records: reportRows.length,
@@ -102,11 +104,12 @@ export default function AttendanceReportsPage() {
       doc.rect(0, 0, pageWidth, 72, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.text("Attendance Report", margin, 32);
+      doc.setFontSize(16);
+      doc.text(institution.name, margin, 24);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(`Period: ${startDate} to ${endDate} | Records: ${reportRows.length}`, margin, 52);
+      doc.setFontSize(9);
+      if (institution.address) doc.text(institution.address, margin, 40);
+      doc.text(`Attendance Report | Period: ${startDate} to ${endDate} | Records: ${reportRows.length}`, margin, institution.address ? 56 : 44);
       doc.addImage(qrDataUrl, "PNG", pageWidth - margin - 54, 14, 48, 48);
       doc.setFontSize(7);
       doc.text("Scan to verify", pageWidth - margin - 30, 68, { align: "center" });

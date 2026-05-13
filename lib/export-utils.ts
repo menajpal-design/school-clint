@@ -1,11 +1,38 @@
 "use client";
 
 import { downloadFile } from "@/lib/utils";
+import { authManager } from "@/lib/auth";
+
+export function getPrintInstitution() {
+  const institution = authManager.getUser()?.institution as any;
+  return {
+    name: institution?.name || "Easy School",
+    address: institution?.address || "",
+    phone: institution?.phone || "",
+    email: institution?.email || "",
+    logo: institution?.logo || "",
+  };
+}
+
+const institutionHeader = () => {
+  const institution = getPrintInstitution();
+  return `
+    <header class="institution-header">
+      <div class="institution-logo">${institution.logo ? `<img src="${institution.logo}" alt="Institution logo" />` : "Logo"}</div>
+      <div class="institution-info">
+        <h1>${institution.name}</h1>
+        ${institution.address ? `<p>${institution.address}</p>` : ""}
+        ${(institution.phone || institution.email) ? `<p>${[institution.phone, institution.email].filter(Boolean).join(" | ")}</p>` : ""}
+      </div>
+    </header>
+  `;
+};
 
 const qrPayload = (title: string, extra?: string) => {
   const timestamp = new Date().toISOString();
   const location = typeof window !== "undefined" ? window.location.href : "";
-  return JSON.stringify({ title, location, timestamp, extra });
+  const institution = getPrintInstitution();
+  return JSON.stringify({ title, institution: institution.name, address: institution.address, location, timestamp, extra });
 };
 
 export async function makeQrDataUrl(value: string, width = 128) {
@@ -41,6 +68,11 @@ const pageShell = (title: string, body: string, styles = "") => `
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #cbd5e1; padding: 8px; font-size: 12px; text-align: left; }
         th { background: #f1f5f9; font-weight: 700; }
+        .institution-header { display: flex; align-items: center; gap: 14px; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; }
+        .institution-logo { width: 58px; height: 58px; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 11px; font-weight: 700; overflow: hidden; }
+        .institution-logo img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
+        .institution-info h1 { margin: 0; font-size: 22px; line-height: 1.15; color: #0f172a; }
+        .institution-info p { margin: 3px 0 0; font-size: 12px; color: #475569; }
         .print-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; }
         .print-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
         .print-muted { color: #64748b; font-size: 12px; }
@@ -80,6 +112,9 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   captureTarget.style.width = `${target.scrollWidth || target.offsetWidth || 900}px`;
   captureTarget.style.background = "#ffffff";
   captureTarget.style.padding = "16px";
+  const header = document.createElement("div");
+  header.innerHTML = institutionHeader();
+  captureTarget.appendChild(header);
   captureTarget.appendChild(target.cloneNode(true));
   const qrFooter = document.createElement("div");
   qrFooter.style.display = "flex";
@@ -130,7 +165,7 @@ export async function printElement(target: HTMLElement | null, title = "Print") 
   const popup = window.open("", "_blank", "width=1200,height=900");
   if (!popup) return;
   popup.document.open();
-  popup.document.write(pageShell(title, `${styleTags}<main style="padding:20px">${target.outerHTML}<div class="print-footer">${qrBlock(qrDataUrl)}</div></main>`));
+  popup.document.write(pageShell(title, `${styleTags}<main style="padding:20px">${institutionHeader()}${target.outerHTML}<div class="print-footer">${qrBlock(qrDataUrl)}</div></main>`));
   popup.document.close();
   popup.focus();
   setTimeout(() => {
@@ -144,7 +179,7 @@ export async function printHtml(title: string, bodyHtml: string, styles = "", qr
   const popup = window.open("", "_blank", "width=900,height=900");
   if (!popup) return;
   const bodyWithQr = bodyHtml
-    .replace('<main class="print-card">', '<main class="print-card"><div class="print-heading"><div>')
+    .replace('<main class="print-card">', `<main class="print-card">${institutionHeader()}<div class="print-heading"><div>`)
     .replace('<div class="print-grid"', `</div>${qrBlock(qrDataUrl)}</div><div class="print-grid"`);
   popup.document.open();
   popup.document.write(pageShell(title, bodyWithQr, styles));
