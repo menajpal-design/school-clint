@@ -416,6 +416,13 @@ export const api = {
     send: (data: any) => apiClient.post('/messages/send', data),
     markAsRead: (id: string) => apiClient.patch(`/messages/${id}/read`),
     delete: (id: string) => apiClient.delete(`/messages/${id}`),
-    getUnreadCount: () => apiClient.get('/messages/stats/unread'),
+    getUnreadCount: async () => {
+      try {
+        return await apiClient.get('/messages/stats/unread');
+      } catch (error: any) {
+        if (error?.response?.status === 404) return { success: true, unreadCount: 0 };
+        throw error;
+      }
+    },
   },
 };

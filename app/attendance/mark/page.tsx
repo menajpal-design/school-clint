@@ -115,9 +115,9 @@ export default function AttendanceMarkPage() {
           </label>
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-700">Section</span>
-            <Select value={sectionId} onValueChange={setSectionId}>
+            <Select value={sectionId || "all"} onValueChange={(value) => setSectionId(value === "all" ? "" : value)}>
               <SelectTrigger><SelectValue placeholder="All sections" /></SelectTrigger>
-              <SelectContent><SelectItem value="">All sections</SelectItem>{sections.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
+              <SelectContent><SelectItem value="all">All sections</SelectItem>{sections.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
             </Select>
           </label>
           <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Date</span><Input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>

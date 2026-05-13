@@ -39,6 +39,11 @@ const admissionSchema = z.object({
 });
 
 type AdmissionValues = z.infer<typeof admissionSchema>;
+type AcademicClassOption = {
+  _id: string;
+  name: string;
+  sections?: Array<{ _id: string; name: string; isActive?: boolean }>;
+};
 
 const steps = ['Student personal info', 'Academic info', 'Parent/guardian info', 'Auto account and ID card'];
 
@@ -46,6 +51,7 @@ export default function InstitutionAdmissionPage() {
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState('');
   const [applications, setApplications] = useState<any[]>([]);
+  const [academicClasses, setAcademicClasses] = useState<AcademicClassOption[]>([]);
   const form = useForm<AdmissionValues>({
     resolver: zodResolver(admissionSchema),
     defaultValues: {
@@ -71,7 +77,18 @@ export default function InstitutionAdmissionPage() {
     api.admissions.getAll().then((data: any) => setApplications(data.applications || [])).catch(() => setApplications([]));
   };
 
+  const loadAcademicClasses = () => {
+    api.academic.classes.getAll()
+      .then((data: any) => setAcademicClasses(data.classes || []))
+      .catch(() => setAcademicClasses([]));
+  };
+
   useEffect(loadApplications, []);
+  useEffect(loadAcademicClasses, []);
+
+  const selectedClassName = form.watch('className');
+  const selectedClass = academicClasses.find((item) => item.name === selectedClassName);
+  const availableSections = (selectedClass?.sections || []).filter((section) => section?.isActive !== false && section?.name);
 
   const next = async () => {
     const fields: (keyof AdmissionValues)[][] = [
@@ -178,8 +195,44 @@ export default function InstitutionAdmissionPage() {
 
                 {step === 1 && (
                   <div className="grid gap-4 md:grid-cols-2">
-                    <Field form={form} name="className" label="Class" />
-                    <Field form={form} name="sectionName" label="Section" />
+                    <FormField control={form.control} name="className" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Class</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('sectionName', '');
+                          }}
+                          value={field.value}
+                        >
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {academicClasses.map((classItem) => (
+                              <SelectItem key={classItem._id} value={classItem.name}>{classItem.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="sectionName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Section</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select section" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {availableSections.length > 0 ? (
+                              availableSections.map((section) => (
+                                <SelectItem key={section._id} value={section.name}>{section.name}</SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="no-sections" disabled>No sections found for selected class</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                     <Field form={form} name="rollNumber" label="Roll" />
                     <Field form={form} name="admissionDate" label="Admission Date" type="date" />
                   </div>
