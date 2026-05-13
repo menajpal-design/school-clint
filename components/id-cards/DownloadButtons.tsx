@@ -11,8 +11,33 @@ import { downloadElementPdf, printElement } from '@/lib/export-utils'
 export function DownloadButtons({ targetRef, filename = 'id-card', cardId, printTitle = 'Print ID Card', emailSubject = 'ID Card' }: { targetRef: React.RefObject<HTMLElement> | null; filename?: string; cardId?: string; printTitle?: string; emailSubject?: string }) {
   const captureElement = async () => {
     if (!targetRef?.current) return null
-
     await document.fonts?.ready?.catch(() => undefined)
+    // Inline remote images to data URLs to avoid CORS tainting
+    const inlineImages = async (root: HTMLElement) => {
+      const imgs = Array.from(root.querySelectorAll('img')) as HTMLImageElement[]
+      await Promise.all(imgs.map(async (img) => {
+        try {
+          const src = img.getAttribute('src') || ''
+          if (!src || src.startsWith('data:') || src.startsWith('blob:')) return
+          // fetch and convert to data URL
+          const res = await fetch(src)
+          if (!res.ok) return
+          const blob = await res.blob()
+          const reader = new FileReader()
+          const dataUrl: string = await new Promise((resolve, reject) => {
+            reader.onloadend = () => resolve(String(reader.result || ''))
+            reader.onerror = reject
+            reader.readAsDataURL(blob)
+          })
+          img.setAttribute('src', dataUrl)
+        } catch (e) {
+          // ignore failures and leave original src
+        }
+      }))
+    }
+
+    await inlineImages(targetRef.current)
+
     return html2canvas(targetRef.current, {
       scale: 3,
       backgroundColor: '#ffffff',
