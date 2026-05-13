@@ -24,6 +24,7 @@ const registerSchema = z.object({
   phone: z.string().optional(),
   role: z.enum(['head']).default('head'),
   planCode: z.string().optional(),
+  billingCycle: z.enum(['monthly', 'yearly']).default('monthly'),
   paymentTrxId: z.string().optional(),
   paymentSenderNumber: z.string().optional(),
   receivedAmount: z.string().optional(),
@@ -39,6 +40,7 @@ export default function RegisterPage() {
   const { addToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlanCode, setSelectedPlanCode] = useState('students_100');
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   const {
     register,
@@ -47,16 +49,20 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: 'head', planCode: 'students_100', paymentTrxId: '', paymentSenderNumber: '', receivedAmount: '' },
+    defaultValues: { role: 'head', planCode: 'students_100', billingCycle: 'monthly', paymentTrxId: '', paymentSenderNumber: '', receivedAmount: '' },
   });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const planCode = params.get('plan') || 'students_100';
+    const billingCycle = params.get('billingCycle') === 'yearly' ? 'yearly' : 'monthly';
     setSelectedPlanCode(planCode);
+    setSelectedBillingCycle(billingCycle);
     setValue('planCode', planCode);
+    setValue('billingCycle', billingCycle);
     setValue('paymentTrxId', params.get('trxId') || '');
     setValue('paymentSenderNumber', params.get('sender') || '');
+    setValue('receivedAmount', params.get('amount') || '');
   }, [setValue]);
 
   const onSubmit = async (data: RegisterForm) => {
@@ -69,6 +75,7 @@ export default function RegisterPage() {
         phone: data.phone || '',
         role: data.role,
         planCode: data.planCode || selectedPlanCode,
+        billingCycle: data.billingCycle || selectedBillingCycle,
         institutionName: data.institutionName,
         paymentGateway: 'bkash',
         paymentTrxId: data.paymentTrxId,
@@ -115,8 +122,9 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-4">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Create Account</h2>
           <input type="hidden" {...register('planCode')} />
+          <input type="hidden" {...register('billingCycle')} />
           <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
-            Selected plan: <span className="font-semibold">{getPlanByCode(selectedPlanCode).name}</span>. Payment is not required during registration.
+            Selected plan: <span className="font-semibold">{getPlanByCode(selectedPlanCode).name}</span> · <span className="font-semibold capitalize">{selectedBillingCycle}</span>. Payment is not required during registration.
           </div>
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
             <div>

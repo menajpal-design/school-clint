@@ -9,13 +9,17 @@ import { Badge } from "@/components/ui/badge";
 import { easySchoolStorageMonthlyPrice, schoolPlans } from "@/lib/plans";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const money = (value: number) => `BDT ${value.toLocaleString()}`;
 
 export default function PricingPage() {
   const [payPlan, setPayPlan] = useState<any>(null);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [trxId, setTrxId] = useState("");
   const [senderNumber, setSenderNumber] = useState("");
+
+  const amount = payPlan ? (billingCycle === "yearly" ? payPlan.yearlyPrice : payPlan.monthlyPrice) : 0;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -123,12 +127,22 @@ export default function PricingPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="rounded-lg border bg-slate-50 p-4 text-sm">
-              Monthly amount: <span className="font-semibold">{money(payPlan?.monthlyPrice || 0)}</span>. Easy School storage adds {money(easySchoolStorageMonthlyPrice)}/month if selected after signup.
+              <div className="font-medium text-slate-900">Payment cycle</div>
+              <Select value={billingCycle} onValueChange={(value) => setBillingCycle(value as "monthly" | "yearly")}>
+                <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly - {money(payPlan?.monthlyPrice || 0)}</SelectItem>
+                  <SelectItem value="yearly">Yearly - {money(payPlan?.yearlyPrice || 0)} ({payPlan?.yearlyDiscountPercent || 0}% discount)</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="mt-3">
+                Payable amount: <span className="font-semibold">{money(amount)}</span>. Easy School storage adds {money(easySchoolStorageMonthlyPrice)}/month if selected after signup.
+              </div>
             </div>
             <Input value={trxId} onChange={(e) => setTrxId(e.target.value)} placeholder="Transaction ID" />
             <Input value={senderNumber} onChange={(e) => setSenderNumber(e.target.value)} placeholder="Sender number" />
             <Button asChild className="w-full">
-              <Link href={`/register?plan=${payPlan?.code || "students_100"}&trxId=${encodeURIComponent(trxId)}&sender=${encodeURIComponent(senderNumber)}`}>
+              <Link href={`/register?plan=${payPlan?.code || "students_100"}&billingCycle=${billingCycle}&amount=${amount}&trxId=${encodeURIComponent(trxId)}&sender=${encodeURIComponent(senderNumber)}`}>
                 Continue Signup
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
