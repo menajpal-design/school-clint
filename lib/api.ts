@@ -3,6 +3,7 @@ import { getDemoMode } from './demo-store';
 import { demoRequest } from './demo-api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://school-server-b264c1a1fac6.herokuapp.com/api';
+  export const API_URL = API_BASE_URL;
 
 interface ApiError {
   message: string;

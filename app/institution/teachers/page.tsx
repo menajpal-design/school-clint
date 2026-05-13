@@ -42,6 +42,7 @@ type TeacherForm = {
   experience: string;
   photo: string;
   autoIdCard: boolean;
+  sendAppointmentLetter: boolean;
 };
 
 const emptyForm: TeacherForm = {
@@ -61,6 +62,7 @@ const emptyForm: TeacherForm = {
   experience: '0',
   photo: '',
   autoIdCard: true,
+  sendAppointmentLetter: false,
 };
 
 const fileToDataUrl = (file: File) =>
@@ -252,7 +254,7 @@ function TeacherDialog({ form, update, submit, editing, classes, subjects }: { f
       </DialogHeader>
       <div className="grid max-h-[70vh] gap-4 overflow-y-auto pr-1 md:grid-cols-2">
         <TextInput form={form} update={update} name="name" label="Name" />
-        <TextInput form={form} update={update} name="email" label="Email" type="email" />
+        <TextInput form={form} update={update} name="email" label="Email (Optional)" type="email" placeholder="Leave blank to auto-generate" />
         <TextInput form={form} update={update} name="phone" label="Phone" />
         <TextInput form={form} update={update} name="employeeId" label="Employee ID" />
         <TextInput form={form} update={update} name="designation" label="Designation" />
@@ -288,6 +290,12 @@ function TeacherDialog({ form, update, submit, editing, classes, subjects }: { f
           <CreditCard className="h-4 w-4" />
           Auto generate account and ID card
         </label>
+        {form.email && (
+          <label className="flex items-center gap-3 rounded-md border p-3 text-sm">
+            <Checkbox checked={form.sendAppointmentLetter} onCheckedChange={(value) => update('sendAppointmentLetter', Boolean(value))} />
+            <span>Send appointment letter via email</span>
+          </label>
+        )}
       </div>
       <DialogFooter>
         <Button onClick={submit}>{editing ? 'Save Changes' : 'Create Teacher'}</Button>
