@@ -15,6 +15,10 @@ export type IDCardProps = {
     name?: string
     logoUrl?: string
     headName?: string
+    address?: string
+    email?: string
+    phone?: string
+    website?: string
   }
   validity?: string
   qrData?: string
@@ -42,6 +46,10 @@ export function StudentIDCard({
       photoUrl={photoUrl}
       institutionName={institution?.name || 'My Institution'}
       institutionLogo={institution?.logoUrl}
+        institutionAddress={institution?.address}
+        institutionPhone={institution?.phone}
+        institutionEmail={institution?.email}
+        institutionWebsite={institution?.website}
       headName={headName || institution?.headName || ''}
       validityDate={validity}
       stream={studentClass}

@@ -124,7 +124,9 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
       role,
       institution: institutionName,
       address: institutionAddress,
+      phone: institutionPhone,
       email: institutionEmail,
+      website: institutionWebsite,
       validity: displayValidityDate,
       class: stream,
       dob: dateOfBirth,
@@ -198,7 +200,9 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
 
             <div style={{ position: 'absolute', left: 44, right: 18, bottom: 36, display: 'grid', gap: 5, fontSize: 8.5, lineHeight: '11px', fontWeight: 700, color: '#082f3a' }}>
               <ContactLine value={institutionAddress} />
+              <ContactLine value={institutionPhone} />
               <ContactLine value={institutionEmail} />
+              <ContactLine value={institutionWebsite} />
             </div>
           </section>
         </div>

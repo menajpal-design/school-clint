@@ -13,6 +13,10 @@ export function StaffIDCard(props: IDCardProps) {
       photoUrl={props.photoUrl}
       institutionName={props.institution?.name || 'My Institution'}
       institutionLogo={props.institution?.logoUrl}
+      institutionAddress={props.institution?.address}
+      institutionPhone={props.institution?.phone}
+      institutionEmail={props.institution?.email}
+      institutionWebsite={props.institution?.website}
       headName={props.headName || props.institution?.headName || ''}
       validityDate={props.validity}
       stream={props.studentClass}
