@@ -16,7 +16,7 @@ import { authManager } from '@/lib/auth'
 const toDateInputValue = (date: Date) => date.toISOString().split('T')[0]
 
 const schema = z.object({
-  cardType: z.enum(['student-id', 'teacher-id', 'staff-id', 'admit-card']).default('student-id'),
+  cardType: z.enum(['student-id', 'teacher-id', 'head-id', 'staff-id', 'admit-card']).default('student-id'),
   name: z.string().min(1, 'Name is required'),
   idNumber: z.string().min(1, 'ID Number is required'),
   photoUrl: z.string().url().or(z.literal('')),
@@ -99,7 +99,8 @@ export function GenerateIDCardForm() {
                   className="w-full border rounded px-3 py-2 mt-1"
                 >
                   <option value="student-id">Student ID Card</option>
-                  <option value="teacher-id">Faculty ID Card</option>
+                  <option value="teacher-id">Teacher ID Card</option>
+                  <option value="head-id">Head ID Card</option>
                   <option value="staff-id">Staff ID Card</option>
                   <option value="admit-card">Admit Card</option>
                 </select>
@@ -243,6 +244,8 @@ export function GenerateIDCardForm() {
                           ? 'student'
                           : data.cardType === 'teacher-id'
                             ? 'teacher'
+                            : data.cardType === 'head-id'
+                              ? 'head'
                             : 'staff'
                       }
                       photoUrl={data.photoUrl || undefined}

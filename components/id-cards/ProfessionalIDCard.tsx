@@ -6,7 +6,7 @@ import { QRCodeSVG } from 'qrcode.react'
 export interface ProfessionalIDCardProps {
   name: string
   idNumber: string
-  role: 'student' | 'teacher' | 'staff'
+  role: 'student' | 'teacher' | 'head' | 'staff'
   className?: string
   photoUrl?: string
   institutionName?: string
@@ -70,13 +70,15 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
 
     const roleLabel = {
       student: 'Student ID Card',
-      teacher: 'Faculty ID Card',
+      teacher: 'Teacher ID Card',
+      head: 'Head ID Card',
       staff: 'Staff ID Card',
     }[role]
 
     const roleColor = {
       student: 'bg-sky-800',
       teacher: 'bg-emerald-800',
+      head: 'bg-amber-800',
       staff: 'bg-slate-800',
     }[role]
 
@@ -183,7 +185,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
                 <p className="font-semibold uppercase text-slate-500">Authorized By</p>
                 {headSignature && <img src={headSignature} alt="Signature" className="mt-1 h-8 max-w-[120px] object-contain" />}
                 <p className="text-sm font-semibold text-slate-950">{headName}</p>
-                <p className="text-slate-500">Institution Head</p>
+                <p className="text-slate-500">{role === 'head' ? 'Head of Institution' : 'Institution Head'}</p>
               </div>
               <div className="text-center">
                 {institutionSeal ? (
@@ -250,7 +252,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
               <div>
                 <p className="font-semibold uppercase text-slate-500">Issued By</p>
                 <p className="text-sm font-semibold text-slate-950">{headName}</p>
-                <p className="text-slate-500">Institution Head</p>
+                <p className="text-slate-500">{role === 'head' ? 'Head of Institution' : 'Institution Head'}</p>
               </div>
               <div className="text-center">
                 {institutionSeal ? (

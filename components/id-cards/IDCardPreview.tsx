@@ -5,7 +5,7 @@ import StudentIDCard, { IDCardProps } from './StudentIDCard'
 import TeacherIDCard from './TeacherIDCard'
 import StaffIDCard from './StaffIDCard'
 
-export type PreviewProps = IDCardProps & { type?: 'student' | 'teacher' | 'staff' }
+export type PreviewProps = IDCardProps & { type?: 'student' | 'teacher' | 'head' | 'staff' }
 
 export const IDCardPreview = forwardRef<HTMLDivElement, PreviewProps>(function IDCardPreview(
   { type = 'student', ...props },
@@ -14,7 +14,7 @@ export const IDCardPreview = forwardRef<HTMLDivElement, PreviewProps>(function I
   const common = props
   return (
     <div ref={ref as any} className="p-2 bg-slate-50 inline-block">
-      {type === 'teacher' ? (
+      {type === 'teacher' || type === 'head' ? (
         <TeacherIDCard {...common} />
       ) : type === 'staff' ? (
         <StaffIDCard {...common} />
