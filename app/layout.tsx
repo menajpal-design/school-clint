@@ -3,7 +3,7 @@ import './globals.css'
 import { ToastProvider } from '@/hooks/useToast'
 
 export const metadata: Metadata = {
-  title: 'DRMS - School Management System',
+  title: 'EASY SCHOOL - School Management System',
   description: 'Complete School/Madrasah Management System',
 }
 

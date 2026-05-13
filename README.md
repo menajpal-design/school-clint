@@ -1,4 +1,4 @@
-# DRMS Client - Next.js Web Application
+# easy school Client - Next.js Web Application
 
 Distributed Records Management System - Next.js Frontend
 
@@ -396,8 +396,8 @@ vercel --prod
 
 ### Docker
 ```bash
-docker build -t drms-client .
-docker run -p 3000:3000 drms-client
+docker build -t easy-school-client .
+docker run -p 3000:3000 easy-school-client
 ```
 
 ### Self-hosted

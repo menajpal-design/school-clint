@@ -6,7 +6,7 @@ import { authManager } from "@/lib/auth";
 export function getPrintInstitution() {
   const institution = authManager.getUser()?.institution as any;
   return {
-    name: institution?.name || "Easy School",
+    name: institution?.name || "EASY SCHOOL",
     address: institution?.address || "",
     phone: institution?.phone || "",
     email: institution?.email || "",

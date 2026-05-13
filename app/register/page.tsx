@@ -114,7 +114,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">DRMS</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">EASY SCHOOL</h1>
           <p className="text-blue-100">School Management System</p>
         </div>
 

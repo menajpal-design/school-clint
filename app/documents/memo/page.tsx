@@ -38,7 +38,7 @@ const initialValues: MemoForm = {
   note: "This memo is effective immediately and should be shared with the relevant staff members.",
   senderName: "Dr. Rahman",
   senderDesignation: "Vice Principal",
-  institutionName: "DRMS School/Madrasah Management",
+  institutionName: "EASY SCHOOL - School/Madrasah Management",
 };
 
 export default function MemoPage() {

@@ -136,7 +136,7 @@ export default function BillingPage() {
                 <Select value={String(form.useEasySchoolStorage)} onValueChange={(value) => setForm((prev) => ({ ...prev, useEasySchoolStorage: value === 'true' }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="true">Easy School storage - BDT 100/month</SelectItem>
+                    <SelectItem value="true">EASY SCHOOL storage - BDT 100/month</SelectItem>
                     <SelectItem value="false">Own MongoDB + ImgBB - no cost</SelectItem>
                   </SelectContent>
                 </Select>

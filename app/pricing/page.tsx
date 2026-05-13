@@ -25,7 +25,7 @@ export default function PricingPage() {
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/" className="font-semibold">Easy School</Link>
+          <Link href="/" className="font-semibold">EASY SCHOOL</Link>
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm"><Link href="/login">Login</Link></Button>
             <Button asChild size="sm"><Link href="/register">Sign up</Link></Button>
@@ -81,11 +81,11 @@ export default function PricingPage() {
         <Card className="mt-6 border-slate-200 bg-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg"><Database className="h-5 w-5" /> Storage charge</CardTitle>
-            <CardDescription>Easy School storage is optional.</CardDescription>
+            <CardDescription>EASY SCHOOL storage is optional.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
             <div className="rounded-md border p-4">
-              <div className="font-semibold">Use Easy School storage</div>
+              <div className="font-semibold">Use EASY SCHOOL storage</div>
               <div className="mt-1 text-sm text-slate-600">{money(easySchoolStorageMonthlyPrice)} monthly extra charge.</div>
             </div>
             <div className="rounded-md border p-4">
@@ -136,7 +136,7 @@ export default function PricingPage() {
                 </SelectContent>
               </Select>
               <div className="mt-3">
-                Payable amount: <span className="font-semibold">{money(amount)}</span>. Easy School storage adds {money(easySchoolStorageMonthlyPrice)}/month if selected after signup.
+                Payable amount: <span className="font-semibold">{money(amount)}</span>. EASY SCHOOL storage adds {money(easySchoolStorageMonthlyPrice)}/month if selected after signup.
               </div>
             </div>
             <Input value={trxId} onChange={(e) => setTrxId(e.target.value)} placeholder="Transaction ID" />

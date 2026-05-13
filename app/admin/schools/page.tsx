@@ -128,7 +128,7 @@ export default function AdminSchoolsPage() {
               <label className="text-sm font-medium">Storage</label>
               <Select value={String(form.useEasySchoolStorage)} onValueChange={(v) => setForm((f: any) => ({ ...f, useEasySchoolStorage: v === 'true' }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="true">Easy School storage</SelectItem><SelectItem value="false">Own MongoDB + ImgBB</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="true">EASY SCHOOL storage</SelectItem><SelectItem value="false">Own MongoDB + ImgBB</SelectItem></SelectContent>
               </Select>
             </div>
             <div>

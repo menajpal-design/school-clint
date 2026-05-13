@@ -73,3 +73,504 @@
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
 <w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+ ⨯ ./lib/demo-api.ts
+Error: 
+  [31mx[0m Expected a semicolon
+    ,-[[36;1;4mC:\New folder\school_n\client\lib\demo-api.ts[0m:76:1]
+ [2m76[0m | 
+ [2m77[0m |   if (method === 'GET' && (!id || path.endsWith('/manage'))) return response({ [listKey]: items });
+ [2m78[0m |   if (method === 'GET' && id) return response(matchId(items, id) || null);
+ [2m79[0m |   if (method === 'POST') return response({ [collection.slice(0, -1)] || 'item': appendCollectionItem(collection as any, collection.slice(0, 3), data) });
+    : [31;1m                                                                     ^^[0m
+ [2m80[0m |   if (method === 'PUT' || method === 'PATCH') return response({ [collection.slice(0, -1)] || 'item': updateCollectionItem(collection as any, id, data) });
+ [2m81[0m |   if (method === 'DELETE') return response({ success: deleteCollectionItem(collection as any, id) });
+ [2m81[0m |   return notFound();
+    `----
+
+  [31mx[0m Expression expected
+    ,-[[36;1;4mC:\New folder\school_n\client\lib\demo-api.ts[0m:76:1]
+ [2m76[0m | 
+ [2m77[0m |   if (method === 'GET' && (!id || path.endsWith('/manage'))) return response({ [listKey]: items });
+ [2m78[0m |   if (method === 'GET' && id) return response(matchId(items, id) || null);
+ [2m79[0m |   if (method === 'POST') return response({ [collection.slice(0, -1)] || 'item': appendCollectionItem(collection as any, collection.slice(0, 3), data) });
+    : [31;1m                                                                     ^^[0m
+ [2m80[0m |   if (method === 'PUT' || method === 'PATCH') return response({ [collection.slice(0, -1)] || 'item': updateCollectionItem(collection as any, id, data) });
+ [2m81[0m |   if (method === 'DELETE') return response({ success: deleteCollectionItem(collection as any, id) });
+ [2m81[0m |   return notFound();
+    `----
+
+  [31mx[0m Expected ',', got ':'
+    ,-[[36;1;4mC:\New folder\school_n\client\lib\demo-api.ts[0m:76:1]
+ [2m76[0m | 
+ [2m77[0m |   if (method === 'GET' && (!id || path.endsWith('/manage'))) return response({ [listKey]: items });
+ [2m78[0m |   if (method === 'GET' && id) return response(matchId(items, id) || null);
+ [2m79[0m |   if (method === 'POST') return response({ [collection.slice(0, -1)] || 'item': appendCollectionItem(collection as any, collection.slice(0, 3), data) });
+    : [31;1m                                                                              ^[0m
+ [2m80[0m |   if (method === 'PUT' || method === 'PATCH') return response({ [collection.slice(0, -1)] || 'item': updateCollectionItem(collection as any, id, data) });
+ [2m81[0m |   if (method === 'DELETE') return response({ success: deleteCollectionItem(collection as any, id) });
+ [2m81[0m |   return notFound();
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/demo-api.ts
+./lib/api.ts
+./app/attendance/page.tsx
+ ⨯ ./lib/demo-api.ts
+Error: 
+  [31mx[0m Expected a semicolon
+    ,-[[36;1;4mC:\New folder\school_n\client\lib\demo-api.ts[0m:76:1]
+ [2m76[0m | 
+ [2m77[0m |   if (method === 'GET' && (!id || path.endsWith('/manage'))) return response({ [listKey]: items });
+ [2m78[0m |   if (method === 'GET' && id) return response(matchId(items, id) || null);
+ [2m79[0m |   if (method === 'POST') return response({ [collection.slice(0, -1)] || 'item': appendCollectionItem(collection as any, collection.slice(0, 3), data) });
+    : [31;1m                                                                     ^^[0m
+ [2m80[0m |   if (method === 'PUT' || method === 'PATCH') return response({ [collection.slice(0, -1)] || 'item': updateCollectionItem(collection as any, id, data) });
+ [2m81[0m |   if (method === 'DELETE') return response({ success: deleteCollectionItem(collection as any, id) });
+ [2m81[0m |   return notFound();
+    `----
+
+  [31mx[0m Expression expected
+    ,-[[36;1;4mC:\New folder\school_n\client\lib\demo-api.ts[0m:76:1]
+ [2m76[0m | 
+ [2m77[0m |   if (method === 'GET' && (!id || path.endsWith('/manage'))) return response({ [listKey]: items });
+ [2m78[0m |   if (method === 'GET' && id) return response(matchId(items, id) || null);
+ [2m79[0m |   if (method === 'POST') return response({ [collection.slice(0, -1)] || 'item': appendCollectionItem(collection as any, collection.slice(0, 3), data) });
+    : [31;1m                                                                     ^^[0m
+ [2m80[0m |   if (method === 'PUT' || method === 'PATCH') return response({ [collection.slice(0, -1)] || 'item': updateCollectionItem(collection as any, id, data) });
+ [2m81[0m |   if (method === 'DELETE') return response({ success: deleteCollectionItem(collection as any, id) });
+ [2m81[0m |   return notFound();
+    `----
+
+  [31mx[0m Expected ',', got ':'
+    ,-[[36;1;4mC:\New folder\school_n\client\lib\demo-api.ts[0m:76:1]
+ [2m76[0m | 
+ [2m77[0m |   if (method === 'GET' && (!id || path.endsWith('/manage'))) return response({ [listKey]: items });
+ [2m78[0m |   if (method === 'GET' && id) return response(matchId(items, id) || null);
+ [2m79[0m |   if (method === 'POST') return response({ [collection.slice(0, -1)] || 'item': appendCollectionItem(collection as any, collection.slice(0, 3), data) });
+    : [31;1m                                                                              ^[0m
+ [2m80[0m |   if (method === 'PUT' || method === 'PATCH') return response({ [collection.slice(0, -1)] || 'item': updateCollectionItem(collection as any, id, data) });
+ [2m81[0m |   if (method === 'DELETE') return response({ success: deleteCollectionItem(collection as any, id) });
+ [2m81[0m |   return notFound();
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./lib/demo-api.ts
+./lib/api.ts
+./app/attendance/page.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+ ⨯ ./app/attendance/mark/page.tsx
+Error: 
+  [31mx[0m the name `Select` is defined multiple times
+     ,-[[36;1;4mC:\New folder\school_n\client\app\attendance\mark\page.tsx[0m:10:1]
+ [2m 10[0m | import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+ [2m 11[0m | import { Input } from "@/components/ui/input";
+ [2m 12[0m | import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+ [2m 13[0m | import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+     : [31;1m         ^^^|^^[0m
+     :             [31;1m`-- [31;1mprevious definition of `Select` here[0m[0m
+ [2m 14[0m | import { api } from "@/lib/api";
+ [2m 15[0m | import { cn } from "@/lib/utils";
+ [2m 16[0m | import { authManager } from "@/lib/auth";
+ [2m 17[0m | 
+ [2m 18[0m | type Status = "present" | "absent" | "late" | "leave";
+ [2m 19[0m | type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
+ [2m 20[0m | type Student = { _id: string; rollNumber: string; userId?: { name: string; avatar?: string }; classId?: { _id: string }; sectionId?: { _id: string; name: string }; status?: Status };
+ [2m 21[0m | 
+ [2m 22[0m | const today = () => new Date().toISOString().slice(0, 10);
+ [2m 23[0m | 
+ [2m 24[0m | export default function AttendanceMarkPage() {
+ [2m 25[0m |   const [classes, setClasses] = useState<ClassItem[]>([]);
+ [2m 26[0m |   const [students, setStudents] = useState<Student[]>([]);
+ [2m 27[0m |   const [classId, setClassId] = useState("");
+ [2m 28[0m |   const [sectionId, setSectionId] = useState("");
+ [2m 29[0m |   const [date, setDate] = useState(today());
+ [2m 30[0m |   const [saving, setSaving] = useState(false);
+ [2m 31[0m |   const [scanOpen, setScanOpen] = useState(false);
+ [2m 32[0m |   const [scanCode, setScanCode] = useState("");
+ [2m 33[0m |   const [message, setMessage] = useState("");
+ [2m 34[0m | 
+ [2m 35[0m |   const selectedClass = classes.find((item) => item._id === classId);
+ [2m 36[0m |   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
+ [2m 37[0m | 
+ [2m 38[0m |   // Check if user is teacher or upper role for enhanced UI
+ [2m 39[0m |   const isTeacherOrUpperRole = authManager.hasRole(['class_teacher', 'subject_teacher', 'head', 'assistant_head']);
+ [2m 40[0m | 
+ [2m 41[0m |   const loadClasses = async () => {
+ [2m 42[0m |     const data = await api.academic.classes.getAll() as { classes: ClassItem[] };
+ [2m 43[0m |     setClasses(data.classes || []);
+ [2m 44[0m |     setClassId((current) => current || data.classes?.[0]?._id || "");
+ [2m 45[0m |   };
+ [2m 46[0m | 
+ [2m 47[0m |   const loadStudents = async () => {
+ [2m 48[0m |     if (!classId) return;
+ [2m 49[0m |     const data = await api.attendance.getStudents({ classId, sectionId: sectionId || undefined }) as { students: Student[] };
+ [2m 50[0m |     const attendance = await api.attendance.getAll({ classId, sectionId: sectionId || undefined, date }) as { attendance: any[] };
+ [2m 51[0m |     const statusByStudent = new Map((attendance.attendance || []).map((item) => [String(item.studentId?._id || item.studentId), item.status]));
+ [2m 52[0m |     setStudents((data.students || []).map((student) => ({ ...student, status: (statusByStudent.get(student._id) as Status) || "present" })));
+ [2m 53[0m |   };
+ [2m 54[0m | 
+ [2m 55[0m |   useEffect(() => { loadClasses().catch(() => undefined); }, []);
+ [2m 56[0m |   useEffect(() => { loadStudents().catch(() => setStudents([])); }, [classId, sectionId, date]);
+ [2m 57[0m | 
+ [2m 58[0m |   const setAll = (status: Status) => setStudents((current) => current.map((student) => ({ ...student, status })));
+ [2m 59[0m |   const setOne = (id: string, status: Status) => setStudents((current) => current.map((student) => student._id === id ? { ...student, status } : student));
+ [2m 60[0m | 
+ [2m 61[0m |   const save = async () => {
+ [2m 62[0m |     setSaving(true);
+ [2m 63[0m |     setMessage("");
+ [2m 64[0m |     try {
+ [2m 65[0m |       await api.attendance.mark({
+ [2m 66[0m |         classId,
+ [2m 67[0m |         sectionId,
+ [2m 68[0m |         date,
+ [2m 69[0m |         records: students.map((student) => ({ studentId: student._id, classId, sectionId: student.sectionId?._id || sectionId, date, status: student.status })),
+ [2m 70[0m |       });
+ [2m 71[0m |       setMessage("Attendance saved.");
+ [2m 72[0m |     } catch (err: any) {
+ [2m 73[0m |       setMessage(err?.message || "Failed to save attendance.");
+ [2m 74[0m |     } finally {
+ [2m 75[0m |       setSaving(false);
+ [2m 76[0m |     }
+ [2m 77[0m |   };
+ [2m 78[0m | 
+ [2m 79[0m |   const scan = async (code?: string) => {
+ [2m 80[0m |     const codeToScan = code || scanCode;
+ [2m 81[0m |     if (!codeToScan) {
+ [2m 82[0m |       setMessage("Please enter or scan a card code.");
+ [2m 83[0m |       return;
+ [2m 84[0m |     }
+ [2m 85[0m |     try {
+ [2m 86[0m |       const data = await api.attendance.scanIdCard({ code: codeToScan }) as { student?: Student };
+ [2m 87[0m |       if (data.student) {
+ [2m 88[0m |         setOne(data.student._id, "present");
+ [2m 89[0m |         setScanOpen(false);
+ [2m 90[0m |         setScanCode("");
+ [2m 91[0m |         setMessage(`✓ ${data.student.userId?.name} marked as present.`);
+ [2m 92[0m |       }
+ [2m 93[0m |     } catch (err: any) {
+ [2m 94[0m |       setMessage(err?.message || "Scan failed.");
+ [2m 95[0m |     }
+ [2m 96[0m |   };
+ [2m 97[0m | 
+ [2m 98[0m |   return (
+ [2m 99[0m |     <div className="space-y-5">
+ [2m100[0m |       <PageHeader
+ [2m101[0m |         title="Attendance Marking"
+ [2m102[0m |         description="Mark daily class attendance with bulk actions and ID card scan support."
+ [2m103[0m |         icon={ClipboardCheck}
+ [2m104[0m |         actions={[{ label: "ID Card Scan", icon: Camera, onClick: () => setScanOpen(true) }]}
+ [2m105[0m |       />
+ [2m106[0m | 
+ [2m107[0m |       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+ [2m108[0m |         <div className="grid gap-3 md:grid-cols-3">
+ [2m109[0m |           <Select label="Class" value={classId} onChange={(value) => { setClassId(value); setSectionId(""); }}>
+ [2m110[0m |             <option value="">Select class</option>{classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
+ [2m111[0m |           </Select>
+ [2m112[0m |           <Select label="Section" value={sectionId} onChange={setSectionId}>
+ [2m113[0m |             <option value="">All sections</option>{sections.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
+ [2m114[0m |           </Select>
+ [2m115[0m |           <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Date</span><Input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+ [2m116[0m |         </div>
+ [2m117[0m |       </section>
+ [2m118[0m | 
+ [2m119[0m |       {message && <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">{message}</div>}
+ [2m120[0m | 
+ [2m121[0m |       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+ [2m122[0m |         <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 p-4">
+ [2m123[0m |           <div className="text-sm font-medium text-slate-700">{students.length} students</div>
+ [2m124[0m |           <div className="flex gap-2">
+ [2m125[0m |             <Button type="button" variant="outline" onClick={() => setAll("present")}>All Present</Button>
+ [2m126[0m |             <Button type="button" variant="outline" onClick={() => setAll("absent")}>All Absent</Button>
+ [2m127[0m |             <Button type="button" onClick={save} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "Saving..." : "Save Attendance"}</Button>
+ [2m128[0m |           </div>
+ [2m129[0m |         </div>
+ [2m130[0m |         <Table>
+ [2m131[0m |           <TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Photo</TableHead><TableHead>Roll</TableHead><TableHead>Name</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+ [2m132[0m |           <TableBody>
+ [2m133[0m |             {students.length === 0 ? <TableRow><TableCell colSpan={4} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => (
+ [2m134[0m |               <TableRow 
+ [2m135[0m |                 key={student._id} 
+ [2m136[0m |                 className={cn(
+ [2m137[0m |                   isTeacherOrUpperRole && student.status === "present" && "bg-green-50 hover:bg-green-100"
+ [2m138[0m |                 )}
+ [2m139[0m |               >
+ [2m140[0m |                 <TableCell><div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
+ [2m141[0m |                 <TableCell>{student.rollNumber}</TableCell>
+ [2m142[0m |                 <TableCell className="font-medium text-slate-950">{student.userId?.name}</TableCell>
+ [2m143[0m |                 <TableCell><div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize")} onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
+ [2m144[0m |               </TableRow>
+ [2m145[0m |             ))}
+ [2m146[0m |           </TableBody>
+ [2m147[0m |         </Table>
+ [2m148[0m |       </section>
+ [2m149[0m | 
+ [2m150[0m |       <Dialog open={scanOpen} onOpenChange={setScanOpen}>
+ [2m151[0m |         <DialogContent className="max-w-md">
+ [2m152[0m |           <DialogHeader><DialogTitle>ID Card Scan</DialogTitle><DialogDescription>Use your device camera to scan ID card QR codes, or enter the code manually.</DialogDescription></DialogHeader>
+ [2m153[0m |           <WebcamScanner enabled={scanOpen} onScan={(code) => {
+ [2m154[0m |             setScanCode(code);
+ [2m155[0m |             scan(code);
+ [2m156[0m |           }} />
+ [2m157[0m |           <div className="mt-4 space-y-2 border-t pt-4">
+ [2m158[0m |             <label className="text-sm font-medium text-slate-700">Manual Entry</label>
+ [2m159[0m |             <Input value={scanCode} onChange={(event) => setScanCode(event.target.value)} placeholder="Or paste ID card code here" />
+ [2m160[0m |           </div>
+ [2m161[0m |           <DialogFooter><Button variant="outline" onClick={() => setScanOpen(false)}>Cancel</Button><Button onClick={() => scan()}>Mark Present</Button></DialogFooter>
+ [2m162[0m |         </DialogContent>
+ [2m163[0m |       </Dialog>
+ [2m164[0m |     </div>
+ [2m165[0m |   );
+ [2m166[0m | }
+ [2m167[0m | 
+ [2m168[0m | function Select({ label, value, onChange, children }: { label: string; value: string; onChange: (value: string) => void; children: React.ReactNode }) {
+     : [33;1m         ^^^|^^[0m
+     :             [33;1m`-- [33;1m`Select` redefined here[0m[0m
+ [2m169[0m |   return <label className="space-y-2"><span className="text-sm font-medium text-slate-700">{label}</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>{children}</select></label>;
+ [2m170[0m | }
+     `----
+
+Import trace for requested module:
+./app/attendance/mark/page.tsx
+ ⨯ ./app/attendance/mark/page.tsx
+Error: 
+  [31mx[0m the name `Select` is defined multiple times
+     ,-[[36;1;4mC:\New folder\school_n\client\app\attendance\mark\page.tsx[0m:10:1]
+ [2m 10[0m | import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+ [2m 11[0m | import { Input } from "@/components/ui/input";
+ [2m 12[0m | import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+ [2m 13[0m | import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+     : [31;1m         ^^^|^^[0m
+     :             [31;1m`-- [31;1mprevious definition of `Select` here[0m[0m
+ [2m 14[0m | import { api } from "@/lib/api";
+ [2m 15[0m | import { cn } from "@/lib/utils";
+ [2m 16[0m | import { authManager } from "@/lib/auth";
+ [2m 17[0m | 
+ [2m 18[0m | type Status = "present" | "absent" | "late" | "leave";
+ [2m 19[0m | type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
+ [2m 20[0m | type Student = { _id: string; rollNumber: string; userId?: { name: string; avatar?: string }; classId?: { _id: string }; sectionId?: { _id: string; name: string }; status?: Status };
+ [2m 21[0m | 
+ [2m 22[0m | const today = () => new Date().toISOString().slice(0, 10);
+ [2m 23[0m | 
+ [2m 24[0m | export default function AttendanceMarkPage() {
+ [2m 25[0m |   const [classes, setClasses] = useState<ClassItem[]>([]);
+ [2m 26[0m |   const [students, setStudents] = useState<Student[]>([]);
+ [2m 27[0m |   const [classId, setClassId] = useState("");
+ [2m 28[0m |   const [sectionId, setSectionId] = useState("");
+ [2m 29[0m |   const [date, setDate] = useState(today());
+ [2m 30[0m |   const [saving, setSaving] = useState(false);
+ [2m 31[0m |   const [scanOpen, setScanOpen] = useState(false);
+ [2m 32[0m |   const [scanCode, setScanCode] = useState("");
+ [2m 33[0m |   const [message, setMessage] = useState("");
+ [2m 34[0m | 
+ [2m 35[0m |   const selectedClass = classes.find((item) => item._id === classId);
+ [2m 36[0m |   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
+ [2m 37[0m | 
+ [2m 38[0m |   // Check if user is teacher or upper role for enhanced UI
+ [2m 39[0m |   const isTeacherOrUpperRole = authManager.hasRole(['class_teacher', 'subject_teacher', 'head', 'assistant_head']);
+ [2m 40[0m | 
+ [2m 41[0m |   const loadClasses = async () => {
+ [2m 42[0m |     const data = await api.academic.classes.getAll() as { classes: ClassItem[] };
+ [2m 43[0m |     setClasses(data.classes || []);
+ [2m 44[0m |     setClassId((current) => current || data.classes?.[0]?._id || "");
+ [2m 45[0m |   };
+ [2m 46[0m | 
+ [2m 47[0m |   const loadStudents = async () => {
+ [2m 48[0m |     if (!classId) return;
+ [2m 49[0m |     const data = await api.attendance.getStudents({ classId, sectionId: sectionId || undefined }) as { students: Student[] };
+ [2m 50[0m |     const attendance = await api.attendance.getAll({ classId, sectionId: sectionId || undefined, date }) as { attendance: any[] };
+ [2m 51[0m |     const statusByStudent = new Map((attendance.attendance || []).map((item) => [String(item.studentId?._id || item.studentId), item.status]));
+ [2m 52[0m |     setStudents((data.students || []).map((student) => ({ ...student, status: (statusByStudent.get(student._id) as Status) || "present" })));
+ [2m 53[0m |   };
+ [2m 54[0m | 
+ [2m 55[0m |   useEffect(() => { loadClasses().catch(() => undefined); }, []);
+ [2m 56[0m |   useEffect(() => { loadStudents().catch(() => setStudents([])); }, [classId, sectionId, date]);
+ [2m 57[0m | 
+ [2m 58[0m |   const setAll = (status: Status) => setStudents((current) => current.map((student) => ({ ...student, status })));
+ [2m 59[0m |   const setOne = (id: string, status: Status) => setStudents((current) => current.map((student) => student._id === id ? { ...student, status } : student));
+ [2m 60[0m | 
+ [2m 61[0m |   const save = async () => {
+ [2m 62[0m |     setSaving(true);
+ [2m 63[0m |     setMessage("");
+ [2m 64[0m |     try {
+ [2m 65[0m |       await api.attendance.mark({
+ [2m 66[0m |         classId,
+ [2m 67[0m |         sectionId,
+ [2m 68[0m |         date,
+ [2m 69[0m |         records: students.map((student) => ({ studentId: student._id, classId, sectionId: student.sectionId?._id || sectionId, date, status: student.status })),
+ [2m 70[0m |       });
+ [2m 71[0m |       setMessage("Attendance saved.");
+ [2m 72[0m |     } catch (err: any) {
+ [2m 73[0m |       setMessage(err?.message || "Failed to save attendance.");
+ [2m 74[0m |     } finally {
+ [2m 75[0m |       setSaving(false);
+ [2m 76[0m |     }
+ [2m 77[0m |   };
+ [2m 78[0m | 
+ [2m 79[0m |   const scan = async (code?: string) => {
+ [2m 80[0m |     const codeToScan = code || scanCode;
+ [2m 81[0m |     if (!codeToScan) {
+ [2m 82[0m |       setMessage("Please enter or scan a card code.");
+ [2m 83[0m |       return;
+ [2m 84[0m |     }
+ [2m 85[0m |     try {
+ [2m 86[0m |       const data = await api.attendance.scanIdCard({ code: codeToScan }) as { student?: Student };
+ [2m 87[0m |       if (data.student) {
+ [2m 88[0m |         setOne(data.student._id, "present");
+ [2m 89[0m |         setScanOpen(false);
+ [2m 90[0m |         setScanCode("");
+ [2m 91[0m |         setMessage(`✓ ${data.student.userId?.name} marked as present.`);
+ [2m 92[0m |       }
+ [2m 93[0m |     } catch (err: any) {
+ [2m 94[0m |       setMessage(err?.message || "Scan failed.");
+ [2m 95[0m |     }
+ [2m 96[0m |   };
+ [2m 97[0m | 
+ [2m 98[0m |   return (
+ [2m 99[0m |     <div className="space-y-5">
+ [2m100[0m |       <PageHeader
+ [2m101[0m |         title="Attendance Marking"
+ [2m102[0m |         description="Mark daily class attendance with bulk actions and ID card scan support."
+ [2m103[0m |         icon={ClipboardCheck}
+ [2m104[0m |         actions={[{ label: "ID Card Scan", icon: Camera, onClick: () => setScanOpen(true) }]}
+ [2m105[0m |       />
+ [2m106[0m | 
+ [2m107[0m |       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+ [2m108[0m |         <div className="grid gap-3 md:grid-cols-3">
+ [2m109[0m |           <label className="space-y-2">
+ [2m110[0m |             <span className="text-sm font-medium text-slate-700">Class</span>
+ [2m111[0m |             <Select value={classId} onValueChange={(value) => { setClassId(value); setSectionId(""); }}>
+ [2m112[0m |               <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+ [2m113[0m |               <SelectContent>{classes.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
+ [2m114[0m |             </Select>
+ [2m115[0m |           </label>
+ [2m116[0m |           <label className="space-y-2">
+ [2m117[0m |             <span className="text-sm font-medium text-slate-700">Section</span>
+ [2m118[0m |             <Select value={sectionId} onValueChange={setSectionId}>
+ [2m119[0m |               <SelectTrigger><SelectValue placeholder="All sections" /></SelectTrigger>
+ [2m120[0m |               <SelectContent><SelectItem value="">All sections</SelectItem>{sections.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
+ [2m121[0m |             </Select>
+ [2m122[0m |           </label>
+ [2m123[0m |           <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Date</span><Input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+ [2m124[0m |         </div>
+ [2m125[0m |       </section>
+ [2m126[0m | 
+ [2m127[0m |       {message && <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">{message}</div>}
+ [2m128[0m | 
+ [2m129[0m |       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+ [2m130[0m |         <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 p-4">
+ [2m131[0m |           <div className="text-sm font-medium text-slate-700">{students.length} students</div>
+ [2m132[0m |           <div className="flex gap-2">
+ [2m133[0m |             <Button type="button" variant="outline" onClick={() => setAll("present")}>All Present</Button>
+ [2m134[0m |             <Button type="button" variant="outline" onClick={() => setAll("absent")}>All Absent</Button>
+ [2m135[0m |             <Button type="button" onClick={save} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "Saving..." : "Save Attendance"}</Button>
+ [2m136[0m |           </div>
+ [2m137[0m |         </div>
+ [2m138[0m |         <Table>
+ [2m139[0m |           <TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Photo</TableHead><TableHead>Roll</TableHead><TableHead>Name</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+ [2m140[0m |           <TableBody>
+ [2m141[0m |             {students.length === 0 ? <TableRow><TableCell colSpan={4} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => (
+ [2m142[0m |               <TableRow 
+ [2m143[0m |                 key={student._id} 
+ [2m144[0m |                 className={cn(
+ [2m145[0m |                   isTeacherOrUpperRole && student.status === "present" && "bg-green-50 hover:bg-green-100"
+ [2m146[0m |                 )}
+ [2m147[0m |               >
+ [2m148[0m |                 <TableCell><div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
+ [2m149[0m |                 <TableCell>{student.rollNumber}</TableCell>
+ [2m150[0m |                 <TableCell className="font-medium text-slate-950">{student.userId?.name}</TableCell>
+ [2m151[0m |                 <TableCell><div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize")} onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
+ [2m152[0m |               </TableRow>
+ [2m153[0m |             ))}
+ [2m154[0m |           </TableBody>
+ [2m155[0m |         </Table>
+ [2m156[0m |       </section>
+ [2m157[0m | 
+ [2m158[0m |       <Dialog open={scanOpen} onOpenChange={setScanOpen}>
+ [2m159[0m |         <DialogContent className="max-w-md">
+ [2m160[0m |           <DialogHeader><DialogTitle>ID Card Scan</DialogTitle><DialogDescription>Use your device camera to scan ID card QR codes, or enter the code manually.</DialogDescription></DialogHeader>
+ [2m161[0m |           <WebcamScanner enabled={scanOpen} onScan={(code) => {
+ [2m162[0m |             setScanCode(code);
+ [2m163[0m |             scan(code);
+ [2m164[0m |           }} />
+ [2m165[0m |           <div className="mt-4 space-y-2 border-t pt-4">
+ [2m166[0m |             <label className="text-sm font-medium text-slate-700">Manual Entry</label>
+ [2m167[0m |             <Input value={scanCode} onChange={(event) => setScanCode(event.target.value)} placeholder="Or paste ID card code here" />
+ [2m168[0m |           </div>
+ [2m169[0m |           <DialogFooter><Button variant="outline" onClick={() => setScanOpen(false)}>Cancel</Button><Button onClick={() => scan()}>Mark Present</Button></DialogFooter>
+ [2m170[0m |         </DialogContent>
+ [2m171[0m |       </Dialog>
+ [2m172[0m |     </div>
+ [2m173[0m |   );
+ [2m174[0m | }
+ [2m175[0m | 
+ [2m176[0m | function Select({ label, value, onChange, children }: { label: string; value: string; onChange: (value: string) => void; children: React.ReactNode }) {
+     : [33;1m         ^^^|^^[0m
+     :             [33;1m`-- [33;1m`Select` redefined here[0m[0m
+ [2m177[0m |   return <label className="space-y-2"><span className="text-sm font-medium text-slate-700">{label}</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>{children}</select></label>;
+ [2m178[0m | }
+     `----
+
+Import trace for requested module:
+./app/attendance/mark/page.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: EPERM: operation not permitted, rename 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\New folder\school_n\client\.next\cache\webpack\client-development\0.pack.gz'

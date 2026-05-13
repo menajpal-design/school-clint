@@ -182,7 +182,7 @@ export default function AdminSubscriptionsPage() {
               <span>Storage</span>
               <Select value={String(form.useEasySchoolStorage)} onValueChange={(value) => setForm((current: any) => ({ ...current, useEasySchoolStorage: value === 'true' }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="true">Easy School storage</SelectItem><SelectItem value="false">Own MongoDB + ImgBB</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="true">EASY SCHOOL storage</SelectItem><SelectItem value="false">Own MongoDB + ImgBB</SelectItem></SelectContent>
               </Select>
             </label>
             <label className="space-y-1 text-sm font-medium">

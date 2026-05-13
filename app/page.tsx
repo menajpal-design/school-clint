@@ -56,7 +56,7 @@ export default function Home() {
               E
             </div>
             <div>
-              <p className="text-sm font-semibold leading-none">easy school</p>
+              <p className="text-sm font-semibold leading-none">EASY SCHOOL</p>
               <p className="mt-1 text-xs text-slate-500">School/Madrasah Management</p>
             </div>
           </Link>
@@ -84,7 +84,7 @@ export default function Home() {
             Role-based school operations
           </div>
           <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            easy school - School/Madrasah Management System
+            EASY SCHOOL - School/Madrasah Management System
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
             A professional dashboard for academics, attendance, finance, ID cards, documents, notices, parents and staff operations.

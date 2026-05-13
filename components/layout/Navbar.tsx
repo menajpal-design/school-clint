@@ -92,9 +92,9 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           {/* Logo and Institution Name */}
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">D</span>
+              <span className="text-white font-bold text-sm">E</span>
             </div>
-            <span className="hidden font-bold text-gray-800 sm:inline-block">DRMS</span>
+            <span className="hidden font-bold text-gray-800 sm:inline-block">EASY SCHOOL</span>
           </Link>
         </div>
 

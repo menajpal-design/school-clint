@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { authManager } from "@/lib/auth";
 
 type Status = "present" | "absent" | "late" | "leave";
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
@@ -32,6 +34,9 @@ export default function AttendanceMarkPage() {
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
+
+  // Check if user is teacher or upper role for enhanced UI
+  const isTeacherOrUpperRole = authManager.hasRole(['class_teacher', 'subject_teacher', 'head', 'assistant_head']);
 
   const loadClasses = async () => {
     const data = await api.academic.classes.getAll() as { classes: ClassItem[] };
@@ -101,12 +106,20 @@ export default function AttendanceMarkPage() {
 
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-3">
-          <Select label="Class" value={classId} onChange={(value) => { setClassId(value); setSectionId(""); }}>
-            <option value="">Select class</option>{classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
-          </Select>
-          <Select label="Section" value={sectionId} onChange={setSectionId}>
-            <option value="">All sections</option>{sections.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
-          </Select>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Class</span>
+            <Select value={classId} onValueChange={(value) => { setClassId(value); setSectionId(""); }}>
+              <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+              <SelectContent>{classes.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
+            </Select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Section</span>
+            <Select value={sectionId} onValueChange={setSectionId}>
+              <SelectTrigger><SelectValue placeholder="All sections" /></SelectTrigger>
+              <SelectContent><SelectItem value="">All sections</SelectItem>{sections.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
+            </Select>
+          </label>
           <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Date</span><Input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
         </div>
       </section>
@@ -125,14 +138,22 @@ export default function AttendanceMarkPage() {
         <Table>
           <TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Photo</TableHead><TableHead>Roll</TableHead><TableHead>Name</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
           <TableBody>
-            {students.length === 0 ? <TableRow><TableCell colSpan={4} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => (
-              <TableRow key={student._id}>
-                <TableCell><div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
-                <TableCell>{student.rollNumber}</TableCell>
-                <TableCell className="font-medium text-slate-950">{student.userId?.name}</TableCell>
-                <TableCell><div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize")} onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
-              </TableRow>
-            ))}
+            {students.length === 0 ? <TableRow><TableCell colSpan={4} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => {
+              const isPresentHighlight = isTeacherOrUpperRole && student.status === "present";
+              return (
+                <TableRow 
+                  key={student._id} 
+                  className={cn(
+                    isPresentHighlight && "bg-emerald-50 hover:bg-emerald-100"
+                  )}
+                >
+                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
+                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{student.rollNumber}</TableCell>
+                  <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
+                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </section>
@@ -153,8 +174,4 @@ export default function AttendanceMarkPage() {
       </Dialog>
     </div>
   );
-}
-
-function Select({ label, value, onChange, children }: { label: string; value: string; onChange: (value: string) => void; children: React.ReactNode }) {
-  return <label className="space-y-2"><span className="text-sm font-medium text-slate-700">{label}</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>{children}</select></label>;
 }

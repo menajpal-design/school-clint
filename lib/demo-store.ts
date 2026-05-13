@@ -1,8 +1,8 @@
 import { User, UserRole } from '@/types';
 
-export const DEMO_MODE_KEY = 'drms:mode';
-export const DEMO_STATE_KEY = 'drms:demo:state';
-export const DEMO_SESSION_KEY = 'drms:demo:session';
+export const DEMO_MODE_KEY = 'easy-school:mode';
+export const DEMO_STATE_KEY = 'easy-school:demo:state';
+export const DEMO_SESSION_KEY = 'easy-school:demo:session';
 
 export type DemoCollectionName =
   | 'users'
@@ -241,7 +241,7 @@ export const clearDemoSession = (): void => {
   if (!storage) return;
   const keysToRemove = [DEMO_SESSION_KEY, DEMO_STATE_KEY, DEMO_MODE_KEY, 'token', 'user', 'selectedInstitutionId', 'selectedInstitutionName'];
   keysToRemove.forEach((key) => storage.removeItem(key));
-  for (const key of collectionNames.map((name) => `drms:demo:${name}`)) {
+  for (const key of collectionNames.map((name) => `easy-school:demo:${name}`)) {
     storage.removeItem(key);
   }
 };

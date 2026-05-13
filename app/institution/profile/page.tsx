@@ -354,7 +354,7 @@ export default function InstitutionProfilePage() {
                         <Select onValueChange={(value) => field.onChange(value === 'true')} value={String(field.value)}>
                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
-                            <SelectItem value="true">Easy School storage - BDT 100/month</SelectItem>
+                            <SelectItem value="true">EASY SCHOOL storage - BDT 100/month</SelectItem>
                             <SelectItem value="false">Own MongoDB URI and ImgBB API - no extra cost</SelectItem>
                           </SelectContent>
                         </Select>
