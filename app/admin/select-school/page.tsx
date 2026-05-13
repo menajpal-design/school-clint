@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Building2, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { BookOpen, Building2, CreditCard, FileText, LayoutGrid, Search, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
 export default function SelectSchoolPage() {
+  const router = useRouter();
   const [schools, setSchools] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string>(() => typeof window === 'undefined' ? '' : localStorage.getItem('selectedInstitutionId') || '');
@@ -22,6 +24,11 @@ export default function SelectSchoolPage() {
     localStorage.setItem('selectedInstitutionId', school._id);
     localStorage.setItem('selectedInstitutionName', school.name);
     setSelectedId(school._id);
+  };
+
+  const openSchoolRoute = async (school: any, path: string) => {
+    await selectSchool(school);
+    router.push(path);
   };
 
   const clear = () => {
@@ -57,10 +64,16 @@ export default function SelectSchoolPage() {
               <div className="flex flex-wrap gap-2">
                 <Badge variant={school.isActive ? 'default' : 'secondary'}>{school.isActive ? 'Active' : 'Pending'}</Badge>
                 <Badge variant="outline">{school.counts?.students || 0} students</Badge>
+                <Badge variant="outline">{school.counts?.users || 0} users</Badge>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 <Button onClick={() => selectSchool(school)}>{selectedId === school._id ? 'Selected' : 'Select'}</Button>
-                <Button asChild variant="outline"><Link href="/dashboard">Open Dashboard</Link></Button>
+                <Button variant="outline" onClick={() => openSchoolRoute(school, '/dashboard')}><LayoutGrid className="mr-2 h-4 w-4" />Dashboard</Button>
+                <Button variant="outline" onClick={() => openSchoolRoute(school, '/users-roles/all')}><Users className="mr-2 h-4 w-4" />Users</Button>
+                <Button variant="outline" onClick={() => openSchoolRoute(school, '/academic')}><BookOpen className="mr-2 h-4 w-4" />Academic</Button>
+                <Button variant="outline" onClick={() => openSchoolRoute(school, '/finance')}><CreditCard className="mr-2 h-4 w-4" />Finance</Button>
+                <Button variant="outline" onClick={() => openSchoolRoute(school, '/documents')}><FileText className="mr-2 h-4 w-4" />Documents</Button>
+                <Button asChild variant="outline"><Link href="/admin/subscriptions">Subscription</Link></Button>
               </div>
             </CardContent>
           </Card>

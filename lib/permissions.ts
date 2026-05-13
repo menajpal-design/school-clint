@@ -18,6 +18,7 @@ export const menuConfig: MenuItemConfig[] = [
     children: [
       { label: 'Overview', href: '/admin', roles: ['admin', 'super_admin'] },
       { label: 'School Manage', href: '/admin/schools', roles: ['admin', 'super_admin'] },
+      { label: 'Subscriptions', href: '/admin/subscriptions', roles: ['admin', 'super_admin'] },
       { label: 'Select School', href: '/admin/select-school', roles: ['admin', 'super_admin'] },
       { label: 'Manage Users', href: '/admin/users', roles: ['admin', 'super_admin'] },
     ],

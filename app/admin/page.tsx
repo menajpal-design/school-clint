@@ -45,8 +45,9 @@ export default function AdminPage() {
       </div>
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Admin Tools</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-3">
+        <CardContent className="grid gap-3 sm:grid-cols-4">
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/schools">School Manage</Link></Button>
+          <Button asChild variant="outline" className="justify-start"><Link href="/admin/subscriptions">Subscriptions</Link></Button>
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/select-school">Select School</Link></Button>
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/users">Manage Users</Link></Button>
         </CardContent>
