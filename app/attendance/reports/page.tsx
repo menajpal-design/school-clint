@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { jsPDF } from "jspdf";
 import { Download, FileBarChart } from "lucide-react";
 
 import { BarChartCard } from "@/components/charts/BarChartCard";
@@ -9,7 +10,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
-import { formatDate } from "@/lib/utils";
+import { downloadFile, formatDate } from "@/lib/utils";
 
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
 type Person = { _id: string; rollNumber?: string; userId?: { name: string } };
@@ -54,18 +55,117 @@ export default function AttendanceReportsPage() {
   useEffect(() => { loadPeople().catch(() => setPeople([])); }, [classId, sectionId]);
   useEffect(() => { loadReports().catch(() => undefined); }, [startDate, endDate, classId, sectionId, personId]);
 
-  const exportCsv = () => {
-    const rows = [["Date","Name","Roll","Class","Section","Status"], ...reports.map((item) => [formatDate(item.date), item.studentId?.userId?.name || "", item.studentId?.rollNumber || "", item.classId?.name || "", item.sectionId?.name || "", item.status])];
-    const blob = new Blob([rows.map((row) => row.join("\t")).join("\n")], { type: "application/vnd.ms-excel" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "attendance-report.xls";
-    link.click();
+  const reportRows = reports.map((item) => ({
+    date: formatDate(item.date),
+    name: item.studentId?.userId?.name || "-",
+    roll: item.studentId?.rollNumber || "-",
+    className: item.classId?.name || "-",
+    section: item.sectionId?.name || "-",
+    status: item.status || "-",
+  }));
+
+  const fileSuffix = `${startDate}_to_${endDate}`;
+
+  const csvCell = (value: string) => `"${String(value).replace(/"/g, '""')}"`;
+
+  const exportExcel = () => {
+    const headers = ["Date", "Name", "Roll", "Class", "Section", "Status"];
+    const rows = reportRows.map((row) => [row.date, row.name, row.roll, row.className, row.section, row.status]);
+    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+    downloadFile(`\uFEFF${csv}`, `attendance-report-${fileSuffix}.csv`, "text/csv;charset=utf-8");
+  };
+
+  const exportPdf = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 36;
+    const columns = [
+      { label: "Date", width: 86 },
+      { label: "Name", width: 190 },
+      { label: "Roll", width: 80 },
+      { label: "Class", width: 135 },
+      { label: "Section", width: 85 },
+      { label: "Status", width: 90 },
+    ];
+
+    const drawHeader = () => {
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, pageWidth, 72, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("Attendance Report", margin, 32);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Period: ${startDate} to ${endDate} | Records: ${reportRows.length}`, margin, 52);
+    };
+
+    const drawTableHeader = (y: number) => {
+      let x = margin;
+      doc.setFillColor(241, 245, 249);
+      doc.rect(margin, y, pageWidth - margin * 2, 24, "F");
+      doc.setTextColor(51, 65, 85);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      columns.forEach((column) => {
+        doc.text(column.label, x + 6, y + 16);
+        x += column.width;
+      });
+    };
+
+    const addPage = () => {
+      doc.addPage();
+      drawHeader();
+      drawTableHeader(88);
+      return 116;
+    };
+
+    drawHeader();
+    drawTableHeader(88);
+
+    let y = 116;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+
+    const rows = reportRows.length > 0 ? reportRows : [{ date: "-", name: "No records found", roll: "-", className: "-", section: "-", status: "-" }];
+    rows.forEach((row, index) => {
+      if (y > pageHeight - 48) {
+        y = addPage();
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+      }
+
+      if (index % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, y - 14, pageWidth - margin * 2, 24, "F");
+      }
+
+      const values = [row.date, row.name, row.roll, row.className, row.section, row.status];
+      let x = margin;
+      doc.setTextColor(15, 23, 42);
+      values.forEach((value, columnIndex) => {
+        const text = doc.splitTextToSize(String(value), columns[columnIndex].width - 12)[0] || "";
+        doc.text(text, x + 6, y);
+        x += columns[columnIndex].width;
+      });
+      y += 24;
+    });
+
+    const pageCount = doc.getNumberOfPages();
+    for (let page = 1; page <= pageCount; page += 1) {
+      doc.setPage(page);
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(8);
+      doc.text(`Page ${page} of ${pageCount}`, pageWidth - margin, pageHeight - 18, { align: "right" });
+    }
+
+    doc.save(`attendance-report-${fileSuffix}.pdf`);
   };
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Attendance Reports" description="Analyze attendance by date, class, section and person." icon={FileBarChart} actions={[{ label: "Export Excel", icon: Download, onClick: exportCsv }, { label: "Export PDF", icon: Download, onClick: () => window.print() }]} />
+      <PageHeader title="Attendance Reports" description="Analyze attendance by date, class, section and person." icon={FileBarChart} actions={[{ label: "Export Excel", icon: Download, onClick: exportExcel }, { label: "Export PDF", icon: Download, onClick: exportPdf }]} />
 
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-5">
@@ -84,7 +184,7 @@ export default function AttendanceReportsPage() {
 
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Date</TableHead><TableHead>Name</TableHead><TableHead>Roll</TableHead><TableHead>Class</TableHead><TableHead>Section</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>
-          {reports.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">No records found.</TableCell></TableRow> : reports.map((item) => <TableRow key={item._id}><TableCell>{formatDate(item.date)}</TableCell><TableCell>{item.studentId?.userId?.name || "-"}</TableCell><TableCell>{item.studentId?.rollNumber || "-"}</TableCell><TableCell>{item.classId?.name || "-"}</TableCell><TableCell>{item.sectionId?.name || "-"}</TableCell><TableCell className="capitalize">{item.status}</TableCell></TableRow>)}
+          {reportRows.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">No records found.</TableCell></TableRow> : reportRows.map((item, index) => <TableRow key={`${item.date}-${item.roll}-${index}`}><TableCell>{item.date}</TableCell><TableCell>{item.name}</TableCell><TableCell>{item.roll}</TableCell><TableCell>{item.className}</TableCell><TableCell>{item.section}</TableCell><TableCell className="capitalize">{item.status}</TableCell></TableRow>)}
         </TableBody></Table>
       </section>
     </div>
