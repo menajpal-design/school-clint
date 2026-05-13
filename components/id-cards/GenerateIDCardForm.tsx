@@ -37,11 +37,11 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-export function GenerateIDCardForm() {
+export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: FormValues['cardType'] } = {}) {
   const { register, handleSubmit, watch, setValue } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      cardType: 'student-id',
+      cardType: defaultCardType || 'student-id',
       institutionName: 'Educational Institution',
       headName: 'Institution Head',
       validityDate: toDateInputValue(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),

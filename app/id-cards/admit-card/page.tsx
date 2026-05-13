@@ -13,7 +13,7 @@ export default function AdmitCardPage() {
         description="Create an English admit card with student photo, exam details, download buttons and mandatory QR code."
         icon={BadgeCheck}
       />
-      <GenerateIDCardForm />
+      <GenerateIDCardForm defaultCardType="admit-card" />
     </div>
   );
 }
