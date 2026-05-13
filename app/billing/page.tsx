@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Loader2 } from 'lucide-react';
+import { CreditCard, Loader2, LogOut } from 'lucide-react';
 import { api } from '@/lib/api';
 import { authManager } from '@/lib/auth';
 import { calculatePlanDue, schoolPlans } from '@/lib/plans';
@@ -25,6 +25,11 @@ export default function BillingPage() {
     paymentTrxId: '',
     paymentSenderNumber: '',
   });
+
+  const logout = () => {
+    authManager.clear();
+    router.replace('/login');
+  };
 
   useEffect(() => {
     const user = authManager.getUser();
@@ -79,15 +84,25 @@ export default function BillingPage() {
 
   const user = authManager.getUser();
   if (user && !['head', 'admin', 'super_admin'].includes(user.role)) {
-    return <main className="flex min-h-screen items-center justify-center bg-white p-6 text-center"><p className="text-xl font-semibold">আপনার প্রতিষ্ঠান প্রধানের সাথে যোগাযোগ করুন।</p></main>;
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-white p-6 text-center">
+        <div className="space-y-4">
+          <p className="text-xl font-semibold">আপনার প্রতিষ্ঠান প্রধানের সাথে যোগাযোগ করুন।</p>
+          <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
+        </div>
+      </main>
+    );
   }
 
   return (
     <main className="min-h-screen bg-slate-50 p-4 sm:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Billing Required</h1>
-          <p className="mt-2 text-sm text-slate-600">আপনার অনুমতি নেই, আগে বিল পরিশোধ করুন। Admin payment verify করলে school active হবে।</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Billing Required</h1>
+            <p className="mt-2 text-sm text-slate-600">আপনার অনুমতি নেই, আগে বিল পরিশোধ করুন। Admin payment verify করলে school active হবে।</p>
+          </div>
+          <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
