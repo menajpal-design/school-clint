@@ -281,86 +281,140 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <PageHeader
-        title="Dashboard"
-        description={`Welcome${user?.name ? `, ${user.name}` : ""}. Role-based overview for ${roleLabel(user?.role as UserRole | undefined)} operations.`}
-        icon={ShieldCheck}
-        status={usingFallback ? <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Mock fallback</Badge> : <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">Live dashboard</Badge>}
-        actions={[
-          { label: "Mark Attendance", href: "/attendance/mark", icon: CalendarCheck },
-          { label: "Generate ID Card", href: "/id-cards/generate", icon: BadgeCheck },
-          { label: "Post Notice", href: "/notices", icon: Bell },
-        ]}
-      />
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard
-            key={stat.label}
-            label={stat.label}
-            value={stat.value}
-            helper={stat.helper}
-            icon={stat.icon}
-            tone={stat.tone}
-            loading={loading}
-          />
-        ))}
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-7">
-        <div className="xl:col-span-3">
-          <PieChartCard title="Institution Composition" data={composition} />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 p-4 md:p-6">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
+            <ShieldCheck className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-slate-900">Dashboard</h1>
+          <p className="mt-2 text-lg text-slate-600">Welcome{user?.name ? `, ${user.name}` : ""}. Role-based overview for {roleLabel(user?.role as UserRole | undefined)} operations.</p>
+          <div className="mt-4 flex justify-center">
+            {usingFallback ? (
+              <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 px-4 py-2">Mock fallback</Badge>
+            ) : (
+              <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-2">Live dashboard</Badge>
+            )}
+          </div>
         </div>
-        <div className="xl:col-span-4">
-          <BarChartCard title="Attendance Overview" data={attendance} xKey="name" yKey="value" />
-        </div>
-      </section>
 
-      <section className="grid gap-4 xl:grid-cols-7">
-        <div className="xl:col-span-4">
-          <LineChartCard title="Monthly Fee Collection Trend" data={feeTrend} xKey="name" yKey="value" />
-        </div>
-        <Card className="border-slate-200 shadow-sm xl:col-span-3">
-          <CardHeader>
-            <CardTitle className="text-base">Recent Notices</CardTitle>
-            <CardDescription>Latest announcements from the institution.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {notices.map((notice) => (
-              <div key={notice._id || notice.id || notice.title} className="rounded-lg border border-slate-200 p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{notice.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">{notice.category || "General"}</p>
-                  </div>
-                  <Badge variant="outline" className="capitalize">{notice.priority || "normal"}</Badge>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </section>
-
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Quick Actions</CardTitle>
-          <CardDescription>Actions are filtered for the current role and common workflows.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
+        <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {stats.map((stat, index) => {
+            const colors = [
+              'from-blue-500 to-blue-600',
+              'from-emerald-500 to-emerald-600',
+              'from-slate-500 to-slate-600',
+              'from-amber-500 to-amber-600',
+              'from-emerald-500 to-green-600',
+              'from-amber-500 to-orange-600',
+              'from-blue-500 to-indigo-600'
+            ];
             return (
-              <Button key={`${action.label}-${action.href}`} asChild variant="outline" className="h-24 flex-col gap-2 whitespace-normal px-3 text-center">
-                <Link href={action.href}>
-                  <Icon className="h-5 w-5" />
-                  <span className="text-xs font-semibold leading-4">{action.label}</span>
-                </Link>
-              </Button>
+              <Card key={stat.label} className={`relative overflow-hidden border-2 border-slate-200 bg-gradient-to-br ${colors[index % colors.length].replace('500', '50').replace('600', '100')} shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105`}>
+                <div className={`absolute inset-0 bg-gradient-to-br ${colors[index % colors.length]} opacity-10`}></div>
+                <CardContent className="relative p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">{stat.label}</p>
+                      <p className="text-2xl font-bold text-slate-900">{loading ? '...' : stat.value}</p>
+                      <p className="text-xs text-slate-500 mt-1">{stat.helper}</p>
+                    </div>
+                    <div className={`rounded-xl bg-gradient-to-r ${colors[index % colors.length]} p-3 text-white shadow-lg`}>
+                      <stat.icon className="h-6 w-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
-        </CardContent>
-      </Card>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-7">
+          <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-xl xl:col-span-3">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-bold text-slate-900">Institution Composition</CardTitle>
+              <CardDescription className="text-slate-600">Distribution of students, teachers, and staff</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PieChartCard title="Institution Composition" data={composition} />
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-xl xl:col-span-4">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-bold text-slate-900">Attendance Overview</CardTitle>
+              <CardDescription className="text-slate-600">Today's attendance statistics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BarChartCard title="Attendance Overview" data={attendance} xKey="name" yKey="value" />
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-7">
+          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 shadow-xl xl:col-span-4">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-bold text-slate-900">Monthly Fee Collection Trend</CardTitle>
+              <CardDescription className="text-slate-600">Fee collection over the past months</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LineChartCard title="Monthly Fee Collection Trend" data={feeTrend} xKey="name" yKey="value" />
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-red-50 shadow-xl xl:col-span-3">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-bold text-slate-900">Recent Notices</CardTitle>
+              <CardDescription className="text-slate-600">Latest announcements from the institution</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {notices.map((notice) => (
+                <div key={notice._id || notice.id || notice.title} className="rounded-lg border border-slate-200 bg-white/60 p-4 shadow-sm backdrop-blur-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{notice.title}</p>
+                      <p className="mt-1 text-xs text-slate-500">{notice.category || "General"}</p>
+                    </div>
+                    <Badge variant="outline" className={`capitalize ${notice.priority === 'high' ? 'border-red-200 bg-red-50 text-red-700' : notice.priority === 'medium' ? 'border-yellow-200 bg-yellow-50 text-yellow-700' : 'border-green-200 bg-green-50 text-green-700'}`}>
+                      {notice.priority || "normal"}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+
+        <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 shadow-xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-bold text-slate-900">Quick Actions</CardTitle>
+            <CardDescription className="text-slate-600">Actions are filtered for the current role and common workflows</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {quickActions.map((action, index) => {
+              const Icon = action.icon;
+              const colors = [
+                'from-blue-500 to-blue-600',
+                'from-green-500 to-green-600',
+                'from-purple-500 to-purple-600',
+                'from-orange-500 to-orange-600',
+                'from-red-500 to-red-600',
+                'from-indigo-500 to-indigo-600'
+              ];
+              return (
+                <Button
+                  key={`${action.label}-${action.href}`}
+                  asChild
+                  className={`h-24 flex-col gap-3 whitespace-normal px-4 text-center bg-gradient-to-r ${colors[index % colors.length]} hover:opacity-90 text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105`}
+                >
+                  <Link href={action.href}>
+                    <Icon className="h-6 w-6" />
+                    <span className="text-sm font-semibold leading-4">{action.label}</span>
+                  </Link>
+                </Button>
+              );
+            })}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

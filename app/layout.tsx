@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
         <ToastProvider>
           {children}
         </ToastProvider>

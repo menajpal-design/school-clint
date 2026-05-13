@@ -403,6 +403,8 @@ export const api = {
     getAll: () => apiClient.get('/backup'),
     create: (data: any) => apiClient.post('/backup', data),
     restore: (id: string) => apiClient.post(`/backup/${id}/restore`),
+    export: (collections?: string[]) => apiClient.get('/backup/export', { params: collections ? { collections: collections.join(',') } : undefined, responseType: 'blob' }),
+    import: (data: any) => apiClient.post('/backup/import', data),
   },
 
   // Messages & Email
