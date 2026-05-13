@@ -59,7 +59,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
     defaultValues: {
       cardType: fallbackCardType,
       institutionName: 'Educational Institution',
-      headName: 'Institution Head',
+      headName: '',
       validityDate: toDateInputValue(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
     },
   })
@@ -333,6 +333,9 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
                       photoUrl={data.photoUrl || undefined}
                       institutionName={data.institutionName}
                       institutionLogo={data.institutionLogo || undefined}
+                      institutionAddress={institutionProfile?.address}
+                      institutionPhone={institutionProfile?.phone}
+                      institutionEmail={institutionProfile?.email}
                       institutionSeal={institutionProfile?.seal}
                       headSignature={institutionProfile?.headSignature}
                       examName={data.examName}
@@ -360,6 +363,10 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
                       photoUrl={data.photoUrl || undefined}
                       institutionName={data.institutionName}
                       institutionLogo={data.institutionLogo || undefined}
+                      institutionAddress={institutionProfile?.address}
+                      institutionPhone={institutionProfile?.phone}
+                      institutionEmail={institutionProfile?.email}
+                      institutionWebsite={institutionProfile?.website}
                       institutionSeal={institutionProfile?.seal}
                       headSignature={institutionProfile?.headSignature}
                       validityDate={data.validityDate}

@@ -33,13 +33,23 @@ export default function ProfilePage() {
     api.idCards.getMine().then((c: any) => setCard(c)).catch((e: any) => setCardErr(e?.message || 'No card'))
   }, []);
 
+  const cardRecord = card?.card || card;
+  const cardOwner = cardRecord?.ownerId;
+  const userId = String(user?._id || user?.id || "");
+  const cardOwnerId = String(
+    typeof cardOwner === "object"
+      ? cardOwner?._id || cardOwner?.id || ""
+      : cardOwner || ""
+  );
+  const isOwnCard = Boolean(cardRecord?._id && userId && cardOwnerId && cardOwnerId === userId);
+  const personalCard = isOwnCard ? cardRecord : null;
   const institution = user?.institution || {};
-  const owner = card?.ownerId || user || {};
+  const owner = user || {};
   const cardType = owner?.role === "head" ? "head" : owner?.role === "teacher" ? "teacher" : owner?.role === "staff" ? "staff" : "student";
   const previewName = owner?.name || "User";
-  const previewId = card?.cardNumber || owner?.employeeId || owner?.rollNumber || owner?.id || "ID";
+  const previewId = personalCard?.cardNumber || owner?.employeeId || owner?.rollNumber || owner?.id || "ID";
   const previewStream = owner?.classId?.name || owner?.className || owner?.designation || owner?.department || "";
-  const headName = institution?.headId?.name || institution?.headName || "Institution Head";
+  const headName = institution?.headId?.name || institution?.headName || "";
 
   const uploadAvatar = (file?: File) => {
     if (!file) return;
@@ -118,6 +128,7 @@ export default function ProfilePage() {
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="mb-4 font-semibold text-slate-950">ID Card Section</h2>
             {cardErr && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{cardErr}</div>}
+            {cardRecord?._id && !isOwnCard && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">Your personal ID card was not found for this account.</div>}
             <div ref={previewRef}>
               <ProfessionalIDCard
                 role={cardType as any}
@@ -125,16 +136,20 @@ export default function ProfilePage() {
                 idNumber={previewId}
                 institutionName={institution?.name || "Educational Institution"}
                 institutionLogo={institution?.logo || institution?.logoUrl}
+                institutionAddress={institution?.address}
+                institutionPhone={institution?.phone}
+                institutionEmail={institution?.email}
+                institutionWebsite={institution?.website}
                 institutionSeal={institution?.seal}
                 headSignature={institution?.headSignature}
                 headName={headName}
                 stream={previewStream}
-                validityDate={card?.validityEnd || undefined}
-                photoUrl={owner?.avatar || user?.avatar}
+                validityDate={personalCard?.validityEnd || undefined}
+                photoUrl={user?.avatar}
               />
             </div>
             <div className="mt-3">
-              <DownloadButtons targetRef={previewRef} filename={card?.cardNumber || `id-${user?.id || 'me'}`} cardId={card?._id} />
+              <DownloadButtons targetRef={previewRef} filename={personalCard?.cardNumber || `id-${user?.id || 'me'}`} cardId={personalCard?._id} />
             </div>
           </div>
         </section>

@@ -160,15 +160,60 @@ class ApiClient {
 
   private handleError(error: any): ApiError {
     if (axios.isAxiosError(error)) {
+      const message = this.getErrorMessage(error);
+      // Don't emit error toasts for 404s - they're often expected and handled by the caller
+      // Don't emit for messages/stats/unread which is polled regularly
+      const shouldSuppressToast = error.response?.status === 404 || 
+                                  error.config?.url?.includes('/messages/stats/unread');
+      if (!shouldSuppressToast) {
+        this.emitErrorToast(message);
+      }
       return {
-        message: error.response?.data?.message || error.message,
+        message,
         error: error.response?.data,
       };
     }
+    this.emitErrorToast('An unexpected error occurred');
     return {
       message: 'An unexpected error occurred',
       error,
     };
+  }
+
+  private getErrorMessage(error: AxiosError<any>): string {
+    const data = error.response?.data;
+    const status = error.response?.status;
+
+    if (status === 500 || status === 502 || status === 503 || status === 504) {
+      if (typeof data?.message === 'string' && data.message !== 'Server error') return data.message;
+      return 'সার্ভারে সমস্যা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।';
+    }
+
+    if (typeof data === 'string') return data;
+    if (typeof data?.message === 'string') return data.message;
+    if (typeof data?.error === 'string') return data.error;
+    if (typeof data?.error?.message === 'string') return data.error.message;
+    if (Array.isArray(data?.errors) && data.errors.length) {
+      return data.errors.map((item: any) => item?.message || item).filter(Boolean).join(', ');
+    }
+
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      return 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। ইন্টারনেট বা সার্ভার চেক করুন।';
+    }
+
+    return error.message || 'Request failed';
+  }
+
+  private emitErrorToast(message: string) {
+    if (typeof window === 'undefined' || !message) return;
+    window.dispatchEvent(new CustomEvent('app-toast', {
+      detail: {
+        title: 'Server error',
+        message,
+        type: 'error',
+        duration: 5000,
+      },
+    }));
   }
 }
 
@@ -180,6 +225,7 @@ export const api = {
   auth: {
     login: (data: any) => apiClient.post('/auth/login', data),
     register: (data: any) => apiClient.post('/auth/register', data),
+    forgotPassword: (data: any) => apiClient.post('/auth/forgot-password', data),
     profile: () => apiClient.get('/auth/profile'),
     updateProfile: (data: any) => apiClient.put('/auth/profile', data),
     changePassword: (data: any) => apiClient.post('/auth/change-password', data),

@@ -42,8 +42,14 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
     const loadMessages = async () => {
       try {
         const res: any = await api.messages.getUnreadCount();
-        setUnreadMessages(res.unreadCount || 0);
-      } catch (e) {}
+        if (res?.unreadCount !== undefined) {
+          setUnreadMessages(res.unreadCount);
+        }
+      } catch (error: any) {
+        // Silently handle errors - endpoint might not be available on all backends
+        // 404 is expected if messages feature is not available
+        console.debug('Messages stats not available:', error?.message);
+      }
     };
 
     loadNotices();

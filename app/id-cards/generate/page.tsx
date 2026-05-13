@@ -62,7 +62,7 @@ export default function GeneratePage() {
 
   const previewName = card?.ownerId?.name || selected?.userId?.name || "Select person";
   const previewId = card?.cardNumber || selected?.rollNumber || selected?.employeeId || "ID";
-  const headName = institution?.headId?.name || (authManager.getUser()?.role === "head" ? authManager.getUser()?.name : undefined) || "Institution Head";
+  const headName = institution?.headId?.name || (authManager.getUser()?.role === "head" ? authManager.getUser()?.name : undefined) || "";
   const role = ownerType === "teacher" ? "teacher" : ownerType === "staff" ? "staff" : "student";
   const className = selected?.classId?.name || selected?.className || selected?.designation || selected?.department || "";
 
@@ -96,6 +96,10 @@ export default function GeneratePage() {
               idNumber={previewId}
               institutionName={institution?.name || "Educational Institution"}
               institutionLogo={options.logo ? institution?.logo : undefined}
+              institutionAddress={institution?.address}
+              institutionPhone={institution?.phone}
+              institutionEmail={institution?.email}
+              institutionWebsite={institution?.website}
               institutionSeal={institution?.seal}
               headSignature={institution?.headSignature}
               headName={headName}

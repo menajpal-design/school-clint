@@ -17,6 +17,10 @@ type InstitutionProfile = {
   name?: string
   logo?: string
   seal?: string
+  address?: string
+  phone?: string
+  email?: string
+  website?: string
   headSignature?: string
   billing?: {
     subscriptionExpiresAt?: string
@@ -90,6 +94,10 @@ export default function TemplatesPage() {
   const institutionName = institution?.name || user?.institution?.name || 'Live Institution Preview'
   const institutionLogo = institution?.logo || user?.institution?.logo
   const institutionSeal = institution?.seal
+  const institutionAddress = institution?.address || user?.institution?.address
+  const institutionPhone = institution?.phone || user?.institution?.phone
+  const institutionEmail = institution?.email || user?.institution?.email
+  const institutionWebsite = institution?.website || user?.institution?.website
   const headName = institution?.headId?.name || user?.name || ''
   const liveIdentity = user?.name || institutionName
   const liveIdNumber = user?.id || institution?._id || ''
@@ -181,6 +189,10 @@ export default function TemplatesPage() {
                   photoUrl={livePhotoUrl}
                   institutionName={institutionName}
                   institutionLogo={institutionLogo}
+                  institutionAddress={institutionAddress}
+                  institutionPhone={institutionPhone}
+                  institutionEmail={institutionEmail}
+                  institutionWebsite={institutionWebsite}
                   institutionSeal={institutionSeal}
                   headName={headName}
                   validityDate={validityDate}
@@ -195,6 +207,10 @@ export default function TemplatesPage() {
                   photoUrl={livePhotoUrl}
                   institutionName={institutionName}
                   institutionLogo={institutionLogo}
+                  institutionAddress={institutionAddress}
+                  institutionPhone={institutionPhone}
+                  institutionEmail={institutionEmail}
+                  institutionWebsite={institutionWebsite}
                   institutionSeal={institutionSeal}
                   headName={headName}
                   validityDate={validityDate}
@@ -211,6 +227,10 @@ export default function TemplatesPage() {
                   photoUrl={livePhotoUrl}
                   institutionName={institutionName}
                   institutionLogo={institutionLogo}
+                  institutionAddress={institutionAddress}
+                  institutionPhone={institutionPhone}
+                  institutionEmail={institutionEmail}
+                  institutionWebsite={institutionWebsite}
                   institutionSeal={institutionSeal}
                   headName={headName}
                   validityDate={validityDate}
@@ -223,6 +243,9 @@ export default function TemplatesPage() {
                   photoUrl={livePhotoUrl}
                   institutionName={institutionName}
                   institutionLogo={institutionLogo}
+                  institutionAddress={institutionAddress}
+                  institutionPhone={institutionPhone}
+                  institutionEmail={institutionEmail}
                   institutionSeal={institutionSeal}
                   examName={examLabel}
                   examDate={validityDate}

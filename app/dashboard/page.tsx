@@ -250,13 +250,13 @@ export default function Dashboard() {
   const quickActions = useMemo(() => getQuickActions(user?.role), [user?.role]);
 
   const stats = [
-    { label: "Total Students", value: summary.totalStudents.toLocaleString(), helper: "Active student records", icon: Users, tone: "blue" as const },
-    { label: "Total Teachers", value: summary.totalTeachers.toLocaleString(), helper: "Teaching staff", icon: BookOpen, tone: "emerald" as const },
-    { label: "Total Staff", value: summary.totalStaff.toLocaleString(), helper: "Operational staff", icon: ShieldCheck, tone: "slate" as const },
-    { label: "Today Attendance", value: summary.todayAttendanceCount.toLocaleString(), helper: "Present today", icon: CalendarCheck, tone: "amber" as const },
-    { label: "Monthly Fee Collection", value: money(summary.monthlyFeeCollection), helper: "Collected this month", icon: CreditCard, tone: "emerald" as const },
-    { label: "Active Notices", value: summary.activeNotices.toLocaleString(), helper: "Published notices", icon: Bell, tone: "amber" as const },
-    { label: "ID Cards Issued", value: summary.idCardsIssued.toLocaleString(), helper: "Total generated cards", icon: BadgeCheck, tone: "blue" as const },
+    { label: "Total Students", value: summary.totalStudents.toLocaleString(), helper: "Active student records", icon: Users, href: "/institution/admission" },
+    { label: "Total Teachers", value: summary.totalTeachers.toLocaleString(), helper: "Teaching staff", icon: BookOpen, href: "/institution/teachers" },
+    { label: "Total Staff", value: summary.totalStaff.toLocaleString(), helper: "Operational staff", icon: ShieldCheck, href: "/institution/staff" },
+    { label: "Today Attendance", value: summary.todayAttendanceCount.toLocaleString(), helper: "Present today", icon: CalendarCheck, href: "/attendance/reports" },
+    { label: "Monthly Fee Collection", value: money(summary.monthlyFeeCollection), helper: "Collected this month", icon: CreditCard, href: "/finance/reports" },
+    { label: "Active Notices", value: summary.activeNotices.toLocaleString(), helper: "Published notices", icon: Bell, href: "/notices" },
+    { label: "ID Cards Issued", value: summary.idCardsIssued.toLocaleString(), helper: "Total generated cards", icon: BadgeCheck, href: "/id-cards/reports" },
   ];
 
   return (
@@ -290,7 +290,12 @@ export default function Dashboard() {
               'from-blue-500 to-indigo-600'
             ];
             return (
-              <Card key={stat.label} className={`relative overflow-hidden border-2 border-slate-200 bg-gradient-to-br ${colors[index % colors.length].replace('500', '50').replace('600', '100')} shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105`}>
+              <Link
+                key={stat.label}
+                href={stat.href}
+                className="block rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+              <Card className={`relative overflow-hidden border-2 border-slate-200 bg-gradient-to-br ${colors[index % colors.length].replace('500', '50').replace('600', '100')} shadow-xl transition-all duration-300 hover:scale-105 hover:border-blue-300 hover:shadow-2xl`}>
                 <div className={`absolute inset-0 bg-gradient-to-br ${colors[index % colors.length]} opacity-10`}></div>
                 <CardContent className="relative p-6">
                   <div className="flex items-center justify-between">
@@ -305,6 +310,7 @@ export default function Dashboard() {
                   </div>
                 </CardContent>
               </Card>
+              </Link>
             );
           })}
         </section>

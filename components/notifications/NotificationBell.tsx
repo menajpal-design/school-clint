@@ -27,9 +27,13 @@ export default function NotificationBell() {
   const fetchUnreadCount = async () => {
     try {
       const response: any = await api.messages.getUnreadCount();
-      setUnreadCount(response.unreadCount || 0);
-    } catch (error) {
-      console.error('Failed to fetch unread count:', error);
+      if (response?.unreadCount !== undefined) {
+        setUnreadCount(response.unreadCount);
+      }
+    } catch (error: any) {
+      // Silently handle errors - endpoint might not be available on all backends
+      // 404 is expected if messages feature is not available
+      console.debug('Messages stats not available:', error?.message);
     }
   };
 

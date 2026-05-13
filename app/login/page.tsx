@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -63,6 +63,56 @@ function getLoginRedirect(user?: User | null) {
   return getRoleRedirect(user.role);
 }
 
+function getLoginFailureMessage(error: any): string {
+  const validationErrors = error?.error?.errors;
+
+  const status = error?.error?.status || error?.status || error?.response?.status;
+  if ([500, 502, 503, 504].includes(Number(status))) {
+    return 'সার্ভারে সমস্যা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।';
+  }
+
+  if (error?.message === 'Network Error' || error?.code === 'ERR_NETWORK') {
+    return 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। ইন্টারনেট বা সার্ভার চেক করুন।';
+  }
+
+  if (Array.isArray(validationErrors) && validationErrors.length) {
+    const message = validationErrors
+      .map((item: any) => {
+        if (typeof item === 'string') return item;
+        if (item?.message) return item.message;
+        if (item?.field) return `${item.field}: ${item.message || 'ভুল ইনপুট'}`;
+        return 'ভুল ইনপুট';
+      })
+      .filter(Boolean)
+      .join(', ');
+
+    return message || 'ইউজারনেম/ইমেইল/মোবাইল এবং পাসওয়ার্ড সঠিক দিন।';
+  }
+
+  const rawMessage = error?.error?.message || error?.message || '';
+  const lowerMessage = String(rawMessage).toLowerCase();
+
+  if (!rawMessage) return 'লগইন করা যাচ্ছে না। অনুগ্রহ করে আবার চেষ্টা করুন।';
+  if (lowerMessage.includes('database is not connected')) return 'সার্ভারের ডাটাবেজ সংযুক্ত নয়। পরে আবার চেষ্টা করুন।';
+  if (lowerMessage.includes('server error')) return 'সার্ভারে সমস্যা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।';
+  if (lowerMessage.includes('user not found')) return 'এই ইউজার পাওয়া যায়নি। ইউজারনেম, ইমেইল বা মোবাইল নম্বর ঠিক আছে কিনা দেখুন।';
+  if (lowerMessage.includes('incorrect password')) return 'পাসওয়ার্ড ভুল হয়েছে। আবার সঠিক পাসওয়ার্ড দিন।';
+  if (lowerMessage.includes('validation failed')) return 'ফর্মের তথ্য ঠিক নয়। ইউজারনেম/ইমেইল/মোবাইল এবং পাসওয়ার্ড দিন।';
+  if (lowerMessage.includes('invalid credentials')) return 'ইউজারনেম/ইমেইল/মোবাইল বা পাসওয়ার্ড সঠিক নয়।';
+
+  return String(rawMessage);
+}
+
+function showToast(
+  addToast: ReturnType<typeof useToast>['addToast'],
+  toast: { title: string; message: string; type: 'success' | 'error' | 'info' | 'warning'; duration?: number }
+) {
+  addToast(toast);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('app-toast', { detail: toast }));
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { addToast } = useToast();
@@ -70,6 +120,7 @@ export default function LoginPage() {
   const [isChecking, setIsChecking] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [demoRole, setDemoRole] = useState<UserRole>('head');
+  const [loginError, setLoginError] = useState("");
 
   useEffect(() => {
     const user = authManager.getUser();
@@ -95,9 +146,10 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
+    setLoginError("");
     try {
       const payload = {
-        identifier: data.identifier,
+        identifier: data.identifier.trim(),
         password: data.password,
       };
       const response = await api.auth.login(payload) as { token: string; user: User };
@@ -110,7 +162,7 @@ export default function LoginPage() {
         sessionStorage.setItem("user", JSON.stringify(response.user));
       }
 
-      addToast({
+      showToast(addToast, {
         title: "Login successful",
         message: "Redirecting to your workspace.",
         type: "success",
@@ -119,11 +171,17 @@ export default function LoginPage() {
 
       router.replace(getLoginRedirect(response.user));
     } catch (error: any) {
-      addToast({
-        title: "Login failed",
-        message: error?.message || "Please check your credentials and try again.",
+      console.error('Login error:', error);
+      console.error('Error response:', error?.error);
+
+      const detailMessage = getLoginFailureMessage(error);
+
+      setLoginError(detailMessage);
+      showToast(addToast, {
+        title: "লগইন ব্যর্থ",
+        message: detailMessage,
         type: "error",
-        duration: 3500,
+        duration: 6000,
       });
     } finally {
       setIsLoading(false);
@@ -133,7 +191,7 @@ export default function LoginPage() {
   const startDemoSession = () => {
     if (demoRole === 'admin' || demoRole === 'super_admin') {
       setDemoRole('head');
-      addToast({
+      showToast(addToast, {
         title: 'Demo role not available',
         message: 'Admin and Super Admin are not available in demo mode.',
         type: 'warning',
@@ -153,7 +211,7 @@ export default function LoginPage() {
     };
 
     authManager.setDemoUser(user);
-    addToast({
+    showToast(addToast, {
       title: 'Demo mode enabled',
       message: 'All data will stay in your browser only.',
       type: 'success',
@@ -251,6 +309,13 @@ export default function LoginPage() {
                 {errors.password && <span className="text-xs font-medium text-red-600">{errors.password.message}</span>}
               </label>
 
+              {loginError && (
+                <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />
+                  <span>{loginError}</span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between gap-3 text-sm">
                 <label className="flex items-center gap-2 text-slate-600">
                   <input
@@ -260,7 +325,7 @@ export default function LoginPage() {
                   />
                   Remember me
                 </label>
-                <Link href="/profile/change-password" className="font-medium text-slate-900 hover:underline">
+                <Link href="/forgot-password" className="font-medium text-slate-900 hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -285,6 +350,34 @@ export default function LoginPage() {
               <Link href="/register" className="font-semibold text-slate-950 hover:underline">
                 Register here
               </Link>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <div className="flex gap-2 text-sm text-blue-900">
+                <span className="font-semibold">💡 Tip:</span>
+                <p>
+                  {loginError ? "Login failed? Try the demo mode below to explore the system as a student or teacher, or contact your administrator." : "Students and teachers can use the demo mode below to explore the system without credentials."}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2 rounded-lg border border-green-200 bg-green-50 p-4">
+              <p className="text-sm font-semibold text-green-900">Test Credentials (Development)</p>
+              <div className="space-y-2 text-xs text-green-800">
+                <div>
+                  <p className="font-medium">📚 Student:</p>
+                  <code className="font-mono bg-green-100 px-1">student@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
+                </div>
+                <div>
+                  <p className="font-medium">👨‍🏫 Teacher:</p>
+                  <code className="font-mono bg-green-100 px-1">teacher@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
+                </div>
+                <div>
+                  <p className="font-medium">👔 Admin:</p>
+                  <code className="font-mono bg-green-100 px-1">head@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
+                </div>
+                <p className="text-xs italic text-green-700 pt-1">All credentials use password: <code className="font-mono bg-green-100 px-1">admin123</code></p>
+              </div>
             </div>
 
             <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">

@@ -10,6 +10,9 @@ export interface AdmitCardProps {
   photoUrl?: string
   institutionName?: string
   institutionLogo?: string
+  institutionAddress?: string
+  institutionPhone?: string
+  institutionEmail?: string
   institutionSeal?: string
   headSignature?: string
   examName?: string
@@ -45,13 +48,13 @@ function AdmitLogo({ logoUrl }: { logoUrl?: string }) {
 }
 
 const InfoLine = ({ label, value }: { label: string; value?: string }) => (
-  <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, minHeight: 39, fontSize: 27, lineHeight: '36px', color: '#111111' }}>
-    <strong style={{ fontWeight: 900 }}>{label}:</strong>
-    <span style={{ fontWeight: 500 }}>{value || '-'}</span>
-  </div>
+  value ? (
+    <div style={{ display: 'grid', gridTemplateColumns: '230px 1fr', alignItems: 'baseline', gap: 9, minHeight: 38, fontSize: 26, lineHeight: '34px', color: '#111111' }}>
+      <strong style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>{label}:</strong>
+      <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
+    </div>
+  ) : null
 )
-
-const courses = ['BEVAE-181', 'BHIC-131', 'BPSC-131', 'BHDLA-135', 'BPAG-171', 'BSOC-131']
 
 export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
   (
@@ -60,9 +63,12 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
       rollNumber,
       className = '',
       photoUrl,
-      institutionName = 'INDIRA GANDHI NATIONAL OPEN UNIVERSITY',
+      institutionName = '',
       institutionLogo,
-      examName = 'ADMIT CARD - Term End Examination',
+      institutionAddress,
+      institutionPhone,
+      institutionEmail,
+      examName = 'Admit Card',
       examDate,
       examCenter,
       centerCode,
@@ -80,6 +86,9 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
       center: examCenter,
       code: centerCode,
       institution: institutionName,
+      address: institutionAddress,
+      phone: institutionPhone,
+      email: institutionEmail,
     })
 
     return (
@@ -102,8 +111,12 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
               <AdmitLogo logoUrl={institutionLogo} />
             </div>
             <div style={{ paddingTop: 4 }}>
-              <h1 style={{ margin: 0, fontSize: 29, lineHeight: '35px', fontWeight: 900, letterSpacing: 0, whiteSpace: 'nowrap' }}>{institutionName}</h1>
-              <h2 style={{ margin: '8px 0 0', fontSize: 29, lineHeight: '35px', fontWeight: 900, letterSpacing: 0 }}>{examName}</h2>
+              <h1 style={{ margin: 0, maxWidth: 570, fontSize: 28, lineHeight: '34px', fontWeight: 900, letterSpacing: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{institutionName}</h1>
+              <h2 style={{ margin: '8px 0 0', maxWidth: 570, fontSize: 28, lineHeight: '34px', fontWeight: 900, letterSpacing: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{examName}</h2>
+              <div style={{ marginTop: 4, display: 'grid', gap: 2, fontSize: 12, fontWeight: 700, color: '#334155' }}>
+                {institutionAddress && <span>{institutionAddress}</span>}
+                {(institutionPhone || institutionEmail) && <span>{[institutionPhone, institutionEmail].filter(Boolean).join(' | ')}</span>}
+              </div>
               <div style={{ marginTop: 12, width: 142, height: 28, borderRadius: 18, background: 'rgba(34, 34, 34, 0.16)', filter: 'blur(7px)' }} />
             </div>
           </header>
@@ -123,41 +136,36 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
             {photoUrl ? (
               <img src={photoUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(#d8c7ad, #f2d19c)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4b5563', fontSize: 15, fontWeight: 800 }}>
-                PHOTO
-              </div>
+              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(#d8c7ad, #f2d19c)' }} />
             )}
           </div>
 
           <main style={{ marginTop: 20, paddingRight: 208 }}>
-            <InfoLine label="Enrollment Number" value={name || rollNumber} />
-            <InfoLine label="Programme" value={(stream || 'BACHELOR OF ARTS (BAG)').toUpperCase()} />
-            <InfoLine label="Regional Centre" value={examCenter || 'Delhi-1'} />
-            <InfoLine label="Date of Birth" value={dateOfBirth || '15 Feb 2000'} />
-            <InfoLine label="Medium" value="English" />
+            <InfoLine label="Student Name" value={name} />
+            <InfoLine label="Roll Number" value={rollNumber} />
+            <InfoLine label="Class / Programme" value={stream} />
+            <InfoLine label="Date of Birth" value={dateOfBirth} />
           </main>
 
           <table style={{ position: 'relative', zIndex: 1, width: '100%', marginTop: 5, borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 22, background: 'transparent' }}>
             <thead>
               <tr>
-                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Course Code</th>
+                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Class / Subject</th>
                 <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Date</th>
                 <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '23%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Time</th>
                 <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '37%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Centre</th>
               </tr>
             </thead>
             <tbody>
-              {courses.map((course, index) => (
-                <tr key={course}>
-                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', height: 37, fontWeight: 900 }}>{course}</td>
-                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 10px', color: 'transparent', textShadow: '0 0 8px rgba(20,20,20,0.5)' }}>{displayExamDate || '00-00-0000'}</td>
-                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}>{index === 0 ? '' : 'Morning (10 AM)'}</td>
-                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}>
-                    <span style={{ marginRight: 34 }}>{centerCode || '0757D'}</span>
-                    <span>{index === 0 ? 'INOU Study' : examCenter || 'Centre, Delhi'}</span>
-                  </td>
-                </tr>
-              ))}
+              <tr>
+                <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', height: 37, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stream || ''}</td>
+                <td style={{ border: '2px solid #1f1f1f', padding: '5px 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayExamDate || ''}</td>
+                <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}></td>
+                <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}>
+                  <span style={{ marginRight: 34 }}>{centerCode || ''}</span>
+                  <span>{examCenter || ''}</span>
+                </td>
+              </tr>
             </tbody>
           </table>
 

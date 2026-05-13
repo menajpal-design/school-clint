@@ -1,9 +1,8 @@
 'use client'
 
 import React, { forwardRef } from 'react'
-import StudentIDCard, { IDCardProps } from './StudentIDCard'
-import TeacherIDCard from './TeacherIDCard'
-import StaffIDCard from './StaffIDCard'
+import { ProfessionalIDCard } from './ProfessionalIDCard'
+import type { IDCardProps } from './StudentIDCard'
 
 export type PreviewProps = IDCardProps & { type?: 'student' | 'teacher' | 'head' | 'staff' }
 
@@ -11,16 +10,19 @@ export const IDCardPreview = forwardRef<HTMLDivElement, PreviewProps>(function I
   { type = 'student', ...props },
   ref
 ) {
-  const common = props
   return (
     <div ref={ref as any} className="p-2 bg-slate-50 inline-block">
-      {type === 'teacher' || type === 'head' ? (
-        <TeacherIDCard {...common} />
-      ) : type === 'staff' ? (
-        <StaffIDCard {...common} />
-      ) : (
-        <StudentIDCard {...common} />
-      )}
+      <ProfessionalIDCard
+        name={props.name}
+        idNumber={props.id}
+        role={type as any}
+        photoUrl={props.photoUrl}
+        institutionName={props.institution?.name || 'My Institution'}
+        institutionLogo={props.institution?.logoUrl}
+        headName={props.headName || props.institution?.headName || ''}
+        validityDate={props.validity}
+        stream={props.studentClass}
+      />
     </div>
   )
 })
