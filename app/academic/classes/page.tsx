@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api, apiClient } from "@/lib/api";
+import { ACADEMIC_YEAR_PRESETS, CLASS_PRESETS, SECTION_PRESETS } from "@/lib/academic-presets";
 import { cn } from "@/lib/utils";
 
 type SectionItem = {
@@ -392,6 +393,12 @@ function ClassFormDialog({
   onRemoveSection: (index: number) => void;
   onUpdateSection: (index: number, value: Partial<SectionItem>) => void;
 }) {
+  const applyClassPreset = (grade: string) => {
+    const preset = CLASS_PRESETS.find((item) => item.grade === grade);
+    if (!preset) return;
+    onFormChange({ ...form, grade: preset.grade, name: preset.name });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
@@ -404,14 +411,38 @@ function ClassFormDialog({
 
         <form className="space-y-5" onSubmit={onSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Class name">
-              <Input value={form.name} onChange={(event) => onFormChange({ ...form, name: event.target.value })} required />
+            <Field label="Class 1-12">
+              <select
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={CLASS_PRESETS.some((item) => item.grade === form.grade && item.name === form.name) ? form.grade : ""}
+                onChange={(event) => applyClassPreset(event.target.value)}
+              >
+                <option value="">Custom class</option>
+                {CLASS_PRESETS.map((item) => (
+                  <option key={item.grade} value={item.grade}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <Field label="Grade">
-              <Input value={form.grade} onChange={(event) => onFormChange({ ...form, grade: event.target.value })} required />
+            <Field label="Class name / custom">
+              <Input value={form.name} onChange={(event) => onFormChange({ ...form, name: event.target.value })} placeholder="Class 1 or custom class name" required />
+            </Field>
+            <Field label="Grade / custom">
+              <Input value={form.grade} onChange={(event) => onFormChange({ ...form, grade: event.target.value })} placeholder="1-12 or custom grade" required />
             </Field>
             <Field label="Academic year">
-              <Input value={form.academicYear} onChange={(event) => onFormChange({ ...form, academicYear: event.target.value })} required />
+              <div className="grid gap-2 sm:grid-cols-[1fr_1fr]">
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={ACADEMIC_YEAR_PRESETS.includes(form.academicYear) ? form.academicYear : ""}
+                  onChange={(event) => onFormChange({ ...form, academicYear: event.target.value || form.academicYear })}
+                >
+                  <option value="">Custom</option>
+                  {ACADEMIC_YEAR_PRESETS.map((year) => <option key={year} value={year}>{year}</option>)}
+                </select>
+                <Input value={form.academicYear} onChange={(event) => onFormChange({ ...form, academicYear: event.target.value })} required />
+              </div>
             </Field>
             <Field label="Shift">
               <select
@@ -461,11 +492,21 @@ function ClassFormDialog({
             <div className="space-y-2">
               {form.sections.map((section, index) => (
                 <div key={section._id || index} className="grid gap-2 rounded-lg border border-slate-200 p-3 md:grid-cols-[1fr_120px_120px_92px]">
-                  <Input
-                    value={section.name}
-                    placeholder="Section"
-                    onChange={(event) => onUpdateSection(index, { name: event.target.value })}
-                  />
+                  <div className="grid gap-2 sm:grid-cols-[1fr_1fr]">
+                    <select
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      value={SECTION_PRESETS.includes(section.name) ? section.name : ""}
+                      onChange={(event) => onUpdateSection(index, { name: event.target.value || section.name })}
+                    >
+                      <option value="">Custom</option>
+                      {SECTION_PRESETS.map((name) => <option key={name} value={name}>{name}</option>)}
+                    </select>
+                    <Input
+                      value={section.name}
+                      placeholder="Section"
+                      onChange={(event) => onUpdateSection(index, { name: event.target.value })}
+                    />
+                  </div>
                   <Input
                     type="number"
                     min={0}

@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
+import { SUBJECT_PRESETS } from "@/lib/academic-presets";
 import { cn } from "@/lib/utils";
 
 type ClassOption = {
@@ -379,6 +380,18 @@ function SubjectFormDialog({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onFormChange: (form: SubjectForm) => void;
 }) {
+  const applySubjectPreset = (subjectName: string) => {
+    const preset = SUBJECT_PRESETS.find((item) => item.name === subjectName);
+    if (!preset) return;
+    onFormChange({
+      ...form,
+      name: preset.name,
+      code: preset.code,
+      type: preset.type,
+      description: form.description || preset.name,
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -391,11 +404,25 @@ function SubjectFormDialog({
 
         <form className="space-y-5" onSubmit={onSubmit}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Subject name">
-              <Input value={form.name} onChange={(event) => onFormChange({ ...form, name: event.target.value })} required />
+            <Field label="Preset subject">
+              <select
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={SUBJECT_PRESETS.some((item) => item.name === form.name) ? form.name : ""}
+                onChange={(event) => applySubjectPreset(event.target.value)}
+              >
+                <option value="">Custom subject</option>
+                {SUBJECT_PRESETS.map((subject) => (
+                  <option key={subject.code} value={subject.name}>
+                    {subject.name}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <Field label="Code">
-              <Input value={form.code} onChange={(event) => onFormChange({ ...form, code: event.target.value.toUpperCase() })} required />
+            <Field label="Subject name / custom">
+              <Input value={form.name} onChange={(event) => onFormChange({ ...form, name: event.target.value })} placeholder="Select or type subject name" required />
+            </Field>
+            <Field label="Code / custom">
+              <Input value={form.code} onChange={(event) => onFormChange({ ...form, code: event.target.value.toUpperCase() })} placeholder="Auto filled, editable" required />
             </Field>
             <Field label="Class">
               <select
@@ -407,7 +434,7 @@ function SubjectFormDialog({
                 <option value="">Select class</option>
                 {classes.map((classItem) => (
                   <option key={classItem._id} value={classItem._id}>
-                    {classItem.name}
+                    {classItem.name}{classItem.grade ? ` - Grade ${classItem.grade}` : ""}
                   </option>
                 ))}
               </select>
