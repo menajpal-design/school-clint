@@ -24,10 +24,34 @@ export interface AdmitCardProps {
 
 const formatDisplayDate = (value?: string) => {
   if (!value) return ''
-
   const parsedDate = new Date(value)
-  return Number.isNaN(parsedDate.getTime()) ? value : parsedDate.toLocaleDateString()
+  return Number.isNaN(parsedDate.getTime()) ? value : parsedDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+
+function AdmitLogo({ logoUrl }: { logoUrl?: string }) {
+  if (logoUrl) {
+    return <img src={logoUrl} alt="Logo" style={{ width: 94, height: 94, objectFit: 'contain' }} />
+  }
+
+  return (
+    <svg width="96" height="96" viewBox="0 0 96 96" aria-label="Institution logo">
+      <circle cx="48" cy="48" r="38" fill="none" stroke="#2096c5" strokeWidth="8" />
+      <circle cx="48" cy="48" r="24" fill="none" stroke="#2096c5" strokeWidth="7" />
+      <path d="M48 12v34h24" fill="none" stroke="#2096c5" strokeWidth="8" strokeLinecap="round" />
+      <circle cx="48" cy="48" r="9" fill="#2096c5" />
+      <path d="M18 18v44c0 10 12 19 30 22 18-3 30-12 30-22V18" fill="none" stroke="#2096c5" strokeWidth="6" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+const InfoLine = ({ label, value }: { label: string; value?: string }) => (
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, minHeight: 39, fontSize: 27, lineHeight: '36px', color: '#111111' }}>
+    <strong style={{ fontWeight: 900 }}>{label}:</strong>
+    <span style={{ fontWeight: 500 }}>{value || '-'}</span>
+  </div>
+)
+
+const courses = ['BEVAE-181', 'BHIC-131', 'BPSC-131', 'BHDLA-135', 'BPAG-171', 'BSOC-131']
 
 export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
   (
@@ -36,263 +60,111 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
       rollNumber,
       className = '',
       photoUrl,
-      institutionName = 'Educational Institution',
+      institutionName = 'INDIRA GANDHI NATIONAL OPEN UNIVERSITY',
       institutionLogo,
-      institutionSeal,
-      headSignature,
-      examName = 'Annual Examination',
+      examName = 'ADMIT CARD - Term End Examination',
       examDate,
       examCenter,
       centerCode,
-      headName = 'Dr. Principal',
       dateOfBirth,
-      fatherName,
       stream,
     },
     ref
   ) => {
+    const displayExamDate = formatDisplayDate(examDate)
     const qrData = JSON.stringify({
       name,
       roll: rollNumber,
       exam: examName,
-      center: centerCode,
-      date: examDate,
+      date: displayExamDate || examDate,
+      center: examCenter,
+      code: centerCode,
       institution: institutionName,
-      stream,
-      fatherName,
-      dateOfBirth,
     })
 
-    const displayExamDate = formatDisplayDate(examDate)
-    const displayIssueDate = formatDisplayDate(new Date().toISOString())
-
     return (
-      <div ref={ref} className={`w-full max-w-[520px] space-y-4 bg-white ${className}`}>
-        <div className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
-          <div className="bg-emerald-800 px-6 py-4 text-white">
-            <div className="flex items-center justify-between gap-3">
-              {institutionLogo ? (
-                <img
-                  src={institutionLogo}
-                  alt="Logo"
-                  className="h-14 w-14 rounded-md border border-white/40 bg-white p-1 object-contain shadow-sm"
-                />
-              ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-md border border-white/40 bg-white/15 text-sm font-bold shadow-sm">
-                  Logo
-                </div>
-              )}
-              <div className="min-w-0 flex-1 text-center">
-                <h1 className="text-xl font-bold leading-tight">{institutionName}</h1>
-                <p className="text-sm font-semibold text-white/90">Admit Card</p>
-              </div>
-              <div className="rounded-md border border-white/35 px-2 py-1 text-right text-[10px] font-semibold uppercase text-white/90">
-                Hall Ticket
-              </div>
+      <div ref={ref} className={className} style={{ width: 850, maxWidth: '100%', background: '#fbf6e8', padding: 0, fontFamily: 'Arial, Helvetica, sans-serif' }}>
+        <section
+          style={{
+            width: 850,
+            maxWidth: '100%',
+            minHeight: 600,
+            position: 'relative',
+            background: '#fbf6e8',
+            border: '2px solid #161616',
+            color: '#111111',
+            padding: '22px 22px 18px',
+            overflow: 'hidden',
+          }}
+        >
+          <header style={{ display: 'grid', gridTemplateColumns: '112px 1fr', gap: 18, alignItems: 'start' }}>
+            <div style={{ paddingTop: 1 }}>
+              <AdmitLogo logoUrl={institutionLogo} />
             </div>
-          </div>
-
-          <div className="px-6 pb-5 pt-4">
-            <div className="grid grid-cols-[96px_1fr_104px] gap-4">
-              <div className="shrink-0">
-                {photoUrl ? (
-                  <img
-                    src={photoUrl}
-                    alt={name}
-                    className="h-28 w-24 rounded-md border border-slate-300 object-cover shadow-sm"
-                  />
-                ) : (
-                  <div className="flex h-28 w-24 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-center text-xs text-slate-500">
-                    Student
-                    <br />Photo
-                  </div>
-                )}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold uppercase text-slate-500">Student Name</p>
-                <p className="truncate text-lg font-bold text-slate-950">{name}</p>
-                <div className="mt-2 grid gap-2 text-sm text-slate-800">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase text-slate-500">Roll No</p>
-                    <p className="font-mono text-sm font-bold">{rollNumber}</p>
-                  </div>
-                  {stream && (
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase text-slate-500">Class / Stream</p>
-                      <p className="font-semibold">{stream}</p>
-                    </div>
-                  )}
-                  {dateOfBirth && (
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase text-slate-500">Date of Birth</p>
-                      <p className="font-semibold">{dateOfBirth}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="shrink-0 rounded-md border border-slate-200 bg-white p-2 shadow-sm">
-                <QRCodeSVG value={qrData} size={96} level="M" includeMargin={false} />
-                <p className="mt-1 text-center text-[10px] font-semibold text-slate-500">Scan QR</p>
-              </div>
+            <div style={{ paddingTop: 4 }}>
+              <h1 style={{ margin: 0, fontSize: 29, lineHeight: '35px', fontWeight: 900, letterSpacing: 0, whiteSpace: 'nowrap' }}>{institutionName}</h1>
+              <h2 style={{ margin: '8px 0 0', fontSize: 29, lineHeight: '35px', fontWeight: 900, letterSpacing: 0 }}>{examName}</h2>
+              <div style={{ marginTop: 12, width: 142, height: 28, borderRadius: 18, background: 'rgba(34, 34, 34, 0.16)', filter: 'blur(7px)' }} />
             </div>
+          </header>
 
-            {(examName || examDate || examCenter || centerCode) && (
-              <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-slate-800 shadow-sm">
-                <p className="text-[11px] font-bold uppercase text-emerald-800">Examination Details</p>
-                <div className="mt-2 grid grid-cols-2 gap-3">
-                  <div>
-                    <span className="font-semibold">Exam:</span> {examName}
-                  </div>
-                  {examDate && (
-                    <div>
-                      <span className="font-semibold">Date:</span> {displayExamDate || examDate}
-                    </div>
-                  )}
-                  {examCenter && (
-                    <div>
-                      <span className="font-semibold">Center:</span> {examCenter}
-                    </div>
-                  )}
-                  {centerCode && (
-                    <div>
-                      <span className="font-semibold">Code:</span> {centerCode}
-                    </div>
-                  )}
-                </div>
+          <div
+            style={{
+              position: 'absolute',
+              right: 21,
+              top: 102,
+              width: 178,
+              height: 230,
+              border: '2px solid #222222',
+              background: '#d7cfc4',
+              overflow: 'hidden',
+            }}
+          >
+            {photoUrl ? (
+              <img src={photoUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(#d8c7ad, #f2d19c)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4b5563', fontSize: 15, fontWeight: 800 }}>
+                PHOTO
               </div>
             )}
-
-            <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-700">
-              {fatherName && (
-                <div className="col-span-2 rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                  <p className="text-[11px] font-semibold uppercase text-slate-500">Father's Name</p>
-                  <p className="mt-1 font-semibold text-slate-900">{fatherName}</p>
-                </div>
-              )}
-              <div className="col-span-2 rounded-md border border-red-100 bg-red-50 px-3 py-2 shadow-sm">
-                <p className="mb-1 text-[11px] font-bold uppercase text-red-700">Important Instructions</p>
-                <ul className="list-disc space-y-1 pl-4 text-red-900">
-                  <li>Present this admit card along with valid ID</li>
-                  <li>Arrive 30 minutes before exam start time</li>
-                  <li>Keep original documents safe</li>
-                  <li>Report any discrepancies to the office</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end gap-3 border-t border-slate-200 pt-3">
-              <div>
-                <p className="text-[11px] font-semibold uppercase text-slate-500">Issue Date</p>
-                <p className="font-semibold text-slate-900">{displayIssueDate}</p>
-              </div>
-              <div className="text-center">
-                {institutionSeal ? (
-                  <img src={institutionSeal} alt="Seal" className="h-14 w-14 rounded-full object-contain" />
-                ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-emerald-600 bg-emerald-50 text-xs font-bold text-emerald-700">Seal</div>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="mb-1 text-[11px] font-semibold uppercase text-slate-500">Authorized by</p>
-                {headSignature && <img src={headSignature} alt="Signature" className="ml-auto h-8 max-w-[120px] object-contain" />}
-                <p className="text-sm font-bold text-emerald-700">{headName}</p>
-                <p className="text-xs text-slate-500">Institution Head</p>
-              </div>
-            </div>
           </div>
 
-          <div className="border-t border-slate-200 bg-slate-50 px-6 py-2 text-center text-xs text-slate-600">
-            <p className="font-semibold">This admit card is valid only for the prescribed examination.</p>
+          <main style={{ marginTop: 20, paddingRight: 208 }}>
+            <InfoLine label="Enrollment Number" value={name || rollNumber} />
+            <InfoLine label="Programme" value={(stream || 'BACHELOR OF ARTS (BAG)').toUpperCase()} />
+            <InfoLine label="Regional Centre" value={examCenter || 'Delhi-1'} />
+            <InfoLine label="Date of Birth" value={dateOfBirth || '15 Feb 2000'} />
+            <InfoLine label="Medium" value="English" />
+          </main>
+
+          <table style={{ position: 'relative', zIndex: 1, width: '100%', marginTop: 5, borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 22, background: 'transparent' }}>
+            <thead>
+              <tr>
+                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Course Code</th>
+                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Date</th>
+                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '23%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Time</th>
+                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '37%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Centre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {courses.map((course, index) => (
+                <tr key={course}>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', height: 37, fontWeight: 900 }}>{course}</td>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 10px', color: 'transparent', textShadow: '0 0 8px rgba(20,20,20,0.5)' }}>{displayExamDate || '00-00-0000'}</td>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}>{index === 0 ? '' : 'Morning (10 AM)'}</td>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}>
+                    <span style={{ marginRight: 34 }}>{centerCode || '0757D'}</span>
+                    <span>{index === 0 ? 'INOU Study' : examCenter || 'Centre, Delhi'}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div style={{ position: 'absolute', right: 35, bottom: 28, width: 100, height: 100, background: '#ffffff', padding: 4 }}>
+            <QRCodeSVG value={qrData} size={92} level="M" includeMargin={false} />
           </div>
-        </div>
-
-        <div className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
-          <div className="bg-emerald-800 px-6 py-4 text-white">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-bold leading-tight">{institutionName}</h2>
-                <p className="text-xs font-semibold text-white/85">Admit Card Back Side</p>
-              </div>
-              <div className="rounded-md border border-white/35 px-2 py-1 text-right text-[10px] font-semibold uppercase text-white/90">
-                Exam Rules
-              </div>
-            </div>
-          </div>
-
-          <div className="px-6 py-4">
-            <div className="grid grid-cols-[1fr_110px] gap-4">
-              <div className="space-y-3">
-                <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] font-bold uppercase text-slate-500">Candidate Instructions</p>
-                  <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-slate-700">
-                    <li>Carry this admit card and a valid school ID for every examination.</li>
-                    <li>Enter the exam hall at least 30 minutes before the start time.</li>
-                    <li>Mobile phones, smart watches, books, and unauthorized notes are prohibited.</li>
-                    <li>Follow the invigilator's instructions throughout the examination.</li>
-                    <li>Any correction must be reported to the school office before the exam date.</li>
-                  </ol>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-md border border-slate-200 p-2">
-                    <p className="font-semibold uppercase text-slate-500">Roll No.</p>
-                    <p className="mt-1 font-mono font-bold text-slate-900">{rollNumber}</p>
-                  </div>
-                  <div className="rounded-md border border-slate-200 p-2">
-                    <p className="font-semibold uppercase text-slate-500">Exam</p>
-                    <p className="mt-1 font-bold text-slate-900">{examName}</p>
-                  </div>
-                  {examCenter && (
-                    <div className="col-span-2 rounded-md border border-slate-200 p-2">
-                      <p className="font-semibold uppercase text-slate-500">Exam Center</p>
-                      <p className="mt-1 font-bold text-slate-900">{examCenter}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="rounded-md border border-slate-200 bg-white p-2 text-center shadow-sm">
-                  <QRCodeSVG value={qrData} size={96} level="M" includeMargin={false} />
-                  <p className="mt-2 text-[10px] font-semibold text-slate-500">Scan to Verify</p>
-                </div>
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-center">
-                  <p className="text-[10px] font-bold uppercase text-emerald-700">Center Code</p>
-                  <p className="mt-1 font-mono text-sm font-bold text-emerald-900">{centerCode || 'N/A'}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end gap-3 border-t border-slate-200 pt-3">
-              <div>
-                <p className="text-[11px] font-semibold uppercase text-slate-500">Authorized by</p>
-                <p className="text-sm font-bold text-emerald-700">{headName}</p>
-                <p className="text-xs text-slate-500">Institution Head</p>
-              </div>
-              <div className="text-center">
-                {institutionSeal ? (
-                  <img src={institutionSeal} alt="Seal" className="h-14 w-14 rounded-full object-contain" />
-                ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-emerald-600 bg-emerald-50 text-xs font-bold text-emerald-700">Seal</div>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="text-[11px] font-semibold uppercase text-slate-500">Signature</p>
-                {headSignature ? (
-                  <img src={headSignature} alt="Signature" className="ml-auto mt-1 h-8 max-w-[120px] object-contain" />
-                ) : (
-                  <div className="ml-auto mt-4 h-px w-28 bg-slate-400" />
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-200 bg-slate-50 px-6 py-2 text-center text-xs text-slate-600">
-            This admit card must be preserved until the examination result is published.
-          </div>
-        </div>
+        </section>
       </div>
     )
   }

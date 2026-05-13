@@ -9,69 +9,56 @@ import { downloadBlob } from '@/lib/utils'
 import { downloadElementPdf, printElement } from '@/lib/export-utils'
 
 export function DownloadButtons({ targetRef, filename = 'id-card', cardId, printTitle = 'Print ID Card', emailSubject = 'ID Card' }: { targetRef: React.RefObject<HTMLElement> | null; filename?: string; cardId?: string; printTitle?: string; emailSubject?: string }) {
+  const copyComputedStyles = (clone: HTMLElement, source: Element) => {
+    const computed = window.getComputedStyle(source)
+    for (let index = 0; index < computed.length; index += 1) {
+      const property = computed.item(index)
+      clone.style.setProperty(property, computed.getPropertyValue(property), computed.getPropertyPriority(property))
+    }
+
+    const cloneChildren = Array.from(clone.children) as HTMLElement[]
+    const sourceChildren = Array.from(source.children) as Element[]
+    cloneChildren.forEach((child, index) => {
+      if (sourceChildren[index]) copyComputedStyles(child, sourceChildren[index])
+    })
+  }
+
+  const inlineImages = async (root: HTMLElement) => {
+    const imgs = Array.from(root.querySelectorAll('img')) as HTMLImageElement[]
+    await Promise.all(imgs.map(async (img) => {
+      try {
+        const src = img.getAttribute('src') || ''
+        if (!src || src.startsWith('data:') || src.startsWith('blob:')) return
+        const res = await fetch(src)
+        if (!res.ok) return
+        const blob = await res.blob()
+        const reader = new FileReader()
+        const dataUrl: string = await new Promise((resolve, reject) => {
+          reader.onloadend = () => resolve(String(reader.result || ''))
+          reader.onerror = reject
+          reader.readAsDataURL(blob)
+        })
+        img.setAttribute('src', dataUrl)
+      } catch (e) {
+        // Leave the original source if the browser cannot fetch it.
+      }
+    }))
+  }
+
   const captureElement = async () => {
     if (!targetRef?.current) return null
     await document.fonts?.ready?.catch(() => undefined)
-    
-    // Inline remote images to data URLs to avoid CORS tainting
-    const inlineImages = async (root: HTMLElement) => {
-      const imgs = Array.from(root.querySelectorAll('img')) as HTMLImageElement[]
-      await Promise.all(imgs.map(async (img) => {
-        try {
-          const src = img.getAttribute('src') || ''
-          if (!src || src.startsWith('data:') || src.startsWith('blob:')) return
-          // fetch and convert to data URL
-          const res = await fetch(src)
-          if (!res.ok) return
-          const blob = await res.blob()
-          const reader = new FileReader()
-          const dataUrl: string = await new Promise((resolve, reject) => {
-            reader.onloadend = () => resolve(String(reader.result || ''))
-            reader.onerror = reject
-            reader.readAsDataURL(blob)
-          })
-          img.setAttribute('src', dataUrl)
-        } catch (e) {
-          // ignore failures and leave original src
-        }
-      }))
-    }
 
-    await inlineImages(targetRef.current)
-
-    // Create a wrapper div and clone with computed styles inlined
     const wrapper = document.createElement('div')
     wrapper.style.position = 'fixed'
     wrapper.style.left = '-9999px'
     wrapper.style.top = '0'
     wrapper.style.background = 'white'
+    wrapper.style.padding = '0'
     
     const cloned = targetRef.current.cloneNode(true) as HTMLElement
-    
-    // Walk through all elements and copy computed styles
-    const walk = (el: HTMLElement, original: Element) => {
-      const computed = window.getComputedStyle(original)
-      el.style.color = computed.color
-      el.style.backgroundColor = computed.backgroundColor
-      el.style.borderColor = computed.borderColor
-      el.style.borderWidth = computed.borderWidth
-      el.style.borderStyle = computed.borderStyle
-      el.style.borderRadius = computed.borderRadius
-      el.style.padding = computed.padding
-      el.style.margin = computed.margin
-      el.style.fontSize = computed.fontSize
-      el.style.fontWeight = computed.fontWeight
-      el.style.textAlign = computed.textAlign
-      el.style.display = computed.display
-      
-      const childEls = Array.from(el.children) as HTMLElement[]
-      const origChildEls = Array.from(original.children) as Element[]
-      childEls.forEach((child, idx) => {
-        if (origChildEls[idx]) walk(child, origChildEls[idx])
-      })
-    }
-    
-    walk(cloned, targetRef.current)
+    copyComputedStyles(cloned, targetRef.current)
+    await inlineImages(cloned)
     wrapper.appendChild(cloned)
     document.body.appendChild(wrapper)
 
@@ -80,6 +67,7 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
       backgroundColor: '#ffffff',
       useCORS: true,
       allowTaint: true,
+      foreignObjectRendering: false,
       scrollX: 0,
       scrollY: 0,
       windowWidth: wrapper.scrollWidth,

@@ -55,6 +55,42 @@ const qrBlock = (qrDataUrl?: string, label = "Scan to verify") => qrDataUrl ? `
   </div>
 ` : "";
 
+const copyComputedStyles = (clone: HTMLElement, source: Element) => {
+  const computed = window.getComputedStyle(source);
+  for (let index = 0; index < computed.length; index += 1) {
+    const property = computed.item(index);
+    clone.style.setProperty(property, computed.getPropertyValue(property), computed.getPropertyPriority(property));
+  }
+
+  const cloneChildren = Array.from(clone.children) as HTMLElement[];
+  const sourceChildren = Array.from(source.children) as Element[];
+  cloneChildren.forEach((child, index) => {
+    if (sourceChildren[index]) copyComputedStyles(child, sourceChildren[index]);
+  });
+};
+
+const inlineImages = async (root: HTMLElement) => {
+  const imgs = Array.from(root.querySelectorAll("img")) as HTMLImageElement[];
+  await Promise.all(imgs.map(async (img) => {
+    try {
+      const src = img.getAttribute("src") || "";
+      if (!src || src.startsWith("data:") || src.startsWith("blob:")) return;
+      const res = await fetch(src);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const reader = new FileReader();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        reader.onloadend = () => resolve(String(reader.result || ""));
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      img.setAttribute("src", dataUrl);
+    } catch (e) {
+      // Keep the original image source when it cannot be converted.
+    }
+  }));
+};
+
 const pageShell = (title: string, body: string, styles = "") => `
   <!doctype html>
   <html>
@@ -104,50 +140,18 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   const html2canvas = (await import("html2canvas")).default;
   const jsPDF = (await import("jspdf")).default;
   await document.fonts?.ready?.catch(() => undefined);
-  const qrDataUrl = await makeQrDataUrl(qrPayload(filename), 128);
   const captureTarget = document.createElement("div");
   captureTarget.style.position = "fixed";
   captureTarget.style.left = "-10000px";
   captureTarget.style.top = "0";
   captureTarget.style.width = `${target.scrollWidth || target.offsetWidth || 900}px`;
   captureTarget.style.background = "#ffffff";
-  captureTarget.style.padding = "16px";
+  captureTarget.style.padding = "0";
   
-  const header = document.createElement("div");
-  header.innerHTML = institutionHeader();
-  captureTarget.appendChild(header);
-  
-  // Clone and inline computed styles to fix color rendering
   const clonedTarget = target.cloneNode(true) as HTMLElement;
-  const walk = (el: HTMLElement, original: Element) => {
-    const computed = window.getComputedStyle(original);
-    el.style.color = computed.color;
-    el.style.backgroundColor = computed.backgroundColor;
-    el.style.borderColor = computed.borderColor;
-    el.style.borderWidth = computed.borderWidth;
-    el.style.borderStyle = computed.borderStyle;
-    el.style.borderRadius = computed.borderRadius;
-    el.style.padding = computed.padding;
-    el.style.margin = computed.margin;
-    el.style.fontSize = computed.fontSize;
-    el.style.fontWeight = computed.fontWeight;
-    
-    const childEls = Array.from(el.children) as HTMLElement[];
-    const origChildEls = Array.from(original.children) as Element[];
-    childEls.forEach((child, idx) => {
-      if (origChildEls[idx]) walk(child, origChildEls[idx]);
-    });
-  };
-  
-  walk(clonedTarget, target);
+  copyComputedStyles(clonedTarget, target);
+  await inlineImages(clonedTarget);
   captureTarget.appendChild(clonedTarget);
-  
-  const qrFooter = document.createElement("div");
-  qrFooter.style.display = "flex";
-  qrFooter.style.justifyContent = "flex-end";
-  qrFooter.style.marginTop = "16px";
-  qrFooter.innerHTML = qrBlock(qrDataUrl);
-  captureTarget.appendChild(qrFooter);
   document.body.appendChild(captureTarget);
 
   const canvas = await html2canvas(captureTarget, {
@@ -155,6 +159,7 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
     backgroundColor: "#ffffff",
     useCORS: true,
     allowTaint: true,
+    foreignObjectRendering: false,
     scrollX: 0,
     scrollY: 0,
   });
@@ -184,32 +189,10 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
 
 export async function printElement(target: HTMLElement | null, title = "Print") {
   if (!target) return;
-  const qrDataUrl = await makeQrDataUrl(qrPayload(title), 128);
-  
-  // Clone and inline computed styles for print consistency
+  await document.fonts?.ready?.catch(() => undefined);
   const cloned = target.cloneNode(true) as HTMLElement;
-  const walk = (el: HTMLElement, original: Element) => {
-    const computed = window.getComputedStyle(original);
-    el.style.color = computed.color;
-    el.style.backgroundColor = computed.backgroundColor;
-    el.style.borderColor = computed.borderColor;
-    el.style.borderWidth = computed.borderWidth;
-    el.style.borderStyle = computed.borderStyle;
-    el.style.borderRadius = computed.borderRadius;
-    el.style.padding = computed.padding;
-    el.style.margin = computed.margin;
-    el.style.fontSize = computed.fontSize;
-    el.style.fontWeight = computed.fontWeight;
-    el.style.textAlign = computed.textAlign;
-    el.style.display = computed.display;
-    
-    const childEls = Array.from(el.children) as HTMLElement[];
-    const origChildEls = Array.from(original.children) as Element[];
-    childEls.forEach((child, idx) => {
-      if (origChildEls[idx]) walk(child, origChildEls[idx]);
-    });
-  };
-  walk(cloned, target);
+  copyComputedStyles(cloned, target);
+  await inlineImages(cloned);
   
   const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
     .map((node) => node.outerHTML)
@@ -218,7 +201,7 @@ export async function printElement(target: HTMLElement | null, title = "Print") 
   const popup = window.open("", "_blank", "width=1200,height=900");
   if (!popup) return;
   popup.document.open();
-  popup.document.write(pageShell(title, `${styleTags}<main style="padding:20px">${institutionHeader()}${cloned.outerHTML}<div class="print-footer">${qrBlock(qrDataUrl)}</div></main>`));
+  popup.document.write(pageShell(title, `${styleTags}<main style="padding:20px">${cloned.outerHTML}</main>`));
   popup.document.close();
   popup.focus();
   setTimeout(() => {

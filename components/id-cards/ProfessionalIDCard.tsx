@@ -23,12 +23,131 @@ export interface ProfessionalIDCardProps {
   stream?: string
 }
 
+const cardCopy = {
+  student: {
+    title: 'STUDENT',
+    subtitle: 'Student ID Card',
+    leftBg: '#073b49',
+    rightBg: '#053441',
+    gold: '#d4a63b',
+  },
+  teacher: {
+    title: 'TEACHER',
+    subtitle: 'Teacher ID Card',
+    leftBg: '#063844',
+    rightBg: '#053441',
+    gold: '#d3a23a',
+  },
+  head: {
+    title: 'HEAD',
+    subtitle: 'Head ID Card',
+    leftBg: '#4b2f08',
+    rightBg: '#3c2809',
+    gold: '#d4a63b',
+  },
+  staff: {
+    title: 'STAFF',
+    subtitle: 'Staff ID Card',
+    leftBg: '#263241',
+    rightBg: '#1f2937',
+    gold: '#d4a63b',
+  },
+}
+
 const formatDisplayDate = (value?: string) => {
   if (!value) return ''
-
   const parsedDate = new Date(value)
   return Number.isNaN(parsedDate.getTime()) ? value : parsedDate.toLocaleDateString()
 }
+
+function LogoMark({
+  logoUrl,
+  institutionName,
+  tone = '#d4a63b',
+}: {
+  logoUrl?: string
+  institutionName: string
+  tone?: string
+}) {
+  if (logoUrl) {
+    return <img src={logoUrl} alt="Logo" style={{ width: 72, height: 56, objectFit: 'contain' }} />
+  }
+
+  const initial = institutionName.trim().charAt(0).toUpperCase() || 'I'
+  return (
+    <div
+      style={{
+        width: 68,
+        height: 54,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: tone,
+        fontFamily: 'Georgia, serif',
+        fontSize: 34,
+        fontWeight: 800,
+      }}
+    >
+      {initial}
+    </div>
+  )
+}
+
+function PhotoFrame({ name, photoUrl }: { name: string; photoUrl?: string }) {
+  return (
+    <div
+      style={{
+        width: 174,
+        height: 174,
+        padding: 6,
+        background: '#ffffff',
+        clipPath: 'polygon(50% 0%, 88% 14%, 100% 48%, 94% 78%, 50% 100%, 7% 78%, 0% 48%, 12% 14%)',
+        filter: 'drop-shadow(0 3px 2px rgba(0,0,0,0.18))',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          background: '#e5e7eb',
+          clipPath: 'polygon(50% 0%, 88% 14%, 100% 48%, 94% 78%, 50% 100%, 7% 78%, 0% 48%, 12% 14%)',
+          overflow: 'hidden',
+        }}
+      >
+        {photoUrl ? (
+          <img src={photoUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#64748b',
+              fontSize: 13,
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #f8fafc, #dbeafe)',
+            }}
+          >
+            PHOTO
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const Row = ({ label, value }: { label: string; value?: string }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '92px 1fr', minHeight: 18, borderBottom: '1px solid rgba(255,255,255,0.62)' }}>
+    <div style={{ borderRight: '1px solid rgba(255,255,255,0.62)', padding: '2px 7px', fontSize: 12, fontWeight: 800, color: '#ffffff' }}>
+      {label}
+    </div>
+    <div style={{ padding: '2px 8px', fontSize: 12, fontWeight: 700, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      {value || '-'}
+    </div>
+  </div>
+)
 
 export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalIDCardProps>(
   (
@@ -38,243 +157,174 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
       role,
       className = '',
       photoUrl,
-      institutionName = 'Educational Institution',
+      institutionName = 'Institute Logo',
       institutionLogo,
       institutionSeal,
       headSignature,
-      validityDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      headName = 'Dr. Principal',
+      validityDate,
+      headName = 'Principal',
       dateOfBirth,
       fatherName,
-      motherName,
       admissionNumber,
       registrationNumber,
       stream,
     },
     ref
   ) => {
+    const theme = cardCopy[role] || cardCopy.student
+    const displayValidityDate = formatDisplayDate(validityDate) || 'Valid Session'
     const qrData = JSON.stringify({
       name,
       id: idNumber,
       role,
       institution: institutionName,
-      validity: validityDate,
-      stream,
-      dateOfBirth,
-      admissionNumber,
-      registrationNumber,
+      validity: displayValidityDate,
+      class: stream,
+      dob: dateOfBirth,
+      admission: admissionNumber,
+      registration: registrationNumber,
     })
 
-    const displayValidityDate = formatDisplayDate(validityDate)
-    const displayIssueDate = formatDisplayDate(new Date().toISOString())
-
-    const roleLabel = {
-      student: 'Student ID Card',
-      teacher: 'Teacher ID Card',
-      head: 'Head ID Card',
-      staff: 'Staff ID Card',
-    }[role]
-
-    const roleColor = {
-      student: 'bg-sky-800',
-      teacher: 'bg-emerald-800',
-      head: 'bg-amber-800',
-      staff: 'bg-slate-800',
-    }[role]
+    const qualificationLabel = role === 'teacher' || role === 'head' ? 'Qualification' : 'Class'
+    const qualificationValue = stream || (role === 'teacher' ? 'M.Sc' : role === 'staff' ? 'Administration' : 'General')
+    const sinceLabel = role === 'teacher' || role === 'head' || role === 'staff' ? 'Working Since' : 'Session'
+    const sinceValue = role === 'student' ? displayValidityDate : displayValidityDate
 
     return (
-      <div ref={ref} className={`w-full max-w-[430px] space-y-4 bg-white ${className}`}>
-        <div className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
-          <div className={`${roleColor} px-5 py-4 text-white`}>
-            <div className="flex items-center justify-between gap-3">
-              {institutionLogo ? (
-                <img
-                  src={institutionLogo}
-                  alt="Logo"
-                  className="h-14 w-14 rounded-md border border-white/40 bg-white p-1 object-contain shadow-sm"
-                />
+      <div ref={ref} className={className} style={{ width: 624, maxWidth: '100%', background: '#ffffff', padding: 0 }}>
+        <div style={{ display: 'flex', gap: 20, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <section
+            style={{
+              position: 'relative',
+              width: 302,
+              height: 444,
+              overflow: 'hidden',
+              background: theme.leftBg,
+              fontFamily: 'Arial, Helvetica, sans-serif',
+              color: '#ffffff',
+            }}
+          >
+            <div style={{ position: 'absolute', inset: 0, background: theme.leftBg }} />
+            <div style={{ position: 'absolute', top: -58, left: -54, width: 142, height: 142, borderRadius: '50%', background: theme.gold }} />
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: 300,
+                height: 215,
+                background: '#ffffff',
+                borderBottomLeftRadius: '48% 14%',
+                borderBottomRightRadius: '62% 20%',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                top: 64,
+                right: -68,
+                width: 168,
+                height: 188,
+                background: theme.leftBg,
+                transform: 'rotate(21deg)',
+              }}
+            />
+
+            <div style={{ position: 'absolute', top: 18, left: 63 }}>
+              <PhotoFrame name={name} photoUrl={photoUrl} />
+            </div>
+
+            <h1
+              style={{
+                position: 'absolute',
+                top: 226,
+                left: 0,
+                right: 0,
+                margin: 0,
+                textAlign: 'center',
+                fontSize: 52,
+                lineHeight: '58px',
+                fontWeight: 900,
+                letterSpacing: 0,
+                color: '#ffffff',
+                fontFamily: 'Arial Black, Impact, Arial, sans-serif',
+              }}
+            >
+              {theme.title}
+            </h1>
+
+            <div style={{ position: 'absolute', left: 25, right: 25, top: 312, border: '1px solid rgba(255,255,255,0.72)' }}>
+              <Row label="Name:" value={name} />
+              <Row label={qualificationLabel + ':'} value={qualificationValue} />
+              <Row label="ID Number:" value={idNumber} />
+              <Row label={sinceLabel + ':'} value={sinceValue} />
+            </div>
+
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <LogoMark logoUrl={institutionLogo} institutionName={institutionName} tone={theme.gold} />
+              <div>
+                <div style={{ color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 23, fontWeight: 800, lineHeight: '22px' }}>{institutionName}</div>
+                <div style={{ color: theme.gold, fontSize: 10, letterSpacing: 1.4 }}>slogan text line goes here</div>
+              </div>
+            </div>
+          </section>
+
+          <section
+            style={{
+              position: 'relative',
+              width: 302,
+              height: 444,
+              overflow: 'hidden',
+              background: '#ffffff',
+              fontFamily: 'Arial, Helvetica, sans-serif',
+              color: '#082f3a',
+            }}
+          >
+            <div style={{ position: 'absolute', inset: 0, background: '#ffffff' }} />
+            <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 86, background: theme.rightBg }} />
+            <div style={{ position: 'absolute', right: -92, top: 72, width: 250, height: 210, borderRadius: '50%', background: theme.rightBg }} />
+            <div style={{ position: 'absolute', left: -70, top: 78, width: 300, height: 125, borderRadius: '50%', background: '#ffffff' }} />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 17, background: theme.gold }} />
+
+            <div style={{ position: 'absolute', top: 25, left: 28 }}>
+              <div style={{ color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 800, lineHeight: '22px' }}>{institutionName}</div>
+              <div style={{ color: theme.gold, fontSize: 10, letterSpacing: 1.3 }}>slogan text line goes here</div>
+            </div>
+            <div style={{ position: 'absolute', top: 31, right: 30 }}>
+              <LogoMark logoUrl={institutionSeal || institutionLogo} institutionName={institutionName} tone={theme.gold} />
+            </div>
+
+            <div style={{ position: 'absolute', left: 15, top: 112, width: 186 }}>
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 500, color: '#082f3a' }}>Terms & Conditions</h2>
+              <ul style={{ margin: '12px 0 0', paddingLeft: 18, fontSize: 8, lineHeight: '12px', color: '#111827', fontWeight: 700 }}>
+                <li>This card is non-transferable and must be carried on campus.</li>
+                <li>Loss or damage must be reported to the office immediately.</li>
+                <li>Finder is requested to return this card to the issuing institute.</li>
+              </ul>
+            </div>
+
+            <div style={{ position: 'absolute', left: 45, top: 236, width: 86, height: 86, background: '#ffffff' }}>
+              <QRCodeSVG value={qrData} size={82} level="M" includeMargin={false} />
+            </div>
+
+            <div style={{ position: 'absolute', left: 158, top: 239, width: 114, textAlign: 'center' }}>
+              <div style={{ fontSize: 8, fontWeight: 800 }}>Signature Authority</div>
+              <div style={{ fontSize: 7, fontStyle: 'italic', fontWeight: 700 }}>Principal</div>
+              {headSignature ? (
+                <img src={headSignature} alt="Signature" style={{ marginTop: 12, width: 88, height: 34, objectFit: 'contain' }} />
               ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-md border border-white/40 bg-white/15 shadow-sm">
-                  <span className="text-sm font-bold">Logo</span>
-                </div>
+                <div style={{ margin: '16px auto 0', width: 80, height: 26, borderBottom: '1px solid #334155', transform: 'rotate(-8deg)' }} />
               )}
-              <div className="min-w-0 flex-1 text-center">
-                <h2 className="text-xl font-bold leading-tight">{institutionName}</h2>
-                <p className="text-sm font-semibold text-white/90">{roleLabel}</p>
-              </div>
-              <div className="rounded-md border border-white/35 px-2 py-1 text-right text-[10px] font-semibold uppercase text-white/90">
-                Official
-              </div>
-            </div>
-          </div>
-
-          <div className="px-5 pb-4 pt-4">
-            <div className="grid grid-cols-[96px_1fr_92px] gap-4">
-              <div className="shrink-0">
-                {photoUrl ? (
-                  <img
-                    src={photoUrl}
-                    alt={name}
-                    className="h-28 w-24 rounded-md border border-slate-300 object-cover shadow-sm"
-                  />
-                ) : (
-                  <div className="flex h-28 w-24 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-center text-xs text-slate-500">
-                    Photo
-                  </div>
-                )}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="mb-2">
-                  <p className="text-[11px] font-semibold uppercase text-slate-500">Full Name</p>
-                  <p className="truncate text-lg font-bold text-slate-950">{name}</p>
-                </div>
-                <div className="mb-2">
-                  <p className="text-[11px] font-semibold uppercase text-slate-500">ID Number</p>
-                  <p className="font-mono text-sm font-bold text-slate-900">{idNumber}</p>
-                </div>
-                {stream && (
-                  <div className="mb-2">
-                    <p className="text-[11px] font-semibold uppercase text-slate-500">Class / Stream</p>
-                    <p className="text-sm font-semibold text-slate-900">{stream}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-[11px] font-semibold uppercase text-slate-500">Valid Until</p>
-                  <p className="text-sm font-semibold text-slate-900">{displayValidityDate || validityDate}</p>
-                </div>
-              </div>
-
-              <div className="shrink-0 rounded-md border border-slate-200 bg-white p-2 shadow-sm">
-                  <QRCodeSVG value={qrData} size={80} level="M" includeMargin={false} />
-                <p className="mt-1 text-center text-[10px] font-semibold text-slate-500">Scan QR</p>
-              </div>
+              <div style={{ marginTop: 2, fontSize: 8, fontWeight: 700, color: '#334155' }}>{headName}</div>
             </div>
 
-            {(dateOfBirth || admissionNumber || registrationNumber || fatherName || motherName) && (
-              <div className="mt-4 grid grid-cols-2 gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800">
-                {dateOfBirth && (
-                  <div>
-                    <p className="font-semibold uppercase text-slate-500">Date of Birth</p>
-                    <p className="font-semibold">{dateOfBirth}</p>
-                  </div>
-                )}
-                {admissionNumber && (
-                  <div>
-                    <p className="font-semibold uppercase text-slate-500">Admission No.</p>
-                    <p className="font-semibold">{admissionNumber}</p>
-                  </div>
-                )}
-                {registrationNumber && (
-                  <div>
-                    <p className="font-semibold uppercase text-slate-500">Registration No.</p>
-                    <p className="font-semibold">{registrationNumber}</p>
-                  </div>
-                )}
-                {motherName && (
-                  <div>
-                    <p className="font-semibold uppercase text-slate-500">Mother's Name</p>
-                    <p className="font-semibold">{motherName}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="mt-4 grid grid-cols-[1.2fr_0.8fr_1fr] items-end gap-3 border-t border-slate-200 pt-3 text-xs text-slate-700">
-              <div>
-                <p className="font-semibold uppercase text-slate-500">Authorized By</p>
-                {headSignature && <img src={headSignature} alt="Signature" className="mt-1 h-8 max-w-[120px] object-contain" />}
-                <p className="text-sm font-semibold text-slate-950">{headName}</p>
-                <p className="text-slate-500">{role === 'head' ? 'Head of Institution' : 'Institution Head'}</p>
-              </div>
-              <div className="text-center">
-                {institutionSeal ? (
-                  <img src={institutionSeal} alt="Seal" className="mx-auto h-14 w-14 rounded-full object-contain" />
-                ) : (
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-400 bg-slate-50 text-[10px] font-semibold text-slate-600">Seal</div>
-                )}
-              </div>
-              <div className="text-right text-xs">
-                <p className="font-semibold uppercase text-slate-500">Issue Date</p>
-                <p className="font-semibold text-slate-950">{displayIssueDate}</p>
-              </div>
+            <div style={{ position: 'absolute', left: 52, right: 24, bottom: 38, display: 'grid', gap: 7, fontSize: 9, fontWeight: 700, color: '#082f3a' }}>
+              <div>123 street address, City State, Zip Code</div>
+              <div>email@OfficeTemplatesOnline.com</div>
+              <div>123-456-7890, 444-555-COMP</div>
+              <div>https://www.OfficeTemplatesOnline.com</div>
             </div>
-          </div>
-
-          <div className="border-t border-slate-200 bg-slate-50 px-6 py-2 text-center text-xs font-medium text-slate-600">
-            This card is the official property of {institutionName}. Loss must be reported immediately.
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
-          <div className={`${roleColor} px-5 py-3 text-white`}>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-bold">{institutionName}</p>
-                <p className="text-xs text-white/85">Card Back Side</p>
-              </div>
-              <p className="rounded-md border border-white/35 px-2 py-1 text-[10px] font-semibold uppercase text-white/90">
-                Verify Before Service
-              </p>
-            </div>
-          </div>
-
-          <div className="px-5 py-4">
-            <div className="grid grid-cols-[1fr_96px] gap-4">
-              <div className="space-y-3">
-                <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] font-bold uppercase text-slate-500">Terms of Use</p>
-                  <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-700">
-                    <li>This card is non-transferable and must be carried inside campus.</li>
-                    <li>Loss or damage must be reported to the institution office immediately.</li>
-                    <li>Finder is requested to return this card to the issuing institution.</li>
-                  </ul>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-md border border-slate-200 p-2">
-                    <p className="font-semibold uppercase text-slate-500">Card No.</p>
-                    <p className="mt-1 font-mono font-bold text-slate-900">{idNumber}</p>
-                  </div>
-                  <div className="rounded-md border border-slate-200 p-2">
-                    <p className="font-semibold uppercase text-slate-500">Valid Until</p>
-                    <p className="mt-1 font-bold text-slate-900">{displayValidityDate || validityDate}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-md border border-slate-200 bg-white p-2 text-center shadow-sm">
-                <QRCodeSVG value={qrData} size={80} level="M" includeMargin={false} />
-                <p className="mt-2 text-[10px] font-semibold text-slate-500">Scan to Verify</p>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end gap-3 border-t border-slate-200 pt-3 text-xs text-slate-700">
-              <div>
-                <p className="font-semibold uppercase text-slate-500">Issued By</p>
-                <p className="text-sm font-semibold text-slate-950">{headName}</p>
-                <p className="text-slate-500">{role === 'head' ? 'Head of Institution' : 'Institution Head'}</p>
-              </div>
-              <div className="text-center">
-                {institutionSeal ? (
-                  <img src={institutionSeal} alt="Seal" className="mx-auto h-14 w-14 rounded-full object-contain" />
-                ) : (
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-400 bg-slate-50 text-[10px] font-semibold text-slate-600">Seal</div>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="font-semibold uppercase text-slate-500">Signature</p>
-                {headSignature ? (
-                  <img src={headSignature} alt="Signature" className="ml-auto mt-1 h-8 max-w-[120px] object-contain" />
-                ) : (
-                  <div className="ml-auto mt-4 h-px w-28 bg-slate-400" />
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-200 bg-slate-50 px-5 py-2 text-center text-[11px] font-medium text-slate-600">
-            If found, please return to {institutionName}.
-          </div>
+          </section>
         </div>
       </div>
     )

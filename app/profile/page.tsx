@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CreditCard, Edit, KeyRound, UserRound } from "lucide-react";
 
-import { IDCardPreview } from "@/components/id-cards/IDCardPreview";
+import { ProfessionalIDCard } from "@/components/id-cards/ProfessionalIDCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -34,6 +34,12 @@ export default function ProfilePage() {
   }, []);
 
   const institution = user?.institution || {};
+  const owner = card?.ownerId || user || {};
+  const cardType = owner?.role === "head" ? "head" : owner?.role === "teacher" ? "teacher" : owner?.role === "staff" ? "staff" : "student";
+  const previewName = owner?.name || "User";
+  const previewId = card?.cardNumber || owner?.employeeId || owner?.rollNumber || owner?.id || "ID";
+  const previewStream = owner?.classId?.name || owner?.className || owner?.designation || owner?.department || "";
+  const headName = institution?.headId?.name || institution?.headName || "Institution Head";
 
   const uploadAvatar = (file?: File) => {
     if (!file) return;
@@ -111,8 +117,21 @@ export default function ProfilePage() {
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="mb-4 font-semibold text-slate-950">ID Card Section</h2>
+            {cardErr && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{cardErr}</div>}
             <div ref={previewRef}>
-              <IDCardPreview type={user?.role === "staff" ? "staff" : user?.role?.includes("teacher") ? "teacher" : "student"} name={user?.name || "User"} id={user?.id || "ID"} qrData={user?.id || ""} barcode={user?.id || ""} />
+              <ProfessionalIDCard
+                role={cardType as any}
+                name={previewName}
+                idNumber={previewId}
+                institutionName={institution?.name || "Educational Institution"}
+                institutionLogo={institution?.logo || institution?.logoUrl}
+                institutionSeal={institution?.seal}
+                headSignature={institution?.headSignature}
+                headName={headName}
+                stream={previewStream}
+                validityDate={card?.validityEnd || undefined}
+                photoUrl={owner?.avatar || user?.avatar}
+              />
             </div>
             <div className="mt-3">
               <DownloadButtons targetRef={previewRef} filename={card?.cardNumber || `id-${user?.id || 'me'}`} cardId={card?._id} />

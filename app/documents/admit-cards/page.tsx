@@ -18,7 +18,7 @@ export default function AdmitCardsPage() {
       />
       
       <div ref={previewRef}>
-        <GenerateIDCardForm />
+        <GenerateIDCardForm defaultCardType="admit-card" />
       </div>
     </div>
   );

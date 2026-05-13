@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -12,6 +12,7 @@ import { AdmitCard } from './AdmitCard'
 import DownloadButtons from './DownloadButtons'
 import { api } from '@/lib/api'
 import { authManager } from '@/lib/auth'
+import { useAuth } from '@/hooks/useAuth'
 
 const toDateInputValue = (date: Date) => date.toISOString().split('T')[0]
 
@@ -37,11 +38,26 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+const allCardTypes: Array<{ value: FormValues['cardType']; label: string; roles: string[] }> = [
+  { value: 'student-id', label: 'Student ID Card', roles: ['head', 'assistant_head', 'staff', 'class_teacher'] },
+  { value: 'teacher-id', label: 'Teacher ID Card', roles: ['head', 'assistant_head'] },
+  { value: 'head-id', label: 'Head ID Card', roles: ['head', 'assistant_head'] },
+  { value: 'staff-id', label: 'Staff ID Card', roles: ['head', 'assistant_head'] },
+  { value: 'admit-card', label: 'Admit Card', roles: ['head', 'assistant_head', 'staff', 'student'] },
+]
+
 export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: FormValues['cardType'] } = {}) {
+  const { user } = useAuth()
+  const userRole = user?.role || authManager.getUser()?.role
+  const visibleCardTypes = useMemo(
+    () => allCardTypes.filter((type) => userRole && type.roles.includes(userRole)),
+    [userRole]
+  )
+  const fallbackCardType = defaultCardType || visibleCardTypes[0]?.value || 'admit-card'
   const { register, handleSubmit, watch, setValue } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      cardType: defaultCardType || 'student-id',
+      cardType: fallbackCardType,
       institutionName: 'Educational Institution',
       headName: 'Institution Head',
       validityDate: toDateInputValue(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
@@ -74,6 +90,12 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
     centerCode: watch('centerCode'),
     validityDate: watch('validityDate'),
   })
+
+  useEffect(() => {
+    if (visibleCardTypes.length > 0 && !visibleCardTypes.some((type) => type.value === cardType)) {
+      setValue('cardType', visibleCardTypes[0].value)
+    }
+  }, [cardType, setValue, visibleCardTypes])
 
   useEffect(() => {
     const user = authManager.getUser()
@@ -148,20 +170,21 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {/* Card Type */}
-              <div>
-                <label className="text-sm font-semibold">Card Type</label>
-                <select
-                  {...register('cardType')}
-                  className="w-full border rounded px-3 py-2 mt-1"
-                >
-                  <option value="student-id">Student ID Card</option>
-                  <option value="teacher-id">Teacher ID Card</option>
-                  <option value="head-id">Head ID Card</option>
-                  <option value="staff-id">Staff ID Card</option>
-                  <option value="admit-card">Admit Card</option>
-                </select>
-              </div>
+              {visibleCardTypes.length > 1 ? (
+                <div>
+                  <label className="text-sm font-semibold">Card Type</label>
+                  <select
+                    {...register('cardType')}
+                    className="w-full border rounded px-3 py-2 mt-1"
+                  >
+                    {visibleCardTypes.map((type) => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <input type="hidden" {...register('cardType')} />
+              )}
 
               {/* Basic Information */}
               <div className="space-y-3 border-t pt-4">

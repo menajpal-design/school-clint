@@ -7,20 +7,28 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 
 type OwnerType = "student" | "teacher" | "staff";
 
 export default function BulkGeneratePage() {
+  const { user } = useAuth();
   const [ownerType, setOwnerType] = useState<OwnerType>("student");
   const [people, setPeople] = useState<any[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
+  const canBulkGenerate = ["head", "assistant_head"].includes(String(user?.role || ""));
 
-  const load = async () => { const data = await api.idCards.searchOwners({ type: ownerType, search }) as any; setPeople(data.people || []); setSelected([]); };
-  useEffect(() => { load().catch(() => undefined); }, [ownerType]);
+  const load = async () => {
+    if (!canBulkGenerate) return;
+    const data = await api.idCards.searchOwners({ type: ownerType, search }) as any;
+    setPeople(data.people || []);
+    setSelected([]);
+  };
+  useEffect(() => { load().catch(() => undefined); }, [ownerType, canBulkGenerate]);
   const toggle = (id: string) => setSelected((current) => current.includes(id) ? current.filter((x) => x !== id) : current.length >= 50 ? current : [...current, id]);
   const generate = async () => {
     setProgress(20);
@@ -32,6 +40,17 @@ export default function BulkGeneratePage() {
     const blob = new Blob([JSON.stringify({ ownerType, selected }, null, 2)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "generated-id-cards.json"; a.click();
   };
+
+  if (!canBulkGenerate) {
+    return (
+      <div className="space-y-5">
+        <PageHeader title="Bulk ID Card Generate" description="Only authorized users can generate cards in a batch." icon={Users} />
+        <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-700 shadow-sm">
+          You do not have access to teacher or staff ID card generation.
+        </section>
+      </div>
+    );
+  }
 
   return <div className="space-y-5">
     <PageHeader title="Bulk ID Card Generate" description="Filter people, select up to 50 and generate cards in a batch." icon={Users} actions={[{ label: "Download JSON", icon: Download, onClick: downloadSelection }]} />
