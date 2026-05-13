@@ -38,6 +38,8 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 const roleRedirects: Partial<Record<UserRole, string>> = {
+  admin: "/admin",
+  super_admin: "/admin",
   head: "/dashboard",
   assistant_head: "/dashboard",
   class_teacher: "/attendance/mark",
