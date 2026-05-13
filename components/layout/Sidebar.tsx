@@ -44,13 +44,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   if (isLoading) {
     return (
-      <aside className="fixed left-0 top-16 z-40 h-[calc(100vh-64px)] w-64 border-r border-gray-200 bg-white p-4 lg:relative lg:top-0 lg:translate-x-0">
+      <aside className="fixed left-0 top-16 z-40 h-[calc(100vh-64px)] w-64 border-r border-border bg-background p-4 lg:relative lg:top-0 lg:translate-x-0">
         <div className="space-y-3 animate-pulse">
-          <div className="h-4 w-28 rounded bg-gray-200" />
-          <div className="h-10 rounded bg-gray-100" />
-          <div className="h-10 rounded bg-gray-100" />
-          <div className="h-10 rounded bg-gray-100" />
-          <div className="h-10 rounded bg-gray-100" />
+          <div className="h-4 w-28 rounded bg-muted" />
+          <div className="h-10 rounded bg-popover" />
+          <div className="h-10 rounded bg-popover" />
+          <div className="h-10 rounded bg-popover" />
+          <div className="h-10 rounded bg-popover" />
         </div>
       </aside>
     );
@@ -89,7 +89,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-16 z-50 h-[calc(100vh-64px)] transform border-r border-gray-200 bg-white shadow-xl transition-transform duration-300 overflow-y-auto lg:relative lg:top-0 lg:z-auto lg:translate-x-0 lg:shadow-none',
+          'fixed left-0 top-16 z-50 h-[calc(100vh-64px)] transform border-r border-border bg-background shadow-xl transition-transform duration-300 overflow-y-auto lg:relative lg:top-0 lg:z-auto lg:translate-x-0 lg:shadow-none',
           collapsed ? 'w-20' : 'w-64',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
@@ -110,8 +110,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     className={cn(
                       'w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       active
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-popover text-primary'
+                        : 'text-foreground hover:bg-muted'
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -132,8 +132,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     className={cn(
                       'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       active
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-popover text-primary'
+                        : 'text-foreground hover:bg-muted'
                     )}
                   >
                       <Icon className="h-4 w-4" />
@@ -143,7 +143,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {/* Submenu */}
                 {hasChildren && expanded && (
-                  <div className="ml-3 space-y-1 border-l border-gray-200 pl-3">
+                  <div className="ml-3 space-y-1 border-l border-border pl-3">
                     {item.children?.map((child) => (
                       <Link
                         key={child.href}
@@ -152,8 +152,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         className={cn(
                           'block w-full rounded-lg px-3 py-2 text-sm transition-colors',
                           isActive(child.href)
-                            ? 'bg-blue-50 font-medium text-blue-700'
-                            : 'text-gray-600 hover:bg-gray-50'
+                            ? 'bg-popover font-medium text-primary'
+                            : 'text-muted-foreground hover:bg-popover'
                         )}
                       >
                           {!collapsed && child.label}
@@ -169,7 +169,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="mt-4 flex items-center justify-center">
             <button
               onClick={() => { setCollapsed(!collapsed); try { localStorage.setItem('sidebarCollapsed', !collapsed ? '1' : '0'); } catch (e) {} }}
-              className="rounded-md px-2 py-1 text-sm text-gray-600 hover:bg-gray-100"
+              className="rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-muted"
             >
               {collapsed ? 'Expand' : 'Collapse'}
             </button>
