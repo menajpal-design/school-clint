@@ -140,6 +140,13 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   const html2canvas = (await import("html2canvas")).default;
   const jsPDF = (await import("jspdf")).default;
   await document.fonts?.ready?.catch(() => undefined);
+
+  // Normalize zoom to 100% for consistent output
+  const originalZoom = document.documentElement.style.zoom;
+  const originalBodyZoom = document.body.style.zoom;
+  document.documentElement.style.zoom = '1';
+  document.body.style.zoom = '1';
+
   const captureTarget = document.createElement("div");
   captureTarget.style.position = "fixed";
   captureTarget.style.left = "-10000px";
@@ -155,15 +162,34 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   captureTarget.style.background = "#ffffff";
   captureTarget.style.padding = "0";
   captureTarget.style.overflow = "hidden";
+  captureTarget.style.zoom = "1";
+  captureTarget.style.transform = "scale(1)";
   
   const clonedTarget = target.cloneNode(true) as HTMLElement;
+  clonedTarget.style.zoom = "1";
+  clonedTarget.style.transform = "scale(1)";
+  
+  // Force zoom: 1 on all child elements to override any responsive scaling
+  const forceZoom = (el: Element) => {
+    if (el instanceof HTMLElement) {
+      el.style.zoom = "1";
+      el.style.transform = "scale(1)";
+    }
+    Array.from(el.children).forEach(forceZoom);
+  };
+  forceZoom(clonedTarget);
+  
   copyComputedStyles(clonedTarget, target);
   await inlineImages(clonedTarget);
   captureTarget.appendChild(clonedTarget);
   document.body.appendChild(captureTarget);
 
+  // Use 1:1 scale since we're already using fixed pixel dimensions
+  const currentZoom = window.devicePixelRatio || 1;
+  const scale = 1 / currentZoom;
+  
   const canvas = await html2canvas(captureTarget, {
-    scale: 2,
+    scale: scale,
     backgroundColor: "#ffffff",
     useCORS: true,
     allowTaint: true,
@@ -175,24 +201,45 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   });
   document.body.removeChild(captureTarget);
 
+  // Restore original zoom
+  document.documentElement.style.zoom = originalZoom;
+  document.body.style.zoom = originalBodyZoom;
+
+  // Create PDF with A4 size (210mm x 297mm)
   const pdf = new jsPDF("p", "mm", "a4");
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const marginX = 6;
-  const marginY = 6;
-  const imgWidth = pageWidth - marginX * 2;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
+  const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+  const marginX = 10;
+  const marginY = 10;
+  const availableWidth = pageWidth - marginX * 2; // 190mm
+  const aspectRatio = canvas.width / canvas.height;
+  const imgWidth = availableWidth;
+  const imgHeight = imgWidth / aspectRatio;
   const imgData = canvas.toDataURL("image/png");
+  
+  // Center horizontally, position from top
+  const offsetX = (pageWidth - imgWidth) / 2;
+  const offsetY = marginY;
 
-  let remainingHeight = imgHeight;
-  let y = marginY;
-  pdf.addImage(imgData, "PNG", marginX, y, imgWidth, imgHeight);
-  remainingHeight -= pageHeight - marginY * 2;
+  // Add image to first page
+  if (imgHeight <= pageHeight - marginY * 2) {
+    // Fits on one page
+    pdf.addImage(imgData, "PNG", offsetX, offsetY, imgWidth, imgHeight);
+  } else {
+    // Multi-page handling
+    let remainingHeight = imgHeight;
+    let y = offsetY;
+    
+    // Add as much as possible on first page
+    const firstPageHeight = pageHeight - marginY * 2;
+    pdf.addImage(imgData, "PNG", offsetX, y, imgWidth, imgHeight);
+    remainingHeight -= firstPageHeight;
 
-  while (remainingHeight > 0) {
-    y = marginY - (imgHeight - remainingHeight);
-    pdf.addPage();
-    pdf.addImage(imgData, "PNG", marginX, y, imgWidth, imgHeight);
+    // Add remaining on subsequent pages
+    while (remainingHeight > 0) {
+      y = marginY - (imgHeight - remainingHeight);
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", offsetX, y, imgWidth, imgHeight);
     remainingHeight -= pageHeight - marginY * 2;
   }
 
@@ -202,7 +249,16 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
 export async function printElement(target: HTMLElement | null, title = "Print") {
   if (!target) return;
   await document.fonts?.ready?.catch(() => undefined);
+
+  // Normalize zoom to 100% for consistent printing
+  const originalZoom = document.documentElement.style.zoom;
+  const originalBodyZoom = document.body.style.zoom;
+  document.documentElement.style.zoom = '1';
+  document.body.style.zoom = '1';
+
   const cloned = target.cloneNode(true) as HTMLElement;
+  cloned.style.zoom = '1';
+  cloned.style.transform = 'scale(1)';
   copyComputedStyles(cloned, target);
   await inlineImages(cloned);
   
@@ -212,13 +268,32 @@ export async function printElement(target: HTMLElement | null, title = "Print") 
   
   const popup = window.open("", "_blank", "width=1200,height=900");
   if (!popup) return;
+  
+  const printContent = `
+    <style>
+      html, body { zoom: 1 !important; transform: scale(1) !important; }
+      @media print {
+        html, body { zoom: 1 !important; transform: scale(1) !important; }
+        .professional-id-card { zoom: 1 !important; }
+        .admit-card { zoom: 1 !important; }
+      }
+    </style>
+    ${styleTags}
+    <main style="padding:20px; zoom: 1; transform: scale(1);">${cloned.outerHTML}</main>
+  `;
+  
   popup.document.open();
-  popup.document.write(pageShell(title, `${styleTags}<main style="padding:20px">${cloned.outerHTML}</main>`));
+  popup.document.write(pageShell(title, printContent));
   popup.document.close();
   popup.focus();
+  
   setTimeout(() => {
     popup.print();
-    popup.close();
+    // Restore original zoom after print dialog closes
+    setTimeout(() => {
+      document.documentElement.style.zoom = originalZoom;
+      document.body.style.zoom = originalBodyZoom;
+    }, 500);
   }, 300);
 }
 

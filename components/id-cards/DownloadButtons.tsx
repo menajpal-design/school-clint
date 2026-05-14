@@ -49,6 +49,9 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
     if (!targetRef?.current) return null
     await document.fonts?.ready?.catch(() => undefined)
 
+    // Normalize zoom to ensure consistent output regardless of page zoom level
+    const currentZoom = window.devicePixelRatio || 1
+    
     // Use fixed dimensions to ensure consistent output across devices
     const isAdmitCard = targetRef.current.classList.contains('admit-card')
     const captureWidth = isAdmitCard ? 850 : 800
@@ -63,15 +66,32 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
     wrapper.style.width = `${captureWidth}px`
     wrapper.style.height = `${captureHeight}px`
     wrapper.style.overflow = 'hidden'
+    wrapper.style.zoom = '1'
+    wrapper.style.transform = 'scale(1)'
     
     const cloned = targetRef.current.cloneNode(true) as HTMLElement
+    cloned.style.zoom = '1'
+    cloned.style.transform = 'scale(1)'
+    
+    // Force zoom: 1 on all child elements
+    const forceZoom = (el: Element) => {
+      if (el instanceof HTMLElement) {
+        el.style.zoom = '1'
+        el.style.transform = 'scale(1)'
+      }
+      Array.from(el.children).forEach(forceZoom)
+    }
+    forceZoom(cloned)
+    
     copyComputedStyles(cloned, targetRef.current)
     await inlineImages(cloned)
     wrapper.appendChild(cloned)
     document.body.appendChild(wrapper)
 
+    // Normalize to 1:1 pixel ratio, accounting for device pixel ratio
+    const scale = Math.max(0.5, 1 / currentZoom)
     const canvas = await html2canvas(wrapper, {
-      scale: 3,
+      scale: scale,
       backgroundColor: '#ffffff',
       useCORS: true,
       allowTaint: true,

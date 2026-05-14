@@ -368,9 +368,9 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
             <CardTitle>Card Preview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center min-h-96 overflow-x-auto" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="flex justify-center min-h-96 overflow-x-auto" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zoom: '1', transform: 'scale(1)' }}>
               {hasPreviewData ? (
-                <div ref={previewRef} className="inline-block" style={{ width: 'fit-content', minWidth: 'fit-content', flex: '0 0 auto' }}>
+                <div ref={previewRef} className="inline-block" style={{ width: 'fit-content', minWidth: 'fit-content', flex: '0 0 auto', zoom: '1', transform: 'scale(1)' }}>
                   {previewData.cardType === 'admit-card' ? (
                     <AdmitCard
                       name={previewData.name}

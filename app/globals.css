@@ -60,7 +60,13 @@
 }
 
 @media print {
+  body, html {
+    zoom: 1 !important;
+    transform: scale(1) !important;
+  }
+
   .professional-id-card {
+    zoom: 1 !important;
     width: 800px !important;
     height: 500px !important;
     max-width: none !important;
@@ -153,17 +159,21 @@
 
 /* Force fixed sizing in all contexts to prevent device-dependent layout changes */
 .professional-id-card {
+  zoom: 1 !important;
   width: 800px !important;
   height: 500px !important;
   max-width: none !important;
   max-height: none !important;
   flex-shrink: 0 !important;
+  transform: scale(1) !important;
 }
 
 .admit-card {
+  zoom: 1 !important;
   width: 850px !important;
   height: 600px !important;
   max-width: none !important;
   max-height: none !important;
   flex-shrink: 0 !important;
+  transform: scale(1) !important;
 }
