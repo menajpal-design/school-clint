@@ -148,29 +148,31 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
             <InfoLine label="Date of Birth" value={dateOfBirth} />
           </main>
 
-          <table style={{ position: 'relative', zIndex: 1, width: '100%', marginTop: 5, borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 22, background: 'transparent' }}>
-            <thead>
-              <tr>
-                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Class / Subject</th>
-                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Date</th>
-                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '23%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Time</th>
-                <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '37%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Centre</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', height: 37, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stream || ''}</td>
-                <td style={{ border: '2px solid #1f1f1f', padding: '5px 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayExamDate || ''}</td>
-                <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}></td>
-                <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}>
-                  <div style={{ display: 'grid', gap: 4, lineHeight: 1.15, wordBreak: 'break-word' }}>
-                    <span style={{ fontWeight: 900 }}>{centerCode || ''}</span>
-                    <span>{examCenter || ''}</span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div style={{ position: 'relative', zIndex: 1, marginTop: 8, paddingRight: 208 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 22, background: 'transparent' }}>
+              <thead>
+                <tr>
+                  <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Class / Subject</th>
+                  <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Date</th>
+                  <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '23%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Time</th>
+                  <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '37%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Centre</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', height: 37, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stream || ''}</td>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayExamDate || ''}</td>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}></td>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}>
+                    <div style={{ display: 'grid', gap: 4, lineHeight: 1.15, wordBreak: 'break-word' }}>
+                      <span style={{ fontWeight: 900 }}>{centerCode || ''}</span>
+                      <span>{examCenter || ''}</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           <div className="admit-qr" style={{ position: 'absolute', right: 35, bottom: 28, width: 100, height: 100, background: '#ffffff', padding: 4 }}>
             <QRCodeSVG value={qrData} size={92} level="M" includeMargin={false} />
