@@ -174,7 +174,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 17, background: theme.gold }} />
 
             <div style={{ position: 'absolute', top: 30, left: 30 }}>
-              <div style={{ maxWidth: 160, color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 800, lineHeight: '20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{institutionName}</div>
+              <div style={{ maxWidth: 160, color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 800, lineHeight: '20px', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{institutionName}</div>
             </div>
             <div style={{ position: 'absolute', top: 30, right: 35 }}>
               <LogoMark logoUrl={institutionSeal || institutionLogo} institutionName={institutionName} tone={theme.gold} />
