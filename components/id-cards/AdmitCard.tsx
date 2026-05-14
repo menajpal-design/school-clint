@@ -94,12 +94,11 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
     })
 
     return (
-      <div ref={ref} className={`admit-card ${className}`} style={{ width: 850, maxWidth: '100%', background: '#fbf6e8', padding: 0, fontFamily: 'Arial, Helvetica, sans-serif' }}>
+      <div ref={ref} className={`admit-card ${className}`} style={{ width: 850, height: 600, maxWidth: 'none', maxHeight: 'none', background: '#fbf6e8', padding: 0, fontFamily: 'Arial, Helvetica, sans-serif', flex: '0 0 auto' }}>
         <section
           style={{
             width: 850,
-            maxWidth: '100%',
-            minHeight: 600,
+            height: 600,
             position: 'relative',
             background: '#fbf6e8',
             border: '2px solid #161616',

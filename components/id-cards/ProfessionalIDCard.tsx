@@ -139,8 +139,8 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
     const roleText = role === 'head' ? 'Head' : role.charAt(0).toUpperCase() + role.slice(1)
 
     return (
-      <div ref={ref} className={`professional-id-card ${className}`} style={{ width: 800, maxWidth: '100%', background: '#ffffff', padding: 0 }}>
-        <div style={{ display: 'flex', gap: 30, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'wrap' }}>
+      <div ref={ref} className={`professional-id-card ${className}`} style={{ width: 800, height: 500, maxWidth: 'none', maxHeight: 'none', background: '#ffffff', padding: 0, flex: '0 0 auto' }}>
+        <div style={{ display: 'flex', gap: 30, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'nowrap', width: 800, height: 500 }}>
           <section style={{ position: 'relative', width: 380, height: 500, overflow: 'hidden', background: theme.leftBg, fontFamily: 'Arial, Helvetica, sans-serif', color: '#ffffff' }}>
             <div style={{ position: 'absolute', inset: 0, background: theme.leftBg }} />
             <div style={{ position: 'absolute', top: -58, left: -54, width: 142, height: 142, borderRadius: '50%', background: theme.gold }} />
@@ -166,7 +166,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
             </div>
           </section>
 
-          <section style={{ position: 'relative', width: 380, height: 500, overflow: 'hidden', background: '#ffffff', fontFamily: 'Arial, Helvetica, sans-serif', color: '#082f3a' }}>
+          <section style={{ position: 'relative', width: 380, height: 500, overflow: 'hidden', background: '#ffffff', fontFamily: 'Arial, Helvetica, sans-serif', color: '#082f3a', flex: '0 0 auto' }}>
             <div style={{ position: 'absolute', inset: 0, background: '#ffffff' }} />
             <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 86, background: theme.rightBg }} />
             <div style={{ position: 'absolute', right: -92, top: 72, width: 250, height: 210, borderRadius: '50%', background: theme.rightBg }} />
