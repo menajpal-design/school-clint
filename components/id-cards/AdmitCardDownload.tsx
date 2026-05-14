@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Loader2, Ticket } from "lucide-react";
 
+import DownloadButtons from "@/components/id-cards/DownloadButtons";
+import { AdmitCard } from "@/components/id-cards/AdmitCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -74,6 +76,7 @@ const formatDuration = (minutes?: number) => {
 };
 
 export function AdmitCardDownload() {
+  const previewRef = useRef<HTMLDivElement | null>(null);
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [institution, setInstitution] = useState<any>(null);
@@ -118,6 +121,31 @@ export function AdmitCardDownload() {
     const studentClassId = selectedStudent?.classId?._id || "";
     return exams.find((exam) => getClassId(exam.classId) === studentClassId) || exams[0];
   }, [exams, selectedStudent?.classId?._id]);
+
+  const previewClassName = selectedStudent?.classId?.name || "";
+  const previewSectionName = selectedStudent?.sectionId?.name ? `-${selectedStudent.sectionId.name}` : "";
+  const previewRollNumber = selectedStudent?.rollNumber || selectedStudent?.admissionNumber || selectedStudent?.registrationNumber || selectedStudent?._id || "";
+  const previewExamRows = useMemo(() => {
+    if (!selectedExam) {
+      return [{ courseCode: previewClassName || "Exam", examDate: "", examTime: "", examCentre: institution?.address || institution?.name || "" }];
+    }
+
+    if (selectedExam.subjectMarks?.length) {
+      return selectedExam.subjectMarks.map((item) => ({
+        courseCode: item.subjectId?.code || item.subjectId?.name || previewClassName,
+        examDate: formatDate(item.date),
+        examTime: formatDuration(item.duration),
+        examCentre: institution?.address || institution?.name || "",
+      }));
+    }
+
+    return [{
+      courseCode: previewClassName || "Exam",
+      examDate: formatDate(selectedExam.date || selectedExam.startDate),
+      examTime: formatDuration(selectedExam.duration),
+      examCentre: institution?.address || institution?.name || "",
+    }];
+  }, [selectedExam, previewClassName, institution?.address, institution?.name]);
 
   const handleDownload = async () => {
     if (!selectedStudent) return;
@@ -198,6 +226,43 @@ export function AdmitCardDownload() {
           {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
           Download Admit Card
         </Button>
+
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+          <div className="mb-3 font-semibold">Preview admit card</div>
+          <div className="overflow-x-auto">
+            <div ref={previewRef} className="min-w-max">
+              <AdmitCard
+                name={getStudentName(selectedStudent)}
+                rollNumber={previewRollNumber}
+                photoUrl={selectedStudent?.userId?.avatar || ""}
+                institutionName={institution?.name || "Institution"}
+                institutionLogo={institution?.logo || institution?.logoUrl || ""}
+                institutionAddress={institution?.address || ""}
+                institutionPhone={institution?.phone || ""}
+                institutionEmail={institution?.email || ""}
+                institutionSeal={institution?.seal || ""}
+                headSignature={institution?.headSignature || ""}
+                examName={selectedExam?.name || "Admit Card"}
+                examDate={selectedExam?.date || selectedExam?.startDate || ""}
+                examCenter={institution?.address || ""}
+                centerCode={institution?.eiin || institution?.code || ""}
+                headName={institution?.headId?.name || institution?.headName || ""}
+                dateOfBirth={selectedStudent?.userId?.dateOfBirth || ""}
+                fatherName={selectedStudent?.fatherName || ""}
+                stream={[previewClassName, previewSectionName].filter(Boolean).join(" ")}
+                examData={previewExamRows}
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <DownloadButtons
+              targetRef={previewRef}
+              filename={`admit-card-${previewRollNumber || "student"}`}
+              printTitle="Print Admit Card"
+              emailSubject={`Admit Card - ${getStudentName(selectedStudent)}`}
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
