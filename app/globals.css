@@ -60,9 +60,16 @@
 }
 
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
   body, html {
     margin: 0 !important;
     padding: 0 !important;
+    background: #ffffff !important;
   }
 
   .professional-id-card {
@@ -71,8 +78,9 @@
     max-width: none !important;
     max-height: none !important;
     font-size: 12pt !important;
-    -webkit-print-color-adjust: exact;
-    color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   .professional-id-card > div {
@@ -103,8 +111,9 @@
     max-width: none !important;
     max-height: none !important;
     font-size: 12pt !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
     background: #fbf6e8 !important;
   }
 

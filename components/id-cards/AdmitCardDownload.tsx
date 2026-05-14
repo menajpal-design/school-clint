@@ -230,8 +230,9 @@ export function AdmitCardDownload() {
         <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="mb-3 font-semibold">Preview admit card</div>
           <div className="overflow-x-auto">
-            <div ref={previewRef} className="min-w-max">
+            <div className="min-w-max">
               <AdmitCard
+                ref={previewRef}
                 name={getStudentName(selectedStudent)}
                 rollNumber={previewRollNumber}
                 photoUrl={selectedStudent?.userId?.avatar || ""}

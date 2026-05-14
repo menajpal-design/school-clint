@@ -273,6 +273,11 @@ export async function printElement(target: HTMLElement | null, title = "Print") 
   const printContent = `
     <style>
       html, body { zoom: 1 !important; transform: scale(1) !important; }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
       @media print {
         html, body { zoom: 1 !important; transform: scale(1) !important; }
         .professional-id-card { zoom: 1 !important; }
