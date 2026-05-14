@@ -63,7 +63,7 @@ export default function CollectionsPage() {
 
   return <div className="space-y-5">
     <PageHeader title="Fee Collection" description="Search students, collect dues and generate receipts." icon={CreditCard} actions={[{ label: "Scan ID Card", icon: ScanLine, onClick: () => setScanOpen(true) }]} />
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
       <div className="flex gap-2"><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, roll or ID card number" /><Button onClick={load}><Search className="mr-2 h-4 w-4" />Search</Button></div>
       <div className="mt-3 grid gap-2 md:grid-cols-3">{students.map((s) => <button key={s._id} onClick={() => choose(s)} className="rounded-lg border border-slate-200 p-3 text-left hover:bg-slate-50"><div className="font-medium">{s.userId?.name}</div><div className="text-sm text-slate-500">Roll {s.rollNumber} · Due {formatCurrency(s.dueAmount || 0)}</div></button>)}</div>
     </section>

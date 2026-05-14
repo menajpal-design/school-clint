@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="grid min-h-screen bg-slate-50 lg:grid-cols-[0.95fr_1.05fr]">
-      <section className="hidden border-r border-slate-200 bg-white px-10 py-12 lg:flex lg:flex-col lg:justify-between">
+      <section className="hidden border-r border-border bg-card px-10 py-12 lg:flex lg:flex-col lg:justify-between">
         <Link href="/login" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">E</div>
           <div>
@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
       </section>
 
       <section className="flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md border-slate-200 bg-white shadow-sm">
+        <Card className="w-full max-w-md border-border bg-card shadow-sm">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl">Forgot password?</CardTitle>
             <CardDescription>We&apos;ll send a temporary password to the email linked to your account.</CardDescription>

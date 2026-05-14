@@ -43,7 +43,7 @@ export default function MyCardPage() {
       <PageHeader title="My ID Card" description="Preview, download, print or email your current ID card." icon={BadgeCheck} status={<Badge variant="outline" className="capitalize">{personalCard?.status || "Unavailable"}</Badge>} />
       {error && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">{error}</div>}
       {cardRecord?._id && !isOwnCard && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">Your personal ID card was not found for this account.</div>}
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <div ref={previewRef} className="flex justify-center overflow-x-auto">
           <ProfessionalIDCard
             role={cardType as any}

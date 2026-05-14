@@ -23,7 +23,7 @@ export default function PricingPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <header className="border-b bg-white">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="font-semibold">EASY SCHOOL</Link>
           <div className="flex items-center gap-2">
@@ -78,7 +78,7 @@ export default function PricingPage() {
           ))}
         </div>
 
-        <Card className="mt-6 border-slate-200 bg-white">
+        <Card className="mt-6 border-border bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg"><Database className="h-5 w-5" /> Storage charge</CardTitle>
             <CardDescription>EASY SCHOOL storage is optional.</CardDescription>
@@ -95,7 +95,7 @@ export default function PricingPage() {
           </CardContent>
         </Card>
 
-        <Card className="mt-6 border-slate-200 bg-white">
+        <Card className="mt-6 border-border bg-card">
           <CardHeader>
             <CardTitle>Payment automation documentation</CardTitle>
             <CardDescription>GatewayFlow compatible manual and SMS-sync payment process.</CardDescription>

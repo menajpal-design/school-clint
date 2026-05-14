@@ -168,7 +168,7 @@ export default function InstitutionBackupPage() {
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-700">Backup Schedule</Label>
                 <Select value={frequency} onValueChange={setFrequency}>
-                  <SelectTrigger className="border-slate-300 bg-white/80 backdrop-blur-sm focus:border-orange-500">
+                  <SelectTrigger className="border-border bg-card/80 backdrop-blur-sm focus:border-orange-500">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -182,7 +182,7 @@ export default function InstitutionBackupPage() {
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-slate-700">Storage Location</Label>
                 <Select value={location} onValueChange={setLocation}>
-                  <SelectTrigger className="border-slate-300 bg-white/80 backdrop-blur-sm focus:border-orange-500">
+                  <SelectTrigger className="border-border bg-card/80 backdrop-blur-sm focus:border-orange-500\">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -198,7 +198,7 @@ export default function InstitutionBackupPage() {
                 <Label className="text-sm font-semibold text-slate-700">Select Collections</Label>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {collectionOptions.map((option) => (
-                    <label key={option.name} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white/60 p-3 text-sm capitalize shadow-sm backdrop-blur-sm transition-colors hover:bg-white/80">
+                    <label key={option.name} className="flex items-center gap-2 rounded-lg border border-border bg-card/60 p-3 text-sm capitalize shadow-sm backdrop-blur-sm transition-colors hover:bg-card/80">
                       <Checkbox
                         checked={collections.includes(option.name)}
                         onCheckedChange={() => toggleCollection(option.name)}
@@ -214,7 +214,7 @@ export default function InstitutionBackupPage() {
               <div className="space-y-3">
                 <Button
                   variant="outline"
-                  className="w-full border-orange-300 bg-white/80 text-orange-700 hover:bg-orange-50"
+                  className="w-full border-orange-300 bg-card/80 text-orange-700 hover:bg-orange-50"
                   onClick={() => createBackup(false)}
                 >
                   <Archive className="mr-2 h-4 w-4" />
@@ -266,7 +266,7 @@ export default function InstitutionBackupPage() {
                   />
                   <Button
                     variant="outline"
-                    className="w-full border-green-300 bg-white/80 text-green-700 hover:bg-green-50"
+                    className="w-full border-green-300 bg-card/80 text-green-700 hover:bg-green-50\"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isImporting}
                   >
@@ -287,7 +287,7 @@ export default function InstitutionBackupPage() {
                 {importResults && (
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold text-slate-700">Import Results</Label>
-                    <div className="rounded-lg border border-slate-200 bg-white/60 p-3 text-sm">
+                    <div className="rounded-lg border border-border bg-card/60 p-3 text-sm">
                       {Object.entries(importResults).map(([collection, result]: [string, any]) => (
                         <div key={collection} className="flex justify-between capitalize">
                           <span>{collection}:</span>
@@ -318,7 +318,7 @@ export default function InstitutionBackupPage() {
             <CardContent>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {backups.map((backup) => (
-                  <div key={backup._id} className="rounded-lg border border-slate-200 bg-white/60 p-4 shadow-sm backdrop-blur-sm">
+                  <div key={backup._id} className="rounded-lg border border-border bg-card/60 p-4 shadow-sm backdrop-blur-sm">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold text-slate-900 capitalize">{backup.frequency}</span>
                       <Badge variant={backup.isActive === false ? 'outline' : 'secondary'} className={backup.isActive === false ? 'border-slate-300' : 'bg-blue-100 text-blue-800'}>

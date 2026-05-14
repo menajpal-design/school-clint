@@ -141,7 +141,7 @@ export default function MemoPage() {
         </Card>
 
         <Card className="border-slate-200 bg-slate-50 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-200 bg-white">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border bg-card">
             <div>
               <CardTitle className="text-base">Preview</CardTitle>
               <p className="mt-1 text-sm text-slate-500">A formal print-ready office memo layout.</p>
@@ -151,7 +151,7 @@ export default function MemoPage() {
           <CardContent className="p-5">
             <article
               ref={previewRef}
-              className="mx-auto min-h-[930px] max-w-[794px] overflow-hidden border border-slate-300 bg-white text-slate-950 shadow-[0_20px_55px_rgba(15,23,42,0.12)]"
+              className="mx-auto min-h-[930px] max-w-[794px] overflow-hidden border border-border bg-card text-foreground shadow-[0_20px_55px_rgba(15,23,42,0.12)]"
             >
               <div className="h-3 bg-slate-950" />
               <div className="px-12 pb-10 pt-9">

@@ -111,7 +111,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden">
+      <div className="w-full max-w-md bg-card rounded-lg shadow-xl overflow-hidden border border-border">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-center">
           <h1 className="text-3xl font-bold text-white mb-2">EASY SCHOOL</h1>

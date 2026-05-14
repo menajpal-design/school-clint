@@ -101,7 +101,7 @@ export default function Downloads() {
               {latestReleaseAsset ? (
                 <a
                   href={latestReleaseAsset.browser_download_url}
-                  className="bg-white text-blue-600 hover:bg-blue-50 font-bold py-3 px-8 rounded-lg transition duration-200 flex items-center gap-2 whitespace-nowrap"
+                  className="bg-card text-primary border border-border hover:bg-popover font-bold py-3 px-8 rounded-lg transition duration-200 flex items-center gap-2 whitespace-nowrap"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -111,7 +111,7 @@ export default function Downloads() {
               ) : (
                 <button
                   onClick={handleLocalDownload}
-                  className="bg-white text-blue-600 hover:bg-blue-50 font-bold py-3 px-8 rounded-lg transition duration-200 flex items-center gap-2 whitespace-nowrap"
+                  className="bg-card text-primary border border-border hover:bg-popover font-bold py-3 px-8 rounded-lg transition duration-200 flex items-center gap-2 whitespace-nowrap"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -133,7 +133,7 @@ export default function Downloads() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">📦 সকল রিলিজ</h2>
             <div className="space-y-4">
               {releases.map((release) => (
-                <div key={release.id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div key={release.id} className="bg-card rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border border-border">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{release.name}</h3>
@@ -174,7 +174,7 @@ export default function Downloads() {
         )}
 
         {/* Installation Guide */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+        <div className="bg-card rounded-lg shadow-lg p-8 mb-8 border border-border">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">📱 ইনস্টলেশন গাইড</h2>
           
           <div className="space-y-4">
@@ -222,7 +222,7 @@ export default function Downloads() {
 
         {/* Features */}
         <div className="grid md:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="bg-card rounded-lg shadow-lg p-8 border border-border\">
             <h3 className="text-xl font-bold text-gray-900 mb-4">✨ প্রধান বৈশিষ্ট্য</h3>
             <ul className="space-y-3 text-gray-700">
               <li className="flex items-center gap-2">✓ <span>নেটিভ এন্ড্রয়েড (কটলিন)</span></li>
@@ -233,7 +233,7 @@ export default function Downloads() {
             </ul>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="bg-card rounded-lg shadow-lg p-8 border border-border">
             <h3 className="text-xl font-bold text-gray-900 mb-4">📋 সিস্টেম প্রয়োজনীয়তা</h3>
             <ul className="space-y-3 text-gray-700">
               <li className="flex items-center gap-2">✓ <span>এন্ড্রয়েড ৬.০+</span></li>

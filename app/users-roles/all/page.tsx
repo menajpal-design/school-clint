@@ -65,15 +65,15 @@ export default function UsersAllPage() {
   return (
     <div className="space-y-5">
       <PageHeader title="All Users" description="Search users, update status, reset passwords and assign roles." icon={Users} />
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-[1fr_240px]">
-          <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email or role" /></div>
+          <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email or role" /></div>
           <Select value={roleFilter} onValueChange={setRoleFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All roles</SelectItem>{roleOptions.map((item) => <SelectItem key={item} value={item}>{item.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select>
         </div>
       </section>
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>User</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>Last Login</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>
-          {filtered.length === 0 ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">No users found.</TableCell></TableRow> : filtered.map((user) => (
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>User</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>Last Login</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>
+          {filtered.length === 0 ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-muted-foreground">No users found.</TableCell></TableRow> : filtered.map((user) => (
             <TableRow key={user._id}>
               <TableCell><div className="font-medium text-slate-950">{user.name}</div><div className="text-xs text-slate-500">{user.email}</div></TableCell>
               <TableCell className="capitalize">{user.role?.replace(/_/g, " ")}</TableCell>

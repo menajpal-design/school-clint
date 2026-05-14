@@ -138,7 +138,7 @@ export default function SubordinatesPage() {
         </div>
 
         {/* Subordinates Grid/Table */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-card rounded-lg shadow-md overflow-hidden border border-border">
           {loading ? (
             <div className="p-8 text-center text-slate-600">Loading subordinates...</div>
           ) : subordinates.length === 0 ? (
@@ -205,7 +205,7 @@ export default function SubordinatesPage() {
         {/* Credentials Modal */}
         {showCredentialModal && selectedUser && credentials && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+            <div className="bg-card rounded-lg shadow-lg p-6 max-w-md w-full border border-border">
               <h2 className="text-2xl font-bold text-slate-900 mb-4">Credentials for {selectedUser.name}</h2>
 
               <div className="space-y-4 mb-6">

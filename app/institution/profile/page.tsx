@@ -423,7 +423,7 @@ export default function InstitutionProfilePage() {
             <CardDescription>How official headers and cards can identify the institution.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-lg border bg-white p-5 text-center shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-5 text-center shadow-sm">
               <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border bg-muted">
                 {values.logo ? <img src={values.logo} alt="" className="h-full w-full object-contain" /> : <Building2 className="h-8 w-8 text-primary" />}
               </div>

@@ -66,7 +66,7 @@ export default function CommitteePage() {
     <div className="space-y-5">
       <PageHeader title="Committee Management" description="Manage members, schedules, agenda and meeting records." icon={UsersRound} actions={[{ label: "Add Member", icon: Plus, onClick: () => startEdit() }]} />
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table>
           <TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Committee</TableHead><TableHead>Chairman</TableHead><TableHead>Members</TableHead><TableHead>Schedule</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
           <TableBody>
@@ -85,7 +85,7 @@ export default function CommitteePage() {
       </section>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <h2 className="flex items-center gap-2 font-semibold text-slate-950"><ClipboardList className="h-5 w-5" />Agenda and Meeting Minutes</h2>
           <div className="mt-4 space-y-3">
             {committees.slice(0, 4).map((item) => <div key={item._id} className="rounded-md border border-slate-200 p-4"><div className="font-medium">{item.name}</div><p className="mt-1 text-sm text-slate-500">{item.description || item.responsibilities?.join(", ") || "Agenda will be added before the next meeting."}</p></div>)}
@@ -93,8 +93,8 @@ export default function CommitteePage() {
           </div>
         </section>
         <section className="space-y-3">
-          {meetings.length === 0 ? <div className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow-sm">No meeting schedules found.</div> : meetings.map((meeting) => (
-            <div key={meeting.title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          {meetings.length === 0 ? <div className="rounded-lg border border-border bg-card p-5 text-sm text-muted-foreground shadow-sm">No meeting schedules found.</div> : meetings.map((meeting) => (
+            <div key={meeting.title} className="rounded-lg border border-border bg-card p-5 shadow-sm">
               <div className="flex items-start justify-between gap-3"><h3 className="font-semibold text-slate-950">{meeting.title}</h3><CalendarDays className="h-5 w-5 text-slate-400" /></div>
               <p className="mt-2 text-sm text-slate-500">{meeting.schedule}</p>
               <Badge variant="outline" className="mt-3">{meeting.attendance}</Badge>

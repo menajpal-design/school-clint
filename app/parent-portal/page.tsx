@@ -38,7 +38,7 @@ export default function ParentPortalPage() {
     <div className="space-y-5">
       <PageHeader title="Parent Portal" description="Track child profile, ID card, attendance, results, fees and notices." icon={UserRound} />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
         <div className="max-w-sm">
           <Select value={selectedChildId} onValueChange={setSelectedChildId}>
             <SelectTrigger><SelectValue placeholder="Select child" /></SelectTrigger>
@@ -56,17 +56,17 @@ export default function ParentPortalPage() {
 
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
         <section className="space-y-5">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="font-semibold text-slate-950">Child Profile</h2>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <h2 className="font-semibold text-foreground\">Child Profile</h2>
             <div className="mt-4 space-y-2 text-sm">
               <Row label="Name" value={child?.userId?.name || "-"} />
               <Row label="Roll" value={child?.rollNumber || "-"} />
               <Row label="Class" value={child?.classId?.name || child?.classId?.grade || "-"} />
-              <Row label="Guardian" value={child?.guardianName || "-"} />
+              <Row label="Guardian\" value={child?.guardianName || "-\"} />
             </div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 font-semibold text-slate-950">Child ID Card</h2>
+          <div className=\"rounded-lg border border-border bg-card p-5 shadow-sm\">
+            <h2 className=\"mb-4 font-semibold text-foreground\">Child ID Card</h2>
             <IDCardPreview type="student" name={child?.userId?.name || "Student"} id={child?.rollNumber || "ID"} qrData={child?.rollNumber || ""} barcode={child?.rollNumber || ""} />
           </div>
         </section>
@@ -92,5 +92,5 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"><h2 className="mb-4 font-semibold text-slate-950">{title}</h2>{children}</div>;
+  return <div className="rounded-lg border border-border bg-card p-5 shadow-sm"><h2 className="mb-4 font-semibold text-foreground">{title}</h2>{children}</div>;
 }

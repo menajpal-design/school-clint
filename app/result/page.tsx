@@ -96,7 +96,7 @@ export default function PublicResultPage() {
                     key={school._id}
                     type="button"
                     onClick={() => chooseSchool(school)}
-                    className={`w-full rounded-md border p-3 text-left text-sm ${selectedSchool?._id === school._id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'}`}
+                    className={`w-full rounded-md border p-3 text-left text-sm ${selectedSchool?._id === school._id ? 'border-primary bg-popover' : 'border-border bg-card'}`}
                   >
                     <div className="font-semibold text-slate-950">{school.name}</div>
                     <div className="text-xs text-slate-500">EIIN {school.eiin || 'N/A'} · {school.address || ''}</div>
@@ -176,7 +176,7 @@ export default function PublicResultPage() {
 
 function Summary({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border bg-white p-4">
+    <div className="rounded-md border border-border bg-card p-4">
       <div className="text-sm text-slate-500">{label}</div>
       <div className="mt-1 text-2xl font-semibold text-slate-950">{value}</div>
     </div>

@@ -31,7 +31,7 @@ export default function FinancePage() {
         <StatCard label="Pending Payments" value={summary.pendingPayments || 0} icon={CreditCard} />
       </div>
       <LineChartCard title="Monthly collection trend" data={summary.monthlyTrend || []} />
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Receipt</TableHead><TableHead>Student</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Date</TableHead></TableRow></TableHeader><TableBody>
           {payments.length === 0 ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">No recent payments.</TableCell></TableRow> : payments.map((p: any) => <TableRow key={p._id}><TableCell>{p.receiptNumber}</TableCell><TableCell>{p.studentId?.userId?.name || p.studentId?.rollNumber || "-"}</TableCell><TableCell>{formatCurrency(p.amount || 0)}</TableCell><TableCell className="capitalize">{p.paymentMethod}</TableCell><TableCell>{formatDate(p.paymentDate)}</TableCell></TableRow>)}
         </TableBody></Table>

@@ -134,7 +134,7 @@ export default function DocumentsUploadPage() {
       <PageHeader title="Upload Document" description="Attach school documents to students, teachers, staff or institution records." icon={UploadCloud} />
 
       <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
-        <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="space-y-4 rounded-lg border border-border bg-card p-5 shadow-sm">
           <div className="space-y-2">
             <Label>Document type</Label>
             <Select value={documentType} onValueChange={(value) => setDocumentType(value as DocumentType)}>
@@ -178,12 +178,12 @@ export default function DocumentsUploadPage() {
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <div
             onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
-            className={cn("flex min-h-[260px] flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition", dragging ? "border-slate-900 bg-slate-50" : "border-slate-300 bg-white")}
+            className={cn("flex min-h-[260px] flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition", dragging ? "border-slate-900 bg-muted" : "border-border bg-card")}
           >
             <div className="rounded-lg bg-slate-100 p-4 text-slate-700"><FileUp className="h-8 w-8" /></div>
             <h2 className="mt-4 text-lg font-semibold text-slate-950">Drop file here</h2>

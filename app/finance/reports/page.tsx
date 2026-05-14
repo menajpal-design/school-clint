@@ -30,10 +30,10 @@ export default function FinanceReportsPage() {
   const exportPdf = () => downloadElementPdf(reportRef.current, `finance-report-${fileSuffix}.pdf`);
   return <div className="space-y-5">
     <PageHeader title="Finance Reports" description="Fee collection, dues and salary reports with exports." icon={FileBarChart} actions={[{ label: "Export Excel", icon: Download, onClick: exportCsv }, { label: "Export PDF", icon: Download, onClick: exportPdf }]} />
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-2"><input className="h-10 rounded-md border border-input bg-background px-3 text-sm" type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} /><input className="h-10 rounded-md border border-input bg-background px-3 text-sm" type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} /></div></section>
+    <section className="rounded-lg border border-border bg-card p-4 shadow-sm\"><div className="grid gap-3 md:grid-cols-2"><input className="h-10 rounded-md border border-input bg-background px-3 text-sm\" type="date\" value={startDate} onChange={(e)=>setStartDate(e.target.value)} /><input className=\"h-10 rounded-md border border-input bg-background px-3 text-sm\" type=\"date\" value={endDate} onChange={(e)=>setEndDate(e.target.value)} /></div></section>
     <div className="grid gap-5 xl:grid-cols-2"><LineChartCard title="Fee collection trend" data={reports.trend || []} /><BarChartCard title="Fee type breakdown" data={reports.byType || []} /></div>
-    <div ref={reportRef} className="space-y-5 bg-white">
-      <div className="rounded-lg border border-slate-200 bg-white p-4">
+    <div ref={reportRef} className="space-y-5 bg-card">
+      <div className="rounded-lg border border-border bg-card p-4">
         <h2 className="text-xl font-semibold text-slate-950">Finance Report</h2>
         <p className="mt-1 text-sm text-slate-600">Period: {startDate} to {endDate}</p>
       </div>
@@ -45,5 +45,5 @@ export default function FinanceReportsPage() {
 }
 
 function ReportTable({ title, rows, kind }: { title: string; rows: any[]; kind: string }) {
-  return <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-200 p-4 font-semibold">{title}</div><Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Name</TableHead><TableHead>Amount</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{rows.length===0 ? <TableRow><TableCell colSpan={4} className="h-24 text-center text-slate-500">No records.</TableCell></TableRow> : rows.map((r:any)=><TableRow key={r._id}><TableCell>{r.studentId?.userId?.name || r.employeeType || "-"}</TableCell><TableCell>{formatCurrency(r.amount || r.netSalary || 0)}</TableCell><TableCell>{formatDate(r.paymentDate || r.dueDate || r.createdAt)}</TableCell><TableCell className="capitalize">{r.status || kind}</TableCell></TableRow>)}</TableBody></Table></section>;
+  return <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"><div className="border-b border-border p-4 font-semibold">{title}</div><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>Name</TableHead><TableHead>Amount</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{rows.length===0 ? <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">No records.</TableCell></TableRow> : rows.map((r:any)=><TableRow key={r._id}><TableCell>{r.studentId?.userId?.name || r.employeeType || "-"}</TableCell><TableCell>{formatCurrency(r.amount || r.netSalary || 0)}</TableCell><TableCell>{formatDate(r.paymentDate || r.dueDate || r.createdAt)}</TableCell><TableCell className="capitalize">{r.status || kind}</TableCell></TableRow>)}</TableBody></Table></section>;
 }

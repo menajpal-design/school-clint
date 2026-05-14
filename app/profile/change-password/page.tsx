@@ -40,7 +40,7 @@ export default function ChangePasswordPage() {
   return (
     <div className="space-y-5">
       <PageHeader title="Change Password" description="Update your account password securely." icon={KeyRound} />
-      <form onSubmit={handleSubmit(submit)} className="max-w-xl space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <form onSubmit={handleSubmit(submit)} className="max-w-xl space-y-4 rounded-lg border border-border bg-card p-5 shadow-sm">
         <Field label="Current password" error={errors.currentPassword?.message}><Input type="password" {...register("currentPassword")} /></Field>
         <Field label="New password" error={errors.newPassword?.message}><Input type="password" {...register("newPassword")} /></Field>
         <Field label="Confirm password" error={errors.confirmPassword?.message}><Input type="password" {...register("confirmPassword")} /></Field>

@@ -34,10 +34,10 @@ export default function MyAttendancePage() {
     <div className="space-y-5">
       <PageHeader title="My Attendance" description="Monthly attendance summary, calendar view and history." icon={UserCheck} status={<Badge variant="outline">{month}/{year}</Badge>} />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Month</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={(e) => setMonth(Number(e.target.value))}>{Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{new Date(2024, index, 1).toLocaleString("en", { month: "long" })}</option>)}</select></label>
-          <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Year</span><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} /></label>
+          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Month</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={(e) => setMonth(Number(e.target.value))}>{Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{new Date(2024, index, 1).toLocaleString("en", { month: "long" })}</option>)}</select></label>
+          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Year</span><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} /></label>
         </div>
       </section>
 
@@ -49,17 +49,17 @@ export default function MyAttendancePage() {
         <StatCard label="Leave" value={summary.leave} tone="blue" />
       </div>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid grid-cols-7 gap-2">
           {Array.from({ length: daysInMonth }, (_, index) => {
             const day = index + 1;
             const status = byDate.get(day);
-            return <div key={day} className="min-h-20 rounded-lg border border-slate-200 p-2"><div className="text-sm font-medium">{day}</div>{status && <Badge variant="outline" className="mt-2 capitalize">{status}</Badge>}</div>;
+            return <div key={day} className="min-h-20 rounded-lg border border-border p-2"><div className="text-sm font-medium">{day}</div>{status && <Badge variant="outline" className="mt-2 capitalize">{status}</Badge>}</div>;
           })}
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Date</TableHead><TableHead>Class</TableHead><TableHead>Section</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>
           {records.length === 0 ? <TableRow><TableCell colSpan={4} className="h-28 text-center text-slate-500">No attendance history for this month.</TableCell></TableRow> : records.map((record) => <TableRow key={record._id}><TableCell>{formatDate(record.date)}</TableCell><TableCell>{record.classId?.name || "-"}</TableCell><TableCell>{record.sectionId?.name || "-"}</TableCell><TableCell><Badge variant="outline" className="capitalize">{record.status}</Badge></TableCell></TableRow>)}
         </TableBody></Table>

@@ -78,7 +78,7 @@ export default function ProfilePage() {
       />
 
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
-        <section className="rounded-lg border border-slate-200 bg-white p-5 text-center shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-5 text-center shadow-sm">
           <div className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-slate-100">
             {(editing ? avatar : user?.avatar) ? <img src={editing ? avatar : user.avatar} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-12 w-12 text-slate-500" />}
           </div>
@@ -107,8 +107,8 @@ export default function ProfilePage() {
         </section>
 
         <section className="space-y-5">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="font-semibold text-slate-950">Contact Info</h2>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <h2 className="font-semibold text-foreground\">Contact Info</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <Info label="Email" value={user?.email} />
               <Info label="Phone" value={user?.phone || "Not set"} />
@@ -116,8 +116,8 @@ export default function ProfilePage() {
               <Info label="Permissions" value={`${user?.permissions?.length || 0} assigned`} />
             </div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="font-semibold text-slate-950">Institution Info</h2>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm\">
+            <h2 className="font-semibold text-foreground\">Institution Info</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <Info label="Institution" value={institution.name || "Not linked"} />
               <Info label="Type" value={institution.type || "-"} />
@@ -125,8 +125,8 @@ export default function ProfilePage() {
               <Info label="Phone" value={institution.phone || "-"} />
             </div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 font-semibold text-slate-950">ID Card Section</h2>
+          <div className="rounded-lg border border-border bg-card p-5 shadow-sm\">
+            <h2 className="mb-4 font-semibold text-foreground\">ID Card Section</h2>
             {cardErr && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{cardErr}</div>}
             {cardRecord?._id && !isOwnCard && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">Your personal ID card was not found for this account.</div>}
             <div ref={previewRef}>

@@ -181,7 +181,7 @@ export default function AttendanceReportsPage() {
     <div className="space-y-5">
       <PageHeader title="Attendance Reports" description="Analyze attendance by date, class, section and person." icon={FileBarChart} actions={[{ label: "Export Excel", icon: Download, onClick: exportExcel }, { label: "Export PDF", icon: Download, onClick: exportPdf }]} />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-5">
           <Field label="Start"><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
           <Field label="End"><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
@@ -196,7 +196,7 @@ export default function AttendanceReportsPage() {
         <LineChartCard title="Attendance trend" data={trend.map((item) => ({ name: item.date, value: item.percentage || 0 }))} />
       </div>
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Date</TableHead><TableHead>Name</TableHead><TableHead>Roll</TableHead><TableHead>Class</TableHead><TableHead>Section</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>
           {reportRows.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">No records found.</TableCell></TableRow> : reportRows.map((item, index) => <TableRow key={`${item.date}-${item.roll}-${index}`}><TableCell>{item.date}</TableCell><TableCell>{item.name}</TableCell><TableCell>{item.roll}</TableCell><TableCell>{item.className}</TableCell><TableCell>{item.section}</TableCell><TableCell className="capitalize">{item.status}</TableCell></TableRow>)}
         </TableBody></Table>

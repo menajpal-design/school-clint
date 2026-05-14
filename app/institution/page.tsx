@@ -88,7 +88,7 @@ export default function InstitutionPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border bg-white">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
               {profile?.logo ? <img src={profile.logo} alt="" className="h-full w-full object-cover" /> : <Building2 className="h-6 w-6 text-primary" />}
             </div>
             <div>

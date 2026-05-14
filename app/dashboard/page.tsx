@@ -353,12 +353,12 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               {notices.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-slate-200 bg-white/60 p-4 text-sm text-slate-500 shadow-sm backdrop-blur-sm">
+                <div className="rounded-lg border border-dashed border-border bg-popover/60 p-4 text-sm text-muted-foreground shadow-sm backdrop-blur-sm">
                   No recent notices are available from the live system yet.
                 </div>
               ) : (
                 notices.map((notice) => (
-                  <div key={notice._id || notice.id || notice.title} className="rounded-lg border border-slate-200 bg-white/60 p-4 shadow-sm backdrop-blur-sm">
+                  <div key={notice._id || notice.id || notice.title} className="rounded-lg border border-border bg-popover/60 p-4 shadow-sm backdrop-blur-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-slate-900">{notice.title}</p>

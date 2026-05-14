@@ -104,7 +104,7 @@ export default function AttendanceMarkPage() {
         actions={[{ label: "ID Card Scan", icon: Camera, onClick: () => setScanOpen(true) }]}
       />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-3">
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-700">Class</span>
@@ -124,9 +124,9 @@ export default function AttendanceMarkPage() {
         </div>
       </section>
 
-      {message && <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">{message}</div>}
+      {message && <div className="rounded-lg border border-border bg-popover px-4 py-3 text-sm text-foreground">{message}</div>}
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 p-4">
           <div className="text-sm font-medium text-slate-700">{students.length} students</div>
           <div className="flex gap-2">

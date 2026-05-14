@@ -137,7 +137,7 @@ export default function DocumentsManagePage() {
         actions={[{ label: "Upload", href: "/documents/upload", icon: UploadCloud }]}
       />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 lg:grid-cols-[1fr_220px_220px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
@@ -160,7 +160,7 @@ export default function DocumentsManagePage() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">

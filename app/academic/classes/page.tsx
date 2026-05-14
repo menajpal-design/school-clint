@@ -267,7 +267,7 @@ export default function ClassesPage() {
         </div>
       )}
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -387,7 +387,7 @@ export default function ClassesPage() {
 
 function SummaryTile({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <div className="rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
       <div className="text-xs font-medium uppercase text-slate-500">{label}</div>
       <div className="mt-1 text-2xl font-semibold text-slate-950">{value}</div>
     </div>

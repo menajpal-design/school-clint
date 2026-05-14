@@ -119,7 +119,7 @@ export default function TemplatesPage() {
         {cardTemplates.map((template) => (
           <Card
             key={template.id}
-            className={`cursor-pointer overflow-hidden rounded-3xl border bg-white/90 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+            className={`cursor-pointer overflow-hidden rounded-3xl border border-border bg-card/90 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
               selectedTemplate === template.id
                 ? 'border-cyan-500 ring-2 ring-cyan-200'
                 : 'border-slate-200 hover:border-cyan-300'
@@ -264,34 +264,34 @@ export default function TemplatesPage() {
 
       {/* Features */}
       <section className="grid gap-4 md:grid-cols-3">
-        <Card className="border-slate-200 bg-white/90 shadow-sm">
+        <Card className="border-border bg-card/90 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">✨ Professional Design</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Layered gradients, refined spacing, and stronger typography make the cards feel closer to printed ID
               images instead of plain form output.
             </p>
           </CardContent>
         </Card>
-        <Card className="border-slate-200 bg-white/90 shadow-sm">
+        <Card className="border-border bg-card/90 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">🔲 QR Code Verified</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Every card now carries a QR payload with identity and exam metadata for faster verification and cleaner
               digital handoff.
             </p>
           </CardContent>
         </Card>
-        <Card className="border-slate-200 bg-white/90 shadow-sm">
+        <Card className="border-border bg-card/90 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">📋 Complete Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground\">
               All required fields including photo, institutional branding, validity dates, head signature, official
               seal, and class or stream details where relevant.
             </p>

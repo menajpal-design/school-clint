@@ -242,7 +242,7 @@ export default function ResultsPage() {
         ]}
       />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-4">
           <Filter label="Class" value={classId} onChange={updateClass}>
             <option value="">Select class</option>
@@ -265,10 +265,10 @@ export default function ResultsPage() {
 
       {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-base font-semibold text-slate-950">Marks entry table</h2>
+            <h2 className="text-base font-semibold text-foreground\">Marks entry table</h2>
             <p className="mt-1 text-sm text-slate-500">
               Total marks {marksSetup.totalMarks}, passing marks {marksSetup.passingMarks}. Missing marks: {localMissingMarks}
             </p>

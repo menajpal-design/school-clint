@@ -81,13 +81,13 @@ export default function GeneratePage() {
     <div className="space-y-5">
       <PageHeader title="Generate ID Card" description="Select a person, customize card options, preview and generate." icon={BadgeCheck} />
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
-        <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="space-y-4 rounded-lg border border-border bg-card p-4 shadow-sm">
           <Step title="1. Card type"><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={ownerType} onChange={(e) => { setOwnerType(e.target.value as OwnerType); setSelected(null); setCard(null); }}>{allowedOwnerTypes.map((type) => <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>)}</select></Step>
           <Step title="2. Search person"><div className="flex gap-2"><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, roll or ID" /><Button onClick={load}><Search className="h-4 w-4" /></Button></div><div className="mt-2 max-h-56 space-y-2 overflow-auto">{people.map((p) => <button key={p._id} onClick={() => { setSelected(p); setCard(null); }} className="w-full rounded-md border border-slate-200 p-2 text-left text-sm hover:bg-slate-50">{p.userId?.name}<div className="text-xs text-slate-500">{p.rollNumber || p.employeeId}</div></button>)}</div></Step>
           <Step title="3. Template options"><div className="grid grid-cols-2 gap-2">{Object.entries(options).map(([key, value]) => <label key={key} className="flex items-center gap-2 text-sm capitalize"><input type="checkbox" checked={value} onChange={(e) => setOptions({ ...options, [key]: e.target.checked })} />{key}</label>)}</div></Step>
           <Button className="w-full" disabled={!selected} onClick={generate}>Generate Card</Button>
         </section>
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 font-semibold">4. Preview card</div>
           <div ref={previewRef} className="flex justify-center">
             <ProfessionalIDCard

@@ -49,7 +49,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex flex-col sm:flex-row sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-2 sm:gap-0 py-3 sm:py-0">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
@@ -79,7 +79,7 @@ export default function Home() {
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
         <div className="flex flex-col justify-center">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
             Role-based school operations
           </div>
@@ -112,14 +112,14 @@ export default function Home() {
 
           {/* Quick action tiles for mobile */}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:hidden">
-            <Link href="/id-cards/generate" className="rounded-md bg-white border p-3 text-center text-sm font-medium shadow-sm hover:bg-slate-50">Generate ID</Link>
-            <Link href="/attendance/mark" className="rounded-md bg-white border p-3 text-center text-sm font-medium shadow-sm hover:bg-slate-50">Scan & Mark</Link>
-            <Link href="/documents/upload" className="rounded-md bg-white border p-3 text-center text-sm font-medium shadow-sm hover:bg-slate-50">Upload Doc</Link>
-            <Link href="/finance/collections" className="rounded-md bg-white border p-3 text-center text-sm font-medium shadow-sm hover:bg-slate-50">Collect Fees</Link>
+            <Link href="/id-cards/generate" className="rounded-md bg-card border border-border p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Generate ID</Link>
+            <Link href="/attendance/mark" className="rounded-md bg-card border border-border p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Scan & Mark</Link>
+            <Link href="/documents/upload" className="rounded-md bg-card border border-border p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Upload Doc</Link>
+            <Link href="/finance/collections" className="rounded-md bg-card border border-border p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Collect Fees</Link>
           </div>
         </div>
 
-          <Card className="border-slate-200 bg-white shadow-sm">
+          <Card className="border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <UsersRound className="h-5 w-5 text-blue-600" />

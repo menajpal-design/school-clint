@@ -66,9 +66,9 @@ export default function NoticesPage() {
 
       <section className="grid gap-4">
         {notices.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">No notices published yet.</div>
+          <div className="rounded-lg border border-border bg-card p-10 text-center text-muted-foreground shadow-sm">No notices published yet.</div>
         ) : notices.map((notice) => (
-          <article key={notice._id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <article key={notice._id} className="rounded-lg border border-border bg-card p-5 shadow-sm">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">

@@ -96,22 +96,22 @@ export default function SettingsPage() {
                       <Label className="text-sm font-semibold text-slate-700">{field}</Label>
                       <Input
                         placeholder={`Enter ${field.toLowerCase()}`}
-                        className="border-slate-300 bg-white/80 backdrop-blur-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="border-border bg-card/80 backdrop-blur-sm focus:border-primary focus:ring-primary"
                       />
                     </div>
                   ))}
                   {section.title === "General" && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold text-slate-700">Default notice footer</Label>
+                      <Label className="text-sm font-semibold text-muted-foreground\">Default notice footer</Label>
                       <Textarea
                         placeholder="School notice footer"
-                        className="border-slate-300 bg-white/80 backdrop-blur-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="border-border bg-card/80 backdrop-blur-sm focus:border-primary focus:ring-primary\"
                         rows={3}
                       />
                     </div>
                   )}
                   {section.switches?.map((item) => (
-                    <div key={item} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white/60 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/80">
+                    <div key={item} className="flex items-center justify-between rounded-lg border border-border bg-card/60 p-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-card/80">
                       <span className="text-sm font-medium text-slate-800">{item}</span>
                       <Switch className="data-[state=checked]:bg-blue-600" />
                     </div>
