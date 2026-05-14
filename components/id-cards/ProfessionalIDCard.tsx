@@ -149,7 +149,25 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
     const sloganText = 'slogan text line goes here'
 
     return (
-      <div ref={ref} className={`professional-id-card ${className}`} style={{ position: 'relative', width: 800, height: 500, maxWidth: 'none', maxHeight: 'none', background: '#ffffff', padding: 0, flex: '0 0 auto' }}>
+      <div
+        ref={ref}
+        className={`professional-id-card ${className}`}
+        style={{
+          position: 'relative',
+          width: 800,
+          height: 500,
+          minWidth: 800,
+          maxWidth: 800,
+          minHeight: 500,
+          maxHeight: 500,
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+          background: '#ffffff',
+          padding: 0,
+          flex: '0 0 auto',
+          marginBottom: 18,
+        }}
+      >
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 28px', background: 'rgba(255,255,255,0.95)', borderBottom: '1px solid rgba(15,23,42,0.08)', zIndex: 20, minHeight: 56 }}>
           <div style={{ fontSize: 10, lineHeight: '12px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#0f172a' }}>PHOTO STUDENT</div>
           <div style={{ display: 'grid', gap: 2, fontSize: 10, lineHeight: '12px', color: '#0f172a', textAlign: 'left' }}>
@@ -181,10 +199,11 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
               <Row label="Class:" value={stream} />
             </div>
 
-            <div style={{ position: 'absolute', left: 0, right: 0, top: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            {/* place institution title below the photo to avoid overlap */}
+            <div style={{ position: 'absolute', left: 0, right: 0, top: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '0 12px' }}>
               <LogoMark logoUrl={institutionLogo} institutionName={institutionName} tone={theme.gold} />
               <div>
-                <div style={{ maxWidth: 190, color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 18, fontWeight: 800, lineHeight: '19px', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{institutionName}</div>
+                <div style={{ maxWidth: 190, color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 18, fontWeight: 800, lineHeight: '19px', overflowWrap: 'anywhere', wordBreak: 'break-word', textAlign: 'center' }}>{institutionName}</div>
               </div>
             </div>
           </section>
