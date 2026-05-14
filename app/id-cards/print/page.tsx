@@ -214,7 +214,7 @@ export default function PrintPage() {
 
       {/* Card rendering area - optimized for print */}
       <div className="w-full flex items-center justify-center py-8 print:py-0 print:m-0 bg-gray-50 print:bg-white">
-        <div style={{ zoom: '1', transform: 'scale(1)' }} className="print:w-full print:bg-white">
+        <div className="print:w-full print:bg-white">
           {renderCard()}
         </div>
       </div>
@@ -234,11 +234,6 @@ export default function PrintPage() {
       {/* Print styles */}
       <style>{`
         @media print {
-          * {
-            zoom: 1 !important;
-            transform: scale(1) !important;
-          }
-          
           body, html {
             margin: 0 !important;
             padding: 0 !important;
@@ -254,14 +249,10 @@ export default function PrintPage() {
           }
           
           .professional-id-card {
-            zoom: 1 !important;
-            transform: scale(1) !important;
             page-break-after: avoid !important;
           }
           
           .admit-card {
-            zoom: 1 !important;
-            transform: scale(1) !important;
             page-break-after: avoid !important;
           }
         }

@@ -94,23 +94,25 @@ export default function GeneratePage() {
         </section>
         <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 font-semibold">4. Preview card</div>
-          <div ref={previewRef} className="flex justify-center">
-            <ProfessionalIDCard
-              role={role}
-              name={previewName}
-              idNumber={previewId}
-              institutionName={institution?.name || "Educational Institution"}
-              institutionLogo={options.logo ? institution?.logo : undefined}
-              institutionAddress={institution?.address}
-              institutionPhone={institution?.phone}
-              institutionEmail={institution?.email}
-              institutionWebsite={institution?.website}
-              institutionSeal={institution?.seal}
-              headSignature={institution?.headSignature}
-              headName={headName}
-              stream={className}
-              validityDate={card?.validityEnd || undefined}
-            />
+          <div className="overflow-x-auto">
+            <div ref={previewRef} className="mx-auto min-w-max">
+              <ProfessionalIDCard
+                role={role}
+                name={previewName}
+                idNumber={previewId}
+                institutionName={institution?.name || "Educational Institution"}
+                institutionLogo={options.logo ? institution?.logo : undefined}
+                institutionAddress={institution?.address}
+                institutionPhone={institution?.phone}
+                institutionEmail={institution?.email}
+                institutionWebsite={institution?.website}
+                institutionSeal={institution?.seal}
+                headSignature={institution?.headSignature}
+                headName={headName}
+                stream={className}
+                validityDate={card?.validityEnd || undefined}
+              />
+            </div>
           </div>
           <div className="mt-4"><DownloadButtons targetRef={previewRef} filename={`id-${previewId}`} cardId={card?._id} /></div>
         </section>

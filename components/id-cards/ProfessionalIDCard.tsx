@@ -81,9 +81,9 @@ function PhotoFrame({ name, photoUrl }: { name: string; photoUrl?: string }) {
   )
 }
 
-const Row = ({ label, value }: { label: string; value?: string }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '104px 1fr', alignItems: 'start', minHeight: 28, borderBottom: '1px solid rgba(255,255,255,0.62)' }}>
-    <div style={{ borderRight: '1px solid rgba(255,255,255,0.62)', padding: '6px 10px', fontSize: 12, fontWeight: 800, color: '#ffffff' }}>{label}</div>
+const Row = ({ label, value, withBottomBorder = true }: { label: string; value?: string; withBottomBorder?: boolean }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '104px 1fr', alignItems: 'start', minHeight: 28, borderBottom: withBottomBorder ? '1px solid rgba(255,255,255,0.9)' : 'none' }}>
+    <div style={{ borderRight: '1px solid rgba(255,255,255,0.9)', padding: '6px 10px', fontSize: 12, fontWeight: 800, color: '#ffffff' }}>{label}</div>
     <div style={{ padding: '6px 10px', fontSize: 11, lineHeight: '15px', fontWeight: 700, color: '#ffffff', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{value || ''}</div>
   </div>
 )
@@ -192,11 +192,12 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
               <PhotoFrame name={name} photoUrl={photoUrl} />
             </div>
 
-            <div style={{ position: 'absolute', left: 25, right: 25, top: 340, border: '1px solid rgba(255,255,255,0.72)' }}>
+            <div style={{ position: 'absolute', left: 25, right: 25, top: 306, border: '1px solid rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.03)', paddingBottom: 8 }}>
               <Row label="Name:" value={name} />
               <Row label="Role:" value={roleText} />
               <Row label="ID Number:" value={idNumber} />
-              <Row label="Class:" value={stream} />
+              <Row label="Class:" value={stream} withBottomBorder={false} />
+              <div style={{ borderBottom: '1px solid rgba(255,255,255,0.95)' }} />
             </div>
 
             {/* place institution title below the photo to avoid overlap */}
