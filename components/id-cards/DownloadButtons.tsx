@@ -53,62 +53,108 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
   const captureElement = async () => {
     if (!targetRef?.current) return null
     await document.fonts?.ready?.catch(() => undefined)
-
-    // Normalize zoom to ensure consistent output regardless of page zoom level
-    const currentZoom = window.devicePixelRatio || 1
-    
     // Use fixed dimensions to ensure consistent output across devices
     const isAdmitCard = targetRef.current.classList.contains('admit-card')
     const captureWidth = isAdmitCard ? 850 : 800
     const captureHeight = isAdmitCard ? 600 : 500
 
-    const wrapper = document.createElement('div')
-    wrapper.style.position = 'fixed'
-    wrapper.style.left = '-9999px'
-    wrapper.style.top = '0'
-    wrapper.style.background = 'white'
-    wrapper.style.padding = '0'
-    wrapper.style.width = `${captureWidth}px`
-    wrapper.style.height = `${captureHeight}px`
-    wrapper.style.overflow = 'hidden'
-    wrapper.style.zoom = '1'
-    wrapper.style.transform = 'scale(1)'
-    
-    const cloned = targetRef.current.cloneNode(true) as HTMLElement
-    cloned.style.zoom = '1'
-    cloned.style.transform = 'scale(1)'
-    
-    // Force zoom: 1 on all child elements
-    const forceZoom = (el: Element) => {
-      if (el instanceof HTMLElement) {
-        el.style.zoom = '1'
-        el.style.transform = 'scale(1)'
-      }
-      Array.from(el.children).forEach(forceZoom)
-    }
-    forceZoom(cloned)
-    
-    copyComputedStyles(cloned, targetRef.current)
-    await inlineImages(cloned)
-    wrapper.appendChild(cloned)
-    document.body.appendChild(wrapper)
+    const currentZoom = window.devicePixelRatio || 1
 
-    // Normalize to 1:1 pixel ratio, accounting for device pixel ratio
-    const scale = Math.max(0.5, 1 / currentZoom)
-    const canvas = await html2canvas(wrapper, {
-      scale: scale,
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      allowTaint: true,
-      foreignObjectRendering: false,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: captureWidth,
-      windowHeight: captureHeight,
-    })
-    
-    document.body.removeChild(wrapper)
-    return canvas
+    // Try capturing inside an off-screen iframe to avoid page zoom/layout influence
+    try {
+      const iframe = document.createElement('iframe')
+      iframe.style.position = 'fixed'
+      iframe.style.left = '-9999px'
+      iframe.style.top = '0'
+      iframe.style.width = `${captureWidth}px`
+      iframe.style.height = `${captureHeight}px`
+      iframe.style.border = '0'
+      document.body.appendChild(iframe)
+
+      const idoc = iframe.contentDocument || iframe.contentWindow?.document
+      if (!idoc) throw new Error('No iframe document')
+      idoc.open()
+      idoc.write('<!doctype html><html><head></head><body></body></html>')
+      idoc.close()
+
+      const cloned = targetRef.current.cloneNode(true) as HTMLElement
+      // Reset transforms/zoom on cloned tree
+      const resetStyles = (el: Element) => {
+        if (el instanceof HTMLElement) {
+          el.style.zoom = '1'
+          el.style.transform = 'none'
+        }
+        Array.from(el.children).forEach(resetStyles)
+      }
+      resetStyles(cloned)
+
+      copyComputedStyles(cloned as HTMLElement, targetRef.current)
+      await inlineImages(cloned)
+
+      // Append cloned node into iframe body
+      idoc.body.style.margin = '0'
+      idoc.body.style.background = '#ffffff'
+      idoc.body.appendChild(cloned)
+
+      const scale = Math.max(0.5, 1 / currentZoom)
+      const canvas = await html2canvas(idoc.body as any, {
+        scale: scale,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: captureWidth,
+        windowHeight: captureHeight,
+      })
+
+      // Cleanup
+      try { document.body.removeChild(iframe) } catch (e) {}
+      return canvas
+    } catch (err) {
+      // Fallback to original off-screen wrapper method if iframe fails
+      const wrapper = document.createElement('div')
+      wrapper.style.position = 'fixed'
+      wrapper.style.left = '-9999px'
+      wrapper.style.top = '0'
+      wrapper.style.background = 'white'
+      wrapper.style.padding = '0'
+      wrapper.style.width = `${captureWidth}px`
+      wrapper.style.height = `${captureHeight}px`
+      wrapper.style.overflow = 'hidden'
+
+      const cloned = targetRef.current.cloneNode(true) as HTMLElement
+      const forceReset = (el: Element) => {
+        if (el instanceof HTMLElement) {
+          el.style.zoom = '1'
+          el.style.transform = 'none'
+        }
+        Array.from(el.children).forEach(forceReset)
+      }
+      forceReset(cloned)
+
+      copyComputedStyles(cloned, targetRef.current)
+      await inlineImages(cloned)
+      wrapper.appendChild(cloned)
+      document.body.appendChild(wrapper)
+
+      const scale = Math.max(0.5, 1 / currentZoom)
+      const canvas = await html2canvas(wrapper, {
+        scale: scale,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: captureWidth,
+        windowHeight: captureHeight,
+      })
+
+      document.body.removeChild(wrapper)
+      return canvas
+    }
   }
 
   const downloadPNG = async () => {
