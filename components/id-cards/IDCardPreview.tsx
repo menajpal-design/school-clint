@@ -2,13 +2,10 @@
 
 import React, { forwardRef } from 'react'
 import { ProfessionalIDCard } from './ProfessionalIDCard'
-import type { IDCardProps } from './StudentIDCard'
 
-export type PreviewProps = IDCardProps & { type?: 'student' | 'teacher' | 'head' | 'staff' }
-
-export const IDCardPreview = forwardRef<HTMLDivElement, PreviewProps>(function IDCardPreview(
-  { type = 'student', ...props },
-  ref
+export const IDCardPreview = forwardRef<HTMLDivElement, any>(function IDCardPreview(
+  { type = 'student', ...props }: any,
+  ref: any
 ) {
   return (
     <div ref={ref as any} className="p-2 bg-slate-50 inline-block">

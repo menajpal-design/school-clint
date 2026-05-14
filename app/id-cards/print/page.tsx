@@ -76,24 +76,24 @@ export default function PrintPage() {
         return (
           <StudentIDCard
             ref={cardRef}
-            name={cardData.name}
-            idNumber={cardData.idNumber}
-            email={cardData.email}
-            phone={cardData.phone}
-            photoUrl={cardData.photoUrl}
-            institutionName={cardData.institutionName}
-            institutionLogo={cardData.institutionLogo}
-            institutionAddress={cardData.institutionAddress}
-            institutionPhone={cardData.institutionPhone}
-            institutionEmail={cardData.institutionEmail}
-            institutionSeal={cardData.institutionSeal}
-            headSignature={cardData.headSignature}
-            validityDate={cardData.validityDate}
-            dateOfBirth={cardData.dateOfBirth}
-            fatherName={cardData.fatherName}
-            admissionNumber={cardData.admissionNumber}
-            registrationNumber={cardData.registrationNumber}
-            stream={cardData.stream}
+            name={cardData.name || ''}
+            idNumber={cardData.idNumber || ''}
+            email={cardData.email || ''}
+            phone={cardData.phone || ''}
+            photoUrl={cardData.photoUrl || ''}
+            institutionName={cardData.institutionName || ''}
+            institutionLogo={cardData.institutionLogo || ''}
+            institutionAddress={cardData.institutionAddress || ''}
+            institutionPhone={cardData.institutionPhone || ''}
+            institutionEmail={cardData.institutionEmail || ''}
+            institutionSeal={cardData.institutionSeal || ''}
+            headSignature={cardData.headSignature || ''}
+            validityDate={cardData.validityDate || ''}
+            dateOfBirth={cardData.dateOfBirth || ''}
+            fatherName={cardData.fatherName || ''}
+            admissionNumber={cardData.admissionNumber || ''}
+            registrationNumber={cardData.registrationNumber || ''}
+            stream={cardData.stream || ''}
           />
         )
 
@@ -101,21 +101,21 @@ export default function PrintPage() {
         return (
           <TeacherIDCard
             ref={cardRef}
-            name={cardData.name}
-            idNumber={cardData.idNumber}
-            email={cardData.email}
-            phone={cardData.phone}
-            designation={cardData.designation}
-            photoUrl={cardData.photoUrl}
-            institutionName={cardData.institutionName}
-            institutionLogo={cardData.institutionLogo}
-            institutionAddress={cardData.institutionAddress}
-            institutionPhone={cardData.institutionPhone}
-            institutionEmail={cardData.institutionEmail}
-            institutionSeal={cardData.institutionSeal}
-            headSignature={cardData.headSignature}
-            validityDate={cardData.validityDate}
-            dateOfBirth={cardData.dateOfBirth}
+            name={cardData.name || ''}
+            idNumber={cardData.idNumber || ''}
+            email={cardData.email || ''}
+            phone={cardData.phone || ''}
+            designation={cardData.designation || ''}
+            photoUrl={cardData.photoUrl || ''}
+            institutionName={cardData.institutionName || ''}
+            institutionLogo={cardData.institutionLogo || ''}
+            institutionAddress={cardData.institutionAddress || ''}
+            institutionPhone={cardData.institutionPhone || ''}
+            institutionEmail={cardData.institutionEmail || ''}
+            institutionSeal={cardData.institutionSeal || ''}
+            headSignature={cardData.headSignature || ''}
+            validityDate={cardData.validityDate || ''}
+            dateOfBirth={cardData.dateOfBirth || ''}
           />
         )
 
@@ -123,22 +123,22 @@ export default function PrintPage() {
         return (
           <StaffIDCard
             ref={cardRef}
-            name={cardData.name}
-            idNumber={cardData.idNumber}
-            email={cardData.email}
-            phone={cardData.phone}
-            designation={cardData.designation}
-            department={cardData.department}
-            photoUrl={cardData.photoUrl}
-            institutionName={cardData.institutionName}
-            institutionLogo={cardData.institutionLogo}
-            institutionAddress={cardData.institutionAddress}
-            institutionPhone={cardData.institutionPhone}
-            institutionEmail={cardData.institutionEmail}
-            institutionSeal={cardData.institutionSeal}
-            headSignature={cardData.headSignature}
-            validityDate={cardData.validityDate}
-            dateOfBirth={cardData.dateOfBirth}
+            name={cardData.name || ''}
+            idNumber={cardData.idNumber || ''}
+            email={cardData.email || ''}
+            phone={cardData.phone || ''}
+            designation={cardData.designation || ''}
+            department={cardData.department || ''}
+            photoUrl={cardData.photoUrl || ''}
+            institutionName={cardData.institutionName || ''}
+            institutionLogo={cardData.institutionLogo || ''}
+            institutionAddress={cardData.institutionAddress || ''}
+            institutionPhone={cardData.institutionPhone || ''}
+            institutionEmail={cardData.institutionEmail || ''}
+            institutionSeal={cardData.institutionSeal || ''}
+            headSignature={cardData.headSignature || ''}
+            validityDate={cardData.validityDate || ''}
+            dateOfBirth={cardData.dateOfBirth || ''}
           />
         )
 
@@ -146,21 +146,21 @@ export default function PrintPage() {
         return (
           <IDCardPreview
             ref={cardRef}
-            name={cardData.name}
-            idNumber={cardData.idNumber}
-            email={cardData.email}
-            phone={cardData.phone}
-            designation={cardData.designation}
-            photoUrl={cardData.photoUrl}
-            institutionName={cardData.institutionName}
-            institutionLogo={cardData.institutionLogo}
-            institutionAddress={cardData.institutionAddress}
-            institutionPhone={cardData.institutionPhone}
-            institutionEmail={cardData.institutionEmail}
-            institutionSeal={cardData.institutionSeal}
-            headSignature={cardData.headSignature}
-            validityDate={cardData.validityDate}
-            dateOfBirth={cardData.dateOfBirth}
+            name={cardData.name || ''}
+            idNumber={cardData.idNumber || ''}
+            email={cardData.email || ''}
+            phone={cardData.phone || ''}
+            designation={cardData.designation || ''}
+            photoUrl={cardData.photoUrl || ''}
+            institutionName={cardData.institutionName || ''}
+            institutionLogo={cardData.institutionLogo || ''}
+            institutionAddress={cardData.institutionAddress || ''}
+            institutionPhone={cardData.institutionPhone || ''}
+            institutionEmail={cardData.institutionEmail || ''}
+            institutionSeal={cardData.institutionSeal || ''}
+            headSignature={cardData.headSignature || ''}
+            validityDate={cardData.validityDate || ''}
+            dateOfBirth={cardData.dateOfBirth || ''}
             type="head"
           />
         )

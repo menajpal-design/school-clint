@@ -10,6 +10,7 @@ export interface AdmitCardExamItem {
   examCentre?: string
   centreCode?: string
   centreName?: string
+  centre?: string
   code?: string
   date?: string
   time?: string
@@ -17,7 +18,8 @@ export interface AdmitCardExamItem {
 
 export interface AdmitCardProps {
   name: string
-  rollNumber: string
+  rollNumber?: string
+  roll?: string
   className?: string
   photoUrl?: string
   institutionName?: string
@@ -80,6 +82,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
     {
       name,
       rollNumber,
+      roll,
       className = '',
       photoUrl,
       institutionName = '',
@@ -103,6 +106,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
     ref
   ) => {
     const displayExamDate = formatDisplayDate(examDate)
+    const resolvedRoll = rollNumber || roll || ''
     const resolvedQrData = qrData || JSON.stringify({ name, rollNumber, examName, examDate: displayExamDate || examDate, examCenter, centerCode, institutionName })
     const instructions = [
       'This card is non-transferable and must be carried on campus.',
@@ -163,7 +167,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
               <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-6">
                 <div className="grid gap-3">
                   <InfoRow label="Candidate Name" value={name} />
-                  <InfoRow label="Roll Number" value={rollNumber} />
+                  <InfoRow label="Roll Number" value={resolvedRoll} />
                   <InfoRow label="Class / Group" value={stream} />
                   <InfoRow label="Date of Birth" value={dateOfBirth} />
                   <InfoRow label="Father Name" value={fatherName} />

@@ -6,16 +6,53 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+type ActionDescriptor = {
+  label?: string;
+  icon?: React.ComponentType<{ className?: string }> | React.ComponentType<any>;
+  href?: string;
+  onClick?: () => void;
+  active?: boolean;
+};
+
 interface PageHeaderProps {
   title: string;
   description?: string;
   icon?: React.ComponentType<{ className?: string }>;
   status?: React.ReactNode;
-  actions?: React.ReactNode[];
+  actions?: Array<React.ReactNode | ActionDescriptor>;
   className?: string;
 }
 
 export function PageHeader({ title, description, icon: Icon, status, actions = [], className }: PageHeaderProps) {
+  const renderAction = (action: React.ReactNode | ActionDescriptor, index: number) => {
+    if (React.isValidElement(action)) return <React.Fragment key={index}>{action}</React.Fragment>;
+    if (typeof action === "object" && action !== null) {
+      const act = action as ActionDescriptor;
+      const IconComp = act.icon as React.ComponentType<{ className?: string }> | undefined;
+      const content = (
+        <>
+          {IconComp && <IconComp className="h-4 w-4" />}
+          {act.label}
+        </>
+      );
+
+      if (act.href) {
+        return (
+          <Link key={index} href={act.href} className={"no-underline"}>
+            <Button variant={act.active ? "default" : "outline"} size="sm" className="flex items-center gap-2">{content}</Button>
+          </Link>
+        );
+      }
+
+      return (
+        <Button key={index} variant={act.active ? "default" : "outline"} size="sm" onClick={act.onClick} className="flex items-center gap-2">
+          {content}
+        </Button>
+      );
+    }
+    return <React.Fragment key={index}>{action}</React.Fragment>;
+  };
+
   return (
     <section className={cn("rounded-lg border border-border bg-card p-5 shadow-sm", className)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -35,11 +72,7 @@ export function PageHeader({ title, description, icon: Icon, status, actions = [
         </div>
         {actions.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {actions.map((action, index) => (
-              <React.Fragment key={index}>
-                {action}
-              </React.Fragment>
-            ))}
+            {actions.map((action, index) => renderAction(action, index))}
           </div>
         )}
       </div>

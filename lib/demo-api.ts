@@ -80,7 +80,7 @@ async function createDemoPdfBlob(payload: any): Promise<Blob> {
     import('qrcode'),
   ]);
 
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const doc: any = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const cardType = String(payload.cardType || '').toLowerCase();
@@ -105,7 +105,7 @@ async function createDemoPdfBlob(payload: any): Promise<Blob> {
     doc.moveTo(cardX, cardY + whiteH);
     doc.lineTo(cardX + cardW, cardY + whiteH);
     doc.lineTo(cardX + cardW, cardY + whiteH - 6.35);
-    doc.quadraticCurveTo(cardX + cardW/2, cardY + whiteH - 12.7, cardX, cardY + whiteH - 6.35);
+    (doc as any).quadraticCurveTo(cardX + cardW/2, cardY + whiteH - 12.7, cardX, cardY + whiteH - 6.35);
     doc.fill();
     doc.restore();
 
@@ -199,7 +199,7 @@ async function createDemoPdfBlob(payload: any): Promise<Blob> {
     doc.moveTo(cardX, cardY + 21.17); // 80px ≈ 21.17mm
     doc.lineTo(cardX + cardW, cardY + 21.17);
     doc.lineTo(cardX + cardW, cardY + headerH);
-    doc.quadraticCurveTo(cardX + cardW/2, cardY + headerH - 5.29, cardX, cardY + headerH); // 20px ≈ 5.29mm
+    (doc as any).quadraticCurveTo(cardX + cardW/2, cardY + headerH - 5.29, cardX, cardY + headerH); // 20px ≈ 5.29mm
     doc.fill();
     doc.restore();
 

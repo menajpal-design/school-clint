@@ -5,16 +5,26 @@ import { QRCodeSVG } from 'qrcode.react'
 
 export interface StudentIDCardProps {
   name: string
-  id: string
-  session: string
+  id?: string
+  idNumber?: string
+  session?: string
+  validityDate?: string
   phone: string
   email: string
   photoUrl: string
   institutionName?: string
+  institutionLogo?: string
   institutionAddress?: string
   institutionWebsite?: string
   institutionPhone?: string
   institutionEmail?: string
+  institutionSeal?: string
+  headSignature?: string
+  dateOfBirth?: string
+  fatherName?: string
+  admissionNumber?: string
+  registrationNumber?: string
+  stream?: string
   instructions?: string[]
 }
 
@@ -59,8 +69,8 @@ const StudentCard = ({ data, id }: { data: StudentIDCardProps; id: string }) => 
           </div>
 
           <div className="mt-6 space-y-3">
-            <InfoRow label="ID No" value={data.id} />
-            <InfoRow label="Session" value={data.session} />
+            <InfoRow label="ID No" value={data.id || data.idNumber} />
+            <InfoRow label="Session" value={data.session || data.validityDate} />
             <InfoRow label="Phone" value={data.phone} />
             <InfoRow label="Email" value={data.email} />
           </div>
@@ -68,7 +78,7 @@ const StudentCard = ({ data, id }: { data: StudentIDCardProps; id: string }) => 
 
         <div className="mt-auto rounded-t-[32px] bg-slate-900 px-6 py-4 text-white">
           <div className="text-[11px] uppercase tracking-[0.3em] text-sky-300">Valid Until</div>
-          <div className="mt-2 text-base font-semibold">{data.session || ''}</div>
+          <div className="mt-2 text-base font-semibold">{data.session || data.validityDate || ''}</div>
         </div>
       </div>
 
@@ -127,3 +137,5 @@ export const StudentIDCard = React.forwardRef<HTMLDivElement, StudentIDCardProps
 StudentIDCard.displayName = 'StudentIDCard'
 
 export default StudentIDCard
+
+export type IDCardProps = StudentIDCardProps

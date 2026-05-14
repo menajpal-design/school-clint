@@ -123,10 +123,10 @@ export default function ProfilePage() {
           <div className="rounded-lg border border-border bg-card p-5 shadow-sm\">
             <h2 className="font-semibold text-foreground\">Institution Info</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <Info label="Institution" value={institution.name || "Not linked"} />
-              <Info label="Type" value={institution.type || "-"} />
-              <Info label="Email" value={institution.email || "-"} />
-              <Info label="Phone" value={institution.phone || "-"} />
+              <Info label="Institution" value={institutionData.name || "Not linked"} />
+              <Info label="Type" value={institutionData.type || "-"} />
+              <Info label="Email" value={institutionData.email || "-"} />
+              <Info label="Phone" value={institutionData.phone || "-"} />
             </div>
           </div>
           <div className="rounded-lg border border-border bg-card p-5 shadow-sm\">

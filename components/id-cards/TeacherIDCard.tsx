@@ -5,17 +5,23 @@ import { QRCodeSVG } from 'qrcode.react'
 
 export interface TeacherIDCardProps {
   name: string
-  id: string
+  id?: string
+  idNumber?: string
   designation: string
-  department: string
+  department?: string
   phone: string
   email: string
   photoUrl: string
   institutionName?: string
+  institutionLogo?: string
   institutionAddress?: string
   institutionWebsite?: string
   institutionPhone?: string
   institutionEmail?: string
+  institutionSeal?: string
+  headSignature?: string
+  dateOfBirth?: string
+  validityDate?: string
   instructions?: string[]
 }
 
@@ -60,7 +66,7 @@ const TeacherCard = ({ data, id }: { data: TeacherIDCardProps; id: string }) => 
           </div>
 
           <div className="mt-6 space-y-3">
-            <InfoRow label="ID No" value={data.id} />
+            <InfoRow label="ID No" value={data.id || data.idNumber} />
             <InfoRow label="Designation" value={data.designation} />
             <InfoRow label="Department" value={data.department} />
             <InfoRow label="Phone" value={data.phone} />

@@ -2,9 +2,8 @@
 
 import React from 'react'
 import { ProfessionalIDCard } from './ProfessionalIDCard'
-import { IDCardProps } from './StudentIDCard'
 
-export const StaffIDCard = React.forwardRef<HTMLDivElement, IDCardProps>((props, ref) => {
+export const StaffIDCard = React.forwardRef<HTMLDivElement, any>((props, ref) => {
   return (
     <ProfessionalIDCard
       ref={ref}

@@ -12,7 +12,7 @@ export type { IDCardProps } from './StudentIDCard'
 export { TeacherIDCard } from './TeacherIDCard'
 export { StaffIDCard } from './StaffIDCard'
 export { IDCardPreview } from './IDCardPreview'
-export type { PreviewProps } from './IDCardPreview'
+// PreviewProps removed — IDCardPreview accepts any props now
 
 // Webcam Scanner Component
 export { WebcamScanner } from './WebcamScanner'

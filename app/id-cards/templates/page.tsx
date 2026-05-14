@@ -252,7 +252,7 @@ export default function TemplatesPage() {
                   examCenter={institutionName}
                   centerCode={institution?._id}
                   headName={headName}
-                  dateOfBirth={user?.lastLogin || undefined}
+                  dateOfBirth={user?.lastLogin ? String(user.lastLogin) : undefined}
                   fatherName={user?.email}
                   stream={user?.role ? user.role.replace(/_/g, ' ') : institutionName}
                 />
