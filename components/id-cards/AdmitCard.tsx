@@ -49,7 +49,7 @@ function AdmitLogo({ logoUrl }: { logoUrl?: string }) {
 
 const InfoLine = ({ label, value }: { label: string; value?: string }) => (
   value ? (
-    <div style={{ display: 'grid', gridTemplateColumns: '230px 1fr', alignItems: 'baseline', gap: 9, minHeight: 38, fontSize: 26, lineHeight: '34px', color: '#111111' }}>
+    <div className="admit-info-line" style={{ display: 'grid', gridTemplateColumns: '230px 1fr', alignItems: 'baseline', gap: 9, minHeight: 38, fontSize: 26, lineHeight: '34px', color: '#111111' }}>
       <strong style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>{label}:</strong>
       <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
     </div>
@@ -92,7 +92,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
     })
 
     return (
-      <div ref={ref} className={className} style={{ width: 850, maxWidth: '100%', background: '#fbf6e8', padding: 0, fontFamily: 'Arial, Helvetica, sans-serif' }}>
+      <div ref={ref} className={`admit-card ${className}`} style={{ width: 850, maxWidth: '100%', background: '#fbf6e8', padding: 0, fontFamily: 'Arial, Helvetica, sans-serif' }}>
         <section
           style={{
             width: 850,
@@ -122,6 +122,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
           </header>
 
           <div
+            className="admit-photo"
             style={{
               position: 'absolute',
               right: 21,
@@ -169,7 +170,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
             </tbody>
           </table>
 
-          <div style={{ position: 'absolute', right: 35, bottom: 28, width: 100, height: 100, background: '#ffffff', padding: 4 }}>
+          <div className="admit-qr" style={{ position: 'absolute', right: 35, bottom: 28, width: 100, height: 100, background: '#ffffff', padding: 4 }}>
             <QRCodeSVG value={qrData} size={92} level="M" includeMargin={false} />
           </div>
         </section>

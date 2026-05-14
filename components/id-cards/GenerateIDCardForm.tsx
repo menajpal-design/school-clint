@@ -323,9 +323,9 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
             <CardTitle>Card Preview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div ref={previewRef} className="flex justify-center min-h-96">
+            <div className="flex justify-center min-h-96">
               {data ? (
-                <>
+                <div ref={previewRef} className="inline-block">
                   {isAdmitCard ? (
                     <AdmitCard
                       name={data.name}
@@ -378,7 +378,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
                       stream={data.stream || undefined}
                     />
                   )}
-                </>
+                </div>
               ) : (
                 <div className="text-center text-slate-500">
                   <p>Fill the form and click "Generate Preview"</p>
