@@ -148,7 +148,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
             <InfoLine label="Date of Birth" value={dateOfBirth} />
           </main>
 
-          <div style={{ position: 'relative', zIndex: 1, marginTop: 4, paddingRight: 198 }}>
+          <div style={{ position: 'relative', zIndex: 1, marginTop: 4, paddingRight: 220, paddingBottom: 130 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 19, background: 'transparent' }}>
               <thead>
                 <tr>
@@ -174,8 +174,8 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
             </table>
           </div>
 
-          <div className="admit-qr" style={{ position: 'absolute', right: 35, bottom: 28, width: 100, height: 100, background: '#ffffff', padding: 4 }}>
-            <QRCodeSVG value={resolvedQrData} size={92} level="M" includeMargin={false} />
+          <div className="admit-qr" style={{ position: 'absolute', right: 28, bottom: 18, width: 110, height: 110, background: '#ffffff', padding: 4, border: '1px solid #cccccc' }}>
+            <QRCodeSVG value={resolvedQrData} size={102} level="M" includeMargin={false} />
           </div>
         </section>
       </div>
