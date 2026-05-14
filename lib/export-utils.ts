@@ -144,7 +144,8 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   captureTarget.style.position = "fixed";
   captureTarget.style.left = "-10000px";
   captureTarget.style.top = "0";
-  captureTarget.style.width = `${target.scrollWidth || target.offsetWidth || 900}px`;
+  const captureWidth = Math.max(target.scrollWidth || 0, target.offsetWidth || 0, 900);
+  captureTarget.style.width = `${captureWidth}px`;
   captureTarget.style.background = "#ffffff";
   captureTarget.style.padding = "0";
   
@@ -162,26 +163,30 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
     foreignObjectRendering: false,
     scrollX: 0,
     scrollY: 0,
+    windowWidth: captureWidth,
+    windowHeight: target.scrollHeight || target.offsetHeight || 1200,
   });
   document.body.removeChild(captureTarget);
 
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const imgWidth = pageWidth;
+  const marginX = 6;
+  const marginY = 6;
+  const imgWidth = pageWidth - marginX * 2;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
   const imgData = canvas.toDataURL("image/png");
 
   let remainingHeight = imgHeight;
-  let y = 0;
-  pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
-  remainingHeight -= pageHeight;
+  let y = marginY;
+  pdf.addImage(imgData, "PNG", marginX, y, imgWidth, imgHeight);
+  remainingHeight -= pageHeight - marginY * 2;
 
   while (remainingHeight > 0) {
-    y = remainingHeight - imgHeight;
+    y = marginY - (imgHeight - remainingHeight);
     pdf.addPage();
-    pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
-    remainingHeight -= pageHeight;
+    pdf.addImage(imgData, "PNG", marginX, y, imgWidth, imgHeight);
+    remainingHeight -= pageHeight - marginY * 2;
   }
 
   pdf.save(filename);

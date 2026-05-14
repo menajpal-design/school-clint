@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Input } from '@/components/ui/input'
@@ -54,7 +54,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
     [userRole]
   )
   const fallbackCardType = defaultCardType || visibleCardTypes[0]?.value || 'admit-card'
-  const { register, handleSubmit, watch, setValue } = useForm<FormValues>({
+  const { register, handleSubmit, watch, setValue, control } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       cardType: fallbackCardType,
@@ -70,6 +70,51 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
   const previewRef = useRef<HTMLDivElement | null>(null)
   const cardType = watch('cardType')
   const formIsAdmitCard = cardType === 'admit-card'
+  const liveCardType = useWatch({ control, name: 'cardType' }) || fallbackCardType
+  const liveName = useWatch({ control, name: 'name' }) || ''
+  const liveIdNumber = useWatch({ control, name: 'idNumber' }) || ''
+  const livePhotoUrl = useWatch({ control, name: 'photoUrl' }) || ''
+  const liveInstitutionName = useWatch({ control, name: 'institutionName' }) || ''
+  const liveInstitutionLogo = useWatch({ control, name: 'institutionLogo' }) || ''
+  const liveHeadName = useWatch({ control, name: 'headName' }) || ''
+  const liveDateOfBirth = useWatch({ control, name: 'dateOfBirth' }) || ''
+  const liveFatherName = useWatch({ control, name: 'fatherName' }) || ''
+  const liveAdmissionNumber = useWatch({ control, name: 'admissionNumber' }) || ''
+  const liveRegistrationNumber = useWatch({ control, name: 'registrationNumber' }) || ''
+  const liveStream = useWatch({ control, name: 'stream' }) || ''
+  const liveExamName = useWatch({ control, name: 'examName' }) || ''
+  const liveExamDate = useWatch({ control, name: 'examDate' }) || ''
+  const liveExamCenter = useWatch({ control, name: 'examCenter' }) || ''
+  const liveCenterCode = useWatch({ control, name: 'centerCode' }) || ''
+  const liveValidityDate = useWatch({ control, name: 'validityDate' }) || ''
+  const livePreviewData: FormValues = {
+    cardType: liveCardType as any,
+    name: liveName,
+    idNumber: liveIdNumber,
+    photoUrl: livePhotoUrl,
+    institutionName: liveInstitutionName,
+    institutionLogo: liveInstitutionLogo,
+    headName: liveHeadName,
+    dateOfBirth: liveDateOfBirth,
+    fatherName: liveFatherName,
+    admissionNumber: liveAdmissionNumber,
+    registrationNumber: liveRegistrationNumber,
+    stream: liveStream,
+    examName: liveExamName,
+    examDate: liveExamDate,
+    examCenter: liveExamCenter,
+    centerCode: liveCenterCode,
+    validityDate: liveValidityDate,
+  }
+  const previewData = data || livePreviewData
+  const hasPreviewData = Boolean(
+    previewData.name ||
+    previewData.idNumber ||
+    previewData.institutionName ||
+    previewData.examName ||
+    previewData.examCenter ||
+    previewData.validityDate
+  )
 
   const getValues = () => ({
     cardType: (watch('cardType') as any) || 'admit-card',
@@ -290,7 +335,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
                 </div>
               )}
 
-              <Button type="button" className="w-full" onClick={() => setData(getValues())}>
+              <Button type="button" className="w-full" onClick={handleSubmit(onSubmit)}>
                 Generate Preview
               </Button>
               {formIsAdmitCard && (
@@ -324,58 +369,58 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
           </CardHeader>
           <CardContent>
             <div className="flex justify-center min-h-96">
-              {data ? (
+              {hasPreviewData ? (
                 <div ref={previewRef} className="inline-block">
-                  {isAdmitCard ? (
+                  {previewData.cardType === 'admit-card' ? (
                     <AdmitCard
-                      name={data.name}
-                      rollNumber={data.idNumber}
-                      photoUrl={data.photoUrl || undefined}
-                      institutionName={data.institutionName}
-                      institutionLogo={data.institutionLogo || undefined}
+                      name={previewData.name}
+                      rollNumber={previewData.idNumber}
+                      photoUrl={previewData.photoUrl || undefined}
+                      institutionName={previewData.institutionName}
+                      institutionLogo={previewData.institutionLogo || undefined}
                       institutionAddress={institutionProfile?.address}
                       institutionPhone={institutionProfile?.phone}
                       institutionEmail={institutionProfile?.email}
                       institutionSeal={institutionProfile?.seal}
                       headSignature={institutionProfile?.headSignature}
-                      examName={data.examName}
-                      examDate={data.examDate}
-                      examCenter={data.examCenter}
-                      centerCode={data.centerCode}
-                      headName={data.headName}
-                      dateOfBirth={data.dateOfBirth || undefined}
-                      fatherName={data.fatherName || undefined}
-                      stream={data.stream || undefined}
+                      examName={previewData.examName}
+                      examDate={previewData.examDate}
+                      examCenter={previewData.examCenter}
+                      centerCode={previewData.centerCode}
+                      headName={previewData.headName}
+                      dateOfBirth={previewData.dateOfBirth || undefined}
+                      fatherName={previewData.fatherName || undefined}
+                      stream={previewData.stream || undefined}
                     />
                   ) : (
                     <ProfessionalIDCard
-                      name={data.name}
-                      idNumber={data.idNumber}
+                      name={previewData.name}
+                      idNumber={previewData.idNumber}
                       role={
-                        data.cardType === 'student-id'
+                        previewData.cardType === 'student-id'
                           ? 'student'
-                          : data.cardType === 'teacher-id'
+                          : previewData.cardType === 'teacher-id'
                             ? 'teacher'
-                            : data.cardType === 'head-id'
+                            : previewData.cardType === 'head-id'
                               ? 'head'
                             : 'staff'
                       }
-                      photoUrl={data.photoUrl || undefined}
-                      institutionName={data.institutionName}
-                      institutionLogo={data.institutionLogo || undefined}
+                      photoUrl={previewData.photoUrl || undefined}
+                      institutionName={previewData.institutionName}
+                      institutionLogo={previewData.institutionLogo || undefined}
                       institutionAddress={institutionProfile?.address}
                       institutionPhone={institutionProfile?.phone}
                       institutionEmail={institutionProfile?.email}
                       institutionWebsite={institutionProfile?.website}
                       institutionSeal={institutionProfile?.seal}
                       headSignature={institutionProfile?.headSignature}
-                      validityDate={data.validityDate}
-                      headName={data.headName}
-                      dateOfBirth={data.dateOfBirth || undefined}
-                      fatherName={data.fatherName || undefined}
-                      admissionNumber={data.admissionNumber || undefined}
-                      registrationNumber={data.registrationNumber || undefined}
-                      stream={data.stream || undefined}
+                      validityDate={previewData.validityDate}
+                      headName={previewData.headName}
+                      dateOfBirth={previewData.dateOfBirth || undefined}
+                      fatherName={previewData.fatherName || undefined}
+                      admissionNumber={previewData.admissionNumber || undefined}
+                      registrationNumber={previewData.registrationNumber || undefined}
+                      stream={previewData.stream || undefined}
                     />
                   )}
                 </div>

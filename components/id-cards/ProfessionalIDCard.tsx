@@ -75,19 +75,19 @@ function PhotoFrame({ name, photoUrl }: { name: string; photoUrl?: string }) {
 }
 
 const Row = ({ label, value }: { label: string; value?: string }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', minHeight: 22, borderBottom: '1px solid rgba(255,255,255,0.62)' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '104px 1fr', alignItems: 'start', minHeight: 24, borderBottom: '1px solid rgba(255,255,255,0.62)' }}>
     <div style={{ borderRight: '1px solid rgba(255,255,255,0.62)', padding: '3px 10px', fontSize: 12, fontWeight: 800, color: '#ffffff' }}>{label}</div>
-    <div style={{ padding: '3px 10px', fontSize: 11, lineHeight: '16px', fontWeight: 700, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value || ''}</div>
+    <div style={{ padding: '3px 10px', fontSize: 10.5, lineHeight: '13px', fontWeight: 700, color: '#ffffff', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{value || ''}</div>
   </div>
 )
 
-const ContactLine = ({ value }: { value?: string }) => (value ? <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '13px' }}>{value}</div> : null)
+const ContactLine = ({ value }: { value?: string }) => (value ? <div style={{ lineHeight: '13px', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{value}</div> : null)
 
 const BackRow = ({ label, value }: { label: string; value?: string }) =>
   value ? (
-    <div style={{ display: 'grid', gridTemplateColumns: '65px 1fr', gap: 8, minHeight: 16, fontSize: 8, lineHeight: '12px', color: '#111827' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '58px 1fr', gap: 6, alignItems: 'start', minHeight: 18, fontSize: 8.5, lineHeight: '11px', color: '#111827' }}>
       <span style={{ fontWeight: 800, color: '#0f3f49' }}>{label}</span>
-      <span style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
+      <span style={{ fontWeight: 700, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{value}</span>
     </div>
   ) : null
 
@@ -161,7 +161,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
             <div style={{ position: 'absolute', left: 0, right: 0, bottom: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
               <LogoMark logoUrl={institutionLogo} institutionName={institutionName} tone={theme.gold} />
               <div>
-                <div style={{ maxWidth: 190, color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 800, lineHeight: '20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{institutionName}</div>
+                <div style={{ maxWidth: 190, color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 18, fontWeight: 800, lineHeight: '19px', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{institutionName}</div>
               </div>
             </div>
           </section>
