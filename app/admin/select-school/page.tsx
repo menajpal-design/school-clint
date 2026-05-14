@@ -55,7 +55,7 @@ export default function SelectSchoolPage() {
           <Card key={school._id} className={selectedId === school._id ? 'border-blue-500' : ''}>
             <CardContent className="space-y-4 p-4">
               <div className="flex gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100"><Building2 className="h-5 w-5" /></div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted"><Building2 className="h-5 w-5" /></div>
                 <div>
                   <h2 className="font-semibold">{school.name}</h2>
                   <p className="text-sm text-muted-foreground">{school.email}</p>

@@ -62,9 +62,9 @@ export default function AttendancePage() {
       </div>
 
       <section className="grid gap-3 md:grid-cols-3">
-        <Button asChild variant="outline" className="h-20 justify-start px-5"><Link href="/attendance/mark">Mark Attendance</Link></Button>
-        <Button asChild variant="outline" className="h-20 justify-start px-5"><Link href="/attendance/my-attendance">My Attendance</Link></Button>
-        <Button asChild variant="outline" className="h-20 justify-start px-5"><Link href="/attendance/reports">Attendance Reports</Link></Button>
+        <Button asChild variant="outline" className="h-20 justify-start px-5 bg-card"><Link href="/attendance/mark">Mark Attendance</Link></Button>
+        <Button asChild variant="outline" className="h-20 justify-start px-5 bg-card"><Link href="/attendance/my-attendance">My Attendance</Link></Button>
+        <Button asChild variant="outline" className="h-20 justify-start px-5 bg-card"><Link href="/attendance/reports">Attendance Reports</Link></Button>
       </section>
     </div>
   );

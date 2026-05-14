@@ -293,7 +293,7 @@ export default function SubordinatesPage() {
                     setCredentials(null);
                     setTempPassword(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded font-medium transition"
+                  className="flex-1 px-4 py-2 bg-muted hover:bg-popover text-foreground rounded font-medium transition"
                 >
                   Close
                 </button>

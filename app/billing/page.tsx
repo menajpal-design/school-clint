@@ -79,13 +79,13 @@ export default function BillingPage() {
   };
 
   if (loading) {
-    return <main className="flex min-h-screen items-center justify-center bg-white"><Loader2 className="h-6 w-6 animate-spin" /></main>;
+    return <main className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-6 w-6 animate-spin" /></main>;
   }
 
   const user = authManager.getUser();
   if (user && !['head', 'admin', 'super_admin'].includes(user.role)) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-white p-6 text-center">
+      <main className="flex min-h-screen items-center justify-center bg-background p-6 text-center">
         <div className="space-y-4">
           <p className="text-xl font-semibold">আপনার প্রতিষ্ঠান প্রধানের সাথে যোগাযোগ করুন।</p>
           <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
@@ -95,7 +95,7 @@ export default function BillingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-4 sm:p-8">
+    <main className="min-h-screen bg-background p-4 sm:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -144,7 +144,7 @@ export default function BillingPage() {
               <Input placeholder="Paid amount" type="number" value={form.receivedAmount} onChange={(event) => setForm((prev) => ({ ...prev, receivedAmount: event.target.value }))} />
               <Input placeholder="Transaction ID" value={form.paymentTrxId} onChange={(event) => setForm((prev) => ({ ...prev, paymentTrxId: event.target.value }))} />
               <Input placeholder="Sender number" value={form.paymentSenderNumber} onChange={(event) => setForm((prev) => ({ ...prev, paymentSenderNumber: event.target.value }))} />
-              <div className="rounded-lg border bg-white p-4 text-sm md:col-span-2">
+              <div className="rounded-lg border bg-card p-4 text-sm md:col-span-2">
                 Due amount: BDT {due.baseAmount.toLocaleString()} + storage BDT {due.storageAmount.toLocaleString()} = <span className="font-semibold">BDT {due.total.toLocaleString()}</span>
               </div>
               <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">

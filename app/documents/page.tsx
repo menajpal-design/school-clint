@@ -60,7 +60,7 @@ export default function DocumentsPage() {
           <Card key={category.value} className="border-slate-200 shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-start justify-between gap-3">
-                <div className="rounded-lg bg-slate-100 p-2 text-slate-700">
+                <div className="rounded-lg bg-muted p-2 text-foreground">
                   <FileText className="h-5 w-5" />
                 </div>
                 <Badge variant="outline">{category.count}</Badge>
@@ -73,14 +73,14 @@ export default function DocumentsPage() {
       </section>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
             <h2 className="font-semibold text-slate-950">Recent Uploaded Files</h2>
             <Button asChild variant="outline" size="sm"><Link href="/documents/manage">View all</Link></Button>
           </div>
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableRow className="bg-muted hover:bg-muted">
                 <TableHead>File</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Owner</TableHead>
@@ -108,7 +108,7 @@ export default function DocumentsPage() {
           </Table>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <h2 className="font-semibold text-slate-950">Quick Links</h2>
           <div className="mt-4 space-y-3">
             <Button asChild className="w-full justify-start"><Link href="/documents/memo"><FileText className="mr-2 h-4 w-4" />Generate Memo</Link></Button>

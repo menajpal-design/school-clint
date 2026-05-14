@@ -263,7 +263,7 @@ export default function ResultsPage() {
         </div>
       </section>
 
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -298,7 +298,7 @@ export default function ResultsPage() {
         <div className="overflow-hidden rounded-lg border border-slate-200">
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableRow className="bg-muted hover:bg-muted">
                 <TableHead>Roll</TableHead>
                 <TableHead>Student</TableHead>
                 <TableHead>Section</TableHead>

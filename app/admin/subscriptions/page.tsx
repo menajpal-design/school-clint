@@ -140,7 +140,7 @@ export default function AdminSubscriptionsPage() {
                 <p className="mt-1 text-sm text-muted-foreground">{school.email} · {school.phone}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{school.counts?.students || 0} students · {school.counts?.users || 0} users</p>
               </div>
-              <div className="grid gap-1 rounded-md border bg-slate-50 p-3 text-sm">
+              <div className="grid gap-1 rounded-md border bg-popover p-3 text-sm">
                 <div className="font-medium">{school.billing?.planName || 'No plan'} · {school.billing?.billingCycle || 'monthly'}</div>
                 <div className="text-muted-foreground">Due {money(school.billing?.dueAmount)} · Paid {money(school.billing?.receivedAmount)}</div>
                 <div className="text-muted-foreground">SMS {Number(school.billing?.smsUsed || 0).toLocaleString()}/{Number(school.billing?.monthlySmsLimit || 0).toLocaleString()}</div>
@@ -201,7 +201,7 @@ export default function AdminSubscriptionsPage() {
             <Input placeholder="Gateway" value={form.paymentGateway} onChange={(event) => setForm((current: any) => ({ ...current, paymentGateway: event.target.value }))} />
             <Input placeholder="Transaction ID" value={form.paymentTrxId} onChange={(event) => setForm((current: any) => ({ ...current, paymentTrxId: event.target.value }))} />
             <Input placeholder="Sender number" value={form.paymentSenderNumber} onChange={(event) => setForm((current: any) => ({ ...current, paymentSenderNumber: event.target.value }))} />
-            <div className="md:col-span-2 rounded-lg border bg-slate-50 p-4 text-sm">
+            <div className="md:col-span-2 rounded-lg border bg-popover p-4 text-sm">
               Due: {money(due.baseAmount)} + storage {money(due.storageAmount)} = <span className="font-semibold">{money(due.total)}</span>
             </div>
           </div>

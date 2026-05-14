@@ -106,7 +106,7 @@ export default function ReportCardPage() {
         ]}
       />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-4">
           <Select label="Class" value={classId} onChange={(value) => { setClassId(value); setSectionId(""); setStudentId(""); }}>
             <option value="">Select class</option>
@@ -127,11 +127,11 @@ export default function ReportCardPage() {
         </div>
       </section>
 
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <Card className="border-slate-200 shadow-sm">
         <CardContent className="p-6">
-          <div ref={previewRef} className="mx-auto max-w-4xl bg-white text-slate-950">
+          <div ref={previewRef} className="mx-auto max-w-4xl bg-card text-foreground">
             {!reportCard ? (
               <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">{loading ? "Loading report card..." : "Select filters to preview a report card."}</div>
             ) : (
@@ -143,7 +143,7 @@ export default function ReportCardPage() {
                     <p className="mt-1 text-sm text-slate-600">Roll {reportCard.rollNumber} · {reportCard.className} · Section {reportCard.sectionName || "-"}</p>
                     <p className="text-sm text-slate-600">{reportCard.examName}</p>
                   </div>
-                  <div className="h-24 w-20 overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+                  <div className="h-24 w-20 overflow-hidden rounded-md border border-border bg-muted">
                     {reportCard.idCard?.photoUrl ? <img src={reportCard.idCard.photoUrl} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">ID Photo</div>}
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export default function ReportCardPage() {
 
                 <table className="w-full border-collapse text-sm">
                   <thead>
-                    <tr className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+                    <tr className="bg-muted text-left text-xs uppercase text-muted-foreground">
                       <th className="border border-slate-200 px-3 py-2">Subject</th>
                       <th className="border border-slate-200 px-3 py-2">Marks</th>
                       <th className="border border-slate-200 px-3 py-2">Grade</th>

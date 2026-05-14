@@ -222,17 +222,17 @@ export default function LoginPage() {
 
   if (isChecking) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50">
+      <main className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-7 w-7 animate-spin text-slate-700" />
       </main>
     );
   }
 
   return (
-    <main className="grid min-h-screen bg-slate-50 lg:grid-cols-[0.95fr_1.05fr]">
-      <section className="hidden border-r border-slate-200 bg-white px-10 py-12 lg:flex lg:flex-col lg:justify-between">
+    <main className="grid min-h-screen bg-background lg:grid-cols-[0.95fr_1.05fr]">
+      <section className="hidden border-r border-border bg-background px-10 py-12 lg:flex lg:flex-col lg:justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
             E
           </div>
           <div>
@@ -242,7 +242,7 @@ export default function LoginPage() {
         </Link>
 
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
             Secure role-based access
           </div>
@@ -264,7 +264,7 @@ export default function LoginPage() {
       </section>
 
       <section className="flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md border-slate-200 bg-white shadow-sm">
+        <Card className="w-full max-w-md border-border bg-card shadow-sm">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl">Login to EASY SCHOOL</CardTitle>
             <CardDescription>Use your username, email or mobile number and password to continue.</CardDescription>
@@ -299,7 +299,7 @@ export default function LoginPage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-2 rounded-md p-1 text-slate-500 hover:bg-slate-100"
+                    className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:bg-muted"
                     onClick={() => setShowPassword((current) => !current)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
@@ -345,14 +345,14 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
+            <div className="mt-6 rounded-lg bg-popover p-4 text-sm text-muted-foreground">
               New institution or account?{" "}
               <Link href="/register" className="font-semibold text-slate-950 hover:underline">
                 Register here
               </Link>
             </div>
 
-            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50/80 p-4">
               <div className="flex gap-2 text-sm text-blue-900">
                 <span className="font-semibold">💡 Tip:</span>
                 <p>
@@ -361,7 +361,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mt-4 space-y-2 rounded-lg border border-green-200 bg-green-50 p-4">
+            <div className="mt-4 space-y-2 rounded-lg border border-green-200 bg-green-50/80 p-4">
               <p className="text-sm font-semibold text-green-900">Test Credentials (Development)</p>
               <div className="space-y-2 text-xs text-green-800">
                 <div>
@@ -380,7 +380,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
+            <div className="mt-4 rounded-lg border border-dashed border-border bg-popover p-4">
               <div className="mb-3">
                 <p className="text-sm font-semibold text-slate-900">Demo login</p>
                 <p className="text-xs text-slate-500">No server, no SMS, no mail, all data stays local.</p>
@@ -390,7 +390,7 @@ export default function LoginPage() {
                 <select
                   value={demoRole}
                   onChange={(event) => setDemoRole(event.target.value as UserRole)}
-                  className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                 >
                   {demoRoles.map((role) => (
                     <option key={role} value={role}>{role.replace(/_/g, ' ')}</option>

@@ -55,7 +55,7 @@ export default function PublicAdmissionPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 p-4 sm:p-6">
+    <main className="min-h-screen bg-background p-4 sm:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -81,7 +81,7 @@ export default function PublicAdmissionPage() {
                   <button
                     key={school._id}
                     onClick={() => setSelectedSchool(school)}
-                    className={`w-full rounded-md border p-3 text-left text-sm ${selectedSchool?._id === school._id ? 'border-blue-600 bg-blue-50' : 'bg-white hover:bg-slate-50'}`}
+                    className={`w-full rounded-md border p-3 text-left text-sm ${selectedSchool?._id === school._id ? 'border-primary bg-popover' : 'bg-background hover:bg-muted'}`}
                   >
                     <div className="font-medium text-slate-950">{school.name}</div>
                     <div className="mt-1 text-xs text-slate-500">{school.address}</div>

@@ -37,14 +37,14 @@ export default function UsersRolesPage() {
         <StatCard label="Active Users" value={users.filter((user) => user.isActive !== false).length} icon={UserCheck} tone="emerald" />
         <StatCard label="Roles" value={Object.keys(roleCounts).length} icon={ListChecks} tone="amber" />
       </div>
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="font-semibold text-slate-950">Role Distribution</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {Object.entries(roleCounts).map(([role, count]) => <div key={role} className="rounded-md border border-slate-200 p-4"><div className="text-sm capitalize text-slate-500">{role.replace(/_/g, " ")}</div><div className="mt-1 text-2xl font-semibold">{count}</div></div>)}
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm\">
+        <h2 className="font-semibold text-foreground\">Role Distribution</h2>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4\">
+          {Object.entries(roleCounts).map(([role, count]) => <div key={role} className=\"rounded-md border border-border p-4\"><div className=\"text-sm capitalize text-muted-foreground\">{role.replace(/_/g, \" \")}</div><div className=\"mt-1 text-2xl font-semibold\">{count}</div></div>)}
         </div>
       </section>
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="font-semibold text-slate-950">Quick Links</h2>
+      <section className=\"rounded-lg border border-border bg-card p-5 shadow-sm\">
+        <h2 className=\"font-semibold text-foreground\">Quick Links</h2>
         <div className="mt-4 flex flex-wrap gap-3">
           <Button asChild><Link href="/users-roles/all"><Users className="mr-2 h-4 w-4" />All Users</Link></Button>
           <Button asChild variant="outline"><Link href="/users-roles/permissions"><ShieldCheck className="mr-2 h-4 w-4" />Permissions Matrix</Link></Button>

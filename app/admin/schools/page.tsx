@@ -73,7 +73,7 @@ export default function AdminSchoolsPage() {
             <CardContent className="p-0">
               <div className="grid gap-4 p-4 lg:grid-cols-[1.3fr_1fr_auto] lg:items-center">
                 <div className="flex gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100"><Building2 className="h-5 w-5" /></div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted"><Building2 className="h-5 w-5" /></div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="font-semibold">{school.name}</h2>
@@ -84,7 +84,7 @@ export default function AdminSchoolsPage() {
                     <p className="mt-1 text-xs text-muted-foreground">{school.counts?.students || 0} students · {school.counts?.users || 0} users</p>
                   </div>
                 </div>
-                <div className="rounded-md border bg-slate-50 p-3 text-sm">
+                <div className="rounded-md border bg-popover p-3 text-sm">
                   <div className="font-medium">{school.billing?.planName || 'No plan'}</div>
                   <div className="text-muted-foreground">{school.billing?.billingCycle || 'monthly'} · {money(school.billing?.dueAmount)} due · paid {money(school.billing?.receivedAmount)}</div>
                   <div className="text-muted-foreground">SMS {Number(school.billing?.smsUsed || 0).toLocaleString()}/{Number(school.billing?.monthlySmsLimit || 0).toLocaleString()} · Exp {school.billing?.subscriptionExpiresAt ? new Date(school.billing.subscriptionExpiresAt).toLocaleDateString() : 'N/A'}</div>

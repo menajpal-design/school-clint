@@ -230,7 +230,7 @@ export default function SubjectsPage() {
         ]}
       />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-[1fr_220px_180px]">
           <div>
             <div className="text-xs font-medium uppercase text-slate-500">Visible subjects</div>
@@ -268,15 +268,15 @@ export default function SubjectsPage() {
       </section>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
+            <TableRow className="bg-muted hover:bg-muted">
               <TableHead>Subject name</TableHead>
               <TableHead>Code</TableHead>
               <TableHead>Class</TableHead>
@@ -307,7 +307,7 @@ export default function SubjectsPage() {
                     {subject.description && <div className="text-xs text-slate-500">{subject.description}</div>}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="border-slate-200 bg-slate-50">
+                    <Badge variant="outline" className="border-border bg-muted">
                       {subject.code}
                     </Badge>
                   </TableCell>
@@ -521,7 +521,7 @@ function SubjectFormDialog({
           </div>
 
           {!editing && (
-            <div className="space-y-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4">
+            <div className="space-y-2 rounded-lg border border-dashed border-border bg-popover p-4">
               <div className="text-sm font-semibold text-slate-950">Bulk create subjects</div>
               <p className="text-xs text-slate-500">One subject per line. Format: name | code | type | class id | teacher id. Missing fields use the values above.</p>
               <Textarea

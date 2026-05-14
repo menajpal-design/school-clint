@@ -47,9 +47,9 @@ export default function PermissionsPage() {
     <div className="space-y-5">
       <PageHeader title="Permissions Matrix" description="Manage role access across core school operations." icon={ShieldCheck} actions={canEdit ? [{ label: "Save Permissions", onClick: save, icon: ShieldCheck }] : []} />
       {!canEdit && <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Only Head or Admin users can update permissions.</div>}
-      <section className="overflow-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-auto rounded-lg border border-border bg-card shadow-sm">
         <table className="w-full min-w-[980px] text-sm">
-          <thead><tr className="border-b bg-slate-50"><th className="px-4 py-3 text-left font-semibold text-slate-600">Operation</th>{roles.map((role) => <th key={role} className="px-4 py-3 text-center font-semibold capitalize text-slate-600">{role.replace(/_/g, " ")}</th>)}</tr></thead>
+          <thead><tr className="border-b bg-muted"><th className="px-4 py-3 text-left font-semibold text-muted-foreground">Operation</th>{roles.map((role) => <th key={role} className="px-4 py-3 text-center font-semibold capitalize text-muted-foreground">{role.replace(/_/g, " ")}</th>)}</tr></thead>
           <tbody>
             {operations.map((operation) => (
               <tr key={operation} className="border-b last:border-0">

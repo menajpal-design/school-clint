@@ -160,13 +160,13 @@ export default function SmsMonitoringPage() {
         {/* Statistics Cards */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div className="bg-card rounded-lg shadow-md p-6 border-l-4 border-green-500">
               <div className="text-sm text-slate-600 font-medium">Total Sent</div>
               <div className="text-3xl font-bold text-green-600 mt-2">{stats.totalSent}</div>
             </div>
 
             {stats.statusBreakdown.map((item) => (
-              <div key={item._id} className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+              <div key={item._id} className="bg-card rounded-lg shadow-md p-6 border-l-4 border-blue-500">
                 <div className="text-sm text-slate-600 font-medium capitalize">{item._id}</div>
                 <div className="text-3xl font-bold text-blue-600 mt-2">{item.count}</div>
               </div>
@@ -175,7 +175,7 @@ export default function SmsMonitoringPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="bg-card rounded-lg shadow-md p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Search</label>
@@ -221,7 +221,7 @@ export default function SmsMonitoringPage() {
         </div>
 
         {/* SMS Logs Table */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-card rounded-lg shadow-md overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-slate-600">Loading SMS logs...</div>
           ) : filteredLogs.length === 0 ? (
