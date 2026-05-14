@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import html2canvas from 'html2canvas'
 import { Button } from '@/components/ui/button'
 import { Download, FileText, Printer, Mail } from 'lucide-react'
@@ -11,6 +12,7 @@ import { downloadElementPdf, printElement } from '@/lib/export-utils'
 export function DownloadButtons({ targetRef, formData, filename = 'id-card', cardId, printTitle = 'Print ID Card', emailSubject = 'ID Card' }: { targetRef: React.RefObject<HTMLElement> | null; formData?: any; filename?: string; cardId?: string; printTitle?: string; emailSubject?: string }) {
   const hasPreviewTarget = Boolean(targetRef?.current)
   const hasFormData = Boolean(formData)
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
 
   const copyComputedStyles = (clone: HTMLElement, source: Element) => {
     const computed = window.getComputedStyle(source)
@@ -171,9 +173,8 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
       window.location.href = `mailto:?subject=${subject}&body=${body}`
     }
   }
-
-  return (
-    <div className="flex items-center space-x-2">
+  const buttons = (
+    <div className="flex items-center space-x-2" style={{ marginTop: 8 }}>
       {hasPreviewTarget && (
         <Button onClick={downloadPNG} size="sm">
           <Download className="mr-2 h-4 w-4" /> PNG
@@ -192,6 +193,36 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
       )}
     </div>
   )
+
+  useEffect(() => {
+    if (!targetRef?.current) {
+      setPortalRoot(null)
+      return
+    }
+
+    // Create a container element and insert it immediately after the target element
+    const el = document.createElement('div')
+    el.className = 'download-buttons-portal'
+    el.style.width = '100%'
+    el.style.boxSizing = 'border-box'
+    el.style.marginTop = '8px'
+
+    const target = targetRef.current
+    if (target && target.parentElement) {
+      if (target.nextSibling) target.parentElement.insertBefore(el, target.nextSibling)
+      else target.parentElement.appendChild(el)
+      setPortalRoot(el)
+    }
+
+    return () => {
+      try {
+        if (el.parentElement) el.parentElement.removeChild(el)
+      } catch (e) {}
+    }
+  }, [targetRef?.current])
+
+  if (portalRoot) return createPortal(buttons, portalRoot)
+  return buttons
 }
 
 export default DownloadButtons
