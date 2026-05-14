@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Loader2, Ticket } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { downloadElementPdf } from "@/lib/export-utils";
 
 import DownloadButtons from "@/components/id-cards/DownloadButtons";
 import { AdmitCard } from "@/components/id-cards/AdmitCard";
@@ -83,6 +85,7 @@ export function AdmitCardDownload() {
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -121,6 +124,17 @@ export function AdmitCardDownload() {
     const studentClassId = selectedStudent?.classId?._id || "";
     return exams.find((exam) => getClassId(exam.classId) === studentClassId) || exams[0];
   }, [exams, selectedStudent?.classId?._id]);
+
+  const filteredStudents = useMemo(() => {
+    if (!filter) return students;
+    const q = filter.toLowerCase();
+    return students.filter((s) => {
+      const name = s.userId?.name || "";
+      const roll = s.rollNumber || s.admissionNumber || s.registrationNumber || "";
+      const className = s.classId && typeof s.classId === 'object' ? s.classId.name || "" : "";
+      return [name, roll, className].some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [students, filter]);
 
   const previewClassName = selectedStudent?.classId?.name || "";
   const previewSectionName = selectedStudent?.sectionId?.name ? `-${selectedStudent.sectionId.name}` : "";
@@ -171,26 +185,39 @@ export function AdmitCardDownload() {
             examCentre: institution?.address || institution?.name || "",
           }];
 
-      const blob = await api.idCards.renderPdf({
-        cardType: "admit-card",
-        name: getStudentName(student),
-        idNumber: rollNumber,
-        enrollmentNumber: rollNumber,
-        photoUrl: student.userId?.avatar || "",
-        institutionName: institution?.name || "Institution",
-        institutionLogo: institution?.logo || institution?.logoUrl || "",
-        examName: exam?.name || "Admit Card",
-        examDate: exam?.date || exam?.startDate || "",
-        examCenter: institution?.address || "",
-        centerCode: institution?.eiin || institution?.code || "",
-        dateOfBirth: student.userId?.dateOfBirth || "",
-        fatherName: student.fatherName || "",
-        stream: [className, sectionName].filter(Boolean).join(" "),
-        program: [className, sectionName].filter(Boolean).join(" ") || "Student",
-        examData: examRows,
-      });
+      let blob: Blob | null = null;
+      try {
+        blob = await api.idCards.renderPdf({
+          cardType: "admit-card",
+          name: getStudentName(student),
+          idNumber: rollNumber,
+          enrollmentNumber: rollNumber,
+          photoUrl: student.userId?.avatar || "",
+          institutionName: institution?.name || "Institution",
+          institutionLogo: institution?.logo || institution?.logoUrl || "",
+          examName: exam?.name || "Admit Card",
+          examDate: exam?.date || exam?.startDate || "",
+          examCenter: institution?.address || "",
+          centerCode: institution?.eiin || institution?.code || "",
+          dateOfBirth: student.userId?.dateOfBirth || "",
+          fatherName: student.fatherName || "",
+          stream: [className, sectionName].filter(Boolean).join(" "),
+          program: [className, sectionName].filter(Boolean).join(" ") || "Student",
+          examData: examRows,
+        });
+      } catch (err) {
+        blob = null;
+      }
 
-      downloadBlob(blob, `admit-card-${rollNumber}.pdf`);
+      if (blob) {
+        downloadBlob(blob, `admit-card-${rollNumber}.pdf`);
+      } else {
+        try {
+          await downloadElementPdf(previewRef.current, `admit-card-${rollNumber}.pdf`);
+        } catch (err) {
+          alert('Failed to generate PDF on server and client. Please try Print as PDF from the preview.');
+        }
+      }
     } finally {
       setDownloading(false);
     }
@@ -208,18 +235,21 @@ export function AdmitCardDownload() {
       <CardContent className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="student">Student</Label>
-          <Select value={selectedStudentId} onValueChange={setSelectedStudentId} disabled={loading || !students.length}>
-            <SelectTrigger id="student">
-              <SelectValue placeholder={loading ? "Loading students..." : "Select student"} />
-            </SelectTrigger>
-            <SelectContent>
-              {students.map((student) => (
-                <SelectItem key={student._id} value={student._id}>
-                  {getStudentName(student)}{student.rollNumber ? ` - ${student.rollNumber}` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Input placeholder={loading ? "Loading students..." : "Search name/class/roll"} value={filter} onChange={(e) => setFilter((e.target as HTMLInputElement).value)} />
+            <Select value={selectedStudentId} onValueChange={setSelectedStudentId} disabled={loading || !students.length}>
+              <SelectTrigger id="student">
+                <SelectValue placeholder={loading ? "Loading students..." : "Select student"} />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredStudents.map((student) => (
+                  <SelectItem key={student._id} value={student._id}>
+                    {getStudentName(student)}{student.rollNumber ? ` - ${student.rollNumber}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Button onClick={handleDownload} disabled={!selectedStudent || downloading} className="w-full sm:w-auto">
