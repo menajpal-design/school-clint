@@ -11,7 +11,7 @@ export function TeacherIDCard(props: IDCardProps) {
       idNumber={props.id}
       role={String(props.role || 'teacher').toLowerCase() as any}
       photoUrl={props.photoUrl}
-      institutionName={props.institution?.name || 'My Institution'}
+      institutionName={props.institution?.name || ''}
       institutionLogo={props.institution?.logoUrl}
       institutionAddress={props.institution?.address}
       institutionPhone={props.institution?.phone}
@@ -20,6 +20,7 @@ export function TeacherIDCard(props: IDCardProps) {
       headName={props.headName || props.institution?.headName || ''}
       validityDate={props.validity}
       stream={props.studentClass}
+      qrData={props.qrData}
     />
   )
 }

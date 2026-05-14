@@ -15,6 +15,7 @@ export interface AdmitCardProps {
   institutionEmail?: string
   institutionSeal?: string
   headSignature?: string
+  qrData?: string
   examName?: string
   examDate?: string
   examCenter?: string
@@ -72,13 +73,14 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
       examDate,
       examCenter,
       centerCode,
+      qrData,
       dateOfBirth,
       stream,
     },
     ref
   ) => {
     const displayExamDate = formatDisplayDate(examDate)
-    const qrData = JSON.stringify({
+    const resolvedQrData = qrData || JSON.stringify({
       name,
       roll: rollNumber,
       exam: examName,
@@ -174,7 +176,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
           </div>
 
           <div className="admit-qr" style={{ position: 'absolute', right: 35, bottom: 28, width: 100, height: 100, background: '#ffffff', padding: 4 }}>
-            <QRCodeSVG value={qrData} size={92} level="M" includeMargin={false} />
+            <QRCodeSVG value={resolvedQrData} size={92} level="M" includeMargin={false} />
           </div>
         </section>
       </div>

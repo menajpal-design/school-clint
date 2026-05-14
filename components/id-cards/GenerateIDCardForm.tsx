@@ -58,7 +58,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
     resolver: zodResolver(schema),
     defaultValues: {
       cardType: fallbackCardType,
-      institutionName: 'Educational Institution',
+      institutionName: '',
       headName: '',
       validityDate: toDateInputValue(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
     },
@@ -290,7 +290,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
                 </div>
               )}
 
-              <Button type="submit" className="w-full">
+              <Button type="button" className="w-full" onClick={() => setData(getValues())}>
                 Generate Preview
               </Button>
               {formIsAdmitCard && (

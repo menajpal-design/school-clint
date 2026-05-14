@@ -17,6 +17,7 @@ export interface ProfessionalIDCardProps {
   institutionEmail?: string
   institutionWebsite?: string
   headSignature?: string
+  qrData?: string
   validityDate?: string
   headName?: string
   dateOfBirth?: string
@@ -102,9 +103,11 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
       institutionLogo,
       institutionSeal,
       institutionAddress,
+      institutionPhone,
       institutionEmail,
       institutionWebsite,
       headSignature,
+      qrData,
       validityDate,
       headName = '',
       dateOfBirth,
@@ -118,7 +121,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
   ) => {
     const theme = cardCopy[role] || cardCopy.student
     const displayValidityDate = formatDisplayDate(validityDate)
-    const qrData = JSON.stringify({
+    const resolvedQrData = qrData || JSON.stringify({
       name,
       id: idNumber,
       role,
@@ -136,7 +139,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
     const roleText = role === 'head' ? 'Head' : role.charAt(0).toUpperCase() + role.slice(1)
 
     return (
-      <div ref={ref} className={className} style={{ width: 800, maxWidth: '100%', background: '#ffffff', padding: 0 }}>
+      <div ref={ref} className={`professional-id-card ${className}`} style={{ width: 800, maxWidth: '100%', background: '#ffffff', padding: 0 }}>
         <div style={{ display: 'flex', gap: 30, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'wrap' }}>
           <section style={{ position: 'relative', width: 380, height: 500, overflow: 'hidden', background: theme.leftBg, fontFamily: 'Arial, Helvetica, sans-serif', color: '#ffffff' }}>
             <div style={{ position: 'absolute', inset: 0, background: theme.leftBg }} />
@@ -191,7 +194,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
             </div>
 
             <div style={{ position: 'absolute', left: 50, top: 280, width: 100, height: 100, background: '#ffffff' }}>
-              <QRCodeSVG value={qrData} size={96} level="M" includeMargin={false} />
+              <QRCodeSVG value={resolvedQrData} size={96} level="M" includeMargin={false} />
             </div>
 
             <div style={{ position: 'absolute', left: 170, top: 280, width: 150, textAlign: 'center' }}>

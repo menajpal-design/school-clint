@@ -44,12 +44,12 @@ export function StudentIDCard({
       idNumber={id}
       role={String(role || 'student').toLowerCase() as any}
       photoUrl={photoUrl}
-      institutionName={institution?.name || 'My Institution'}
+      institutionName={institution?.name || ''}
       institutionLogo={institution?.logoUrl}
-        institutionAddress={institution?.address}
-        institutionPhone={institution?.phone}
-        institutionEmail={institution?.email}
-        institutionWebsite={institution?.website}
+      institutionAddress={institution?.address}
+      institutionPhone={institution?.phone}
+      institutionEmail={institution?.email}
+      institutionWebsite={institution?.website}
       headName={headName || institution?.headName || ''}
       validityDate={validity}
       stream={studentClass}

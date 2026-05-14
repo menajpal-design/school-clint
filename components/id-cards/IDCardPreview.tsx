@@ -17,7 +17,7 @@ export const IDCardPreview = forwardRef<HTMLDivElement, PreviewProps>(function I
         idNumber={props.id}
         role={type as any}
         photoUrl={props.photoUrl}
-        institutionName={props.institution?.name || 'My Institution'}
+        institutionName={props.institution?.name || ''}
         institutionLogo={props.institution?.logoUrl}
         institutionAddress={props.institution?.address}
         institutionPhone={props.institution?.phone}
@@ -26,6 +26,7 @@ export const IDCardPreview = forwardRef<HTMLDivElement, PreviewProps>(function I
         headName={props.headName || props.institution?.headName || ''}
         validityDate={props.validity}
         stream={props.studentClass}
+        qrData={props.qrData}
       />
     </div>
   )
