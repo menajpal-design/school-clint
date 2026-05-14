@@ -144,10 +144,17 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   captureTarget.style.position = "fixed";
   captureTarget.style.left = "-10000px";
   captureTarget.style.top = "0";
-  const captureWidth = Math.max(target.scrollWidth || 0, target.offsetWidth || 0, 900);
+  
+  // Detect card type and use exact fixed dimensions
+  const isAdmitCard = target.classList.contains('admit-card');
+  const captureWidth = isAdmitCard ? 850 : 800;
+  const captureHeight = isAdmitCard ? 600 : 500;
+  
   captureTarget.style.width = `${captureWidth}px`;
+  captureTarget.style.height = `${captureHeight}px`;
   captureTarget.style.background = "#ffffff";
   captureTarget.style.padding = "0";
+  captureTarget.style.overflow = "hidden";
   
   const clonedTarget = target.cloneNode(true) as HTMLElement;
   copyComputedStyles(clonedTarget, target);
@@ -164,7 +171,7 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
     scrollX: 0,
     scrollY: 0,
     windowWidth: captureWidth,
-    windowHeight: target.scrollHeight || target.offsetHeight || 1200,
+    windowHeight: captureHeight,
   });
   document.body.removeChild(captureTarget);
 

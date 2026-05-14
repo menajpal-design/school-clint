@@ -49,12 +49,20 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
     if (!targetRef?.current) return null
     await document.fonts?.ready?.catch(() => undefined)
 
+    // Use fixed dimensions to ensure consistent output across devices
+    const isAdmitCard = targetRef.current.classList.contains('admit-card')
+    const captureWidth = isAdmitCard ? 850 : 800
+    const captureHeight = isAdmitCard ? 600 : 500
+
     const wrapper = document.createElement('div')
     wrapper.style.position = 'fixed'
     wrapper.style.left = '-9999px'
     wrapper.style.top = '0'
     wrapper.style.background = 'white'
     wrapper.style.padding = '0'
+    wrapper.style.width = `${captureWidth}px`
+    wrapper.style.height = `${captureHeight}px`
+    wrapper.style.overflow = 'hidden'
     
     const cloned = targetRef.current.cloneNode(true) as HTMLElement
     copyComputedStyles(cloned, targetRef.current)
@@ -70,8 +78,8 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
       foreignObjectRendering: false,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: wrapper.scrollWidth,
-      windowHeight: wrapper.scrollHeight,
+      windowWidth: captureWidth,
+      windowHeight: captureHeight,
     })
     
     document.body.removeChild(wrapper)

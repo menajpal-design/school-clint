@@ -61,22 +61,27 @@
 
 @media print {
   .professional-id-card {
-    width: 210mm !important;
+    width: 800px !important;
+    height: 500px !important;
     max-width: none !important;
+    max-height: none !important;
     font-size: 12pt !important;
     -webkit-print-color-adjust: exact;
     color-adjust: exact;
   }
 
   .professional-id-card > div {
+    width: 800px !important;
+    height: 500px !important;
     gap: 30px !important;
     flex-wrap: nowrap !important;
   }
 
   .professional-id-card > div > section {
-    width: calc(50% - 15px) !important;
-    height: auto !important;
-    overflow: visible !important;
+    width: 380px !important;
+    height: 500px !important;
+    flex: 0 0 auto !important;
+    overflow: hidden !important;
   }
 
   .professional-id-card img {
@@ -86,10 +91,12 @@
 }
 
 @media print {
-  /* Admit card: force A4 portrait sizing and adjust internal elements to avoid overlap */
+  /* Admit card: force fixed sizing for consistent print/download output */
   .admit-card {
-    width: 210mm !important;
+    width: 850px !important;
+    height: 600px !important;
     max-width: none !important;
+    max-height: none !important;
     font-size: 12pt !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -97,45 +104,43 @@
   }
 
   .admit-card > section {
-    width: 210mm !important;
+    width: 850px !important;
+    height: 600px !important;
     max-width: none !important;
     min-height: auto !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     box-sizing: border-box !important;
-    padding: 18mm !important;
+    padding: 18px !important;
   }
 
   .admit-card .admit-photo {
-    /* place photo in printable units to avoid overlapping content */
-    right: 18mm !important;
-    top: 40mm !important;
-    width: 50mm !important;
-    height: 65mm !important;
+    right: 21px !important;
+    top: 102px !important;
+    width: 178px !important;
+    height: 230px !important;
     overflow: hidden !important;
   }
 
   .admit-card .admit-qr {
-    right: 18mm !important;
-    bottom: 18mm !important;
-    width: 30mm !important;
-    height: 30mm !important;
-    padding: 2mm !important;
+    right: 35px !important;
+    bottom: 28px !important;
+    width: 100px !important;
+    height: 100px !important;
+    padding: 4px !important;
   }
 
   .admit-card main {
-    padding-right: 72mm !important; /* reserve space for photo */
+    padding-right: 198px !important;
   }
 
   .admit-card .admit-info-line {
-    grid-template-columns: 60mm 1fr !important;
-    gap: 6mm !important;
-    min-height: 8mm !important;
-    font-size: 12pt !important;
-    line-height: 1.2 !important;
+    min-height: 32px !important;
+    font-size: 19px !important;
+    line-height: 24px !important;
   }
 
   .admit-card table {
-    font-size: 11pt !important;
+    font-size: 19px !important;
     table-layout: fixed !important;
     word-break: break-word !important;
   }
@@ -144,4 +149,21 @@
     max-width: 100% !important;
     height: auto !important;
   }
+}
+
+/* Force fixed sizing in all contexts to prevent device-dependent layout changes */
+.professional-id-card {
+  width: 800px !important;
+  height: 500px !important;
+  max-width: none !important;
+  max-height: none !important;
+  flex-shrink: 0 !important;
+}
+
+.admit-card {
+  width: 850px !important;
+  height: 600px !important;
+  max-width: none !important;
+  max-height: none !important;
+  flex-shrink: 0 !important;
 }
