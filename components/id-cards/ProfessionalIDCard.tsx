@@ -74,17 +74,17 @@ function PhotoFrame({ name, photoUrl }: { name: string; photoUrl?: string }) {
 }
 
 const Row = ({ label, value }: { label: string; value?: string }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '92px 1fr', minHeight: 18, borderBottom: '1px solid rgba(255,255,255,0.62)' }}>
-    <div style={{ borderRight: '1px solid rgba(255,255,255,0.62)', padding: '2px 7px', fontSize: 12, fontWeight: 800, color: '#ffffff' }}>{label}</div>
-    <div style={{ padding: '2px 8px', fontSize: 11, lineHeight: '14px', fontWeight: 700, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value || ''}</div>
+  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', minHeight: 22, borderBottom: '1px solid rgba(255,255,255,0.62)' }}>
+    <div style={{ borderRight: '1px solid rgba(255,255,255,0.62)', padding: '3px 10px', fontSize: 12, fontWeight: 800, color: '#ffffff' }}>{label}</div>
+    <div style={{ padding: '3px 10px', fontSize: 11, lineHeight: '16px', fontWeight: 700, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value || ''}</div>
   </div>
 )
 
-const ContactLine = ({ value }: { value?: string }) => (value ? <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</div> : null)
+const ContactLine = ({ value }: { value?: string }) => (value ? <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '13px' }}>{value}</div> : null)
 
 const BackRow = ({ label, value }: { label: string; value?: string }) =>
   value ? (
-    <div style={{ display: 'grid', gridTemplateColumns: '54px 1fr', gap: 5, minHeight: 14, fontSize: 8, lineHeight: '11px', color: '#111827' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '65px 1fr', gap: 8, minHeight: 16, fontSize: 8, lineHeight: '12px', color: '#111827' }}>
       <span style={{ fontWeight: 800, color: '#0f3f49' }}>{label}</span>
       <span style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
     </div>
@@ -136,26 +136,26 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
     const roleText = role === 'head' ? 'Head' : role.charAt(0).toUpperCase() + role.slice(1)
 
     return (
-      <div ref={ref} className={className} style={{ width: 624, maxWidth: '100%', background: '#ffffff', padding: 0 }}>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <section style={{ position: 'relative', width: 302, height: 444, overflow: 'hidden', background: theme.leftBg, fontFamily: 'Arial, Helvetica, sans-serif', color: '#ffffff' }}>
+      <div ref={ref} className={className} style={{ width: 800, maxWidth: '100%', background: '#ffffff', padding: 0 }}>
+        <div style={{ display: 'flex', gap: 30, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <section style={{ position: 'relative', width: 380, height: 500, overflow: 'hidden', background: theme.leftBg, fontFamily: 'Arial, Helvetica, sans-serif', color: '#ffffff' }}>
             <div style={{ position: 'absolute', inset: 0, background: theme.leftBg }} />
             <div style={{ position: 'absolute', top: -58, left: -54, width: 142, height: 142, borderRadius: '50%', background: theme.gold }} />
             <div style={{ position: 'absolute', top: 0, left: 0, width: 300, height: 215, background: '#ffffff', borderBottomLeftRadius: '48% 14%', borderBottomRightRadius: '62% 20%' }} />
             <div style={{ position: 'absolute', top: 64, right: -68, width: 168, height: 188, background: theme.leftBg, transform: 'rotate(21deg)' }} />
 
-            <div style={{ position: 'absolute', top: 18, left: 63 }}>
+            <div style={{ position: 'absolute', top: 30, left: 80 }}>
               <PhotoFrame name={name} photoUrl={photoUrl} />
             </div>
 
-            <div style={{ position: 'absolute', left: 25, right: 25, top: 312, border: '1px solid rgba(255,255,255,0.72)' }}>
+            <div style={{ position: 'absolute', left: 25, right: 25, top: 370, border: '1px solid rgba(255,255,255,0.72)' }}>
               <Row label="Name:" value={name} />
               <Row label="Role:" value={roleText} />
               <Row label="ID Number:" value={idNumber} />
               <Row label="Class:" value={stream} />
             </div>
 
-            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
               <LogoMark logoUrl={institutionLogo} institutionName={institutionName} tone={theme.gold} />
               <div>
                 <div style={{ maxWidth: 190, color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 800, lineHeight: '20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{institutionName}</div>
@@ -163,21 +163,21 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
             </div>
           </section>
 
-          <section style={{ position: 'relative', width: 302, height: 444, overflow: 'hidden', background: '#ffffff', fontFamily: 'Arial, Helvetica, sans-serif', color: '#082f3a' }}>
+          <section style={{ position: 'relative', width: 380, height: 500, overflow: 'hidden', background: '#ffffff', fontFamily: 'Arial, Helvetica, sans-serif', color: '#082f3a' }}>
             <div style={{ position: 'absolute', inset: 0, background: '#ffffff' }} />
             <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 86, background: theme.rightBg }} />
             <div style={{ position: 'absolute', right: -92, top: 72, width: 250, height: 210, borderRadius: '50%', background: theme.rightBg }} />
             <div style={{ position: 'absolute', left: -70, top: 78, width: 300, height: 125, borderRadius: '50%', background: '#ffffff' }} />
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 17, background: theme.gold }} />
 
-            <div style={{ position: 'absolute', top: 25, left: 28 }}>
+            <div style={{ position: 'absolute', top: 30, left: 30 }}>
               <div style={{ maxWidth: 160, color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 800, lineHeight: '20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{institutionName}</div>
             </div>
-            <div style={{ position: 'absolute', top: 31, right: 30 }}>
+            <div style={{ position: 'absolute', top: 30, right: 35 }}>
               <LogoMark logoUrl={institutionSeal || institutionLogo} institutionName={institutionName} tone={theme.gold} />
             </div>
 
-            <div style={{ position: 'absolute', left: 15, top: 112, width: 184, display: 'grid', gap: 4 }}>
+            <div style={{ position: 'absolute', left: 15, top: 112, width: 320, display: 'grid', gap: 6 }}>
               <BackRow label="Name" value={name} />
               <BackRow label="ID" value={idNumber} />
               <BackRow label="Role" value={roleText} />
@@ -190,15 +190,15 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
               <BackRow label="Auth." value={headName} />
             </div>
 
-            <div style={{ position: 'absolute', left: 45, top: 236, width: 86, height: 86, background: '#ffffff' }}>
-              <QRCodeSVG value={qrData} size={82} level="M" includeMargin={false} />
+            <div style={{ position: 'absolute', left: 50, top: 280, width: 100, height: 100, background: '#ffffff' }}>
+              <QRCodeSVG value={qrData} size={96} level="M" includeMargin={false} />
             </div>
 
-            <div style={{ position: 'absolute', left: 158, top: 239, width: 114, textAlign: 'center' }}>
+            <div style={{ position: 'absolute', left: 170, top: 280, width: 150, textAlign: 'center' }}>
               {headSignature ? <img src={headSignature} alt="Signature" style={{ marginTop: 18, width: 88, height: 34, objectFit: 'contain' }} /> : <div style={{ margin: '28px auto 0', width: 80, height: 1, background: '#334155' }} />}
             </div>
 
-            <div style={{ position: 'absolute', left: 44, right: 18, bottom: 36, display: 'grid', gap: 5, fontSize: 8.5, lineHeight: '11px', fontWeight: 700, color: '#082f3a' }}>
+            <div style={{ position: 'absolute', left: 44, right: 18, bottom: 36, display: 'grid', gap: 7, fontSize: 8.5, lineHeight: '12px', fontWeight: 700, color: '#082f3a' }}>
               <ContactLine value={institutionAddress} />
               <ContactLine value={institutionPhone} />
               <ContactLine value={institutionEmail} />
