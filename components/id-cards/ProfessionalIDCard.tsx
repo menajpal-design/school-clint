@@ -192,12 +192,11 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
               <PhotoFrame name={name} photoUrl={photoUrl} />
             </div>
 
-            <div style={{ position: 'absolute', left: 25, right: 25, top: 306, border: '1px solid rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.03)', paddingBottom: 8 }}>
+            <div style={{ position: 'absolute', left: 25, right: 25, top: 318, border: '1px solid rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.03)', paddingBottom: 10 }}>
               <Row label="Name:" value={name} />
               <Row label="Role:" value={roleText} />
-              <Row label="ID Number:" value={idNumber} />
-              <Row label="Class:" value={stream} withBottomBorder={false} />
-              <div style={{ borderBottom: '1px solid rgba(255,255,255,0.95)' }} />
+              <Row label="ID Number:" value={idNumber} withBottomBorder={false} />
+              <div style={{ borderBottom: '2px solid rgba(255,255,255,0.98)' }} />
             </div>
 
             {/* place institution title below the photo to avoid overlap */}
