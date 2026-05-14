@@ -82,9 +82,9 @@ function PhotoFrame({ name, photoUrl }: { name: string; photoUrl?: string }) {
 }
 
 const Row = ({ label, value }: { label: string; value?: string }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '104px 1fr', alignItems: 'start', minHeight: 24, borderBottom: '1px solid rgba(255,255,255,0.62)' }}>
-    <div style={{ borderRight: '1px solid rgba(255,255,255,0.62)', padding: '3px 10px', fontSize: 12, fontWeight: 800, color: '#ffffff' }}>{label}</div>
-    <div style={{ padding: '3px 10px', fontSize: 10.5, lineHeight: '13px', fontWeight: 700, color: '#ffffff', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{value || ''}</div>
+  <div style={{ display: 'grid', gridTemplateColumns: '104px 1fr', alignItems: 'start', minHeight: 28, borderBottom: '1px solid rgba(255,255,255,0.62)' }}>
+    <div style={{ borderRight: '1px solid rgba(255,255,255,0.62)', padding: '6px 10px', fontSize: 12, fontWeight: 800, color: '#ffffff' }}>{label}</div>
+    <div style={{ padding: '6px 10px', fontSize: 11, lineHeight: '15px', fontWeight: 700, color: '#ffffff', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{value || ''}</div>
   </div>
 )
 
@@ -192,7 +192,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
               <PhotoFrame name={name} photoUrl={photoUrl} />
             </div>
 
-            <div style={{ position: 'absolute', left: 25, right: 25, top: 370, border: '1px solid rgba(255,255,255,0.72)' }}>
+            <div style={{ position: 'absolute', left: 25, right: 25, top: 340, border: '1px solid rgba(255,255,255,0.72)' }}>
               <Row label="Name:" value={name} />
               <Row label="Role:" value={roleText} />
               <Row label="ID Number:" value={idNumber} />
