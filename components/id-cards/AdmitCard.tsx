@@ -117,7 +117,6 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
                 {institutionAddress && <span>{institutionAddress}</span>}
                 {(institutionPhone || institutionEmail) && <span>{[institutionPhone, institutionEmail].filter(Boolean).join(' | ')}</span>}
               </div>
-              <div style={{ marginTop: 8, width: 132, height: 24, borderRadius: 18, background: 'rgba(34, 34, 34, 0.16)', filter: 'blur(6px)' }} />
             </div>
           </header>
 
