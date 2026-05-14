@@ -145,9 +145,6 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
     })
     const roleText = role === 'head' ? 'Head' : role.charAt(0).toUpperCase() + role.slice(1)
 
-    const titleText = institutionName || 'hridoy School12w'
-    const sloganText = 'slogan text line goes here'
-
     return (
       <div
         ref={ref}
@@ -168,20 +165,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
           marginBottom: 18,
         }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 28px', background: 'rgba(255,255,255,0.95)', borderBottom: '1px solid rgba(15,23,42,0.08)', zIndex: 20, minHeight: 56 }}>
-          <div style={{ fontSize: 10, lineHeight: '12px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#0f172a' }}>PHOTO STUDENT</div>
-          <div style={{ display: 'grid', gap: 2, fontSize: 10, lineHeight: '12px', color: '#0f172a', textAlign: 'left' }}>
-            <span style={{ fontWeight: 700 }}>Name: {name || 'Select person'}</span>
-            <span style={{ fontWeight: 700 }}>Class: {stream || 'General'}</span>
-            <span style={{ fontWeight: 700 }}>ID Number: {idNumber || 'ID'}</span>
-            <span style={{ fontWeight: 700 }}>ID Session: {displayValidityDate || 'Valid Session'}</span>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', lineHeight: '18px' }}>{titleText}</div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#475569', lineHeight: '14px', marginTop: 2 }}>{sloganText}</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 30, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'nowrap', width: 800, height: 500, paddingTop: 68 }}>
+        <div style={{ display: 'flex', gap: 30, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'nowrap', width: 800, height: 500, paddingTop: 0 }}>
           <section style={{ position: 'relative', width: 380, height: 500, overflow: 'hidden', background: theme.leftBg, fontFamily: 'Arial, Helvetica, sans-serif', color: '#ffffff' }}>
             <div style={{ position: 'absolute', inset: 0, background: theme.leftBg }} />
             <div style={{ position: 'absolute', top: -58, left: -54, width: 142, height: 142, borderRadius: '50%', background: theme.gold }} />
