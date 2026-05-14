@@ -30,7 +30,12 @@ export default function FinanceReportsPage() {
   const exportPdf = () => downloadElementPdf(reportRef.current, `finance-report-${fileSuffix}.pdf`);
   return <div className="space-y-5">
     <PageHeader title="Finance Reports" description="Fee collection, dues and salary reports with exports." icon={FileBarChart} actions={[{ label: "Export Excel", icon: Download, onClick: exportCsv }, { label: "Export PDF", icon: Download, onClick: exportPdf }]} />
-    <section className="rounded-lg border border-border bg-card p-4 shadow-sm\"><div className="grid gap-3 md:grid-cols-2"><input className="h-10 rounded-md border border-input bg-background px-3 text-sm\" type="date\" value={startDate} onChange={(e)=>setStartDate(e.target.value)} /><input className=\"h-10 rounded-md border border-input bg-background px-3 text-sm\" type=\"date\" value={endDate} onChange={(e)=>setEndDate(e.target.value)} /></div></section>
+    <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
+      <div className="grid gap-3 md:grid-cols-2">
+        <input className="h-10 rounded-md border border-input bg-background px-3 text-sm" type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} />
+        <input className="h-10 rounded-md border border-input bg-background px-3 text-sm" type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} />
+      </div>
+    </section>
     <div className="grid gap-5 xl:grid-cols-2"><LineChartCard title="Fee collection trend" data={reports.trend || []} /><BarChartCard title="Fee type breakdown" data={reports.byType || []} /></div>
     <div ref={reportRef} className="space-y-5 bg-card">
       <div className="rounded-lg border border-border bg-card p-4">

@@ -8,7 +8,7 @@ export function StaffIDCard(props: IDCardProps) {
   return (
     <ProfessionalIDCard
       name={props.name}
-      idNumber={props.id}
+      idNumber={props.id || props.idNumber || ''}
       role={String(props.role || 'staff').toLowerCase() as any}
       photoUrl={props.photoUrl}
       institutionName={props.institution?.name || ''}
