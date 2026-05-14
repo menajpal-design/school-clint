@@ -55,8 +55,12 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
     await document.fonts?.ready?.catch(() => undefined)
     // Use fixed dimensions to ensure consistent output across devices
     const isAdmitCard = targetRef.current.classList.contains('admit-card')
-    const captureWidth = isAdmitCard ? 850 : 800
-    const captureHeight = isAdmitCard ? 600 : 500
+    // Convert desired mm sizes to pixels using 96 DPI assumption: 1in = 25.4mm, 96px = 1in
+    const mmToPx = (mm: number) => Math.round((mm / 25.4) * 96)
+    // A4 content width = 210mm - 2*12mm margins = 186mm
+    const captureWidth = isAdmitCard ? mmToPx(186) : mmToPx(186)
+    // Use a fixed aspect ratio matching our admit card pixel dimensions (850x600 -> height from width)
+    const captureHeight = Math.round(captureWidth * (600 / 850))
 
     const currentZoom = window.devicePixelRatio || 1
 

@@ -91,7 +91,7 @@ const inlineImages = async (root: HTMLElement) => {
   }));
 };
 
-const pageShell = (title: string, body: string, styles = "") => `
+  const pageShell = (title: string, body: string, styles = "") => `
   <!doctype html>
   <html>
     <head>
@@ -109,7 +109,9 @@ const pageShell = (title: string, body: string, styles = "") => `
         .institution-logo img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
         .institution-info h1 { margin: 0; font-size: 22px; line-height: 1.15; color: #0f172a; }
         .institution-info p { margin: 3px 0 0; font-size: 12px; color: #475569; }
+        /* Force print sizing to A4 content area (A4 minus 12mm margins each side = 186mm) */
         .print-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; }
+        .admit-card, .professional-id-card { width: 186mm !important; max-width: 186mm !important; box-sizing: border-box !important; }
         .print-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
         .print-muted { color: #64748b; font-size: 12px; }
         .print-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
@@ -152,10 +154,13 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   captureTarget.style.left = "-10000px";
   captureTarget.style.top = "0";
   
-  // Detect card type and use exact fixed dimensions
+  // Detect card type and compute capture dimensions from mm so output matches A4 layout
   const isAdmitCard = target.classList.contains('admit-card');
-  const captureWidth = isAdmitCard ? 850 : 800;
-  const captureHeight = isAdmitCard ? 600 : 500;
+  const mmToPx = (mm: number) => Math.round((mm / 25.4) * 96);
+  // A4 content width (210mm - 12mm margins each side) = 186mm
+  const captureWidth = mmToPx(186);
+  // Use same aspect ratio as design (850x600) to compute height
+  const captureHeight = Math.round(captureWidth * (600 / 850));
   
   captureTarget.style.width = `${captureWidth}px`;
   captureTarget.style.height = `${captureHeight}px`;
