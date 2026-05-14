@@ -111,7 +111,8 @@ const inlineImages = async (root: HTMLElement) => {
         .institution-info p { margin: 3px 0 0; font-size: 12px; color: #475569; }
         /* Force print sizing to A4 content area (A4 minus 12mm margins each side = 186mm) */
         .print-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; }
-        .admit-card, .professional-id-card { width: 186mm !important; max-width: 186mm !important; box-sizing: border-box !important; }
+        .admit-card, .professional-id-card { width: 186mm !important; max-width: 186mm !important; box-sizing: border-box !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+        .admit-card { height: 131.5mm !important; }
         .print-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
         .print-muted { color: #64748b; font-size: 12px; }
         .print-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }

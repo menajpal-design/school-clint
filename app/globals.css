@@ -106,8 +106,8 @@
 @media print {
   /* Admit card: force fixed sizing for consistent print/download output */
   .admit-card {
-    width: 850px !important;
-    height: 600px !important;
+    width: 186mm !important;
+    height: 131.5mm !important;
     max-width: none !important;
     max-height: none !important;
     font-size: 12pt !important;
@@ -118,43 +118,39 @@
   }
 
   .admit-card > section {
-    width: 850px !important;
-    height: 600px !important;
+    width: 186mm !important;
+    height: 131.5mm !important;
     max-width: none !important;
     min-height: auto !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-    padding: 18px !important;
+    padding: 0 !important;
   }
 
   .admit-card .admit-photo {
-    right: 21px !important;
-    top: 102px !important;
-    width: 178px !important;
-    height: 230px !important;
+    width: 38mm !important;
+    height: 34mm !important;
     overflow: hidden !important;
   }
 
   .admit-card .admit-qr {
-    right: 35px !important;
-    bottom: 28px !important;
-    width: 100px !important;
-    height: 100px !important;
-    padding: 4px !important;
+    width: 32mm !important;
+    height: 34mm !important;
+    padding: 3mm !important;
   }
 
   .admit-card main {
-    padding-right: 198px !important;
+    padding-right: 0 !important;
   }
 
   .admit-card .admit-info-line {
-    min-height: 32px !important;
-    font-size: 19px !important;
-    line-height: 24px !important;
+    min-height: 7mm !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
   }
 
   .admit-card table {
-    font-size: 19px !important;
+    font-size: 10px !important;
     table-layout: fixed !important;
     word-break: break-word !important;
   }
@@ -175,8 +171,8 @@
 }
 
 .admit-card {
-  width: 850px !important;
-  height: 600px !important;
+  width: 186mm !important;
+  height: 131.5mm !important;
   max-width: none !important;
   max-height: none !important;
   flex-shrink: 0 !important;

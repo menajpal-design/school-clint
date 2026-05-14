@@ -249,8 +249,8 @@ export default function PrintPage() {
           }
           
           @page {
-            size: auto;
-            margin: 0;
+            size: A4;
+            margin: 12mm;
             padding: 0;
           }
           
@@ -259,6 +259,10 @@ export default function PrintPage() {
           }
           
           .admit-card {
+            width: 186mm !important;
+            height: 131.5mm !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
             page-break-after: avoid !important;
           }
         }
