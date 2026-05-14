@@ -246,7 +246,7 @@ export default function LoginPage() {
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
             Secure role-based access
           </div>
-          <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-foreground">
             Run every school operation from one professional dashboard.
           </h1>
           <p className="mt-4 max-w-lg text-sm leading-7 text-slate-600">
@@ -256,7 +256,7 @@ export default function LoginPage() {
 
         <div className="grid grid-cols-3 gap-3 text-sm">
           {["Academic", "Finance", "ID Cards"].map((item) => (
-            <div key={item} className="rounded-lg border border-slate-200 p-3 font-medium text-slate-700">
+            <div key={item} className="rounded-lg border border-border p-3 font-medium text-muted-foreground">
               {item}
             </div>
           ))}
@@ -274,7 +274,7 @@ export default function LoginPage() {
               <label className="space-y-1 text-sm font-medium text-slate-700">
                 <span>Username, email or mobile</span>
                 <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Mail className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     {...register("identifier")}
                     type="text"
@@ -325,7 +325,7 @@ export default function LoginPage() {
                   />
                   Remember me
                 </label>
-                <Link href="/forgot-password" className="font-medium text-slate-900 hover:underline">
+                <Link href="/forgot-password" className="font-medium text-foreground hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -361,9 +361,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mt-4 space-y-2 rounded-lg border border-green-200 bg-green-50/80 p-4">
-              <p className="text-sm font-semibold text-green-900">Test Credentials (Development)</p>
-              <div className="space-y-2 text-xs text-green-800">
+            <div className="mt-4 space-y-2 rounded-lg border border-border bg-popover p-4">
+              <p className="text-sm font-semibold text-foreground">Test Credentials (Development)</p>
+              <div className="space-y-2 text-xs text-muted-foreground">
                 <div>
                   <p className="font-medium">📚 Student:</p>
                   <code className="font-mono bg-green-100 px-1">student@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
@@ -382,8 +382,8 @@ export default function LoginPage() {
 
             <div className="mt-4 rounded-lg border border-dashed border-border bg-popover p-4">
               <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">Demo login</p>
-                <p className="text-xs text-slate-500">No server, no SMS, no mail, all data stays local.</p>
+                <p className="text-sm font-semibold text-foreground">Demo login</p>
+                <p className="text-xs text-muted-foreground">No server, no SMS, no mail, all data stays local.</p>
               </div>
               <label className="space-y-1 text-sm font-medium text-slate-700">
                 <span>Demo role</span>
