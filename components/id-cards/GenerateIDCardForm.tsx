@@ -1,15 +1,11 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ProfessionalIDCard } from './ProfessionalIDCard'
-import { AdmitCard } from './AdmitCard'
 import DownloadButtons from './DownloadButtons'
 import { api } from '@/lib/api'
 import { authManager } from '@/lib/auth'
@@ -48,7 +44,6 @@ const allCardTypes: Array<{ value: FormValues['cardType']; label: string; roles:
 ]
 
 export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: FormValues['cardType'] } = {}) {
-  const router = useRouter()
   const { user } = useAuth()
   const userRole = user?.role || authManager.getUser()?.role
   const visibleCardTypes = useMemo(
@@ -56,7 +51,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
     [userRole]
   )
   const fallbackCardType = defaultCardType || visibleCardTypes[0]?.value || 'admit-card'
-  const { register, handleSubmit, watch, setValue, control } = useForm<FormValues>({
+  const { register, watch, setValue, control } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       cardType: fallbackCardType,
@@ -66,10 +61,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
     },
   })
 
-  const [data, setData] = useState<FormValues | null>(null)
   const [students, setStudents] = useState<any[]>([])
-  const [institutionProfile, setInstitutionProfile] = useState<any>(null)
-  const previewRef = useRef<HTMLDivElement | null>(null)
   const cardType = watch('cardType')
   const formIsAdmitCard = cardType === 'admit-card'
   const liveCardType = useWatch({ control, name: 'cardType' }) || fallbackCardType
@@ -89,7 +81,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
   const liveExamCenter = useWatch({ control, name: 'examCenter' }) || ''
   const liveCenterCode = useWatch({ control, name: 'centerCode' }) || ''
   const liveValidityDate = useWatch({ control, name: 'validityDate' }) || ''
-  const livePreviewData: FormValues = {
+  const formData: FormValues = {
     cardType: liveCardType as any,
     name: liveName,
     idNumber: liveIdNumber,
@@ -108,35 +100,6 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
     centerCode: liveCenterCode,
     validityDate: liveValidityDate,
   }
-  const previewData = data || livePreviewData
-  const hasPreviewData = Boolean(
-    previewData.name ||
-    previewData.idNumber ||
-    previewData.institutionName ||
-    previewData.examName ||
-    previewData.examCenter ||
-    previewData.validityDate
-  )
-
-  const getValues = () => ({
-    cardType: (watch('cardType') as any) || 'admit-card',
-    name: watch('name'),
-    idNumber: watch('idNumber'),
-    photoUrl: watch('photoUrl'),
-    institutionName: watch('institutionName'),
-    institutionLogo: watch('institutionLogo'),
-    headName: watch('headName'),
-    dateOfBirth: watch('dateOfBirth'),
-    fatherName: watch('fatherName'),
-    admissionNumber: watch('admissionNumber'),
-    registrationNumber: watch('registrationNumber'),
-    stream: watch('stream'),
-    examName: watch('examName'),
-    examDate: watch('examDate'),
-    examCenter: watch('examCenter'),
-    centerCode: watch('centerCode'),
-    validityDate: watch('validityDate'),
-  })
 
   useEffect(() => {
     if (visibleCardTypes.length > 0 && !visibleCardTypes.some((type) => type.value === cardType)) {
@@ -154,7 +117,6 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
       .then((response: any) => {
         const institution = response?.institution
         if (!institution) return
-        setInstitutionProfile(institution)
         const head = institution.headId
         const headName = typeof head === 'object' ? head?.name : undefined
 
@@ -177,20 +139,6 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
       .catch(() => setStudents([]))
   }, [formIsAdmitCard])
 
-  const onSubmit = (vals: FormValues) => {
-    setData(vals)
-  }
-
-  const openInPrintPage = () => {
-    const vals = getValues()
-    if (!vals.name || !vals.idNumber) {
-      alert('Please enter at least Name and ID Number')
-      return
-    }
-    const cardDataJson = encodeURIComponent(JSON.stringify(vals))
-    router.push(`/id-cards/print?data=${cardDataJson}`)
-  }
-
   const onSelectStudent = async (studentId: string) => {
     if (!studentId) return
     try {
@@ -207,15 +155,10 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
       // exam defaults can stay; set admission/reg numbers
       setValue('admissionNumber', student.admissionNumber || '')
       setValue('registrationNumber', student.registrationNumber || '')
-      // auto-generate preview
-      const vals = getValues()
-      setData(vals)
     } catch (e) {
       // ignore
     }
   }
-
-  const isAdmitCard = data?.cardType === 'admit-card'
 
   return (
     <div className="grid md:grid-cols-2 gap-6" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(900px, 1fr)', gap: '24px', width: '100%', minWidth: 0 }}>
@@ -226,7 +169,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
             <CardTitle>Generate ID Card</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form className="space-y-4">
               {visibleCardTypes.length > 1 ? (
                 <div>
                   <label className="text-sm font-semibold">Card Type</label>
@@ -347,124 +290,32 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
                 </div>
               )}
 
-              <Button type="button" className="w-full" onClick={handleSubmit(onSubmit)}>
-                Generate Preview
-              </Button>
-              {formIsAdmitCard && (
-                <div className="mt-2">
-                  <Button type="button" className="w-full" onClick={async () => {
-                    // ensure form values are applied as preview data
-                    const vals = getValues()
-                    setData(vals)
-                    // trigger direct download
-                    try {
-                      const exportModule = await import('@/lib/export-utils')
-                      await exportModule.downloadElementPdf(previewRef.current, `${vals.name || 'admit'}-${vals.idNumber || 'card'}.pdf`)
-                    } catch (e) {
-                      // ignore
-                    }
-                  }}>
-                    Download Admit Card
-                  </Button>
-                </div>
-              )}
             </form>
           </CardContent>
         </Card>
       </div>
 
-      {/* Preview Section */}
+      {/* Download Section */}
       <div>
         <Card>
           <CardHeader>
-            <CardTitle>Card Preview</CardTitle>
+            <CardTitle>Download PDF</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center min-h-96 overflow-x-auto" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zoom: '1', transform: 'scale(1)' }}>
-              {hasPreviewData ? (
-                <div ref={previewRef} className="inline-block" style={{ width: 'fit-content', minWidth: 'fit-content', flex: '0 0 auto', zoom: '1', transform: 'scale(1)' }}>
-                  {previewData.cardType === 'admit-card' ? (
-                    <AdmitCard
-                      name={previewData.name}
-                      rollNumber={previewData.idNumber}
-                      photoUrl={previewData.photoUrl || undefined}
-                      institutionName={previewData.institutionName}
-                      institutionLogo={previewData.institutionLogo || undefined}
-                      institutionAddress={institutionProfile?.address}
-                      institutionPhone={institutionProfile?.phone}
-                      institutionEmail={institutionProfile?.email}
-                      institutionSeal={institutionProfile?.seal}
-                      headSignature={institutionProfile?.headSignature}
-                      examName={previewData.examName}
-                      examDate={previewData.examDate}
-                      examCenter={previewData.examCenter}
-                      centerCode={previewData.centerCode}
-                      headName={previewData.headName}
-                      dateOfBirth={previewData.dateOfBirth || undefined}
-                      fatherName={previewData.fatherName || undefined}
-                      stream={previewData.stream || undefined}
-                    />
-                  ) : (
-                    <ProfessionalIDCard
-                      name={previewData.name}
-                      idNumber={previewData.idNumber}
-                      role={
-                        previewData.cardType === 'student-id'
-                          ? 'student'
-                          : previewData.cardType === 'teacher-id'
-                            ? 'teacher'
-                            : previewData.cardType === 'head-id'
-                              ? 'head'
-                            : 'staff'
-                      }
-                      photoUrl={previewData.photoUrl || undefined}
-                      institutionName={previewData.institutionName}
-                      institutionLogo={previewData.institutionLogo || undefined}
-                      institutionAddress={institutionProfile?.address}
-                      institutionPhone={institutionProfile?.phone}
-                      institutionEmail={institutionProfile?.email}
-                      institutionWebsite={institutionProfile?.website}
-                      institutionSeal={institutionProfile?.seal}
-                      headSignature={institutionProfile?.headSignature}
-                      validityDate={previewData.validityDate}
-                      headName={previewData.headName}
-                      dateOfBirth={previewData.dateOfBirth || undefined}
-                      fatherName={previewData.fatherName || undefined}
-                      admissionNumber={previewData.admissionNumber || undefined}
-                      registrationNumber={previewData.registrationNumber || undefined}
-                      stream={previewData.stream || undefined}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div className="text-center text-slate-500">
-                  <p>Fill the form and click "Generate Preview"</p>
-                  <p className="text-sm mt-2">Your card will appear here</p>
-                </div>
-              )}
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
+              <p className="font-medium text-slate-900">Server-side PDF generation</p>
+              <p className="mt-1">The PDF is rendered on the server with a fixed A4-safe layout, so zoom level and device size do not change the result.</p>
             </div>
 
-            {data && (
-              <div className="mt-6 space-y-4">
-                <div className="flex gap-2">
-                  <Button 
-                    type="button" 
-                    variant="default" 
-                    className="flex-1"
-                    onClick={openInPrintPage}
-                  >
-                    Open in Print Page
-                  </Button>
-                </div>
-                <div>
-                  <DownloadButtons
-                    targetRef={previewRef}
-                    filename={`${data.cardType}-${data.idNumber}`}
-                    cardId={data.idNumber}
-                  />
-                </div>
-              </div>
-            )}
+            <div className="mt-6">
+              <DownloadButtons
+                targetRef={null}
+                formData={formData}
+                filename={`${formData.cardType}-${formData.idNumber || 'card'}`}
+                printTitle={`${formData.cardType} Card`}
+                emailSubject={`${formData.cardType} Card`}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>

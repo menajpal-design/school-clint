@@ -8,7 +8,10 @@ import { api } from '@/lib/api'
 import { downloadBlob } from '@/lib/utils'
 import { downloadElementPdf, printElement } from '@/lib/export-utils'
 
-export function DownloadButtons({ targetRef, filename = 'id-card', cardId, printTitle = 'Print ID Card', emailSubject = 'ID Card' }: { targetRef: React.RefObject<HTMLElement> | null; filename?: string; cardId?: string; printTitle?: string; emailSubject?: string }) {
+export function DownloadButtons({ targetRef, formData, filename = 'id-card', cardId, printTitle = 'Print ID Card', emailSubject = 'ID Card' }: { targetRef: React.RefObject<HTMLElement> | null; formData?: any; filename?: string; cardId?: string; printTitle?: string; emailSubject?: string }) {
+  const hasPreviewTarget = Boolean(targetRef?.current)
+  const hasFormData = Boolean(formData)
+
   const copyComputedStyles = (clone: HTMLElement, source: Element) => {
     const computed = window.getComputedStyle(source)
     for (let index = 0; index < computed.length; index += 1) {
@@ -116,10 +119,33 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
   }
 
   const downloadPDF = async () => {
+    if (hasFormData) {
+      const blob = await api.idCards.renderPdf(formData)
+      downloadBlob(blob, `${filename}.pdf`)
+      return
+    }
     await downloadElementPdf(targetRef?.current || null, `${filename}.pdf`)
   }
 
   const print = () => {
+    if (hasFormData) {
+      api.idCards.renderPdf(formData).then((blob) => {
+        const url = URL.createObjectURL(blob)
+        const popup = window.open(url, '_blank')
+        if (popup) {
+          popup.focus()
+          setTimeout(() => {
+            try {
+              popup.print()
+            } catch (e) {
+              // ignore
+            }
+          }, 1200)
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 30000)
+      }).catch(() => undefined)
+      return
+    }
     printElement(targetRef?.current || null, printTitle)
   }
 
@@ -148,18 +174,22 @@ export function DownloadButtons({ targetRef, filename = 'id-card', cardId, print
 
   return (
     <div className="flex items-center space-x-2">
-      <Button onClick={downloadPNG} size="sm">
-        <Download className="mr-2 h-4 w-4" /> PNG
-      </Button>
+      {hasPreviewTarget && (
+        <Button onClick={downloadPNG} size="sm">
+          <Download className="mr-2 h-4 w-4" /> PNG
+        </Button>
+      )}
       <Button onClick={downloadPDF} size="sm">
         <FileText className="mr-2 h-4 w-4" /> PDF
       </Button>
       <Button onClick={print} size="sm">
         <Printer className="mr-2 h-4 w-4" /> Print
       </Button>
-      <Button onClick={email} size="sm">
-        <Mail className="mr-2 h-4 w-4" /> Email
-      </Button>
+      {hasPreviewTarget && cardId && (
+        <Button onClick={email} size="sm">
+          <Mail className="mr-2 h-4 w-4" /> Email
+        </Button>
+      )}
     </div>
   )
 }

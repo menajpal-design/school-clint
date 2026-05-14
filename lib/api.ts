@@ -158,6 +158,23 @@ class ApiClient {
     }
   }
 
+  async postBlob(url: string, data?: any, config?: any): Promise<Blob> {
+    try {
+      if (getDemoMode()) {
+        const result = await demoRequest('POST', url, data);
+        if (result instanceof Blob) return result;
+        return new Blob([typeof result === 'string' ? result : JSON.stringify(result)], { type: 'application/octet-stream' });
+      }
+      const response = await this.client.post(url, data, {
+        ...config,
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   private handleError(error: any): ApiError {
     if (axios.isAxiosError(error)) {
       const message = this.getErrorMessage(error);
@@ -341,6 +358,7 @@ export const api = {
     searchOwners: (params: any) => apiClient.get('/id-cards/owners/search', { params }),
     create: (data: any) => apiClient.post('/id-cards', data),
     generate: (data: any) => apiClient.post('/id-cards/generate', data),
+    renderPdf: (data: any) => apiClient.postBlob('/id-cards/render-pdf', data),
     generateStudent: (studentId: string) => apiClient.get(`/id-cards/student/${studentId}`),
     generateTeacher: (teacherId: string) => apiClient.get(`/id-cards/teacher/${teacherId}`),
     generateStaff: (staffId: string) => apiClient.get(`/id-cards/staff/${staffId}`),
