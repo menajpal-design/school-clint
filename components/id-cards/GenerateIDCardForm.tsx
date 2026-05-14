@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -47,6 +48,7 @@ const allCardTypes: Array<{ value: FormValues['cardType']; label: string; roles:
 ]
 
 export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: FormValues['cardType'] } = {}) {
+  const router = useRouter()
   const { user } = useAuth()
   const userRole = user?.role || authManager.getUser()?.role
   const visibleCardTypes = useMemo(
@@ -177,6 +179,16 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
 
   const onSubmit = (vals: FormValues) => {
     setData(vals)
+  }
+
+  const openInPrintPage = () => {
+    const vals = getValues()
+    if (!vals.name || !vals.idNumber) {
+      alert('Please enter at least Name and ID Number')
+      return
+    }
+    const cardDataJson = encodeURIComponent(JSON.stringify(vals))
+    router.push(`/id-cards/print?data=${cardDataJson}`)
   }
 
   const onSelectStudent = async (studentId: string) => {
@@ -433,12 +445,24 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
             </div>
 
             {data && (
-              <div className="mt-6">
-                <DownloadButtons
-                  targetRef={previewRef}
-                  filename={`${data.cardType}-${data.idNumber}`}
-                  cardId={data.idNumber}
-                />
+              <div className="mt-6 space-y-4">
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="default" 
+                    className="flex-1"
+                    onClick={openInPrintPage}
+                  >
+                    Open in Print Page
+                  </Button>
+                </div>
+                <div>
+                  <DownloadButtons
+                    targetRef={previewRef}
+                    filename={`${data.cardType}-${data.idNumber}`}
+                    cardId={data.idNumber}
+                  />
+                </div>
               </div>
             )}
           </CardContent>
