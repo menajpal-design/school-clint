@@ -163,8 +163,10 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
                 <td style={{ border: '2px solid #1f1f1f', padding: '5px 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayExamDate || ''}</td>
                 <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}></td>
                 <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}>
-                  <span style={{ marginRight: 34 }}>{centerCode || ''}</span>
-                  <span>{examCenter || ''}</span>
+                  <div style={{ display: 'grid', gap: 4, lineHeight: 1.15, wordBreak: 'break-word' }}>
+                    <span style={{ fontWeight: 900 }}>{centerCode || ''}</span>
+                    <span>{examCenter || ''}</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
