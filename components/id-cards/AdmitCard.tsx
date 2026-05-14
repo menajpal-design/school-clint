@@ -33,11 +33,11 @@ const formatDisplayDate = (value?: string) => {
 
 function AdmitLogo({ logoUrl }: { logoUrl?: string }) {
   if (logoUrl) {
-    return <img src={logoUrl} alt="Logo" style={{ width: 94, height: 94, objectFit: 'contain' }} />
+    return <img src={logoUrl} alt="Logo" style={{ width: 88, height: 88, objectFit: 'contain' }} />
   }
 
   return (
-    <svg width="96" height="96" viewBox="0 0 96 96" aria-label="Institution logo">
+    <svg width="88" height="88" viewBox="0 0 96 96" aria-label="Institution logo">
       <circle cx="48" cy="48" r="38" fill="none" stroke="#2096c5" strokeWidth="8" />
       <circle cx="48" cy="48" r="24" fill="none" stroke="#2096c5" strokeWidth="7" />
       <path d="M48 12v34h24" fill="none" stroke="#2096c5" strokeWidth="8" strokeLinecap="round" />
@@ -49,7 +49,7 @@ function AdmitLogo({ logoUrl }: { logoUrl?: string }) {
 
 const InfoLine = ({ label, value }: { label: string; value?: string }) => (
   value ? (
-    <div className="admit-info-line" style={{ display: 'grid', gridTemplateColumns: '230px 1fr', alignItems: 'baseline', gap: 9, minHeight: 38, fontSize: 26, lineHeight: '34px', color: '#111111' }}>
+    <div className="admit-info-line" style={{ display: 'grid', gridTemplateColumns: '220px 1fr', alignItems: 'baseline', gap: 8, minHeight: 32, fontSize: 22, lineHeight: '28px', color: '#111111' }}>
       <strong style={{ fontWeight: 900, whiteSpace: 'nowrap' }}>{label}:</strong>
       <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
     </div>
@@ -102,22 +102,22 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
             background: '#fbf6e8',
             border: '2px solid #161616',
             color: '#111111',
-            padding: '22px 22px 18px',
+            padding: '18px 22px 16px',
             overflow: 'hidden',
           }}
         >
-          <header style={{ display: 'grid', gridTemplateColumns: '112px 1fr', gap: 18, alignItems: 'start' }}>
-            <div style={{ paddingTop: 1 }}>
+          <header style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 14, alignItems: 'start' }}>
+            <div style={{ paddingTop: 0 }}>
               <AdmitLogo logoUrl={institutionLogo} />
             </div>
-            <div style={{ paddingTop: 4 }}>
-              <h1 style={{ margin: 0, maxWidth: 570, fontSize: 28, lineHeight: '34px', fontWeight: 900, letterSpacing: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{institutionName}</h1>
-              <h2 style={{ margin: '8px 0 0', maxWidth: 570, fontSize: 28, lineHeight: '34px', fontWeight: 900, letterSpacing: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{examName}</h2>
-              <div style={{ marginTop: 4, display: 'grid', gap: 2, fontSize: 12, fontWeight: 700, color: '#334155' }}>
+            <div style={{ paddingTop: 0 }}>
+              <h1 style={{ margin: 0, maxWidth: 570, fontSize: 25, lineHeight: '30px', fontWeight: 900, letterSpacing: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{institutionName}</h1>
+              <h2 style={{ margin: '4px 0 0', maxWidth: 570, fontSize: 25, lineHeight: '30px', fontWeight: 900, letterSpacing: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{examName}</h2>
+              <div style={{ marginTop: 2, display: 'grid', gap: 2, fontSize: 11, fontWeight: 700, color: '#334155' }}>
                 {institutionAddress && <span>{institutionAddress}</span>}
                 {(institutionPhone || institutionEmail) && <span>{[institutionPhone, institutionEmail].filter(Boolean).join(' | ')}</span>}
               </div>
-              <div style={{ marginTop: 12, width: 142, height: 28, borderRadius: 18, background: 'rgba(34, 34, 34, 0.16)', filter: 'blur(7px)' }} />
+              <div style={{ marginTop: 8, width: 132, height: 24, borderRadius: 18, background: 'rgba(34, 34, 34, 0.16)', filter: 'blur(6px)' }} />
             </div>
           </header>
 
@@ -141,30 +141,30 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
             )}
           </div>
 
-          <main style={{ marginTop: 20, paddingRight: 208 }}>
+          <main style={{ marginTop: 12, paddingRight: 208 }}>
             <InfoLine label="Student Name" value={name} />
             <InfoLine label="Roll Number" value={rollNumber} />
             <InfoLine label="Class / Programme" value={stream} />
             <InfoLine label="Date of Birth" value={dateOfBirth} />
           </main>
 
-          <div style={{ position: 'relative', zIndex: 1, marginTop: 8, paddingRight: 208 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 22, background: 'transparent' }}>
+          <div style={{ position: 'relative', zIndex: 1, marginTop: 4, paddingRight: 208 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 20, background: 'transparent' }}>
               <thead>
                 <tr>
-                  <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Class / Subject</th>
-                  <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '20%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Date</th>
-                  <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '23%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Time</th>
-                  <th style={{ border: '2px solid #1f1f1f', padding: '6px 8px', width: '37%', fontSize: 21, fontWeight: 900, textAlign: 'center' }}>Exam Centre</th>
+                  <th style={{ border: '2px solid #1f1f1f', padding: '5px 8px', width: '20%', fontSize: 19, fontWeight: 900, textAlign: 'center' }}>Class / Subject</th>
+                  <th style={{ border: '2px solid #1f1f1f', padding: '5px 8px', width: '20%', fontSize: 19, fontWeight: 900, textAlign: 'center' }}>Exam Date</th>
+                  <th style={{ border: '2px solid #1f1f1f', padding: '5px 8px', width: '23%', fontSize: 19, fontWeight: 900, textAlign: 'center' }}>Exam Time</th>
+                  <th style={{ border: '2px solid #1f1f1f', padding: '5px 8px', width: '37%', fontSize: 19, fontWeight: 900, textAlign: 'center' }}>Exam Centre</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', height: 37, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stream || ''}</td>
-                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayExamDate || ''}</td>
-                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}></td>
-                  <td style={{ border: '2px solid #1f1f1f', padding: '5px 12px', fontWeight: 500 }}>
-                    <div style={{ display: 'grid', gap: 4, lineHeight: 1.15, wordBreak: 'break-word' }}>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '4px 10px', height: 32, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stream || ''}</td>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '4px 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayExamDate || ''}</td>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '4px 10px', fontWeight: 500 }}></td>
+                  <td style={{ border: '2px solid #1f1f1f', padding: '4px 10px', fontWeight: 500 }}>
+                    <div style={{ display: 'grid', gap: 2, lineHeight: 1.1, wordBreak: 'break-word' }}>
                       <span style={{ fontWeight: 900 }}>{centerCode || ''}</span>
                       <span>{examCenter || ''}</span>
                     </div>
