@@ -25,20 +25,20 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, icon: Icon, status, actions = [], className }: PageHeaderProps) {
   return (
-    <section className={cn("rounded-lg border border-slate-200 bg-white p-5 shadow-sm", className)}>
+    <section className={cn("rounded-lg border border-border bg-card p-5 shadow-sm", className)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-start gap-4">
           {Icon && (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Icon className="h-6 w-6" />
             </div>
           )}
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-950">{title}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
               {status}
             </div>
-            {description && <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p>}
+            {description && <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>}
           </div>
         </div>
         {actions.length > 0 && (

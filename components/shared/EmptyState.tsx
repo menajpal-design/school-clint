@@ -21,10 +21,10 @@ export function EmptyState({
   className,
 }: EmptyStateProps) {
   return (
-    <div className={cn("flex min-h-56 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 text-center", className)}>
-      <Icon className="h-8 w-8 text-slate-400" />
-      <p className="mt-3 font-medium text-slate-800">{title}</p>
-      <p className="mt-1 max-w-md text-sm text-slate-500">{description}</p>
+    <div className={cn("flex min-h-56 flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted px-4 text-center", className)}>
+      <Icon className="h-8 w-8 text-muted-foreground" />
+      <p className="mt-3 font-medium text-foreground">{title}</p>
+      <p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

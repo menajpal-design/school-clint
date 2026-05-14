@@ -15,17 +15,17 @@ interface DataTableProps<T> {
 
 export function DataTable<T extends Record<string, any>>({ columns, data, getKey }: DataTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200">
-      <div className="grid bg-slate-50 text-xs font-semibold uppercase text-slate-500" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+    <div className="overflow-hidden rounded-lg border border-border">
+      <div className="grid bg-muted text-xs font-semibold uppercase text-muted-foreground" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
         {columns.map((column) => (
           <div key={column.label} className="px-4 py-3">{column.label}</div>
         ))}
       </div>
-      <div className="divide-y divide-slate-100 bg-white">
+      <div className="divide-y divide-border bg-card">
         {data.map((item, index) => (
           <div
             key={getKey ? getKey(item, index) : item?._id || item?.id || index}
-            className="grid items-center text-sm text-slate-700"
+            className="grid items-center text-sm text-foreground"
             style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
           >
             {columns.map((column) => (
