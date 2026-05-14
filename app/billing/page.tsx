@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CreditCard, Loader2, LogOut } from 'lucide-react';
 import { api } from '@/lib/api';
 import { authManager } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 import { calculatePlanDue, schoolPlans } from '@/lib/plans';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function BillingPage() {
   const router = useRouter();
+  const { user: authUser, isLoading: authLoading } = useAuth();
   const [institution, setInstitution] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
@@ -32,7 +34,7 @@ export default function BillingPage() {
   };
 
   useEffect(() => {
-    const user = authManager.getUser();
+    const user = authUser || authManager.getUser();
     if (!user) {
       router.replace('/login');
       return;
@@ -57,7 +59,7 @@ export default function BillingPage() {
         });
       })
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [router, authUser]);
 
   const due = useMemo(
     () => calculatePlanDue(form.planCode, form.billingCycle as 'monthly' | 'yearly', form.useEasySchoolStorage),
@@ -78,11 +80,11 @@ export default function BillingPage() {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return <main className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-6 w-6 animate-spin" /></main>;
   }
 
-  const user = authManager.getUser();
+  const user = authUser || authManager.getUser();
   if (user && !['head', 'admin', 'super_admin'].includes(user.role)) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background p-6 text-center">

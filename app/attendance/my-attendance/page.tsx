@@ -36,7 +36,7 @@ export default function MyAttendancePage() {
 
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Month</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={(e) => setMonth(Number(e.target.value))}>{Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{new Date(2024, index, 1).toLocaleString("en", { month: "long" })}</option>)}</select></label>
+          <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Month</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={(e) => setMonth(Number(e.target.value))}>{Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{new Date(Date.UTC(2024, index, 1)).toLocaleString('en-US', { month: 'long', timeZone: 'UTC' })}</option>)}</select></label>
           <label className="space-y-2"><span className="text-sm font-medium text-muted-foreground">Year</span><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} /></label>
         </div>
       </section>

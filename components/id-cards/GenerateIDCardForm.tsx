@@ -45,7 +45,11 @@ const allCardTypes: Array<{ value: FormValues['cardType']; label: string; roles:
 
 export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: FormValues['cardType'] } = {}) {
   const { user } = useAuth()
-  const userRole = user?.role || authManager.getUser()?.role
+  const [sessionUser, setSessionUser] = useState<any>(null)
+  useEffect(() => {
+    setSessionUser(user || authManager.getUser())
+  }, [user])
+  const userRole = sessionUser?.role
   const visibleCardTypes = useMemo(
     () => allCardTypes.filter((type) => userRole && type.roles.includes(userRole)),
     [userRole]
@@ -108,10 +112,9 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
   }, [cardType, setValue, visibleCardTypes])
 
   useEffect(() => {
-    const user = authManager.getUser()
-    const institutionFromSession = user?.institution as any
+    const institutionFromSession = sessionUser?.institution as any
     if (institutionFromSession?.name) setValue('institutionName', institutionFromSession.name)
-    if (user?.role === 'head' && user.name) setValue('headName', user.name)
+    if (sessionUser?.role === 'head' && sessionUser.name) setValue('headName', sessionUser.name)
 
     api.institution.profile()
       .then((response: any) => {
@@ -125,7 +128,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
         if (headName) setValue('headName', headName)
       })
       .catch(() => undefined)
-  }, [setValue])
+  }, [sessionUser, setValue])
 
   useEffect(() => {
     if (!formIsAdmitCard) return

@@ -17,6 +17,7 @@ type OwnerType = "student" | "teacher" | "staff";
 export default function GeneratePage() {
   const { user } = useAuth();
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const [sessionUser, setSessionUser] = useState<any>(null);
   const [ownerType, setOwnerType] = useState<OwnerType>("student");
   const [search, setSearch] = useState("");
   const [people, setPeople] = useState<any[]>([]);
@@ -24,7 +25,11 @@ export default function GeneratePage() {
   const [card, setCard] = useState<any>(null);
   const [institution, setInstitution] = useState<any>(null);
   const [options, setOptions] = useState({ logo: true, watermark: true });
-  const currentUserRole = String(user?.role || authManager.getUser()?.role || "");
+  useEffect(() => {
+    setSessionUser(user || authManager.getUser());
+  }, [user]);
+
+  const currentUserRole = String(sessionUser?.role || "");
   const allowedOwnerTypes: OwnerType[] = ["head", "assistant_head"].includes(currentUserRole)
     ? ["student", "teacher", "staff"]
     : ["staff", "class_teacher"].includes(currentUserRole)
@@ -47,12 +52,12 @@ export default function GeneratePage() {
     load().catch(() => undefined);
   }, [ownerType, currentUserRole]);
   useEffect(() => {
-    const sessionInstitution = (authManager.getUser() as any)?.institution;
+    const sessionInstitution = sessionUser?.institution || authManager.getUser()?.institution;
     if (sessionInstitution) setInstitution(sessionInstitution);
     api.institution.profile()
       .then((response: any) => setInstitution(response?.institution || sessionInstitution || null))
       .catch(() => undefined);
-  }, []);
+  }, [sessionUser]);
 
   const generate = async () => {
     if (!selected || !canGenerateCards) return;
@@ -62,7 +67,7 @@ export default function GeneratePage() {
 
   const previewName = card?.ownerId?.name || selected?.userId?.name || "Select person";
   const previewId = card?.cardNumber || selected?.rollNumber || selected?.employeeId || "ID";
-  const headName = institution?.headId?.name || (authManager.getUser()?.role === "head" ? authManager.getUser()?.name : undefined) || "";
+  const headName = institution?.headId?.name || (sessionUser?.role === "head" ? sessionUser?.name : undefined) || "";
   const role = ownerType === "teacher" ? "teacher" : ownerType === "staff" ? "staff" : "student";
   const className = selected?.classId?.name || selected?.className || selected?.designation || selected?.department || "";
 

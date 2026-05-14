@@ -179,7 +179,15 @@ export default function AttendanceReportsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Attendance Reports" description="Analyze attendance by date, class, section and person." icon={FileBarChart} actions={[{ label: "Export Excel", icon: Download, onClick: exportExcel }, { label: "Export PDF", icon: Download, onClick: exportPdf }]} />
+      <PageHeader
+        title="Attendance Reports"
+        description="Analyze attendance by date, class, section and person."
+        icon={FileBarChart}
+        actions={[
+          <Button key="export-excel" variant="outline" size="sm" onClick={exportExcel} className="flex items-center gap-2"><Download className="h-4 w-4" />Export Excel</Button>,
+          <Button key="export-pdf" variant="outline" size="sm" onClick={exportPdf} className="flex items-center gap-2"><Download className="h-4 w-4" />Export PDF</Button>,
+        ]}
+      />
 
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-5">

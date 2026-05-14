@@ -145,7 +145,7 @@ export default function InstitutionPage() {
               ['Email', profile?.email],
               ['Address', profile?.address],
               ['Billing Status', profile?.billing?.billingStatus || (profile?.isActive ? 'active' : 'pending')],
-              ['Subscription Expiry', profile?.billing?.subscriptionExpiresAt ? new Date(profile.billing.subscriptionExpiresAt).toLocaleDateString() : 'Not active'],
+              ['Subscription Expiry', profile?.billing?.subscriptionExpiresAt ? new Date(profile.billing.subscriptionExpiresAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : 'Not active'],
             ].map(([label, value]) => (
               <div key={label} className="rounded-md border p-4">
                 <div className="text-xs font-medium uppercase text-muted-foreground">{label}</div>
