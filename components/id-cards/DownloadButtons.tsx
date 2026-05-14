@@ -254,10 +254,13 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
     el.style.marginTop = '8px'
 
     const target = targetRef.current
-    if (target && target.parentElement) {
-      if (target.nextSibling) target.parentElement.insertBefore(el, target.nextSibling)
-      else target.parentElement.appendChild(el)
-      setPortalRoot(el)
+    if (target) {
+      const containerParent = (target.closest && (target.closest('section') as HTMLElement)) || target.parentElement
+      if (containerParent) {
+        // append at the end of the container so buttons sit below the preview area
+        containerParent.appendChild(el)
+        setPortalRoot(el)
+      }
     }
 
     return () => {
