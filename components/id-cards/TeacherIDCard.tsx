@@ -3,176 +3,127 @@
 import React from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 
-type InstitutionInfo = {
-  name?: string
-  logoUrl?: string
-  address?: string
-  email?: string
-  phone?: string
-  website?: string
-  headName?: string
-}
-
-export type TeacherIDCardProps = {
+export interface TeacherIDCardProps {
   name: string
-  id?: string
-  idNumber?: string
-  role?: string
-  className?: string
-  photoUrl?: string
-  qualification?: string
-  designation?: string
-  studentClass?: string
-  stream?: string
-  joined?: string
-  joinDate?: string
-  validity?: string
-  validityDate?: string
-  headName?: string
-  qrData?: string
-  phone?: string
-  email?: string
-  institution?: InstitutionInfo
+  id: string
+  designation: string
+  department: string
+  phone: string
+  email: string
+  photoUrl: string
   institutionName?: string
-  institutionLogo?: string
   institutionAddress?: string
+  institutionWebsite?: string
   institutionPhone?: string
   institutionEmail?: string
-  institutionWebsite?: string
-}
-
-const formatDate = (value?: string) => {
-  if (!value) return ''
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-    ? value
-    : date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+  instructions?: string[]
 }
 
 const InfoRow = ({ label, value }: { label: string; value?: string }) => (
-  <tr>
-    <td style={{ padding: 7, border: '1px solid rgba(255,255,255,0.1)', fontWeight: 800, width: '40%' }}>{label}</td>
-    <td style={{ padding: 7, border: '1px solid rgba(255,255,255,0.1)', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{value || ''}</td>
-  </tr>
+  <div className="grid grid-cols-[104px_1fr] gap-3 items-start">
+    <span className="text-[11px] uppercase tracking-[0.24em] text-slate-500">{label}</span>
+    <span className="text-sm font-semibold text-slate-900 min-h-[18px]">{value || ''}</span>
+  </div>
 )
 
-const TermItem = ({ children }: { children: React.ReactNode }) => (
-  <li style={{ marginBottom: 8 }}>{children}</li>
-)
+const TeacherCard = ({ data, id }: { data: TeacherIDCardProps; id: string }) => {
+  const instructions = data.instructions && data.instructions.length > 0
+    ? data.instructions
+    : [
+        'Card must be presented on demand.',
+        'Loss must be reported to the office immediately.',
+        'Finder must return this card to the issuing institute.',
+      ]
 
-export const TeacherIDCard = React.forwardRef<HTMLDivElement, TeacherIDCardProps>(
-  (
-    {
-      name,
-      id,
-      idNumber,
-      className = '',
-      photoUrl,
-      qualification,
-      designation,
-      studentClass,
-      stream,
-      joined,
-      joinDate,
-      validity,
-      validityDate,
-      headName,
-      qrData,
-      phone,
-      email,
-      institution,
-      institutionName,
-      institutionAddress,
-      institutionPhone,
-      institutionEmail,
-      institutionWebsite,
-    },
-    ref
-  ) => {
-    const resolvedInstitutionName = institutionName || institution?.name || 'Institute Logo'
-    const resolvedAddress = institutionAddress || institution?.address || ''
-    const resolvedPhone = institutionPhone || institution?.phone || phone || ''
-    const resolvedEmail = institutionEmail || institution?.email || email || ''
-    const resolvedWebsite = institutionWebsite || institution?.website || ''
-    const resolvedId = idNumber || id || ''
-    const resolvedQualification = qualification || designation || studentClass || stream || ''
-    const resolvedJoined = joined || joinDate || formatDate(validityDate || validity)
-    const resolvedQrData = qrData || JSON.stringify({
-      type: 'teacher-id',
-      name,
-      id: resolvedId,
-      institution: resolvedInstitutionName,
-    })
+  return (
+    <div id={id} className="flex flex-wrap gap-8 justify-center p-8 bg-transparent print:p-0 print:m-0 print:bg-white">
+      <div className="w-[350px] h-[520px] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl print:border-0 print:shadow-none">
+        <div className="h-28 bg-gradient-to-r from-slate-800 to-slate-600 px-6 py-5 text-white">
+          <div className="text-[10px] uppercase tracking-[0.34em]">Teacher ID Card</div>
+          <div className="mt-3 text-2xl font-black leading-tight">{data.institutionName || ''}</div>
+        </div>
 
-    return (
-      <div ref={ref} className={`teacher-id-card ${className}`} style={{ width: 730, height: 500, maxWidth: 'none', maxHeight: 'none', display: 'flex', gap: 30, justifyContent: 'center', flexWrap: 'nowrap', fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif', flex: '0 0 auto' }}>
-        <section style={{ width: 350, height: 500, backgroundColor: '#002B36', position: 'relative', overflow: 'hidden', borderRadius: 15, color: '#ffffff', flex: '0 0 auto' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 230, background: '#ffffff', borderBottomLeftRadius: '50% 20%', borderBottomRightRadius: '50% 20%', zIndex: 1 }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, width: 90, height: 90, background: '#D49B41', borderBottomRightRadius: '100%', zIndex: 2 }} />
-
-          <div style={{ position: 'relative', zIndex: 3, marginTop: 45, textAlign: 'center' }}>
-            <div style={{ width: 150, height: 180, border: '6px solid #002B36', borderRadius: 30, display: 'inline-block', overflow: 'hidden', background: '#eeeeee' }}>
-              {photoUrl ? (
-                <img src={photoUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div className="px-6 py-5">
+          <div className="-mt-16 flex justify-center">
+            <div className="relative w-28 h-28 overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-xl">
+              {data.photoUrl ? (
+                <img src={data.photoUrl} alt={data.name || 'Teacher'} className="h-full w-full object-cover" />
               ) : (
-                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #f8fafc, #cbd5e1)' }} />
+                <div className="h-full w-full bg-slate-200" />
               )}
             </div>
           </div>
 
-          <h1 style={{ margin: '15px 0', position: 'relative', zIndex: 3, textAlign: 'center', fontSize: 45, fontWeight: 900, letterSpacing: 3, lineHeight: 1 }}>TEACHER</h1>
-
-          <div style={{ padding: '0 25px', position: 'relative', zIndex: 3 }}>
-            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
-              <tbody>
-                <InfoRow label="Name:" value={name} />
-                <InfoRow label="Qualification:" value={resolvedQualification} />
-                <InfoRow label="ID Number:" value={resolvedId} />
-                <InfoRow label="Joined:" value={resolvedJoined} />
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section style={{ width: 350, height: 500, backgroundColor: '#ffffff', position: 'relative', overflow: 'hidden', borderRadius: 15, color: '#333333', flex: '0 0 auto' }}>
-          <div style={{ height: 100, background: '#002B36', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}>
-            <div style={{ textAlign: 'left', color: '#D49B41' }}>
-              <div style={{ fontWeight: 800, fontSize: 16, maxWidth: 220, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{resolvedInstitutionName}</div>
-              <div style={{ fontSize: 10, color: '#cccccc' }}>Education for future</div>
-            </div>
-            <div style={{ fontSize: 22, color: '#D49B41', fontWeight: 900 }}>LOGO</div>
+          <div className="mt-4 text-center">
+            <div className="text-xs uppercase tracking-[0.28em] text-slate-400">Teacher</div>
+            <h2 className="mt-2 text-2xl font-black text-slate-900 leading-snug">{data.name || ''}</h2>
           </div>
 
-          <div style={{ padding: 25, height: 200 }}>
-            <h3 style={{ color: '#002B36', fontSize: 16, margin: '0 0 10px', borderBottom: '2px solid #D49B41', display: 'inline-block' }}>Terms & Conditions</h3>
-            <ul style={{ listStyle: 'disc', paddingLeft: 20, fontSize: 11, color: '#555555', margin: 0 }}>
-              <TermItem>This card is property of the Institute.</TermItem>
-              <TermItem>Loss must be reported immediately to the office.</TermItem>
-              <TermItem>Always wear this ID card within premises.</TermItem>
-              <TermItem>Non-transferable and must be returned on exit.</TermItem>
-            </ul>
+          <div className="mt-6 space-y-3">
+            <InfoRow label="ID No" value={data.id} />
+            <InfoRow label="Designation" value={data.designation} />
+            <InfoRow label="Department" value={data.department} />
+            <InfoRow label="Phone" value={data.phone} />
+            <InfoRow label="Email" value={data.email} />
           </div>
+        </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '0 25px', marginTop: 10 }}>
-            <div style={{ width: 88, height: 88, border: '1px solid #dddddd', padding: 3, background: '#ffffff' }}>
-              <QRCodeSVG value={resolvedQrData} size={80} level="M" includeMargin={false} />
-            </div>
-            <div style={{ textAlign: 'center', borderTop: '1px solid #002B36', width: 120, paddingTop: 5, fontSize: 10, fontWeight: 800 }}>
-              <div style={{ height: 30 }} />
-              {headName || institution?.headName || 'AUTHORITY SIGN'}
-            </div>
-          </div>
-
-          <div style={{ position: 'absolute', bottom: 6, width: '100%', background: '#f9f9f9', padding: '15px 25px', borderTop: '1px solid #eeeeee', fontSize: 10, color: '#666666', lineHeight: 1.5 }}>
-            {resolvedAddress && <p style={{ margin: 0 }}>{resolvedAddress}</p>}
-            {(resolvedPhone || resolvedEmail) && <p style={{ margin: 0 }}>{[resolvedPhone, resolvedEmail].filter(Boolean).join(' | ')}</p>}
-            {resolvedWebsite && <p style={{ margin: 0 }}>{resolvedWebsite}</p>}
-          </div>
-          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: 6, background: '#D49B41' }} />
-        </section>
+        <div className="mt-auto rounded-t-[32px] bg-slate-900 px-6 py-4 text-white">
+          <div className="text-[11px] uppercase tracking-[0.3em] text-slate-300">Verified by</div>
+          <div className="mt-2 text-base font-semibold">{data.institutionName || ''}</div>
+        </div>
       </div>
-    )
-  }
+
+      <div className="w-[350px] h-[520px] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl print:border-0 print:shadow-none">
+        <div className="h-24 bg-slate-900 px-6 py-5 text-white flex items-end">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.34em] text-slate-400">Back Side</div>
+            <div className="mt-3 text-2xl font-black">Teacher Details</div>
+          </div>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          <div className="grid gap-3">
+            {instructions.map((instruction, index) => (
+              <div key={index} className="flex gap-3 text-sm text-slate-700">
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-500" />
+                <span>{instruction}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Institution Details</div>
+            <div className="mt-3 space-y-2 text-sm text-slate-900">
+              <div>{data.institutionAddress || ''}</div>
+              <div>{data.institutionPhone || ''}</div>
+              <div>{data.institutionEmail || ''}</div>
+              <div>{data.institutionWebsite || ''}</div>
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-slate-200 bg-white p-4 text-[11px] leading-5 text-slate-600">
+            <div className="font-semibold text-slate-900 uppercase tracking-[0.25em] mb-3">Important</div>
+            <div className="space-y-2">
+              <div>Non-transferable card.</div>
+              <div>Carry card on campus.</div>
+              <div>Report loss immediately.</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-slate-900" />
+      </div>
+    </div>
+  )
+}
+
+export const TeacherIDCard = React.forwardRef<HTMLDivElement, TeacherIDCardProps>(
+  (props, ref) => (
+    <div ref={ref}>
+      <TeacherCard data={props} id="teacher-card" />
+    </div>
+  )
 )
 
 TeacherIDCard.displayName = 'TeacherIDCard'

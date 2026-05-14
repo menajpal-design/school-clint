@@ -225,8 +225,14 @@ export default function SubjectsPage() {
           </Badge>
         }
         actions={[
-          { label: "Refresh", icon: RefreshCw, onClick: loadData },
-          { label: "Add Subject", icon: Plus, onClick: openAddModal, active: true },
+          <Button key="refresh" variant="outline" size="sm" onClick={loadData}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>,
+          <Button key="add-subject" size="sm" onClick={openAddModal}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Subject
+          </Button>,
         ]}
       />
 

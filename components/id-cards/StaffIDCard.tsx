@@ -4,9 +4,10 @@ import React from 'react'
 import { ProfessionalIDCard } from './ProfessionalIDCard'
 import { IDCardProps } from './StudentIDCard'
 
-export function StaffIDCard(props: IDCardProps) {
+export const StaffIDCard = React.forwardRef<HTMLDivElement, IDCardProps>((props, ref) => {
   return (
     <ProfessionalIDCard
+      ref={ref}
       name={props.name}
       idNumber={props.id || props.idNumber || ''}
       role={String(props.role || 'staff').toLowerCase() as any}
@@ -23,6 +24,8 @@ export function StaffIDCard(props: IDCardProps) {
       qrData={props.qrData}
     />
   )
-}
+})
+
+StaffIDCard.displayName = 'StaffIDCard'
 
 export default StaffIDCard

@@ -169,9 +169,24 @@ export default function AcademicPage() {
         icon={LayoutList}
         status={<Badge variant="outline" className={dataSource === 'live' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : dataSource === 'empty' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-blue-200 bg-blue-50 text-blue-700'}>{dataSource === 'live' ? 'Live academic data' : dataSource === 'empty' ? 'No live academic data yet' : 'Loading live academic data'}</Badge>}
         actions={[
-          { label: "Classes", href: "/academic/classes", icon: GraduationCap },
-          { label: "Subjects", href: "/academic/subjects", icon: BookOpen },
-          { label: "Exams", href: "/academic/exams", icon: CalendarClock },
+          <Button key="classes" variant="outline" size="sm" asChild>
+            <Link href="/academic/classes">
+              <GraduationCap className="mr-2 h-4 w-4" />
+              Classes
+            </Link>
+          </Button>,
+          <Button key="subjects" variant="outline" size="sm" asChild>
+            <Link href="/academic/subjects">
+              <BookOpen className="mr-2 h-4 w-4" />
+              Subjects
+            </Link>
+          </Button>,
+          <Button key="exams" variant="outline" size="sm" asChild>
+            <Link href="/academic/exams">
+              <CalendarClock className="mr-2 h-4 w-4" />
+              Exams
+            </Link>
+          </Button>,
         ]}
       />
 

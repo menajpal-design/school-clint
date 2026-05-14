@@ -38,7 +38,14 @@ const cardCopy = {
 const formatDisplayDate = (value?: string) => {
   if (!value) return ''
   const parsedDate = new Date(value)
-  return Number.isNaN(parsedDate.getTime()) ? value : parsedDate.toLocaleDateString()
+  return Number.isNaN(parsedDate.getTime())
+    ? value
+    : parsedDate.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'UTC',
+      })
 }
 
 function LogoMark({
@@ -138,9 +145,25 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
     })
     const roleText = role === 'head' ? 'Head' : role.charAt(0).toUpperCase() + role.slice(1)
 
+    const titleText = institutionName || 'hridoy School12w'
+    const sloganText = 'slogan text line goes here'
+
     return (
-      <div ref={ref} className={`professional-id-card ${className}`} style={{ width: 800, height: 500, maxWidth: 'none', maxHeight: 'none', background: '#ffffff', padding: 0, flex: '0 0 auto' }}>
-        <div style={{ display: 'flex', gap: 30, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'nowrap', width: 800, height: 500 }}>
+      <div ref={ref} className={`professional-id-card ${className}`} style={{ position: 'relative', width: 800, height: 500, maxWidth: 'none', maxHeight: 'none', background: '#ffffff', padding: 0, flex: '0 0 auto' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 28px', background: 'rgba(255,255,255,0.95)', borderBottom: '1px solid rgba(15,23,42,0.08)', zIndex: 20, minHeight: 56 }}>
+          <div style={{ fontSize: 10, lineHeight: '12px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#0f172a' }}>PHOTO STUDENT</div>
+          <div style={{ display: 'grid', gap: 2, fontSize: 10, lineHeight: '12px', color: '#0f172a', textAlign: 'left' }}>
+            <span style={{ fontWeight: 700 }}>Name: {name || 'Select person'}</span>
+            <span style={{ fontWeight: 700 }}>Class: {stream || 'General'}</span>
+            <span style={{ fontWeight: 700 }}>ID Number: {idNumber || 'ID'}</span>
+            <span style={{ fontWeight: 700 }}>ID Session: {displayValidityDate || 'Valid Session'}</span>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', lineHeight: '18px' }}>{titleText}</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: '#475569', lineHeight: '14px', marginTop: 2 }}>{sloganText}</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 30, alignItems: 'stretch', justifyContent: 'center', flexWrap: 'nowrap', width: 800, height: 500, paddingTop: 68 }}>
           <section style={{ position: 'relative', width: 380, height: 500, overflow: 'hidden', background: theme.leftBg, fontFamily: 'Arial, Helvetica, sans-serif', color: '#ffffff' }}>
             <div style={{ position: 'absolute', inset: 0, background: theme.leftBg }} />
             <div style={{ position: 'absolute', top: -58, left: -54, width: 142, height: 142, borderRadius: '50%', background: theme.gold }} />
@@ -181,6 +204,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
             </div>
 
             <div style={{ position: 'absolute', left: 15, top: 112, width: 320, display: 'grid', gap: 6 }}>
+              <BackRow label="Auth." value={headName} />
               <BackRow label="Name" value={name} />
               <BackRow label="ID" value={idNumber} />
               <BackRow label="Role" value={roleText} />
@@ -190,7 +214,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
               <BackRow label="Adm." value={admissionNumber} />
               <BackRow label="Reg." value={registrationNumber} />
               <BackRow label="Valid" value={displayValidityDate} />
-              <BackRow label="Auth." value={headName} />
+              
             </div>
 
             <div style={{ position: 'absolute', left: 50, top: 280, width: 100, height: 100, background: '#ffffff' }}>

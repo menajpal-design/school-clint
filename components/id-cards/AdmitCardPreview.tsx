@@ -129,7 +129,7 @@ const AdmitCardPreview = ({ data }: { data: any }) => {
 
         {/* Footer Branding */}
         <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-          <span>Date Generated: {new Date().toLocaleDateString()}</span>
+          <span>Date Generated: {data.dateGenerated || ''}</span>
           <span>Official Examination Portal</span>
         </div>
       </div>

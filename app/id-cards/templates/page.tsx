@@ -101,7 +101,7 @@ export default function TemplatesPage() {
   const headName = institution?.headId?.name || user?.name || ''
   const liveIdentity = user?.name || institutionName
   const liveIdNumber = user?.id || institution?._id || ''
-  const validityDate = institution?.billing?.subscriptionExpiresAt || new Date().toISOString()
+  const validityDate = institution?.billing?.subscriptionExpiresAt || undefined
   const examLabel = institutionName ? `${institutionName} Examination` : 'Live Examination'
   const livePhotoUrl = user?.avatar
 
@@ -252,7 +252,7 @@ export default function TemplatesPage() {
                   examCenter={institutionName}
                   centerCode={institution?._id}
                   headName={headName}
-                  dateOfBirth={user?.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : undefined}
+                  dateOfBirth={user?.lastLogin || undefined}
                   fatherName={user?.email}
                   stream={user?.role ? user.role.replace(/_/g, ' ') : institutionName}
                 />

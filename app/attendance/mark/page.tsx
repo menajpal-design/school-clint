@@ -101,7 +101,12 @@ export default function AttendanceMarkPage() {
         title="Attendance Marking"
         description="Mark daily class attendance with bulk actions and ID card scan support."
         icon={ClipboardCheck}
-        actions={[{ label: "ID Card Scan", icon: Camera, onClick: () => setScanOpen(true) }]}
+        actions={[
+          <Button key="id-card-scan" variant="outline" size="sm" onClick={() => setScanOpen(true)}>
+            <Camera className="mr-2 h-4 w-4" />
+            ID Card Scan
+          </Button>,
+        ]}
       />
 
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm">

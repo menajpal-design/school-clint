@@ -13,6 +13,7 @@ import { useRef } from 'react'
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
+  const [institution, setInstitution] = useState<any>(null);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -29,6 +30,9 @@ export default function ProfilePage() {
       setPhone(next.phone || "");
       setAvatar(next.avatar || "");
     }).catch(() => undefined);
+    api.institution.profile()
+      .then((data: any) => setInstitution(data?.institution || null))
+      .catch(() => undefined);
     // load my id card if exists
     api.idCards.getMine().then((c: any) => setCard(c)).catch((e: any) => setCardErr(e?.message || 'No card'))
   }, []);
@@ -43,13 +47,13 @@ export default function ProfilePage() {
   );
   const isOwnCard = Boolean(cardRecord?._id && userId && cardOwnerId && cardOwnerId === userId);
   const personalCard = isOwnCard ? cardRecord : null;
-  const institution = user?.institution || {};
+  const institutionData = institution || user?.institution || {};
   const owner = user || {};
   const cardType = owner?.role === "head" ? "head" : owner?.role === "teacher" ? "teacher" : owner?.role === "staff" ? "staff" : "student";
   const previewName = owner?.name || "User";
   const previewId = personalCard?.cardNumber || owner?.employeeId || owner?.rollNumber || owner?.id || "ID";
   const previewStream = owner?.classId?.name || owner?.className || owner?.designation || owner?.department || "";
-  const headName = institution?.headId?.name || institution?.headName || "";
+  const headName = institutionData?.headId?.name || institutionData?.headName || "";
 
   const uploadAvatar = (file?: File) => {
     if (!file) return;
@@ -134,14 +138,14 @@ export default function ProfilePage() {
                 role={cardType as any}
                 name={previewName}
                 idNumber={previewId}
-                institutionName={institution?.name || "Educational Institution"}
-                institutionLogo={institution?.logo || institution?.logoUrl}
-                institutionAddress={institution?.address}
-                institutionPhone={institution?.phone}
-                institutionEmail={institution?.email}
-                institutionWebsite={institution?.website}
-                institutionSeal={institution?.seal}
-                headSignature={institution?.headSignature}
+                institutionName={institutionData?.name || "Educational Institution"}
+                institutionLogo={institutionData?.logo || institutionData?.logoUrl}
+                institutionAddress={institutionData?.address}
+                institutionPhone={institutionData?.phone}
+                institutionEmail={institutionData?.email}
+                institutionWebsite={institutionData?.website}
+                institutionSeal={institutionData?.seal}
+                headSignature={institutionData?.headSignature}
                 headName={headName}
                 stream={previewStream}
                 validityDate={personalCard?.validityEnd || undefined}

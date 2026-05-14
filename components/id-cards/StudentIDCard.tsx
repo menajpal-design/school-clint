@@ -3,183 +3,126 @@
 import React from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 
-type InstitutionInfo = {
-  name?: string
-  logoUrl?: string
-  headName?: string
-  address?: string
-  email?: string
-  phone?: string
-  website?: string
-}
-
-export type IDCardProps = {
+export interface StudentIDCardProps {
   name: string
-  id?: string
-  idNumber?: string
-  role?: string
-  className?: string
-  photoUrl?: string
-  studentClass?: string
-  stream?: string
-  headName?: string
-  institution?: InstitutionInfo
-  validity?: string
-  validityDate?: string
-  qrData?: string
-  barcode?: string
-  phone?: string
-  email?: string
+  id: string
+  session: string
+  phone: string
+  email: string
+  photoUrl: string
   institutionName?: string
-  institutionLogo?: string
   institutionAddress?: string
+  institutionWebsite?: string
   institutionPhone?: string
   institutionEmail?: string
-  institutionWebsite?: string
+  instructions?: string[]
 }
 
-const getSession = (value?: string) => {
-  if (!value) {
-    const year = new Date().getFullYear()
-    return `${year} - ${year + 1}`
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  const year = date.getFullYear()
-  return `${year} - ${year + 1}`
-}
-
-const splitName = (name: string) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  return {
-    first: parts[0] || name,
-    rest: parts.slice(1).join(' '),
-  }
-}
-
-const DataItem = ({ label, value }: { label: string; value?: string }) => (
-  <div style={{ display: 'flex', marginBottom: 10 }}>
-    <div style={{ fontWeight: 800, color: '#cccccc', width: 90, fontSize: 11, textTransform: 'uppercase' }}>{label}</div>
-    <div style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{value || ''}</div>
+const InfoRow = ({ label, value }: { label: string; value?: string }) => (
+  <div className="grid grid-cols-[104px_1fr] gap-3 items-start">
+    <span className="text-[11px] uppercase tracking-[0.24em] text-slate-500">{label}</span>
+    <span className="text-sm font-semibold text-slate-900 min-h-[18px]">{value || ''}</span>
   </div>
 )
 
-const Instruction = ({ children }: { children: React.ReactNode }) => (
-  <li style={{ marginBottom: 6 }}>{children}</li>
-)
+const StudentCard = ({ data, id }: { data: StudentIDCardProps; id: string }) => {
+  const instructions = data.instructions && data.instructions.length > 0
+    ? data.instructions
+    : [
+        'Card must be presented on demand.',
+        'Loss must be reported to the office immediately.',
+        'Finder must return this card to the issuing institute.',
+      ]
 
-export const StudentIDCard = React.forwardRef<HTMLDivElement, IDCardProps>(
-  (
-    {
-      name,
-      id,
-      idNumber,
-      className = '',
-      photoUrl,
-      studentClass,
-      stream,
-      institution,
-      validity,
-      validityDate,
-      qrData,
-      phone,
-      email,
-      institutionName,
-      institutionAddress,
-      institutionPhone,
-      institutionEmail,
-      institutionWebsite,
-    },
-    ref
-  ) => {
-    const resolvedId = idNumber || id || ''
-    const resolvedInstitutionName = institutionName || institution?.name || 'LOGO'
-    const resolvedAddress = institutionAddress || institution?.address || ''
-    const resolvedPhone = institutionPhone || institution?.phone || phone || ''
-    const resolvedEmail = institutionEmail || institution?.email || email || ''
-    const resolvedWebsite = institutionWebsite || institution?.website || ''
-    const session = getSession(validityDate || validity)
-    const nameParts = splitName(name)
-    const resolvedQrData = qrData || JSON.stringify({
-      type: 'student-id',
-      name,
-      id: resolvedId,
-      institution: resolvedInstitutionName,
-      class: studentClass || stream,
-    })
+  return (
+    <div id={id} className="flex flex-wrap gap-8 justify-center p-8 bg-transparent print:p-0 print:m-0 print:bg-white">
+      <div className="w-[350px] h-[520px] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl print:border-0 print:shadow-none">
+        <div className="h-28 bg-gradient-to-r from-sky-700 to-cyan-500 px-6 py-5 text-white">
+          <div className="text-[10px] uppercase tracking-[0.34em]">Student ID Card</div>
+          <div className="mt-3 text-2xl font-black leading-tight">{data.institutionName || ''}</div>
+        </div>
 
-    return (
-      <div ref={ref} className={`student-id-card ${className}`} style={{ width: 730, height: 500, maxWidth: 'none', maxHeight: 'none', display: 'flex', gap: 30, justifyContent: 'center', flexWrap: 'nowrap', fontFamily: '"Segoe UI", sans-serif', flex: '0 0 auto' }}>
-        <section style={{ width: 350, height: 500, background: '#ffffff', borderRadius: 12, overflow: 'hidden', position: 'relative', flex: '0 0 auto' }}>
-          <div style={{ height: 180, background: '#1A1A1A', position: 'relative' }}>
-            <div style={{ position: 'absolute', bottom: 0, width: '110%', left: '-5%', height: 80, background: '#1E73BE', borderTopLeftRadius: '50% 100%', borderTopRightRadius: '50% 100%' }} />
-            <div style={{ width: 120, height: 120, background: '#ffffff', borderRadius: '50%', border: '4px solid #ffffff', position: 'absolute', bottom: -60, left: '50%', transform: 'translateX(-50%)', zIndex: 10, overflow: 'hidden', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
-              {photoUrl ? (
-                <img src={photoUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div className="px-6 py-5">
+          <div className="-mt-16 flex justify-center">
+            <div className="relative w-28 h-28 overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-xl">
+              {data.photoUrl ? (
+                <img src={data.photoUrl} alt={data.name || 'Student'} className="h-full w-full object-cover" />
               ) : (
-                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #f8fafc, #dbeafe)' }} />
+                <div className="h-full w-full bg-slate-200" />
               )}
             </div>
           </div>
 
-          <div style={{ marginTop: 70, textAlign: 'center', padding: '0 30px' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#333333', lineHeight: '29px', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
-              <span style={{ color: '#1E73BE' }}>{nameParts.first}</span>{nameParts.rest ? ` ${nameParts.rest}` : ''}
-            </div>
-            <div style={{ fontSize: 13, color: '#888888', textTransform: 'uppercase', letterSpacing: 2, fontWeight: 800, marginTop: 5 }}>Student</div>
-
-            <div style={{ marginTop: 30, textAlign: 'left', fontSize: 13, color: '#555555' }}>
-              <DataItem label="ID No :" value={resolvedId} />
-              <DataItem label="Session :" value={session} />
-              <DataItem label="Phone :" value={resolvedPhone} />
-              <DataItem label="Mail :" value={resolvedEmail} />
-            </div>
+          <div className="mt-4 text-center">
+            <div className="text-xs uppercase tracking-[0.28em] text-slate-500">Student</div>
+            <h2 className="mt-2 text-2xl font-black text-slate-900 leading-snug">{data.name || ''}</h2>
           </div>
 
-          <CardFooter logoText={resolvedInstitutionName} />
-        </section>
-
-        <section style={{ width: 350, height: 500, background: '#ffffff', borderRadius: 12, overflow: 'hidden', position: 'relative', flex: '0 0 auto' }}>
-          <div style={{ height: 120, background: '#1A1A1A', position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: 15 }}>
-            <div style={{ position: 'absolute', bottom: -30, width: '100%', height: 60, background: '#1E73BE', borderBottomLeftRadius: '50% 100%', borderBottomRightRadius: '50% 100%' }} />
-            <div style={{ width: 80, height: 80, background: '#ffffff', padding: 5, borderRadius: 8, zIndex: 5, boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
-              <QRCodeSVG value={resolvedQrData} size={70} level="M" includeMargin={false} />
-            </div>
+          <div className="mt-6 space-y-3">
+            <InfoRow label="ID No" value={data.id} />
+            <InfoRow label="Session" value={data.session} />
+            <InfoRow label="Phone" value={data.phone} />
+            <InfoRow label="Email" value={data.email} />
           </div>
+        </div>
 
-          <div style={{ marginTop: 50, padding: '0 30px', textAlign: 'center' }}>
-            <div style={{ color: '#1E73BE', fontWeight: 800, fontSize: 14, marginBottom: 15, textTransform: 'uppercase' }}>Instructions</div>
-            <ul style={{ textAlign: 'left', fontSize: 11, color: '#777777', listStyle: 'square', paddingLeft: 15, margin: 0 }}>
-              <Instruction>This card must be presented on demand by the authority.</Instruction>
-              <Instruction>In case of loss, inform the registrar office immediately.</Instruction>
-              <Instruction>Misuse of this card is a punishable offense.</Instruction>
-              <Instruction>Return the card upon completion of the course.</Instruction>
-            </ul>
-
-            <div style={{ marginTop: 40, fontSize: 11, color: '#444444', borderTop: '1px solid #eeeeee', paddingTop: 15 }}>
-              <b style={{ display: 'block', marginBottom: 5, color: '#333333' }}>OFFICE ADDRESS</b>
-              {resolvedAddress && <p style={{ margin: 0 }}>{resolvedAddress}</p>}
-              {(resolvedPhone || resolvedEmail) && <p style={{ margin: 0 }}>{[resolvedPhone, resolvedEmail].filter(Boolean).join(' | ')}</p>}
-              {resolvedWebsite && <p style={{ margin: 0 }}>{resolvedWebsite}</p>}
-            </div>
-          </div>
-
-          <CardFooter logoText={resolvedInstitutionName} />
-        </section>
+        <div className="mt-auto rounded-t-[32px] bg-slate-900 px-6 py-4 text-white">
+          <div className="text-[11px] uppercase tracking-[0.3em] text-sky-300">Valid Until</div>
+          <div className="mt-2 text-base font-semibold">{data.session || ''}</div>
+        </div>
       </div>
-    )
-  }
-)
 
-function CardFooter({ logoText }: { logoText: string }) {
-  return (
-    <div style={{ position: 'absolute', bottom: 0, width: '100%', height: 60, background: '#1A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 25 }}>
-      <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '45%', background: '#1E73BE', clipPath: 'polygon(0 0, 100% 0, 75% 100%, 0% 100%)' }} />
-      <div style={{ color: '#ffffff', fontWeight: 900, letterSpacing: 3, fontSize: 18, zIndex: 2, maxWidth: 170, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{logoText || 'LOGO'}</div>
+      <div className="w-[350px] h-[520px] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl print:border-0 print:shadow-none">
+        <div className="h-24 bg-slate-900 px-6 py-5 text-white flex items-end">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.34em] text-slate-400">Back Side</div>
+            <div className="mt-3 text-2xl font-black">Student Details</div>
+          </div>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          <div className="grid gap-3">
+            {instructions.map((instruction, index) => (
+              <div key={index} className="flex gap-3 text-sm text-slate-700">
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-500" />
+                <span>{instruction}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Institution Details</div>
+            <div className="mt-3 space-y-2 text-sm text-slate-900">
+              <div>{data.institutionAddress || ''}</div>
+              <div>{data.institutionPhone || ''}</div>
+              <div>{data.institutionEmail || ''}</div>
+              <div>{data.institutionWebsite || ''}</div>
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-slate-200 bg-white p-4 text-[11px] leading-5 text-slate-600">
+            <div className="font-semibold text-slate-900 uppercase tracking-[0.25em] mb-3">Important</div>
+            <div className="space-y-2">
+              <div>Non-transferable card.</div>
+              <div>Carry card on campus.</div>
+              <div>Report loss immediately.</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-slate-900" />
+      </div>
     </div>
   )
 }
+
+export const StudentIDCard = React.forwardRef<HTMLDivElement, StudentIDCardProps>(
+  (props, ref) => (
+    <div ref={ref}>
+      <StudentCard data={props} id="student-card" />
+    </div>
+  )
+)
 
 StudentIDCard.displayName = 'StudentIDCard'
 

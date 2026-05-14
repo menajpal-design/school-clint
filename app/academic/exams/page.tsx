@@ -278,8 +278,14 @@ export default function ExamsPage() {
           </Badge>
         }
         actions={[
-          { label: "Refresh", icon: RefreshCw, onClick: loadData },
-          { label: "Create Exam", icon: Plus, onClick: openCreateModal, active: true },
+          <Button key="refresh" variant="outline" size="sm" onClick={loadData}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>,
+          <Button key="create-exam" size="sm" onClick={openCreateModal}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Exam
+          </Button>,
         ]}
       />
 

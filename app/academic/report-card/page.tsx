@@ -101,8 +101,14 @@ export default function ReportCardPage() {
         icon={FileText}
         status={<Badge variant="outline">{reportCard?.grade || "Preview"}</Badge>}
         actions={[
-          { label: "Download PDF", icon: Download, onClick: downloadPdf },
-          { label: "Print", icon: Printer, onClick: () => printElement(previewRef.current, "Report Card") },
+          <Button key="download-pdf" variant="outline" size="sm" onClick={downloadPdf}>
+            <Download className="mr-2 h-4 w-4" />
+            Download PDF
+          </Button>,
+          <Button key="print" variant="outline" size="sm" onClick={() => printElement(previewRef.current, "Report Card")}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print
+          </Button>,
         ]}
       />
 

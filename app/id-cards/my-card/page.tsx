@@ -14,11 +14,13 @@ export default function MyCardPage() {
   const previewRef = useRef<HTMLDivElement | null>(null);
   const [card, setCard] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [institution, setInstitution] = useState<any>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     api.idCards.getMine().then(setCard).catch((err: any) => setError(err?.message || "No card found"));
     api.auth.profile().then((data: any) => setProfile(data.user || data)).catch(() => undefined);
+    api.institution.profile().then((data: any) => setInstitution(data?.institution || null)).catch(() => undefined);
   }, []);
 
   const cardRecord = card?.card || card;
@@ -32,11 +34,11 @@ export default function MyCardPage() {
   const isOwnCard = Boolean(cardRecord?._id && profileId && cardOwnerId && cardOwnerId === profileId);
   const personalCard = isOwnCard ? cardRecord : null;
   const owner = profile || {};
-  const institution = owner?.institution || profile?.institution || {};
+  const institutionData = institution || owner?.institution || profile?.institution || {};
   const cardType = owner?.role === "head" ? "head" : owner?.role === "teacher" ? "teacher" : owner?.role === "staff" ? "staff" : "student";
   const previewId = personalCard?.cardNumber || owner?.employeeId || owner?.rollNumber || owner?.id || "ID-CARD";
   const previewStream = owner?.classId?.name || owner?.className || owner?.designation || owner?.department || "";
-  const headName = institution?.headId?.name || institution?.headName || "";
+  const headName = institutionData?.headId?.name || institutionData?.headName || "";
 
   return (
     <div className="space-y-5">
@@ -49,14 +51,14 @@ export default function MyCardPage() {
             role={cardType as any}
             name={owner.name || "Your Name"}
             idNumber={previewId}
-            institutionName={institution?.name || "Educational Institution"}
-            institutionLogo={institution?.logo || institution?.logoUrl}
-            institutionAddress={institution?.address}
-            institutionPhone={institution?.phone}
-            institutionEmail={institution?.email}
-            institutionWebsite={institution?.website}
-            institutionSeal={institution?.seal}
-            headSignature={institution?.headSignature}
+            institutionName={institutionData?.name || "Educational Institution"}
+            institutionLogo={institutionData?.logo || institutionData?.logoUrl}
+            institutionAddress={institutionData?.address}
+            institutionPhone={institutionData?.phone}
+            institutionEmail={institutionData?.email}
+            institutionWebsite={institutionData?.website}
+            institutionSeal={institutionData?.seal}
+            headSignature={institutionData?.headSignature}
             headName={headName}
             stream={previewStream}
             validityDate={personalCard?.validityEnd || undefined}

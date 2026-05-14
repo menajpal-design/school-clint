@@ -238,7 +238,10 @@ export default function ResultsPage() {
         icon={ClipboardCheck}
         status={<WorkflowBadge status={workflowStatus} />}
         actions={[
-          { label: "Refresh", icon: RefreshCw, onClick: loadRows },
+          <Button key="refresh" variant="outline" size="sm" onClick={loadRows}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>,
         ]}
       />
 

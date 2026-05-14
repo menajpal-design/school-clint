@@ -240,7 +240,8 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
       y = marginY - (imgHeight - remainingHeight);
       pdf.addPage();
       pdf.addImage(imgData, "PNG", offsetX, y, imgWidth, imgHeight);
-    remainingHeight -= pageHeight - marginY * 2;
+      remainingHeight -= pageHeight - marginY * 2;
+    }
   }
 
   pdf.save(filename);

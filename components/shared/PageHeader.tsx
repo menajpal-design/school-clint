@@ -6,20 +6,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type PageHeaderAction = {
-  label: string;
-  href?: string;
-  onClick?: () => void;
-  icon?: React.ComponentType<{ className?: string }>;
-  active?: boolean;
-};
-
 interface PageHeaderProps {
   title: string;
   description?: string;
   icon?: React.ComponentType<{ className?: string }>;
   status?: React.ReactNode;
-  actions?: PageHeaderAction[];
+  actions?: React.ReactNode[];
   className?: string;
 }
 
@@ -43,29 +35,11 @@ export function PageHeader({ title, description, icon: Icon, status, actions = [
         </div>
         {actions.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {actions.map((action) => {
-              const ActionIcon = action.icon;
-              const content = (
-                <>
-                  {ActionIcon && <ActionIcon className="mr-2 h-4 w-4" />}
-                  {action.label}
-                </>
-              );
-
-              if (action.href) {
-                return (
-                  <Button key={`${action.label}-${action.href}`} asChild variant={action.active ? "default" : "outline"} size="sm">
-                    <Link href={action.href}>{content}</Link>
-                  </Button>
-                );
-              }
-
-              return (
-                <Button key={action.label} type="button" variant={action.active ? "default" : "outline"} size="sm" onClick={action.onClick}>
-                  {content}
-                </Button>
-              );
-            })}
+            {actions.map((action, index) => (
+              <React.Fragment key={index}>
+                {action}
+              </React.Fragment>
+            ))}
           </div>
         )}
       </div>

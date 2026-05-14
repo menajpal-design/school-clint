@@ -43,9 +43,24 @@ export default function AttendancePage() {
         description="Track today attendance, class-wise presence and weekly trend."
         icon={Users}
         actions={[
-          { label: "Mark Attendance", href: "/attendance/mark", icon: ClipboardCheck, active: true },
-          { label: "My Attendance", href: "/attendance/my-attendance", icon: UserCheck },
-          { label: "Reports", href: "/attendance/reports", icon: FileBarChart },
+          <Button key="mark-attendance" size="sm" asChild>
+            <Link href="/attendance/mark">
+              <ClipboardCheck className="mr-2 h-4 w-4" />
+              Mark Attendance
+            </Link>
+          </Button>,
+          <Button key="my-attendance" variant="outline" size="sm" asChild>
+            <Link href="/attendance/my-attendance">
+              <UserCheck className="mr-2 h-4 w-4" />
+              My Attendance
+            </Link>
+          </Button>,
+          <Button key="reports" variant="outline" size="sm" asChild>
+            <Link href="/attendance/reports">
+              <FileBarChart className="mr-2 h-4 w-4" />
+              Reports
+            </Link>
+          </Button>,
         ]}
       />
 

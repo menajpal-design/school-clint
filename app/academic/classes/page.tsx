@@ -250,8 +250,14 @@ export default function ClassesPage() {
           </Badge>
         }
         actions={[
-          { label: "Refresh", icon: RefreshCw, onClick: loadData },
-          { label: "Add Class", icon: Plus, onClick: openAddModal, active: true },
+          <Button key="refresh" variant="outline" size="sm" onClick={loadData}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>,
+          <Button key="add-class" size="sm" onClick={openAddModal}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Class
+          </Button>,
         ]}
       />
 

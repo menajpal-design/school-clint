@@ -38,6 +38,7 @@ interface CardData {
   examCenter?: string
   centerCode?: string
   headName?: string
+  examData?: Array<{ courseCode?: string; examDate?: string; examTime?: string; examCentre?: string; centreCode?: string; centreName?: string; code?: string; date?: string; time?: string }>
 }
 
 export default function PrintPage() {
@@ -160,7 +161,7 @@ export default function PrintPage() {
             headSignature={cardData.headSignature}
             validityDate={cardData.validityDate}
             dateOfBirth={cardData.dateOfBirth}
-            theme="professional"
+            type="head"
           />
         )
 
@@ -186,6 +187,7 @@ export default function PrintPage() {
             dateOfBirth={cardData.dateOfBirth}
             fatherName={cardData.fatherName}
             stream={cardData.stream}
+            examData={cardData.examData}
           />
         )
 
