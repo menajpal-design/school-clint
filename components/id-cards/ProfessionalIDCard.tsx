@@ -181,7 +181,7 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
               <Row label="Class:" value={stream} />
             </div>
 
-            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <div style={{ position: 'absolute', left: 0, right: 0, top: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
               <LogoMark logoUrl={institutionLogo} institutionName={institutionName} tone={theme.gold} />
               <div>
                 <div style={{ maxWidth: 190, color: theme.gold, fontFamily: 'Georgia, serif', fontSize: 18, fontWeight: 800, lineHeight: '19px', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{institutionName}</div>
