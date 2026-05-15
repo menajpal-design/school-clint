@@ -35,6 +35,7 @@ export default function AttendanceMarkPage() {
   const [calendarStudent, setCalendarStudent] = useState<Student | null>(null);
   const [calendarViewYear, setCalendarViewYear] = useState<number>(new Date().getFullYear());
   const [calendarSelectedMonth, setCalendarSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+  const [calendarSelectedDay, setCalendarSelectedDay] = useState<number | null>(null);
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
@@ -159,13 +160,42 @@ export default function AttendanceMarkPage() {
                 if (day === null) return <div key={di} className="h-10 rounded-md bg-transparent" />;
                 const status = recordsByDay.get(day);
                 const bg = status === 'present' ? 'bg-emerald-200' : status === 'absent' ? 'bg-rose-200' : status === 'late' ? 'bg-amber-200' : status === 'leave' ? 'bg-sky-200' : 'bg-slate-100';
+                const isSelected = calendarSelectedDay === day;
                 return (
-                  <div key={di} className={`${bg} h-10 rounded-md flex items-center justify-center text-sm`}>{day}</div>
+                  <Button
+                    key={di}
+                    variant="ghost"
+                    size="sm"
+                    className={`${bg} h-10 rounded-md flex items-center justify-center text-sm ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+                    onClick={() => setCalendarSelectedDay(day)}
+                  >
+                    {day}
+                  </Button>
                 );
               })}
             </div>
           ))}
         </div>
+        {calendarSelectedDay && (
+          <div className="mt-4 p-4 border rounded-md bg-slate-50">
+            <h4 className="font-semibold">Attendance on {calendarSelectedDay}/{calendarSelectedMonth}/{calendarViewYear}</h4>
+            <div className="mt-2 space-y-1">
+              {students.map((s) => {
+                const record = s.attendanceRecords?.find(r => {
+                  const d = new Date(r.date);
+                  return d.getFullYear() === calendarViewYear && d.getMonth() + 1 === calendarSelectedMonth && d.getDate() === calendarSelectedDay;
+                });
+                const status = record?.status || 'No record';
+                return (
+                  <div key={s._id} className="flex justify-between text-sm">
+                    <span>{s.userId?.name} ({s.rollNumber})</span>
+                    <Badge variant={status === 'present' ? 'default' : 'secondary'}>{status}</Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -238,7 +268,7 @@ export default function AttendanceMarkPage() {
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{student.rollNumber}</TableCell>
                   <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
-                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarOpen(true); setCalendarViewYear(Number(date.split('-')[0])); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
+                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarOpen(true); setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
                 </TableRow>
               );
@@ -271,7 +301,7 @@ export default function AttendanceMarkPage() {
                 });
                 const isSelected = calendarSelectedMonth === month;
                 return (
-                  <Button key={month} variant={isSelected ? 'secondary' : isCurrent ? 'outline' : 'ghost'} size="sm" onClick={() => setCalendarSelectedMonth(month)}>
+                  <Button key={month} variant={isSelected ? 'secondary' : isCurrent ? 'outline' : 'ghost'} size="sm" onClick={() => { setCalendarSelectedMonth(month); setCalendarSelectedDay(null); }}>
                     {new Date(0, idx).toLocaleString(undefined, { month: 'short' })}
                   </Button>
                 );
