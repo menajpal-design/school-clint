@@ -238,11 +238,33 @@ export default function AttendanceMarkPage() {
                   const d = new Date(r.date);
                   return d.getFullYear() === calendarViewYear && d.getMonth() + 1 === calendarSelectedMonth && d.getDate() === calendarSelectedDay;
                 });
-                const status = record?.status || 'No record';
+                const status = (record?.status as Status) || 'No record';
                 return (
-                  <div key={s._id} className="flex justify-between text-sm">
-                    <span>{s.userId?.name} ({s.rollNumber})</span>
-                    <Badge variant={status === 'present' ? 'default' : 'secondary'}>{status}</Badge>
+                  <div key={s._id} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="truncate text-sm font-medium">{s.userId?.name} <span className="text-slate-500">({s.rollNumber})</span></div>
+                      <div className="flex gap-2">
+                        {(['present','absent','late','leave'] as Status[]).map((st) => (
+                          <Button
+                            key={st}
+                            size="sm"
+                            variant={status === st ? 'default' : 'outline'}
+                            onClick={async () => {
+                              if (!classId) { setMessage('Select a class first.'); return; }
+                              const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
+                              try {
+                                await api.attendance.mark({ classId, sectionId, date: d, records: [{ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: st }] });
+                                setMessage(`Marked ${s.userId?.name} as ${st}.`);
+                                await loadStudents();
+                              } catch (e:any) { setMessage(e?.message || 'Failed to update attendance.'); }
+                            }}
+                          >
+                            {st}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-500">{status === 'No record' ? 'No record' : `Status: ${status}`}</div>
                   </div>
                 );
               })}
