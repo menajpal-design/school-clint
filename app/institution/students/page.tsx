@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { CalendarCheck, CreditCard, Edit, GraduationCap, Plus, Search, UserRound, type LucideIcon } from 'lucide-react';
+import { CalendarCheck, CreditCard, Download, Edit, Eye, GraduationCap, Plus, Search, UserRound, type LucideIcon } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import { downloadFile } from '@/lib/utils';
 
 type Option = { _id: string; name?: string; grade?: string; sections?: Option[] };
 
@@ -93,6 +95,7 @@ const emptyForm: StudentForm = {
 
 const teacherRoles = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'];
 const managerRoles = ['head', 'assistant_head', 'class_teacher', 'subject_teacher'];
+const studentCardRoles = ['head', 'assistant_head', 'staff', 'class_teacher'];
 
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -110,7 +113,9 @@ export default function InstitutionStudentsPage() {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [classes, setClasses] = useState<Option[]>([]);
   const [open, setOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(null);
   const [form, setForm] = useState<StudentForm>(emptyForm);
   const [classFilter, setClassFilter] = useState('');
   const [sectionFilter, setSectionFilter] = useState('');
@@ -120,6 +125,7 @@ export default function InstitutionStudentsPage() {
 
   const canView = !user || teacherRoles.includes(user.role);
   const canManage = !!user && managerRoles.includes(user.role);
+  const canGenerateStudentCards = !!user && studentCardRoles.includes(user.role);
 
   const loadStudents = () => {
     setLoading(true);
@@ -194,6 +200,101 @@ export default function InstitutionStudentsPage() {
     setStatus('');
   };
 
+  const openView = (student: StudentRecord) => {
+    setSelectedStudent(student);
+    setViewOpen(true);
+  };
+
+  const formatDate = (value?: string) => {
+    if (!value) return 'N/A';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value.slice(0, 10) : date.toLocaleDateString();
+  };
+
+  const exportRows = useMemo(() => filteredStudents.map((student, index) => ([
+    index + 1,
+    student.userId?.name || 'Student',
+    student.userId?.email || '',
+    student.userId?.phone || '',
+    student.rollNumber || '',
+    nameOf(student.classId) || '',
+    nameOf(student.sectionId) || '',
+    student.admissionDate ? student.admissionDate.slice(0, 10) : '',
+    student.dateOfBirth ? student.dateOfBirth.slice(0, 10) : '',
+    student.bloodGroup || '',
+    student.address || '',
+    student.guardianName || student.parentId?.name || '',
+    student.guardianPhone || student.parentId?.phone || '',
+    student.guardianEmail || student.parentId?.email || '',
+    student.isActive === false ? 'Inactive' : 'Active',
+  ])), [filteredStudents]);
+
+  const exportExcel = async () => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      ['#', 'Student Name', 'Student Email', 'Student Phone', 'Roll', 'Class', 'Section', 'Admission Date', 'Date of Birth', 'Blood Group', 'Address', 'Guardian Name', 'Guardian Phone', 'Guardian Email', 'Status'],
+      ...exportRows,
+    ]);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
+    XLSX.writeFile(workbook, `students-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const exportPdf = async () => {
+    const { default: jsPDF } = await import('jspdf');
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginX = 30;
+    const topY = 36;
+    const lineHeight = 16;
+    const maxWidth = pageWidth - marginX * 2;
+    let cursorY = topY;
+
+    doc.setFontSize(16);
+    doc.text('Students List', marginX, cursorY);
+    cursorY += 20;
+    doc.setFontSize(10);
+    doc.text(`Total records: ${filteredStudents.length}`, marginX, cursorY);
+    cursorY += 18;
+
+    const headers = ['Name', 'Roll', 'Class', 'Section', 'Guardian', 'Phone', 'Status'];
+    const colWidth = maxWidth / headers.length;
+
+    const drawRow = (values: string[], isHeader = false) => {
+      if (cursorY > doc.internal.pageSize.getHeight() - 40) {
+        doc.addPage();
+        cursorY = topY;
+      }
+      if (isHeader) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+      } else {
+        doc.setFont('helvetica', 'normal');
+      }
+      values.forEach((value, index) => {
+        const x = marginX + index * colWidth;
+        const text = doc.splitTextToSize(value || '-', colWidth - 6);
+        doc.text(text, x, cursorY);
+      });
+      cursorY += isHeader ? 20 : Math.max(lineHeight, ...values.map((value) => doc.getTextDimensions(value || '-').h)) + 4;
+      doc.setFont('helvetica', 'normal');
+    };
+
+    drawRow(headers, true);
+    filteredStudents.forEach((student) => {
+      drawRow([
+        student.userId?.name || 'Student',
+        student.rollNumber || '',
+        nameOf(student.classId) || '',
+        nameOf(student.sectionId) || '',
+        student.guardianName || student.parentId?.name || '',
+        student.guardianPhone || student.parentId?.phone || '',
+        student.isActive === false ? 'Inactive' : 'Active',
+      ]);
+    });
+
+    doc.save(`students-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   const openEdit = (student: StudentRecord) => {
     setEditingId(student._id || null);
     setForm({
@@ -264,17 +365,27 @@ export default function InstitutionStudentsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Student Management</h1>
           <p className="mt-2 text-sm text-muted-foreground">Student list, class/section filter, admission details, guardian account, fee setup, and ID card shortcuts.</p>
         </div>
-        {canManage && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Student
-              </Button>
-            </DialogTrigger>
-            <StudentDialog form={form} update={update} submit={submit} editing={!!editingId} classes={classes} sections={selectedSections} />
-          </Dialog>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={exportExcel} disabled={!filteredStudents.length}>
+            <Download className="mr-2 h-4 w-4" />
+            Download Excel
+          </Button>
+          <Button variant="outline" onClick={exportPdf} disabled={!filteredStudents.length}>
+            <Download className="mr-2 h-4 w-4" />
+            Download PDF
+          </Button>
+          {canManage && (
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={resetForm}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Student
+                </Button>
+              </DialogTrigger>
+              <StudentDialog form={form} update={update} submit={submit} editing={!!editingId} classes={classes} sections={selectedSections} />
+            </Dialog>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -322,7 +433,6 @@ export default function InstitutionStudentsPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Roll</TableHead>
                 <TableHead>Class / Section</TableHead>
-                <TableHead>Guardian</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
@@ -344,23 +454,25 @@ export default function InstitutionStudentsPage() {
                   <TableCell>{student.rollNumber || 'N/A'}</TableCell>
                   <TableCell>{nameOf(student.classId) || 'Unassigned'} / {nameOf(student.sectionId) || 'No section'}</TableCell>
                   <TableCell>
-                    <div className="text-sm">{student.guardianName || student.parentId?.name || 'Guardian'}</div>
-                    <div className="text-xs text-muted-foreground">{student.guardianPhone || student.parentId?.phone || 'No phone'}</div>
-                  </TableCell>
-                  <TableCell>
                     <Badge variant={student.isActive === false ? 'secondary' : 'default'}>{student.isActive === false ? 'Inactive' : 'Active'}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/academic/report-card?studentId=${student._id || ''}`}>Result</Link>
+                      <Button variant="ghost" size="sm" onClick={() => openView(student)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Student
                       </Button>
                       <Button asChild variant="ghost" size="sm">
-                        <Link href={`/id-cards/generate?ownerType=student&ownerId=${student._id || ''}`}>
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          ID
-                        </Link>
+                        <Link href={`/academic/report-card?studentId=${student._id || ''}&classId=${idOf(student.classId)}&sectionId=${idOf(student.sectionId)}`}>Result</Link>
                       </Button>
+                      {canGenerateStudentCards && (
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/id-cards/generate?ownerType=student&ownerId=${student._id || ''}`}>
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            ID
+                          </Link>
+                        </Button>
+                      )}
                       {canManage && (
                         <Button variant="ghost" size="sm" onClick={() => openEdit(student)}>
                           <Edit className="mr-2 h-4 w-4" />
@@ -373,7 +485,7 @@ export default function InstitutionStudentsPage() {
               ))}
               {!loading && filteredStudents.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">No students match this class, section, or search.</TableCell>
+                  <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">No students match this class, section, or search.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -381,6 +493,49 @@ export default function InstitutionStudentsPage() {
           <p className="mt-4 text-sm text-muted-foreground">{status}</p>
         </CardContent>
       </Card>
+
+      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Student Details</DialogTitle>
+            <DialogDescription>Student and guardian information for the selected record.</DialogDescription>
+          </DialogHeader>
+          {selectedStudent && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Student Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <Detail label="Name" value={selectedStudent.userId?.name || 'Student'} />
+                  <Detail label="Email" value={selectedStudent.userId?.email || 'N/A'} />
+                  <Detail label="Phone" value={selectedStudent.userId?.phone || 'N/A'} />
+                  <Detail label="Roll Number" value={selectedStudent.rollNumber || 'N/A'} />
+                  <Detail label="Class / Section" value={`${nameOf(selectedStudent.classId) || 'Unassigned'} / ${nameOf(selectedStudent.sectionId) || 'No section'}`} />
+                  <Detail label="Admission Date" value={formatDate(selectedStudent.admissionDate)} />
+                  <Detail label="Date of Birth" value={formatDate(selectedStudent.dateOfBirth)} />
+                  <Detail label="Blood Group" value={selectedStudent.bloodGroup || 'N/A'} />
+                  <Detail label="Address" value={selectedStudent.address || 'N/A'} />
+                  <Detail label="Status" value={selectedStudent.isActive === false ? 'Inactive' : 'Active'} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Guardian Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <Detail label="Guardian Name" value={selectedStudent.guardianName || selectedStudent.parentId?.name || 'N/A'} />
+                  <Detail label="Guardian Phone" value={selectedStudent.guardianPhone || selectedStudent.parentId?.phone || 'N/A'} />
+                  <Detail label="Guardian Email" value={selectedStudent.guardianEmail || selectedStudent.parentId?.email || 'N/A'} />
+                  <Detail label="Parent Account" value={selectedStudent.parentId ? 'Linked' : 'Not linked'} />
+                  <Detail label="Student ID" value={selectedStudent._id || 'N/A'} />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -503,6 +658,15 @@ function SelectField({ label, value, onChange, children }: { label: string; valu
       <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>
         {children}
       </select>
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border bg-background px-3 py-2">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-1 font-medium text-slate-900">{value}</div>
     </div>
   );
 }
