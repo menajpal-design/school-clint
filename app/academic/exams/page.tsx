@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -99,11 +100,13 @@ const emptyForm = (): ExamForm => ({
 });
 
 export default function ExamsPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [publishingExamId, setPublishingExamId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<ExamItem | null>(null);
@@ -119,6 +122,32 @@ export default function ExamsPage() {
     () => exams.filter((exam) => exam.status === "scheduled" || exam.status === "approved").length,
     [exams]
   );
+
+  const canPublishRoutine = !authLoading && user?.role === "assistant_head";
+
+  const isRoutineReady = (exam: ExamItem) => {
+    const marks = exam.subjectMarks || [];
+    return marks.length > 0 && marks.every((mark) => Boolean(mark.subjectId?._id && mark.date && mark.duration));
+  };
+
+  const buildRoutineNotice = (exam: ExamItem) => {
+    const routineLines = (exam.subjectMarks || []).map((mark, index) => {
+      const subjectName = mark.subjectId?.name || "Subject";
+      const subjectCode = mark.subjectId?.code ? ` (${mark.subjectId.code})` : "";
+      const dateText = mark.date ? formatDate(mark.date) : "Not set";
+      const durationText = mark.duration ? `${mark.duration} min` : "Not set";
+      return `${index + 1}. ${subjectName}${subjectCode} - ${dateText} - ${durationText}`;
+    });
+
+    return [
+      `Exam: ${exam.name}`,
+      `Class: ${exam.classId?.name || "Unassigned"}`,
+      "Routine:",
+      ...routineLines,
+      "",
+      "This routine was published by the assistant head.",
+    ].join("\n");
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -266,6 +295,41 @@ export default function ExamsPage() {
     }
   };
 
+  const publishRoutine = async (exam: ExamItem) => {
+    if (!canPublishRoutine) {
+      setError("Only assistant head can publish exam routine notices.");
+      return;
+    }
+
+    if (!isRoutineReady(exam)) {
+      setError("Set all subject dates and durations before publishing the routine.");
+      return;
+    }
+
+    setPublishingExamId(exam._id);
+    setError("");
+    try {
+      const body = new FormData();
+      body.append("title", `${exam.name} Routine`);
+      body.append("content", buildRoutineNotice(exam));
+      body.append("category", "academic");
+      body.append("priority", "medium");
+      body.append("targetAudience", "all");
+      body.append("schedulePublish", "false");
+      body.append("publishedAt", "");
+      body.append("expiryDate", "");
+      body.append("idCardRenewal", "false");
+      body.append("targetRoles", "all");
+
+      await api.notices.create(body);
+      setError(`${exam.name} routine published as a notice.`);
+    } catch (err: any) {
+      setError(err?.message || "Failed to publish exam routine notice");
+    } finally {
+      setPublishingExamId(null);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -300,6 +364,7 @@ export default function ExamsPage() {
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
               <TableHead>Exam name</TableHead>
+              <TableHead>Routine</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Class</TableHead>
               <TableHead>Start date</TableHead>
@@ -312,13 +377,13 @@ export default function ExamsPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-slate-500">
+                <TableCell colSpan={9} className="h-32 text-center text-slate-500">
                   Loading exams...
                 </TableCell>
               </TableRow>
             ) : exams.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-slate-500">
+                <TableCell colSpan={9} className="h-32 text-center text-slate-500">
                   No exams found.
                 </TableCell>
               </TableRow>
@@ -328,6 +393,33 @@ export default function ExamsPage() {
                   <TableCell>
                     <div className="font-medium text-slate-950">{exam.name}</div>
                     <div className="text-xs text-slate-500">{exam.subjectMarks?.length || 0} subject schedule</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-2">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "w-fit capitalize",
+                          isRoutineReady(exam)
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-amber-200 bg-amber-50 text-amber-700"
+                        )}
+                      >
+                        {isRoutineReady(exam) ? "Routine ready" : "Routine incomplete"}
+                      </Badge>
+                      {canPublishRoutine && isRoutineReady(exam) && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="w-fit"
+                          disabled={publishingExamId === exam._id}
+                          onClick={() => publishRoutine(exam)}
+                        >
+                          {publishingExamId === exam._id ? "Publishing..." : "Publish routine"}
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
