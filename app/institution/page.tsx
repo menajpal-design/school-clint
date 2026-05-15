@@ -40,6 +40,7 @@ type BackupConfig = {
 
 const quickLinks = [
   { href: '/institution/profile', label: 'Profile', icon: Building2 },
+  { href: '/institution/students', label: 'Students', icon: GraduationCap },
   { href: '/institution/admission', label: 'Admission', icon: GraduationCap },
   { href: '/institution/teachers', label: 'Teachers', icon: Users },
   { href: '/institution/staff', label: 'Staff', icon: UserRoundCog },
