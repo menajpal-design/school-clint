@@ -164,15 +164,24 @@ export default function AttendanceMarkPage() {
               week.map((day, di) => {
                 if (day === null) return <div key={`${wi}-${di}`} className="h-10 rounded-md bg-transparent" />;
                 const status = recordsByDay.get(day);
-                const bgClass = status === 'present' ? 'bg-emerald-200' : status === 'absent' ? 'bg-rose-200' : status === 'late' ? 'bg-amber-200' : status === 'leave' ? 'bg-sky-200' : 'bg-white';
                 const isSelected = calendarSelectedDay === day;
+                const classes = [
+                  'h-10', 'rounded-md', 'flex', 'items-center', 'justify-center', 'text-sm', 'font-medium', 'relative', 'transition', 'duration-150', 'ease-in-out', 'cursor-pointer'
+                ];
+                if (isSelected) classes.push('ring-2', 'ring-blue-500');
+                if (status === 'present') classes.push('bg-emerald-600', 'text-white');
+                else if (status === 'absent') classes.push('bg-rose-200', 'text-slate-800');
+                else if (status === 'late') classes.push('bg-amber-200', 'text-slate-800');
+                else if (status === 'leave') classes.push('bg-sky-200', 'text-slate-800');
+                else classes.push('bg-white', 'text-slate-800', 'border', 'border-transparent', 'hover:border-slate-200');
+
                 return (
                   <button
                     key={`${wi}-${di}`}
-                    onClick={() => { setCalendarSelectedDay(day); }}
+                    onClick={() => setCalendarSelectedDay(day)}
                     onMouseEnter={() => setHoverDay(day)}
                     onMouseLeave={() => setHoverDay((d) => d === day ? null : d)}
-                    className={`${bgClass} ${isSelected ? 'ring-2 ring-blue-500' : ''} h-10 rounded-md flex items-center justify-center text-sm font-medium text-slate-800 relative`}
+                    className={classes.join(' ')}
                     title={`Day ${day}`}
                   >
                     {day}
