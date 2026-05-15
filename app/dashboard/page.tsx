@@ -260,6 +260,29 @@ export default function Dashboard() {
     { label: "ID Cards Issued", value: summary.idCardsIssued.toLocaleString(), helper: "Total generated cards", icon: BadgeCheck, href: "/id-cards/reports" },
   ];
 
+  // Role-based visibility: define which roles see full dashboard
+  const isFullAdmin = user && ['admin', 'super_admin', 'head', 'assistant_head'].includes(user.role);
+
+  // Determine which stats should be visible for each role
+  const visibleStats = useMemo(() => {
+    if (!user) return [];
+    if (isFullAdmin) return stats;
+    switch (user.role) {
+      case 'class_teacher':
+        return stats.filter((s) => ['Total Students', 'Today Attendance', 'Active Notices'].includes(s.label));
+      case 'subject_teacher':
+        return stats.filter((s) => ['Today Attendance', 'Active Notices'].includes(s.label));
+      case 'staff':
+        return stats.filter((s) => ['Total Staff', 'Active Notices', 'ID Cards Issued'].includes(s.label));
+      case 'parent':
+        return stats.filter((s) => ['Active Notices'].includes(s.label));
+      case 'student':
+        return []; // Students should not see the main stats tiles
+      default:
+        return stats;
+    }
+  }, [user, stats, isFullAdmin]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 p-4 md:p-6">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -279,8 +302,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat, index) => {
+        {visibleStats.length > 0 && (
+          <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {visibleStats.map((stat, index) => {
             const colors = [
               'from-blue-500 to-blue-600',
               'from-emerald-500 to-emerald-600',
@@ -313,40 +337,49 @@ export default function Dashboard() {
               </Card>
               </Link>
             );
-          })}
+            })}
+          </section>
+        )}
+
+        <section className="grid gap-6 xl:grid-cols-7">
+          {isFullAdmin && (
+            <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-xl xl:col-span-3">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold text-slate-900">Institution Composition</CardTitle>
+                <CardDescription className="text-slate-600">Distribution of students, teachers, and staff</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PieChartCard title="Institution Composition" data={composition} />
+              </CardContent>
+            </Card>
+          )}
+
+          {(isFullAdmin || ['class_teacher', 'assistant_head', 'subject_teacher'].includes(user?.role || '')) && (
+            <Card className={`border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-xl ${isFullAdmin ? 'xl:col-span-4' : 'xl:col-span-7'}`}>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold text-slate-900">Attendance Overview</CardTitle>
+                <CardDescription className="text-slate-600">Today's attendance statistics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BarChartCard title="Attendance Overview" data={attendance} xKey="name" yKey="value" />
+              </CardContent>
+            </Card>
+          )}
         </section>
 
         <section className="grid gap-6 xl:grid-cols-7">
-          <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-xl xl:col-span-3">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-bold text-slate-900">Institution Composition</CardTitle>
-              <CardDescription className="text-slate-600">Distribution of students, teachers, and staff</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PieChartCard title="Institution Composition" data={composition} />
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-xl xl:col-span-4">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-bold text-slate-900">Attendance Overview</CardTitle>
-              <CardDescription className="text-slate-600">Today's attendance statistics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <BarChartCard title="Attendance Overview" data={attendance} xKey="name" yKey="value" />
-            </CardContent>
-          </Card>
-        </section>
+          {(isFullAdmin || ['finance_officer', 'staff'].includes(user?.role || '')) && (
+            <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 shadow-xl xl:col-span-4">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold text-slate-900">Monthly Fee Collection Trend</CardTitle>
+                <CardDescription className="text-slate-600">Fee collection over the past months</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LineChartCard title="Monthly Fee Collection Trend" data={feeTrend} xKey="name" yKey="value" />
+              </CardContent>
+            </Card>
+          )}
 
-        <section className="grid gap-6 xl:grid-cols-7">
-          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 shadow-xl xl:col-span-4">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-bold text-slate-900">Monthly Fee Collection Trend</CardTitle>
-              <CardDescription className="text-slate-600">Fee collection over the past months</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LineChartCard title="Monthly Fee Collection Trend" data={feeTrend} xKey="name" yKey="value" />
-            </CardContent>
-          </Card>
           <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-red-50 shadow-xl xl:col-span-3">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-bold text-slate-900">Recent Notices</CardTitle>
