@@ -36,6 +36,7 @@ export default function AttendanceMarkPage() {
   const [calendarViewYear, setCalendarViewYear] = useState<number>(new Date().getFullYear());
   const [calendarSelectedMonth, setCalendarSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [calendarSelectedDay, setCalendarSelectedDay] = useState<number | null>(null);
+  const [hoverDay, setHoverDay] = useState<number | null>(null);
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
@@ -166,8 +167,10 @@ export default function AttendanceMarkPage() {
                 return (
                   <button
                     key={`${wi}-${di}`}
-                    onClick={() => setCalendarSelectedDay(day)}
-                    className={`${bgClass} ${isSelected ? 'ring-2 ring-blue-500' : ''} h-10 rounded-md flex items-center justify-center text-sm font-medium text-slate-800`}
+                    onClick={() => { setCalendarSelectedDay(day); }}
+                    onMouseEnter={() => setHoverDay(day)}
+                    onMouseLeave={() => setHoverDay((d) => d === day ? null : d)}
+                    className={`${bgClass} ${isSelected ? 'ring-2 ring-blue-500' : ''} h-10 rounded-md flex items-center justify-center text-sm font-medium text-slate-800 relative`}
                     title={`Day ${day}`}
                   >
                     {day}
@@ -178,10 +181,58 @@ export default function AttendanceMarkPage() {
           </div>
         </div>
 
+        {/* Hover preview box for teachers: show who is present on hover */}
+        {hoverDay && isTeacherOrUpperRole && (
+          <div className="mt-2 p-2 bg-white border rounded shadow-sm text-sm">
+            <div className="font-medium">Present on {hoverDay}/{calendarSelectedMonth}/{calendarViewYear}</div>
+            <div className="mt-2 max-h-40 overflow-auto">
+              {(students.filter(s => s.attendanceRecords?.some(r => { const d=new Date(r.date); return d.getFullYear()===calendarViewYear && d.getMonth()+1===calendarSelectedMonth && d.getDate()===hoverDay && r.status==='present'; }))).map(s => (
+                <div key={s._id} className="flex items-center justify-between py-1">
+                  <div className="truncate">{s.userId?.name} <span className="text-slate-500">({s.rollNumber})</span></div>
+                </div>
+              )) || <div className="text-slate-500">No present records</div>}
+            </div>
+          </div>
+        )}
+
         {calendarSelectedDay && (
           <div className="mt-4 p-4 border rounded-md bg-slate-50">
             <h4 className="font-semibold">Attendance on {calendarSelectedDay}/{calendarSelectedMonth}/{calendarViewYear}</h4>
             <div className="mt-2 space-y-1">
+              {/* Teacher actions */}
+              {isTeacherOrUpperRole && (
+                <div className="flex gap-2 mb-2">
+                  <Button size="sm" onClick={async () => {
+                    if (!classId) { setMessage('Select a class first.'); return; }
+                    const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
+                    try {
+                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'present' })) });
+                      setMessage('Marked all present for the day.');
+                      await loadStudents();
+                    } catch (e:any) { setMessage(e?.message || 'Failed to mark.'); }
+                  }}>Mark All Present</Button>
+                  <Button size="sm" variant="outline" onClick={async () => {
+                    if (!classId) { setMessage('Select a class first.'); return; }
+                    const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
+                    try {
+                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'absent' })) });
+                      setMessage('Marked all absent for the day.');
+                      await loadStudents();
+                    } catch (e:any) { setMessage(e?.message || 'Failed to mark.'); }
+                  }}>Mark All Absent</Button>
+                  <Button size="sm" variant="ghost" onClick={() => {
+                    // print present list
+                    const d = `${calendarSelectedDay}/${calendarSelectedMonth}/${calendarViewYear}`;
+                    const presentList = students.filter(s => s.attendanceRecords?.some(r => { const dd=new Date(r.date); return dd.getFullYear()===calendarViewYear && dd.getMonth()+1===calendarSelectedMonth && dd.getDate()===calendarSelectedDay && r.status==='present'; }));
+                    const w = window.open('', '_blank');
+                    if (w) {
+                      w.document.write(`<html><head><title>Attendance ${d}</title></head><body><h3>Present on ${d}</h3><ul>${presentList.map(p => `<li>${p.userId?.name} (${p.rollNumber})</li>`).join('')}</ul></body></html>`);
+                      w.document.close();
+                      w.print();
+                    }
+                  }}>Print</Button>
+                </div>
+              )}
               {students.map((s) => {
                 const record = s.attendanceRecords?.find(r => {
                   const d = new Date(r.date);
