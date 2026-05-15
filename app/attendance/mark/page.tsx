@@ -36,6 +36,10 @@ export default function AttendanceMarkPage() {
   const [calendarViewYear, setCalendarViewYear] = useState<number>(new Date().getFullYear());
   const [calendarSelectedMonth, setCalendarSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [calendarSelectedDay, setCalendarSelectedDay] = useState<number | null>(null);
+  const [overviewYear, setOverviewYear] = useState<number>(new Date().getFullYear());
+  const [overviewMonth, setOverviewMonth] = useState<number>(new Date().getMonth() + 1);
+  const [overviewStudents, setOverviewStudents] = useState<Student[]>([]);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
@@ -47,6 +51,13 @@ export default function AttendanceMarkPage() {
     const data = await api.academic.classes.getAll() as { classes: ClassItem[] };
     setClasses(data.classes || []);
     setClassId((current) => current || data.classes?.[0]?._id || "");
+  };
+
+  const loadOverview = async () => {
+    if (!classId) return;
+    const overviewDate = `${overviewYear}-${String(overviewMonth).padStart(2, '0')}-01`;
+    const data = await api.attendance.getStudentAttendance(classId, sectionId, overviewDate) as { students: Student[] };
+    setOverviewStudents(data.students || []);
   };
 
   const loadStudents = async () => {
@@ -80,6 +91,7 @@ export default function AttendanceMarkPage() {
 
   useEffect(() => { loadClasses().catch(() => undefined); }, []);
   useEffect(() => { loadStudents().catch(() => setStudents([])); }, [classId, sectionId, date]);
+  useEffect(() => { loadOverview().catch(() => setOverviewStudents([])); }, [classId, sectionId, overviewYear, overviewMonth]);
 
   const setAll = (status: Status) => setStudents((current) => current.map((student) => ({ ...student, status })));
   const setOne = (id: string, status: Status) => setStudents((current) => current.map((student) => student._id === id ? { ...student, status } : student));
@@ -235,6 +247,62 @@ export default function AttendanceMarkPage() {
       </section>
 
       {message && <div className="rounded-lg border border-border bg-popover px-4 py-3 text-sm text-foreground">{message}</div>}
+
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
+        <h3 className="text-lg font-semibold mb-4">Monthly Attendance Overview</h3>
+        <div className="flex items-center gap-4 mb-4">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Year</span>
+            <Select value={String(overviewYear)} onValueChange={(value) => setOverviewYear(Number(value))}>
+              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+              <SelectContent>{Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}</SelectContent>
+            </Select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Month</span>
+            <Select value={String(overviewMonth)} onValueChange={(value) => setOverviewMonth(Number(value))}>
+              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>{Array.from({ length: 12 }, (_, i) => i + 1).map((month) => <SelectItem key={month} value={String(month)}>{new Date(0, month - 1).toLocaleString(undefined, { month: 'long' })}</SelectItem>)}</SelectContent>
+            </Select>
+          </label>
+        </div>
+        <div className="grid grid-cols-7 gap-2 md:grid-cols-10 lg:grid-cols-15 xl:grid-cols-31">
+          {Array.from({ length: new Date(overviewYear, overviewMonth, 0).getDate() }, (_, i) => i + 1).map((day) => {
+            const presentCount = overviewStudents.filter(s => s.attendanceRecords?.some(r => {
+              const d = new Date(r.date);
+              return d.getFullYear() === overviewYear && d.getMonth() + 1 === overviewMonth && d.getDate() === day && r.status === 'present';
+            })).length;
+            return (
+              <Button
+                key={day}
+                variant={selectedDay === day ? "default" : "outline"}
+                size="sm"
+                className="h-12 flex flex-col items-center justify-center"
+                onClick={() => setSelectedDay(selectedDay === day ? null : day)}
+              >
+                <div className="text-xs">{day}</div>
+                <div className="text-xs font-semibold">{presentCount}</div>
+              </Button>
+            );
+          })}
+        </div>
+        {selectedDay && (
+          <div className="mt-4 p-4 border rounded-md bg-slate-50">
+            <h4 className="font-semibold">Present on {selectedDay}/{overviewMonth}/{overviewYear}</h4>
+            <div className="mt-2 space-y-1">
+              {overviewStudents.filter(s => s.attendanceRecords?.some(r => {
+                const d = new Date(r.date);
+                return d.getFullYear() === overviewYear && d.getMonth() + 1 === overviewMonth && d.getDate() === selectedDay && r.status === 'present';
+              })).map((s) => (
+                <div key={s._id} className="flex justify-between text-sm">
+                  <span>{s.userId?.name} ({s.rollNumber})</span>
+                  <Badge variant="default">Present</Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 p-4">
