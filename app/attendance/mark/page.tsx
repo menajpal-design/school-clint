@@ -236,8 +236,8 @@ export default function AttendanceMarkPage() {
 
       {message && <div className="rounded-lg border border-border bg-popover px-4 py-3 text-sm text-foreground">{message}</div>}
 
-      {calendarStudent && (
-        <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
+      <Dialog open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <DialogContent className="max-w-3xl">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">Attendance calendar</h3>
@@ -274,8 +274,8 @@ export default function AttendanceMarkPage() {
               </div>
             )}
           </div>
-        </section>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 p-4">
@@ -309,7 +309,7 @@ export default function AttendanceMarkPage() {
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{student.rollNumber}</TableCell>
                   <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
-                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
+                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarOpen(true); setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
                 </TableRow>
               );
