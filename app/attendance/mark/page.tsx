@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Camera, ClipboardCheck, Save, Calendar as CalendarIcon } from "lucide-react";
+import { jsPDF } from "jspdf";
+import { Camera, ClipboardCheck, Download, FileSpreadsheet, FileText, Save, Calendar as CalendarIcon } from "lucide-react";
 
 import { WebcamScanner } from "@/components/id-cards/WebcamScanner";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -13,8 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/useToast";
 import { api } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { downloadFile, cn } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
+import { getPrintInstitution, makeQrDataUrl } from "@/lib/export-utils";
 
 type Status = "present" | "absent" | "late" | "leave";
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
@@ -28,6 +30,15 @@ const dateKey = (value?: string | Date) => {
   if (match) return match[0];
   return new Date(value).toISOString().slice(0, 10);
 };
+const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+const summarizeRecords = (records: Array<{ status: Status }> = []) => ({
+  total: records.length,
+  present: records.filter((record) => record.status === "present").length,
+  absent: records.filter((record) => record.status === "absent").length,
+  late: records.filter((record) => record.status === "late").length,
+  leave: records.filter((record) => record.status === "leave").length,
+});
 
 export default function AttendanceMarkPage() {
   const { addToast } = useToast();
@@ -126,6 +137,182 @@ export default function AttendanceMarkPage() {
 
   const setAll = (status: Status) => setStudents((current) => current.map((student) => ({ ...student, status })));
   const setOne = (id: string, status: Status) => setStudents((current) => current.map((student) => student._id === id ? { ...student, status } : student));
+
+  const className = selectedClass?.name || "Selected class";
+  const exportClassExcel = () => {
+    const headers = ["Roll", "Name", "Class", "Section", "Selected Date", "Date Status", "Total", "Present", "Absent", "Late", "Leave"];
+    const rows = students.map((student) => {
+      const summary = summarizeRecords(student.attendanceRecords);
+      return [
+        student.rollNumber || "-",
+        student.userId?.name || "-",
+        className,
+        student.sectionId?.name || (sectionId ? sections.find((section) => section._id === sectionId)?.name : "All sections") || "-",
+        date,
+        student.status || "-",
+        summary.total,
+        summary.present,
+        summary.absent,
+        summary.late,
+        summary.leave,
+      ];
+    });
+    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+    downloadFile(`\uFEFF${csv}`, `attendance-${className.replace(/\s+/g, "-").toLowerCase()}-${date}.csv`, "text/csv;charset=utf-8");
+  };
+
+  const exportClassPdf = async () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    const institution = getPrintInstitution();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 36;
+    const qrDataUrl = await makeQrDataUrl(JSON.stringify({ title: "Class Attendance", className, date, records: students.length, generatedAt: new Date().toISOString() }), 96);
+    const columns = [
+      { label: "Roll", width: 70 },
+      { label: "Name", width: 170 },
+      { label: "Section", width: 90 },
+      { label: "Date Status", width: 88 },
+      { label: "Total", width: 58 },
+      { label: "Present", width: 65 },
+      { label: "Absent", width: 65 },
+      { label: "Late", width: 58 },
+      { label: "Leave", width: 58 },
+    ];
+
+    const drawHeader = () => {
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, pageWidth, 72, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(institution.name, margin, 24);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(`Class Attendance | ${className} | ${date} | Students: ${students.length}`, margin, 44);
+      if (institution.address) doc.text(institution.address, margin, 58);
+      doc.addImage(qrDataUrl, "PNG", pageWidth - margin - 54, 14, 48, 48);
+    };
+
+    const drawTableHeader = (y: number) => {
+      let x = margin;
+      doc.setFillColor(241, 245, 249);
+      doc.rect(margin, y, pageWidth - margin * 2, 24, "F");
+      doc.setTextColor(51, 65, 85);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      columns.forEach((column) => {
+        doc.text(column.label, x + 5, y + 16);
+        x += column.width;
+      });
+    };
+
+    drawHeader();
+    drawTableHeader(88);
+    let y = 116;
+    const rows = students.length ? students : [{ _id: "empty", rollNumber: "-", userId: { name: "No students found" }, status: undefined, attendanceRecords: [] } as Student];
+    rows.forEach((student, index) => {
+      if (y > pageHeight - 44) {
+        doc.addPage();
+        drawHeader();
+        drawTableHeader(88);
+        y = 116;
+      }
+      if (index % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, y - 14, pageWidth - margin * 2, 24, "F");
+      }
+      const summary = summarizeRecords(student.attendanceRecords);
+      const values = [
+        student.rollNumber || "-",
+        student.userId?.name || "-",
+        student.sectionId?.name || "-",
+        student.status || "-",
+        summary.total,
+        summary.present,
+        summary.absent,
+        summary.late,
+        summary.leave,
+      ];
+      let x = margin;
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      values.forEach((value, columnIndex) => {
+        const text = doc.splitTextToSize(String(value), columns[columnIndex].width - 10)[0] || "";
+        doc.text(text, x + 5, y);
+        x += columns[columnIndex].width;
+      });
+      y += 24;
+    });
+    doc.save(`attendance-${className.replace(/\s+/g, "-").toLowerCase()}-${date}.pdf`);
+  };
+
+  const exportStudentExcel = (student: Student) => {
+    const headers = ["Date", "Status", "Roll", "Name", "Class", "Section"];
+    const rows = (student.attendanceRecords || []).map((record) => [record.date, record.status, student.rollNumber || "-", student.userId?.name || "-", className, student.sectionId?.name || "-"]);
+    const csv = [headers, ...(rows.length ? rows : [["-", "No records", student.rollNumber || "-", student.userId?.name || "-", className, student.sectionId?.name || "-"]])].map((row) => row.map(csvCell).join(",")).join("\r\n");
+    downloadFile(`\uFEFF${csv}`, `attendance-${student.rollNumber || student._id}-${student.userId?.name || "student"}.csv`, "text/csv;charset=utf-8");
+  };
+
+  const exportStudentPdf = async (student: Student) => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    const institution = getPrintInstitution();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 42;
+    const summary = summarizeRecords(student.attendanceRecords);
+    const qrDataUrl = await makeQrDataUrl(JSON.stringify({ title: "Student Attendance", studentId: student._id, name: student.userId?.name, generatedAt: new Date().toISOString() }), 96);
+
+    const drawHeader = () => {
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, pageWidth, 86, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(institution.name, margin, 26);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Attendance Calendar | ${student.userId?.name || "-"} | Roll: ${student.rollNumber || "-"}`, margin, 48);
+      doc.text(`Class: ${className} | Section: ${student.sectionId?.name || "-"}`, margin, 66);
+      doc.addImage(qrDataUrl, "PNG", pageWidth - margin - 54, 16, 48, 48);
+    };
+
+    drawHeader();
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`Total ${summary.total}`, margin, 116);
+    doc.text(`Present ${summary.present}`, margin + 90, 116);
+    doc.text(`Absent ${summary.absent}`, margin + 190, 116);
+    doc.text(`Late ${summary.late}`, margin + 290, 116);
+    doc.text(`Leave ${summary.leave}`, margin + 380, 116);
+
+    let y = 148;
+    doc.setFillColor(241, 245, 249);
+    doc.rect(margin, y - 16, pageWidth - margin * 2, 24, "F");
+    doc.text("Date", margin + 8, y);
+    doc.text("Status", margin + 160, y);
+    y += 28;
+    doc.setFont("helvetica", "normal");
+    const records = student.attendanceRecords?.length ? student.attendanceRecords : [{ date: "-", status: "No records" as Status }];
+    records.forEach((record, index) => {
+      if (y > pageHeight - 42) {
+        doc.addPage();
+        drawHeader();
+        y = 116;
+      }
+      if (index % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, y - 15, pageWidth - margin * 2, 24, "F");
+      }
+      doc.setTextColor(15, 23, 42);
+      doc.text(record.date, margin + 8, y);
+      doc.text(record.status, margin + 160, y);
+      y += 24;
+    });
+    doc.save(`attendance-${student.rollNumber || student._id}-${student.userId?.name || "student"}.pdf`);
+  };
 
   const save = async () => {
     setSaving(true);
@@ -363,6 +550,14 @@ export default function AttendanceMarkPage() {
             <Camera className="mr-2 h-4 w-4" />
             ID Card Scan
           </Button>,
+          <Button key="export-class-excel" variant="outline" size="sm" onClick={exportClassExcel} disabled={!students.length}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Excel
+          </Button>,
+          <Button key="export-class-pdf" variant="outline" size="sm" onClick={exportClassPdf} disabled={!students.length}>
+            <FileText className="mr-2 h-4 w-4" />
+            PDF
+          </Button>,
         ]}
       />
 
@@ -445,10 +640,11 @@ export default function AttendanceMarkPage() {
               <TableHead>Name</TableHead>
               <TableHead>Total Present</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {students.length === 0 ? <TableRow><TableCell colSpan={5} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => {
+            {students.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => {
               const isPresentHighlight = isTeacherOrUpperRole && student.status === "present";
               return (
                 <TableRow 
@@ -462,6 +658,12 @@ export default function AttendanceMarkPage() {
                   <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
                   <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button type="button" variant="ghost" size="sm" onClick={async () => { setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); await fetchCalendarStudent(student._id); setCalendarOpen(true); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
+                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => exportStudentExcel(student)}><FileSpreadsheet className="h-4 w-4" /></Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => exportStudentPdf(student)}><Download className="h-4 w-4" /></Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               );
             })}

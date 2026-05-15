@@ -7,6 +7,8 @@ import { Download, FileBarChart } from "lucide-react";
 import { BarChartCard } from "@/components/charts/BarChartCard";
 import { LineChartCard } from "@/components/charts/LineChartCard";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { StatCard } from "@/components/shared/StatCard";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
@@ -19,6 +21,13 @@ type RecordItem = { _id: string; date: string; status: string; studentId?: { rol
 
 const firstDay = () => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
 const today = () => new Date().toISOString().slice(0, 10);
+const dateKey = (value?: string | Date) => {
+  if (!value) return "";
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  const match = String(value).match(/^\d{4}-\d{2}-\d{2}/);
+  if (match) return match[0];
+  return new Date(value).toISOString().slice(0, 10);
+};
 
 export default function AttendanceReportsPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
@@ -31,6 +40,8 @@ export default function AttendanceReportsPage() {
   const [reports, setReports] = useState<RecordItem[]>([]);
   const [comparison, setComparison] = useState<any[]>([]);
   const [trend, setTrend] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
@@ -46,10 +57,21 @@ export default function AttendanceReportsPage() {
   };
 
   const loadReports = async () => {
-    const data = await api.attendance.getReports({ startDate, endDate, classId: classId || undefined, sectionId: sectionId || undefined, personId: personId || undefined }) as any;
-    setReports(data.reports || []);
-    setComparison(data.comparison || []);
-    setTrend(data.trend || []);
+    setLoading(true);
+    setMessage("");
+    try {
+      const data = await api.attendance.getReports({ startDate, endDate, classId: classId || undefined, sectionId: sectionId || undefined, personId: personId || undefined }) as any;
+      setReports(data.reports || []);
+      setComparison(data.comparison || []);
+      setTrend(data.trend || []);
+    } catch (err: any) {
+      setReports([]);
+      setComparison([]);
+      setTrend([]);
+      setMessage(err?.message || "Failed to load attendance reports.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { loadLookups().catch(() => undefined); }, []);
@@ -57,13 +79,20 @@ export default function AttendanceReportsPage() {
   useEffect(() => { loadReports().catch(() => undefined); }, [startDate, endDate, classId, sectionId, personId]);
 
   const reportRows = reports.map((item) => ({
-    date: formatDate(item.date),
+    date: formatDate(dateKey(item.date)),
     name: item.studentId?.userId?.name || "-",
     roll: item.studentId?.rollNumber || "-",
     className: item.classId?.name || "-",
     section: item.sectionId?.name || "-",
     status: item.status || "-",
   }));
+  const summary = {
+    total: reports.length,
+    present: reports.filter((item) => item.status === "present").length,
+    absent: reports.filter((item) => item.status === "absent").length,
+    late: reports.filter((item) => item.status === "late").length,
+    leave: reports.filter((item) => item.status === "leave").length,
+  };
 
   const fileSuffix = `${startDate}_to_${endDate}`;
 
@@ -199,6 +228,16 @@ export default function AttendanceReportsPage() {
         </div>
       </section>
 
+      {message && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{message}</div>}
+
+      <div className="grid gap-4 md:grid-cols-5">
+        <StatCard label="Total" value={summary.total} loading={loading} />
+        <StatCard label="Present" value={summary.present} tone="emerald" loading={loading} />
+        <StatCard label="Absent" value={summary.absent} tone="rose" loading={loading} />
+        <StatCard label="Late" value={summary.late} tone="amber" loading={loading} />
+        <StatCard label="Leave" value={summary.leave} tone="blue" loading={loading} />
+      </div>
+
       <div className="grid gap-5 xl:grid-cols-2">
         <BarChartCard title="Attendance comparison" data={comparison.map((item) => ({ name: item.name || "Class", value: item.percentage || 0 }))} />
         <LineChartCard title="Attendance trend" data={trend.map((item) => ({ name: item.date, value: item.percentage || 0 }))} />
@@ -206,7 +245,7 @@ export default function AttendanceReportsPage() {
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Date</TableHead><TableHead>Name</TableHead><TableHead>Roll</TableHead><TableHead>Class</TableHead><TableHead>Section</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>
-          {reportRows.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">No records found.</TableCell></TableRow> : reportRows.map((item, index) => <TableRow key={`${item.date}-${item.roll}-${index}`}><TableCell>{item.date}</TableCell><TableCell>{item.name}</TableCell><TableCell>{item.roll}</TableCell><TableCell>{item.className}</TableCell><TableCell>{item.section}</TableCell><TableCell className="capitalize">{item.status}</TableCell></TableRow>)}
+          {reportRows.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">{loading ? "Loading reports..." : "No records found."}</TableCell></TableRow> : reportRows.map((item, index) => <TableRow key={`${item.date}-${item.roll}-${index}`}><TableCell>{item.date}</TableCell><TableCell>{item.name}</TableCell><TableCell>{item.roll}</TableCell><TableCell>{item.className}</TableCell><TableCell>{item.section}</TableCell><TableCell><Badge variant="outline" className="capitalize">{item.status}</Badge></TableCell></TableRow>)}
         </TableBody></Table>
       </section>
     </div>

@@ -10,7 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 
-type AttendanceRecord = { _id: string; date: string; status: "present" | "absent" | "late" | "leave"; classId?: { name: string }; sectionId?: { name: string } };
+type AttendanceRecord = { _id: string; date: string; status: "present" | "absent" | "late" | "leave"; studentId?: { rollNumber?: string; userId?: { name: string } }; classId?: { name: string }; sectionId?: { name: string } };
+const dateKey = (value?: string | Date) => {
+  if (!value) return "";
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  const match = String(value).match(/^\d{4}-\d{2}-\d{2}/);
+  if (match) return match[0];
+  return new Date(value).toISOString().slice(0, 10);
+};
 
 export default function MyAttendancePage() {
   const now = new Date();
@@ -19,8 +26,10 @@ export default function MyAttendancePage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [summary, setSummary] = useState({ total: 0, present: 0, absent: 0, late: 0, leave: 0 });
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const load = async () => {
+    setLoading(true);
     try {
       const data = await api.attendance.getMine({ month, year }) as { attendance: AttendanceRecord[]; summary: typeof summary };
       setRecords(data.attendance || []);
@@ -30,12 +39,15 @@ export default function MyAttendancePage() {
       setRecords([]);
       setSummary({ total: 0, present: 0, absent: 0, late: 0, leave: 0 });
       setMessage(err?.message || 'Failed to load attendance.');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => { load().catch(() => undefined); }, [month, year]);
 
-  const byDate = useMemo(() => new Map(records.map((item) => [new Date(item.date).getDate(), item.status])), [records]);
+  const byDate = useMemo(() => new Map(records.map((item) => [Number(dateKey(item.date).slice(8, 10)), item.status])), [records]);
+  const firstWeekday = new Date(year, month - 1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
 
   return (
@@ -62,6 +74,8 @@ export default function MyAttendancePage() {
           <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">{message}</div>
         ) : (
           <div className="grid grid-cols-7 gap-2">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <div key={day} className="text-center text-xs font-semibold text-muted-foreground">{day}</div>)}
+            {Array.from({ length: firstWeekday }, (_, index) => <div key={`empty-${index}`} className="min-h-20" />)}
             {Array.from({ length: daysInMonth }, (_, index) => {
               const day = index + 1;
               const status = byDate.get(day);
@@ -78,8 +92,8 @@ export default function MyAttendancePage() {
       </section>
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Date</TableHead><TableHead>Class</TableHead><TableHead>Section</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>
-          {records.length === 0 ? <TableRow><TableCell colSpan={4} className="h-28 text-center text-slate-500">No attendance history for this month.</TableCell></TableRow> : records.map((record) => <TableRow key={record._id}><TableCell>{formatDate(record.date)}</TableCell><TableCell>{record.classId?.name || "-"}</TableCell><TableCell>{record.sectionId?.name || "-"}</TableCell><TableCell><Badge variant="outline" className="capitalize">{record.status}</Badge></TableCell></TableRow>)}
+        <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Date</TableHead><TableHead>Student</TableHead><TableHead>Class</TableHead><TableHead>Section</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>
+          {records.length === 0 ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">{loading ? "Loading attendance..." : "No attendance history for this month."}</TableCell></TableRow> : records.map((record) => <TableRow key={record._id}><TableCell>{formatDate(dateKey(record.date))}</TableCell><TableCell>{record.studentId?.userId?.name || record.studentId?.rollNumber || "-"}</TableCell><TableCell>{record.classId?.name || "-"}</TableCell><TableCell>{record.sectionId?.name || "-"}</TableCell><TableCell><Badge variant="outline" className="capitalize">{record.status}</Badge></TableCell></TableRow>)}
         </TableBody></Table>
       </section>
     </div>
