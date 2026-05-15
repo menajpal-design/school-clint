@@ -54,6 +54,26 @@ export default function AttendanceMarkPage() {
     addToast({ title, message, type, duration: 3500 });
   };
 
+  // Fetch and set fresh attendance history for a student into calendarStudent
+  const fetchCalendarStudent = async (studentId: string) => {
+    try {
+      const res = await api.attendance.getStudentAttendance(studentId) as { attendance: Array<{ date: string; status: Status }> };
+      const records = (res.attendance || []).map((r) => ({ date: String(r.date).slice(0, 10), status: r.status }));
+      const stu = students.find(s => s._id === studentId) || { _id: studentId } as Student;
+      const monthKey = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}`;
+      const presentCount = records.filter((r) => r.status === 'present' && r.date.slice(0,7) === monthKey).length;
+      const enriched = { ...stu, attendanceRecords: records, presentCount } as Student;
+      setCalendarStudent(enriched);
+      return enriched;
+    } catch (e) {
+      const stu = students.find(s => s._id === studentId) || { _id: studentId } as Student;
+      const enriched = { ...stu, attendanceRecords: [], presentCount: 0 } as Student;
+      setCalendarStudent(enriched);
+      return enriched;
+    }
+  };
+
+
   const loadClasses = async () => {
     const data = await api.academic.classes.getAll() as { classes: ClassItem[] };
     setClasses(data.classes || []);
@@ -242,7 +262,10 @@ export default function AttendanceMarkPage() {
                       await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'present' })) });
                       setDate(d);
                       const updated = await loadStudents(d);
-                      setCalendarStudent(updated.find(u => u._id === calendarStudent?._id) || calendarStudent);
+                      {
+                        const targetId = calendarStudent?._id;
+                        if (targetId) await fetchCalendarStudent(targetId);
+                      }
                       setMessage('Marked all present for the day.');
                       notify('Marked all present', `${calendarSelectedDay}/${calendarSelectedMonth}/${calendarViewYear} updated successfully.`, 'success');
                     } catch (e:any) { setMessage(e?.message || 'Failed to mark.'); }
@@ -254,7 +277,10 @@ export default function AttendanceMarkPage() {
                       await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'absent' })) });
                       setDate(d);
                       const updated = await loadStudents(d);
-                      setCalendarStudent(updated.find(u => u._id === calendarStudent?._id) || calendarStudent);
+                      {
+                        const targetId = calendarStudent?._id;
+                        if (targetId) await fetchCalendarStudent(targetId);
+                      }
                       setMessage('Marked all absent for the day.');
                       notify('Marked all absent', `${calendarSelectedDay}/${calendarSelectedMonth}/${calendarViewYear} updated successfully.`, 'success');
                     } catch (e:any) { setMessage(e?.message || 'Failed to mark.'); }
@@ -295,7 +321,7 @@ export default function AttendanceMarkPage() {
                                 await api.attendance.mark({ classId, sectionId, date: d, records: [{ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: st }] });
                                 setDate(d);
                                 const updated = await loadStudents(d);
-                                setCalendarStudent(updated.find(u => u._id === s._id) || calendarStudent);
+                                await fetchCalendarStudent(s._id);
                                 setMessage(`Marked ${s.userId?.name} as ${st}.`);
                               } catch (e:any) { setMessage(e?.message || 'Failed to update attendance.'); }
                             }}
@@ -427,7 +453,7 @@ export default function AttendanceMarkPage() {
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{student.rollNumber}</TableCell>
                   <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
-                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button type="button" variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarOpen(true); setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
+                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button type="button" variant="ghost" size="sm" onClick={async () => { setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); await fetchCalendarStudent(student._id); setCalendarOpen(true); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
                 </TableRow>
               );
