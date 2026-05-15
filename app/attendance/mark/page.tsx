@@ -238,7 +238,7 @@ export default function AttendanceMarkPage() {
                   const d = new Date(r.date);
                   return d.getFullYear() === calendarViewYear && d.getMonth() + 1 === calendarSelectedMonth && d.getDate() === calendarSelectedDay;
                 });
-                const status = (record?.status as Status) || 'No record';
+                const status: Status | 'No record' = (record?.status as Status) || 'No record';
                 return (
                   <div key={s._id} className="space-y-1">
                     <div className="flex items-center justify-between">
