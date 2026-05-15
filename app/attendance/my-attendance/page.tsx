@@ -18,11 +18,19 @@ export default function MyAttendancePage() {
   const [year, setYear] = useState(now.getFullYear());
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [summary, setSummary] = useState({ total: 0, present: 0, absent: 0, late: 0, leave: 0 });
+  const [message, setMessage] = useState("");
 
   const load = async () => {
-    const data = await api.attendance.getMine({ month, year }) as { attendance: AttendanceRecord[]; summary: typeof summary };
-    setRecords(data.attendance || []);
-    setSummary(data.summary || { total: 0, present: 0, absent: 0, late: 0, leave: 0 });
+    try {
+      const data = await api.attendance.getMine({ month, year }) as { attendance: AttendanceRecord[]; summary: typeof summary };
+      setRecords(data.attendance || []);
+      setSummary(data.summary || { total: 0, present: 0, absent: 0, late: 0, leave: 0 });
+      setMessage("");
+    } catch (err: any) {
+      setRecords([]);
+      setSummary({ total: 0, present: 0, absent: 0, late: 0, leave: 0 });
+      setMessage(err?.message || 'Failed to load attendance.');
+    }
   };
 
   useEffect(() => { load().catch(() => undefined); }, [month, year]);
@@ -50,13 +58,23 @@ export default function MyAttendancePage() {
       </div>
 
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
-        <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: daysInMonth }, (_, index) => {
-            const day = index + 1;
-            const status = byDate.get(day);
-            return <div key={day} className="min-h-20 rounded-lg border border-border p-2"><div className="text-sm font-medium">{day}</div>{status && <Badge variant="outline" className="mt-2 capitalize">{status}</Badge>}</div>;
-          })}
-        </div>
+        {message ? (
+          <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">{message}</div>
+        ) : (
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: daysInMonth }, (_, index) => {
+              const day = index + 1;
+              const status = byDate.get(day);
+              const classes = ['min-h-20', 'rounded-lg', 'p-2', 'flex', 'flex-col', 'items-start', 'justify-start'];
+              if (status === 'present') classes.push('bg-emerald-600', 'text-white');
+              else if (status === 'absent') classes.push('bg-rose-100');
+              else if (status === 'late') classes.push('bg-amber-100');
+              else if (status === 'leave') classes.push('bg-sky-100');
+              else classes.push('border', 'border-border');
+              return <div key={day} className={classes.join(' ')}><div className="text-sm font-medium">{day}</div>{status && <Badge variant="outline" className="mt-2 capitalize">{status}</Badge>}</div>;
+            })}
+          </div>
+        )}
       </section>
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
