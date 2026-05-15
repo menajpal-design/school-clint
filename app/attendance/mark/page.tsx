@@ -55,9 +55,18 @@ export default function AttendanceMarkPage() {
 
   const loadOverview = async () => {
     if (!classId) return;
-    const overviewDate = `${overviewYear}-${String(overviewMonth).padStart(2, '0')}-01`;
-    const data = await api.attendance.getStudentAttendance(classId, sectionId, overviewDate) as { students: Student[] };
-    setOverviewStudents(data.students || []);
+    const data = await api.attendance.getStudents({ classId, sectionId: sectionId || undefined }) as { students: Student[] };
+    const baseStudents = data.students || [];
+    const withRecords = await Promise.all(baseStudents.map(async (student) => {
+      try {
+        const res = await api.attendance.getStudentAttendance(student._id) as { attendance: Array<{ date: string; status: Status }> };
+        const records = (res.attendance || []).map((r) => ({ date: String(r.date).slice(0, 10), status: r.status }));
+        return { ...student, attendanceRecords: records };
+      } catch {
+        return { ...student, attendanceRecords: [] };
+      }
+    }));
+    setOverviewStudents(withRecords);
   };
 
   const loadStudents = async () => {
