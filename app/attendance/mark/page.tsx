@@ -148,8 +148,7 @@ export default function AttendanceMarkPage() {
       weeks.push(currentWeek);
     }
 
-    // build a horizontal day strip (single row) with offset to align weekday
-    const offset = startWeekday; // number of empty slots before day 1
+    // Render true month grid (weeks as rows)
     return (
       <div>
         <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-600">
@@ -157,28 +156,25 @@ export default function AttendanceMarkPage() {
         </div>
 
         <div className="mt-2">
-          <div className="overflow-x-auto py-2">
-            <div className="inline-flex items-center gap-2 px-2 py-1 rounded-xl bg-slate-50">
-              {Array.from({ length: offset }).map((_, i) => (
-                <div key={`pad-${i}`} className="w-9 h-9 inline-flex items-center justify-center" />
-              ))}
-              {Array.from({ length: daysInMonth }).map((_, idx) => {
-                const day = idx + 1;
+          <div className="grid grid-cols-7 gap-2">
+            {weeks.map((week, wi) => (
+              week.map((day, di) => {
+                if (day === null) return <div key={`${wi}-${di}`} className="h-10 rounded-md bg-transparent" />;
                 const status = recordsByDay.get(day);
-                const bg = status === 'present' ? 'bg-emerald-200' : status === 'absent' ? 'bg-rose-200' : status === 'late' ? 'bg-amber-200' : status === 'leave' ? 'bg-sky-200' : 'bg-white';
+                const bgClass = status === 'present' ? 'bg-emerald-200' : status === 'absent' ? 'bg-rose-200' : status === 'late' ? 'bg-amber-200' : status === 'leave' ? 'bg-sky-200' : 'bg-white';
                 const isSelected = calendarSelectedDay === day;
                 return (
                   <button
-                    key={day}
+                    key={`${wi}-${di}`}
                     onClick={() => setCalendarSelectedDay(day)}
-                    className={`${bg} ${isSelected ? 'ring-2 ring-blue-500' : ''} inline-flex items-center justify-center w-9 h-9 rounded-full text-sm font-medium text-slate-800 shadow-sm`}
+                    className={`${bgClass} ${isSelected ? 'ring-2 ring-blue-500' : ''} h-10 rounded-md flex items-center justify-center text-sm font-medium text-slate-800`}
                     title={`Day ${day}`}
                   >
                     {day}
                   </button>
                 );
-              })}
-            </div>
+              })
+            ))}
           </div>
         </div>
 
