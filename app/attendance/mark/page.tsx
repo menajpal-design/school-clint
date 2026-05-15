@@ -36,10 +36,6 @@ export default function AttendanceMarkPage() {
   const [calendarViewYear, setCalendarViewYear] = useState<number>(new Date().getFullYear());
   const [calendarSelectedMonth, setCalendarSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [calendarSelectedDay, setCalendarSelectedDay] = useState<number | null>(null);
-  const [overviewYear, setOverviewYear] = useState<number>(new Date().getFullYear());
-  const [overviewMonth, setOverviewMonth] = useState<number>(new Date().getMonth() + 1);
-  const [overviewStudents, setOverviewStudents] = useState<Student[]>([]);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
@@ -51,22 +47,6 @@ export default function AttendanceMarkPage() {
     const data = await api.academic.classes.getAll() as { classes: ClassItem[] };
     setClasses(data.classes || []);
     setClassId((current) => current || data.classes?.[0]?._id || "");
-  };
-
-  const loadOverview = async () => {
-    if (!classId) return;
-    const data = await api.attendance.getStudents({ classId, sectionId: sectionId || undefined }) as { students: Student[] };
-    const baseStudents = data.students || [];
-    const withRecords = await Promise.all(baseStudents.map(async (student) => {
-      try {
-        const res = await api.attendance.getStudentAttendance(student._id) as { attendance: Array<{ date: string; status: Status }> };
-        const records = (res.attendance || []).map((r) => ({ date: String(r.date).slice(0, 10), status: r.status }));
-        return { ...student, attendanceRecords: records };
-      } catch {
-        return { ...student, attendanceRecords: [] };
-      }
-    }));
-    setOverviewStudents(withRecords);
   };
 
   const loadStudents = async () => {
@@ -99,8 +79,7 @@ export default function AttendanceMarkPage() {
   };
 
   useEffect(() => { loadClasses().catch(() => undefined); }, []);
-  useEffect(() => { loadStudents().catch(() => setStudents([])); }, [classId, sectionId, date]);
-  useEffect(() => { loadOverview().catch(() => setOverviewStudents([])); }, [classId, sectionId, overviewYear, overviewMonth]);
+  useEffect(() => { if (classId) loadStudents(); }, [classId, sectionId, date]);
 
   const setAll = (status: Status) => setStudents((current) => current.map((student) => ({ ...student, status })));
   const setOne = (id: string, status: Status) => setStudents((current) => current.map((student) => student._id === id ? { ...student, status } : student));
@@ -257,105 +236,8 @@ export default function AttendanceMarkPage() {
 
       {message && <div className="rounded-lg border border-border bg-popover px-4 py-3 text-sm text-foreground">{message}</div>}
 
-      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Monthly Attendance Overview</h3>
-        <div className="flex items-center gap-4 mb-4">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">Year</span>
-            <Select value={String(overviewYear)} onValueChange={(value) => setOverviewYear(Number(value))}>
-              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-              <SelectContent>{Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => <SelectItem key={year} value={String(year)}>{year}</SelectItem>)}</SelectContent>
-            </Select>
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">Month</span>
-            <Select value={String(overviewMonth)} onValueChange={(value) => setOverviewMonth(Number(value))}>
-              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-              <SelectContent>{Array.from({ length: 12 }, (_, i) => i + 1).map((month) => <SelectItem key={month} value={String(month)}>{new Date(0, month - 1).toLocaleString(undefined, { month: 'long' })}</SelectItem>)}</SelectContent>
-            </Select>
-          </label>
-        </div>
-        <div className="grid grid-cols-7 gap-2 md:grid-cols-10 lg:grid-cols-15 xl:grid-cols-31">
-          {Array.from({ length: new Date(overviewYear, overviewMonth, 0).getDate() }, (_, i) => i + 1).map((day) => {
-            const presentCount = overviewStudents.filter(s => s.attendanceRecords?.some(r => {
-              const d = new Date(r.date);
-              return d.getFullYear() === overviewYear && d.getMonth() + 1 === overviewMonth && d.getDate() === day && r.status === 'present';
-            })).length;
-            return (
-              <Button
-                key={day}
-                variant={selectedDay === day ? "default" : "outline"}
-                size="sm"
-                className="h-12 flex flex-col items-center justify-center"
-                onClick={() => setSelectedDay(selectedDay === day ? null : day)}
-              >
-                <div className="text-xs">{day}</div>
-                <div className="text-xs font-semibold">{presentCount}</div>
-              </Button>
-            );
-          })}
-        </div>
-        {selectedDay && (
-          <div className="mt-4 p-4 border rounded-md bg-slate-50">
-            <h4 className="font-semibold">Present on {selectedDay}/{overviewMonth}/{overviewYear}</h4>
-            <div className="mt-2 space-y-1">
-              {overviewStudents.filter(s => s.attendanceRecords?.some(r => {
-                const d = new Date(r.date);
-                return d.getFullYear() === overviewYear && d.getMonth() + 1 === overviewMonth && d.getDate() === selectedDay && r.status === 'present';
-              })).map((s) => (
-                <div key={s._id} className="flex justify-between text-sm">
-                  <span>{s.userId?.name} ({s.rollNumber})</span>
-                  <Badge variant="default">Present</Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
-
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 p-4">
-          <div className="text-sm font-medium text-slate-700">{students.length} students</div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => setAll("present")}>All Present</Button>
-            <Button type="button" variant="outline" onClick={() => setAll("absent")}>All Absent</Button>
-            <Button type="button" onClick={save} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "Saving..." : "Save Attendance"}</Button>
-          </div>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
-              <TableHead>Photo</TableHead>
-              <TableHead>Roll</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Month Present</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {students.length === 0 ? <TableRow><TableCell colSpan={5} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => {
-              const isPresentHighlight = isTeacherOrUpperRole && student.status === "present";
-              return (
-                <TableRow 
-                  key={student._id} 
-                  className={cn(
-                    isPresentHighlight && "bg-emerald-50 hover:bg-emerald-100"
-                  )}
-                >
-                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
-                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{student.rollNumber}</TableCell>
-                  <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
-                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarOpen(true); setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
-                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </section>
-
-      <Dialog open={calendarOpen} onOpenChange={setCalendarOpen}>
-        <DialogContent className="max-w-3xl">
+      {calendarStudent && (
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">Attendance calendar</h3>
@@ -392,8 +274,49 @@ export default function AttendanceMarkPage() {
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </section>
+      )}
+
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 p-4">
+          <div className="text-sm font-medium text-slate-700">{students.length} students</div>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => setAll("present")}>All Present</Button>
+            <Button type="button" variant="outline" onClick={() => setAll("absent")}>All Absent</Button>
+            <Button type="button" onClick={save} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "Saving..." : "Save Attendance"}</Button>
+          </div>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead>Photo</TableHead>
+              <TableHead>Roll</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Month Present</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {students.length === 0 ? <TableRow><TableCell colSpan={5} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => {
+              const isPresentHighlight = isTeacherOrUpperRole && student.status === "present";
+              return (
+                <TableRow 
+                  key={student._id} 
+                  className={cn(
+                    isPresentHighlight && "bg-emerald-50 hover:bg-emerald-100"
+                  )}
+                >
+                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
+                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{student.rollNumber}</TableCell>
+                  <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
+                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
+                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </section>
 
       <Dialog open={scanOpen} onOpenChange={setScanOpen}>
         <DialogContent className="max-w-md">
