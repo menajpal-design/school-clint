@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { downloadBlob } from "@/lib/utils";
 
 type StudentOption = {
   _id: string;
@@ -165,59 +164,8 @@ export function AdmitCardDownload() {
     if (!selectedStudent) return;
     setDownloading(true);
     try {
-      const fullStudentResponse = await api.students.getById(selectedStudent._id).catch(() => selectedStudent) as any;
-      const student = (fullStudentResponse?.student || fullStudentResponse || selectedStudent) as StudentOption;
-      const exam = selectedExam;
-      const className = student.classId?.name || "";
-      const sectionName = student.sectionId?.name ? `-${student.sectionId.name}` : "";
-      const rollNumber = student.rollNumber || student.admissionNumber || student.registrationNumber || student._id;
-      const examRows = exam?.subjectMarks?.length
-        ? exam.subjectMarks.map((item) => ({
-            courseCode: item.subjectId?.code || item.subjectId?.name || className,
-            examDate: formatDate(item.date),
-            examTime: formatDuration(item.duration),
-            examCentre: institution?.address || institution?.name || "",
-          }))
-        : [{
-            courseCode: className || "Exam",
-            examDate: formatDate(exam?.date || exam?.startDate),
-            examTime: formatDuration(exam?.duration),
-            examCentre: institution?.address || institution?.name || "",
-          }];
-
-      let blob: Blob | null = null;
-      try {
-        blob = await api.idCards.renderPdf({
-          cardType: "admit-card",
-          name: getStudentName(student),
-          idNumber: rollNumber,
-          enrollmentNumber: rollNumber,
-          photoUrl: student.userId?.avatar || "",
-          institutionName: institution?.name || "Institution",
-          institutionLogo: institution?.logo || institution?.logoUrl || "",
-          examName: exam?.name || "Admit Card",
-          examDate: exam?.date || exam?.startDate || "",
-          examCenter: institution?.address || "",
-          centerCode: institution?.eiin || institution?.code || "",
-          dateOfBirth: student.userId?.dateOfBirth || "",
-          fatherName: student.fatherName || "",
-          stream: [className, sectionName].filter(Boolean).join(" "),
-          program: [className, sectionName].filter(Boolean).join(" ") || "Student",
-          examData: examRows,
-        });
-      } catch (err) {
-        blob = null;
-      }
-
-      if (blob) {
-        downloadBlob(blob, `admit-card-${rollNumber}.pdf`);
-      } else {
-        try {
-          await downloadElementPdf(previewRef.current, `admit-card-${rollNumber}.pdf`);
-        } catch (err) {
-          alert('Failed to generate PDF on server and client. Please try Print as PDF from the preview.');
-        }
-      }
+      const rollNumber = selectedStudent.rollNumber || selectedStudent.admissionNumber || selectedStudent.registrationNumber || selectedStudent._id;
+      await downloadElementPdf(previewRef.current, `admit-card-${rollNumber}.pdf`);
     } finally {
       setDownloading(false);
     }
