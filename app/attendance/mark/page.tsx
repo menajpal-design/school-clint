@@ -50,15 +50,16 @@ export default function AttendanceMarkPage() {
     setClassId((current) => current || data.classes?.[0]?._id || "");
   };
 
-  const loadStudents = async () => {
-    if (!classId) return;
+  const loadStudents = async (overrideDate?: string) => {
+    if (!classId) return [] as Student[];
+    const usedDate = overrideDate || date;
     const data = await api.attendance.getStudents({ classId, sectionId: sectionId || undefined }) as { students: Student[] };
-    const attendance = await api.attendance.getAll({ classId, sectionId: sectionId || undefined, date }) as { attendance: any[] };
+    const attendance = await api.attendance.getAll({ classId, sectionId: sectionId || undefined, date: usedDate }) as { attendance: any[] };
     const statusByStudent = new Map((attendance.attendance || []).map((item) => [String(item.studentId?._id || item.studentId), item.status]));
     const baseStudents = (data.students || []).map((student) => ({ ...student, status: (statusByStudent.get(student._id) as Status) || "absent" }));
 
     // Fetch individual student attendance history to compute month present counts
-    const [yearStr, monthStr] = date.split('-');
+    const [yearStr, monthStr] = usedDate.split('-');
     const month = Number(monthStr);
     const year = Number(yearStr);
 
@@ -77,6 +78,7 @@ export default function AttendanceMarkPage() {
     }));
 
     setStudents(withCounts);
+    return withCounts;
   };
 
   useEffect(() => { loadClasses().catch(() => undefined); }, []);
@@ -207,8 +209,10 @@ export default function AttendanceMarkPage() {
                     const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
                     try {
                       await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'present' })) });
+                      setDate(d);
+                      const updated = await loadStudents(d);
+                      setCalendarStudent(updated.find(u => u._id === calendarStudent?._id) || calendarStudent);
                       setMessage('Marked all present for the day.');
-                      await loadStudents();
                     } catch (e:any) { setMessage(e?.message || 'Failed to mark.'); }
                   }}>Mark All Present</Button>
                   <Button size="sm" variant="outline" onClick={async () => {
@@ -216,8 +220,10 @@ export default function AttendanceMarkPage() {
                     const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
                     try {
                       await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'absent' })) });
+                      setDate(d);
+                      const updated = await loadStudents(d);
+                      setCalendarStudent(updated.find(u => u._id === calendarStudent?._id) || calendarStudent);
                       setMessage('Marked all absent for the day.');
-                      await loadStudents();
                     } catch (e:any) { setMessage(e?.message || 'Failed to mark.'); }
                   }}>Mark All Absent</Button>
                   <Button size="sm" variant="ghost" onClick={() => {
@@ -254,8 +260,10 @@ export default function AttendanceMarkPage() {
                               const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
                               try {
                                 await api.attendance.mark({ classId, sectionId, date: d, records: [{ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: st }] });
+                                setDate(d);
+                                const updated = await loadStudents(d);
+                                setCalendarStudent(updated.find(u => u._id === s._id) || calendarStudent);
                                 setMessage(`Marked ${s.userId?.name} as ${st}.`);
-                                await loadStudents();
                               } catch (e:any) { setMessage(e?.message || 'Failed to update attendance.'); }
                             }}
                           >
