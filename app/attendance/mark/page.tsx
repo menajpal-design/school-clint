@@ -21,6 +21,13 @@ type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; na
 type Student = { _id: string; rollNumber: string; userId?: { name: string; avatar?: string }; classId?: { _id: string }; sectionId?: { _id: string; name: string }; status?: Status; presentCount?: number; attendanceRecords?: Array<{ date: string; status: Status }> };
 
 const today = () => new Date().toISOString().slice(0, 10);
+const dateKey = (value?: string | Date) => {
+  if (!value) return "";
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  const match = String(value).match(/^\d{4}-\d{2}-\d{2}/);
+  if (match) return match[0];
+  return new Date(value).toISOString().slice(0, 10);
+};
 
 export default function AttendanceMarkPage() {
   const { addToast } = useToast();
@@ -44,7 +51,13 @@ export default function AttendanceMarkPage() {
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
   const currentCalendarStudent = useMemo(() => {
     if (!calendarStudent) return null;
-    return students.find((student) => student._id === calendarStudent._id) || calendarStudent;
+    const matchingStudent = students.find((student) => student._id === calendarStudent._id);
+    if (!matchingStudent) return calendarStudent;
+    return {
+      ...matchingStudent,
+      attendanceRecords: calendarStudent.attendanceRecords || matchingStudent.attendanceRecords,
+      presentCount: calendarStudent.presentCount ?? matchingStudent.presentCount,
+    };
   }, [students, calendarStudent]);
 
   // Check if user is teacher or upper role for enhanced UI
@@ -58,11 +71,11 @@ export default function AttendanceMarkPage() {
   const fetchCalendarStudent = async (studentId: string) => {
     try {
       const res = await api.attendance.getStudentAttendance(studentId) as { attendance: Array<{ date: string; status: Status }> };
-      const records = (res.attendance || []).map((r) => ({ date: String(r.date).slice(0, 10), status: r.status }));
+      const records = (res.attendance || []).map((r) => ({ date: dateKey(r.date), status: r.status }));
       const stu = students.find(s => s._id === studentId) || { _id: studentId } as Student;
-      const monthKey = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}`;
-      const presentCount = records.filter((r) => r.status === 'present' && r.date.slice(0,7) === monthKey).length;
+      const presentCount = records.filter((r) => r.status === 'present').length;
       const enriched = { ...stu, attendanceRecords: records, presentCount } as Student;
+      setStudents((current) => current.map((student) => student._id === studentId ? { ...student, attendanceRecords: records, presentCount } : student));
       setCalendarStudent(enriched);
       return enriched;
     } catch (e) {
@@ -96,9 +109,8 @@ export default function AttendanceMarkPage() {
     const withCounts = await Promise.all(baseStudents.map(async (student) => {
       try {
         const res = await api.attendance.getStudentAttendance(student._id) as { attendance: Array<{ date: string; status: Status }> };
-        const records = (res.attendance || []).map((r) => ({ date: String(r.date).slice(0, 10), status: r.status }));
-        const monthKey = usedDate.slice(0, 7);
-        const presentCount = records.filter((r) => r.status === 'present' && r.date.slice(0, 7) === monthKey).length;
+        const records = (res.attendance || []).map((r) => ({ date: dateKey(r.date), status: r.status }));
+        const presentCount = records.filter((r) => r.status === 'present').length;
         return { ...student, attendanceRecords: records, presentCount } as Student;
       } catch (e) {
         return { ...student, attendanceRecords: [], presentCount: 0 } as Student;
@@ -261,7 +273,7 @@ export default function AttendanceMarkPage() {
                     try {
                       await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'present' })) });
                       setDate(d);
-                      const updated = await loadStudents(d);
+                      await loadStudents(d);
                       {
                         const targetId = calendarStudent?._id;
                         if (targetId) await fetchCalendarStudent(targetId);
@@ -276,7 +288,7 @@ export default function AttendanceMarkPage() {
                     try {
                       await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'absent' })) });
                       setDate(d);
-                      const updated = await loadStudents(d);
+                      await loadStudents(d);
                       {
                         const targetId = calendarStudent?._id;
                         if (targetId) await fetchCalendarStudent(targetId);
@@ -288,7 +300,8 @@ export default function AttendanceMarkPage() {
                   <Button size="sm" variant="ghost" onClick={() => {
                     // print present list
                     const d = `${calendarSelectedDay}/${calendarSelectedMonth}/${calendarViewYear}`;
-                    const presentList = students.filter(s => s.attendanceRecords?.some(r => { const dd=new Date(r.date); return dd.getFullYear()===calendarViewYear && dd.getMonth()+1===calendarSelectedMonth && dd.getDate()===calendarSelectedDay && r.status==='present'; }));
+                    const selectedDayKey = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
+                    const presentList = students.filter(s => s.attendanceRecords?.some(r => r.date === selectedDayKey && r.status === 'present'));
                     const w = window.open('', '_blank');
                     if (w) {
                       w.document.write(`<html><head><title>Attendance ${d}</title></head><body><h3>Present on ${d}</h3><ul>${presentList.map(p => `<li>${p.userId?.name} (${p.rollNumber})</li>`).join('')}</ul></body></html>`);
@@ -299,10 +312,7 @@ export default function AttendanceMarkPage() {
                 </div>
               )}
               {students.map((s) => {
-                const record = s.attendanceRecords?.find(r => {
-                  const d = new Date(r.date);
-                  return d.getFullYear() === calendarViewYear && d.getMonth() + 1 === calendarSelectedMonth && d.getDate() === calendarSelectedDay;
-                });
+                const record = s.attendanceRecords?.find(r => r.date === `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`);
                 const status: Status | 'No record' = (record?.status as Status) || 'No record';
                 return (
                   <div key={s._id} className="space-y-1">
@@ -320,7 +330,7 @@ export default function AttendanceMarkPage() {
                               try {
                                 await api.attendance.mark({ classId, sectionId, date: d, records: [{ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: st }] });
                                 setDate(d);
-                                const updated = await loadStudents(d);
+                                await loadStudents(d);
                                 await fetchCalendarStudent(s._id);
                                 setMessage(`Marked ${s.userId?.name} as ${st}.`);
                               } catch (e:any) { setMessage(e?.message || 'Failed to update attendance.'); }
@@ -398,10 +408,7 @@ export default function AttendanceMarkPage() {
             <div className="flex flex-wrap gap-2">
               {Array.from({ length: 12 }).map((_, idx) => {
                 const month = idx + 1;
-                const isCurrent = calendarStudent?.attendanceRecords?.some(r => {
-                  const d = new Date(r.date);
-                  return d.getFullYear() === calendarViewYear && d.getMonth() + 1 === month && r.status === 'present';
-                });
+                const isCurrent = currentCalendarStudent?.attendanceRecords?.some(r => r.date.slice(0, 7) === `${calendarViewYear}-${String(month).padStart(2, '0')}` && r.status === 'present');
                 const isSelected = calendarSelectedMonth === month;
                 return (
                   <Button key={month} variant={isSelected ? 'secondary' : isCurrent ? 'outline' : 'ghost'} size="sm" onClick={() => { setCalendarSelectedMonth(month); setCalendarSelectedDay(null); }}>
@@ -436,7 +443,7 @@ export default function AttendanceMarkPage() {
               <TableHead>Photo</TableHead>
               <TableHead>Roll</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Month Present</TableHead>
+              <TableHead>Total Present</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
