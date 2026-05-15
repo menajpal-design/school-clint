@@ -264,7 +264,7 @@ export default function AttendanceMarkPage() {
                         ))}
                       </div>
                     </div>
-                    <div className="text-xs text-slate-500">{status === 'No record' ? 'No record' : `Status: ${status}`}</div>
+                    <div className="text-xs text-slate-500">{record ? `Status: ${status}` : 'No record'}</div>
                   </div>
                 );
               })}
