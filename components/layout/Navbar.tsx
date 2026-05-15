@@ -128,27 +128,25 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
         {/* Right Section */}
         <div className="flex items-center gap-2 lg:gap-4">
           {/* Messages Button */}
-          <Link href="/messages" title="Messages">
-            <button className="relative rounded-lg p-2 hover:bg-muted">
-              <svg
-                className="h-5 w-5 text-muted-foreground"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                />
-              </svg>
-                {unreadMessages > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
-                  {unreadMessages > 99 ? '99+' : unreadMessages}
-                </span>
-              )}
-            </button>
+          <Link href="/messages" title="Messages" className="relative rounded-lg p-2 hover:bg-muted">
+            <svg
+              className="h-5 w-5 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
+            </svg>
+            {unreadMessages > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
+                {unreadMessages > 99 ? '99+' : unreadMessages}
+              </span>
+            )}
           </Link>
 
           {/* Notifications Dropdown */}
@@ -196,11 +194,9 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           </div>
 
           {/* ID Card Shortcut */}
-            {can('download:idcard') && (
-            <Link href="/id-cards/my-card">
-              <button className="hidden rounded-lg p-2 hover:bg-muted md:block">
-                <span className="text-xs font-semibold text-muted-foreground">ID Card</span>
-              </button>
+          {can('download:idcard') && (
+            <Link href="/id-cards/my-card" className="hidden rounded-lg p-2 hover:bg-muted md:block">
+              <span className="text-xs font-semibold text-muted-foreground">ID Card</span>
             </Link>
           )}
 
@@ -232,17 +228,13 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
 
             {showProfileMenu && (
               <div className="absolute right-0 mt-2 w-48 rounded-lg border border-border bg-popover shadow-lg">
-                <Link href="/profile">
-                  <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted">
-                    <User className="h-4 w-4" />
-                    My Profile
-                  </button>
+                <Link href="/profile" className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted">
+                  <User className="h-4 w-4" />
+                  My Profile
                 </Link>
-                <Link href="/settings">
-                  <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted">
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </button>
+                <Link href="/settings" className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted">
+                  <Settings className="h-4 w-4" />
+                  Settings
                 </Link>
                 <hr className="my-1 border-border" />
                 <button
