@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Camera, ClipboardCheck, Save, Calendar as CalendarIcon } from "lucide-react";
 
 import { WebcamScanner } from "@/components/id-cards/WebcamScanner";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/useToast";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
@@ -22,6 +23,7 @@ type Student = { _id: string; rollNumber: string; userId?: { name: string; avata
 const today = () => new Date().toISOString().slice(0, 10);
 
 export default function AttendanceMarkPage() {
+  const { addToast } = useToast();
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [classId, setClassId] = useState("");
@@ -40,9 +42,17 @@ export default function AttendanceMarkPage() {
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
+  const currentCalendarStudent = useMemo(() => {
+    if (!calendarStudent) return null;
+    return students.find((student) => student._id === calendarStudent._id) || calendarStudent;
+  }, [students, calendarStudent]);
 
   // Check if user is teacher or upper role for enhanced UI
   const isTeacherOrUpperRole = authManager.hasRole(['class_teacher', 'subject_teacher', 'head', 'assistant_head']);
+
+  const notify = (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
+    addToast({ title, message, type, duration: 3500 });
+  };
 
   const loadClasses = async () => {
     const data = await api.academic.classes.getAll() as { classes: ClassItem[] };
@@ -67,10 +77,8 @@ export default function AttendanceMarkPage() {
       try {
         const res = await api.attendance.getStudentAttendance(student._id) as { attendance: Array<{ date: string; status: Status }> };
         const records = (res.attendance || []).map((r) => ({ date: String(r.date).slice(0, 10), status: r.status }));
-        const presentCount = records.filter((r) => {
-          const d = new Date(r.date);
-          return r.status === 'present' && d.getFullYear() === year && d.getMonth() + 1 === month;
-        }).length;
+        const monthKey = usedDate.slice(0, 7);
+        const presentCount = records.filter((r) => r.status === 'present' && r.date.slice(0, 7) === monthKey).length;
         return { ...student, attendanceRecords: records, presentCount } as Student;
       } catch (e) {
         return { ...student, attendanceRecords: [], presentCount: 0 } as Student;
@@ -97,9 +105,13 @@ export default function AttendanceMarkPage() {
         date,
         records: students.map((student) => ({ studentId: student._id, classId, sectionId: student.sectionId?._id || sectionId, date, status: student.status })),
       });
+      await loadStudents(date);
       setMessage("Attendance saved.");
+      notify("Attendance saved", "Present counts and calendar updated.", "success");
     } catch (err: any) {
-      setMessage(err?.message || "Failed to save attendance.");
+      const errorMessage = err?.message || "Failed to save attendance.";
+      setMessage(errorMessage);
+      notify("Attendance failed", errorMessage, "error");
     } finally {
       setSaving(false);
     }
@@ -109,6 +121,7 @@ export default function AttendanceMarkPage() {
     const codeToScan = code || scanCode;
     if (!codeToScan) {
       setMessage("Please enter or scan a card code.");
+      notify("Scan required", "Please enter or scan a card code.", "warning");
       return;
     }
     try {
@@ -118,9 +131,13 @@ export default function AttendanceMarkPage() {
         setScanOpen(false);
         setScanCode("");
         setMessage(`✓ ${data.student.userId?.name} marked as present.`);
+        await loadStudents(date);
+        notify("Marked present", `${data.student.userId?.name} is marked present.`, "success");
       }
     } catch (err: any) {
-      setMessage(err?.message || "Scan failed.");
+      const errorMessage = err?.message || "Scan failed.";
+      setMessage(errorMessage);
+      notify("Scan failed", errorMessage, "error");
     }
   };
 
@@ -131,12 +148,13 @@ export default function AttendanceMarkPage() {
     const lastDay = new Date(year, month, 0);
     const startWeekday = firstDay.getDay(); // 0..6 (Sun..Sat)
     const daysInMonth = lastDay.getDate();
+    const monthKey = selectedDateStr.slice(0, 7);
 
     const recordsByDay = new Map<number, Status>();
     (student.attendanceRecords || []).forEach((r) => {
-      const d = new Date(r.date);
-      if (d.getFullYear() === year && d.getMonth() + 1 === month) {
-        recordsByDay.set(d.getDate(), r.status);
+      if (r.date.slice(0, 7) === monthKey) {
+        const day = Number(r.date.slice(8, 10));
+        recordsByDay.set(day, r.status);
       }
     });
 
@@ -158,7 +176,7 @@ export default function AttendanceMarkPage() {
           {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d}>{d}</div>)}
         </div>
 
-        <div className="mt-2">
+        <div className="mt-2 min-h-[19rem]">
           <div className="grid grid-cols-7 gap-2">
             {weeks.map((week, wi) => (
               week.map((day, di) => {
@@ -197,11 +215,15 @@ export default function AttendanceMarkPage() {
           <div className="mt-2 p-2 bg-white border rounded shadow-sm text-sm">
             <div className="font-medium">Present on {hoverDay}/{calendarSelectedMonth}/{calendarViewYear}</div>
             <div className="mt-2 max-h-40 overflow-auto">
-              {(students.filter(s => s.attendanceRecords?.some(r => { const d=new Date(r.date); return d.getFullYear()===calendarViewYear && d.getMonth()+1===calendarSelectedMonth && d.getDate()===hoverDay && r.status==='present'; }))).map(s => (
-                <div key={s._id} className="flex items-center justify-between py-1">
-                  <div className="truncate">{s.userId?.name} <span className="text-slate-500">({s.rollNumber})</span></div>
-                </div>
-              )) || <div className="text-slate-500">No present records</div>}
+              {students.filter((student) => student.attendanceRecords?.some((record) => record.status === 'present' && record.date.slice(0, 7) === `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}` && Number(record.date.slice(8, 10)) === hoverDay)).length > 0 ? (
+                students.filter((student) => student.attendanceRecords?.some((record) => record.status === 'present' && record.date.slice(0, 7) === `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}` && Number(record.date.slice(8, 10)) === hoverDay)).map((student) => (
+                  <div key={student._id} className="flex items-center justify-between py-1">
+                    <div className="truncate">{student.userId?.name} <span className="text-slate-500">({student.rollNumber})</span></div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-slate-500">No present records</div>
+              )}
             </div>
           </div>
         )}
@@ -222,6 +244,7 @@ export default function AttendanceMarkPage() {
                       const updated = await loadStudents(d);
                       setCalendarStudent(updated.find(u => u._id === calendarStudent?._id) || calendarStudent);
                       setMessage('Marked all present for the day.');
+                      notify('Marked all present', `${calendarSelectedDay}/${calendarSelectedMonth}/${calendarViewYear} updated successfully.`, 'success');
                     } catch (e:any) { setMessage(e?.message || 'Failed to mark.'); }
                   }}>Mark All Present</Button>
                   <Button size="sm" variant="outline" onClick={async () => {
@@ -233,6 +256,7 @@ export default function AttendanceMarkPage() {
                       const updated = await loadStudents(d);
                       setCalendarStudent(updated.find(u => u._id === calendarStudent?._id) || calendarStudent);
                       setMessage('Marked all absent for the day.');
+                      notify('Marked all absent', `${calendarSelectedDay}/${calendarSelectedMonth}/${calendarViewYear} updated successfully.`, 'success');
                     } catch (e:any) { setMessage(e?.message || 'Failed to mark.'); }
                   }}>Mark All Absent</Button>
                   <Button size="sm" variant="ghost" onClick={() => {
@@ -330,17 +354,19 @@ export default function AttendanceMarkPage() {
 
       <Dialog open={calendarOpen} onOpenChange={setCalendarOpen}>
         <DialogContent className="max-w-3xl">
-          <div className="flex items-center justify-between">
+          <DialogHeader className="flex flex-row items-start justify-between space-y-0">
             <div>
-              <h3 className="text-lg font-semibold">Attendance calendar</h3>
-              <p className="text-sm text-slate-600">{calendarStudent?.userId?.name} — {calendarStudent?.rollNumber}</p>
+              <DialogTitle>Attendance calendar</DialogTitle>
+              <DialogDescription>
+                {currentCalendarStudent?.userId?.name} — {currentCalendarStudent?.rollNumber}
+              </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setCalendarViewYear(calendarViewYear - 1)}>-</Button>
               <div className="text-sm font-medium">{calendarViewYear}</div>
               <Button variant="outline" size="sm" onClick={() => setCalendarViewYear(calendarViewYear + 1)}>+</Button>
             </div>
-          </div>
+          </DialogHeader>
           <div className="mt-4 space-y-4">
             {/* Month selector */}
             <div className="flex flex-wrap gap-2">
@@ -360,9 +386,9 @@ export default function AttendanceMarkPage() {
             </div>
 
             {/* Render selected month calendar */}
-            {calendarStudent && (
+            {currentCalendarStudent && (
               <div>
-                {renderMonthCalendar(calendarStudent, `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}`)}
+                {renderMonthCalendar(currentCalendarStudent, `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}`)}
               </div>
             )}
           </div>
@@ -401,7 +427,7 @@ export default function AttendanceMarkPage() {
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{student.rollNumber}</TableCell>
                   <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
-                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarOpen(true); setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
+                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button type="button" variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarOpen(true); setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
                 </TableRow>
               );
