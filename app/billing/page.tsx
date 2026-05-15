@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { authManager } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { calculatePlanDue, schoolPlans } from '@/lib/plans';
+import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -138,7 +139,7 @@ export default function BillingPage() {
                 <Select value={String(form.useEasySchoolStorage)} onValueChange={(value) => setForm((prev) => ({ ...prev, useEasySchoolStorage: value === 'true' }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="true">EASY SCHOOL storage - BDT 100/month</SelectItem>
+                    <SelectItem value="true">EASY SCHOOL storage - {formatCurrency(100)}/month</SelectItem>
                     <SelectItem value="false">Own MongoDB + ImgBB - no cost</SelectItem>
                   </SelectContent>
                 </Select>
@@ -147,7 +148,7 @@ export default function BillingPage() {
               <Input placeholder="Transaction ID" value={form.paymentTrxId} onChange={(event) => setForm((prev) => ({ ...prev, paymentTrxId: event.target.value }))} />
               <Input placeholder="Sender number" value={form.paymentSenderNumber} onChange={(event) => setForm((prev) => ({ ...prev, paymentSenderNumber: event.target.value }))} />
               <div className="rounded-lg border bg-card p-4 text-sm md:col-span-2">
-                Due amount: BDT {due.baseAmount.toLocaleString()} + storage BDT {due.storageAmount.toLocaleString()} = <span className="font-semibold">BDT {due.total.toLocaleString()}</span>
+                Due amount: {formatCurrency(due.baseAmount)} + storage {formatCurrency(due.storageAmount)} = <span className="font-semibold">{formatCurrency(due.total)}</span>
               </div>
               <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-slate-600">{status}</p>
@@ -164,7 +165,7 @@ export default function BillingPage() {
             <CardContent className="space-y-3 text-sm">
               <div className="rounded-md border p-3"><span className="text-slate-500">Status</span><div className="font-semibold">{institution?.isActive ? 'Active' : 'Pending / Inactive'}</div></div>
               <div className="rounded-md border p-3"><span className="text-slate-500">Billing</span><div className="font-semibold">{institution?.billing?.billingStatus || 'pending'}</div></div>
-              <div className="rounded-md border p-3"><span className="text-slate-500">Paid</span><div className="font-semibold">BDT {Number(institution?.billing?.receivedAmount || 0).toLocaleString()}</div></div>
+              <div className="rounded-md border p-3"><span className="text-slate-500">Paid</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.receivedAmount || 0))}</div></div>
             </CardContent>
           </Card>
         </div>

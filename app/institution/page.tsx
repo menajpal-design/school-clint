@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { api } from '@/lib/api';
+import { formatCurrency } from '@/lib/utils';
 
 type Profile = {
   name?: string;
@@ -124,7 +125,7 @@ export default function InstitutionPage() {
             <CardContent>
               <div className="text-2xl font-bold">{loading ? '...' : item.value}</div>
               {item.label === 'Storage Usage' && <div className="mt-3 h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-primary" style={{ width: `${storageUsage.percent}%` }} /></div>}
-              {item.label === 'Plan' && <p className="mt-2 text-xs text-muted-foreground">Due BDT {Number(profile?.billing?.dueAmount || 0).toLocaleString()} · SMS {Number(profile?.billing?.smsUsed || 0).toLocaleString()}/{profile?.billing?.monthlySmsLimit || 0}</p>}
+              {item.label === 'Plan' && <p className="mt-2 text-xs text-muted-foreground">Due {formatCurrency(Number(profile?.billing?.dueAmount || 0))} · SMS {Number(profile?.billing?.smsUsed || 0).toLocaleString()}/{profile?.billing?.monthlySmsLimit || 0}</p>}
             </CardContent>
           </Card>
         ))}

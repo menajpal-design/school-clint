@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Camera, ClipboardCheck, Save } from "lucide-react";
+import { Camera, ClipboardCheck, Save, Calendar as CalendarIcon } from "lucide-react";
 
 import { WebcamScanner } from "@/components/id-cards/WebcamScanner";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -17,7 +17,7 @@ import { authManager } from "@/lib/auth";
 
 type Status = "present" | "absent" | "late" | "leave";
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
-type Student = { _id: string; rollNumber: string; userId?: { name: string; avatar?: string }; classId?: { _id: string }; sectionId?: { _id: string; name: string }; status?: Status };
+type Student = { _id: string; rollNumber: string; userId?: { name: string; avatar?: string }; classId?: { _id: string }; sectionId?: { _id: string; name: string }; status?: Status; presentCount?: number; attendanceRecords?: Array<{ date: string; status: Status }> };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -31,6 +31,10 @@ export default function AttendanceMarkPage() {
   const [scanOpen, setScanOpen] = useState(false);
   const [scanCode, setScanCode] = useState("");
   const [message, setMessage] = useState("");
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarStudent, setCalendarStudent] = useState<Student | null>(null);
+  const [calendarViewYear, setCalendarViewYear] = useState<number>(new Date().getFullYear());
+  const [calendarSelectedMonth, setCalendarSelectedMonth] = useState<number>(new Date().getMonth() + 1);
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
@@ -49,7 +53,28 @@ export default function AttendanceMarkPage() {
     const data = await api.attendance.getStudents({ classId, sectionId: sectionId || undefined }) as { students: Student[] };
     const attendance = await api.attendance.getAll({ classId, sectionId: sectionId || undefined, date }) as { attendance: any[] };
     const statusByStudent = new Map((attendance.attendance || []).map((item) => [String(item.studentId?._id || item.studentId), item.status]));
-    setStudents((data.students || []).map((student) => ({ ...student, status: (statusByStudent.get(student._id) as Status) || "present" })));
+    const baseStudents = (data.students || []).map((student) => ({ ...student, status: (statusByStudent.get(student._id) as Status) || "absent" }));
+
+    // Fetch individual student attendance history to compute month present counts
+    const [yearStr, monthStr] = date.split('-');
+    const month = Number(monthStr);
+    const year = Number(yearStr);
+
+    const withCounts = await Promise.all(baseStudents.map(async (student) => {
+      try {
+        const res = await api.attendance.getStudentAttendance(student._id) as { attendance: Array<{ date: string; status: Status }> };
+        const records = (res.attendance || []).map((r) => ({ date: String(r.date).slice(0, 10), status: r.status }));
+        const presentCount = records.filter((r) => {
+          const d = new Date(r.date);
+          return r.status === 'present' && d.getFullYear() === year && d.getMonth() + 1 === month;
+        }).length;
+        return { ...student, attendanceRecords: records, presentCount } as Student;
+      } catch (e) {
+        return { ...student, attendanceRecords: [], presentCount: 0 } as Student;
+      }
+    }));
+
+    setStudents(withCounts);
   };
 
   useEffect(() => { loadClasses().catch(() => undefined); }, []);
@@ -94,6 +119,56 @@ export default function AttendanceMarkPage() {
       setMessage(err?.message || "Scan failed.");
     }
   };
+
+  function renderMonthCalendar(student: Student, selectedDateStr: string) {
+    const [y, m] = selectedDateStr.split('-').map(Number);
+    const month = m; const year = y;
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+    const startWeekday = firstDay.getDay(); // 0..6 (Sun..Sat)
+    const daysInMonth = lastDay.getDate();
+
+    const recordsByDay = new Map<number, Status>();
+    (student.attendanceRecords || []).forEach((r) => {
+      const d = new Date(r.date);
+      if (d.getFullYear() === year && d.getMonth() + 1 === month) {
+        recordsByDay.set(d.getDate(), r.status);
+      }
+    });
+
+    const weeks: Array<Array<number | null>> = [];
+    let currentWeek: Array<number | null> = Array(startWeekday).fill(null);
+    for (let day = 1; day <= daysInMonth; day++) {
+      currentWeek.push(day);
+      if (currentWeek.length === 7) { weeks.push(currentWeek); currentWeek = []; }
+    }
+    if (currentWeek.length) {
+      while (currentWeek.length < 7) currentWeek.push(null);
+      weeks.push(currentWeek);
+    }
+
+    return (
+      <div>
+        <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-600">
+          {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d}>{d}</div>)}
+        </div>
+        <div className="mt-2 grid grid-cols-7 gap-1">
+          {weeks.map((week, wi) => (
+            <div key={wi} className="grid grid-cols-7 gap-1">
+              {week.map((day, di) => {
+                if (day === null) return <div key={di} className="h-10 rounded-md bg-transparent" />;
+                const status = recordsByDay.get(day);
+                const bg = status === 'present' ? 'bg-emerald-200' : status === 'absent' ? 'bg-rose-200' : status === 'late' ? 'bg-amber-200' : status === 'leave' ? 'bg-sky-200' : 'bg-slate-100';
+                return (
+                  <div key={di} className={`${bg} h-10 rounded-md flex items-center justify-center text-sm`}>{day}</div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -141,9 +216,17 @@ export default function AttendanceMarkPage() {
           </div>
         </div>
         <Table>
-          <TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Photo</TableHead><TableHead>Roll</TableHead><TableHead>Name</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+          <TableHeader>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead>Photo</TableHead>
+              <TableHead>Roll</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Month Present</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
-            {students.length === 0 ? <TableRow><TableCell colSpan={4} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => {
+            {students.length === 0 ? <TableRow><TableCell colSpan={5} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => {
               const isPresentHighlight = isTeacherOrUpperRole && student.status === "present";
               return (
                 <TableRow 
@@ -155,6 +238,7 @@ export default function AttendanceMarkPage() {
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{student.rollNumber}</TableCell>
                   <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
+                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button variant="ghost" size="sm" onClick={() => { setCalendarStudent(student); setCalendarOpen(true); setCalendarViewYear(Number(date.split('-')[0])); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
                 </TableRow>
               );
@@ -162,6 +246,47 @@ export default function AttendanceMarkPage() {
           </TableBody>
         </Table>
       </section>
+
+      <Dialog open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <DialogContent className="max-w-3xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Attendance calendar</h3>
+              <p className="text-sm text-slate-600">{calendarStudent?.userId?.name} — {calendarStudent?.rollNumber}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setCalendarViewYear(calendarViewYear - 1)}>-</Button>
+              <div className="text-sm font-medium">{calendarViewYear}</div>
+              <Button variant="outline" size="sm" onClick={() => setCalendarViewYear(calendarViewYear + 1)}>+</Button>
+            </div>
+          </div>
+          <div className="mt-4 space-y-4">
+            {/* Month selector */}
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 12 }).map((_, idx) => {
+                const month = idx + 1;
+                const isCurrent = calendarStudent?.attendanceRecords?.some(r => {
+                  const d = new Date(r.date);
+                  return d.getFullYear() === calendarViewYear && d.getMonth() + 1 === month && r.status === 'present';
+                });
+                const isSelected = calendarSelectedMonth === month;
+                return (
+                  <Button key={month} variant={isSelected ? 'secondary' : isCurrent ? 'outline' : 'ghost'} size="sm" onClick={() => setCalendarSelectedMonth(month)}>
+                    {new Date(0, idx).toLocaleString(undefined, { month: 'short' })}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Render selected month calendar */}
+            {calendarStudent && (
+              <div>
+                {renderMonthCalendar(calendarStudent, `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}`)}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={scanOpen} onOpenChange={setScanOpen}>
         <DialogContent className="max-w-md">

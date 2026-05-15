@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Building2, CreditCard, Search, ShieldCheck, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { calculatePlanDue, schoolPlans } from '@/lib/plans';
+import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const money = (value: any) => `BDT ${Number(value || 0).toLocaleString()}`;
+const money = (value: any) => formatCurrency(Number(value || 0));
 
 export default function AdminSchoolsPage() {
   const [schools, setSchools] = useState<any[]>([]);

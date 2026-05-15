@@ -26,10 +26,37 @@ export function formatDateTime(date: Date | string): string {
 }
 
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(value);
+  // Respect user preference stored in localStorage. Default to BDT (Taka).
+  try {
+    const preferred = (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('easy_school_currency')) || 'BDT';
+    const amount = Number(value || 0);
+    const formatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(amount);
+    if (String(preferred).toUpperCase() === 'USD') return `$ ${formatted}`;
+    // Default: Bangladeshi Taka symbol
+    return `৳ ${formatted}`;
+  } catch (e) {
+    // Fallback
+    return `৳ ${Number(value || 0).toLocaleString()}`;
+  }
+}
+
+export function getPreferredCurrency(): 'BDT' | 'USD' {
+  if (typeof window === 'undefined') return 'BDT';
+  try {
+    const val = window.localStorage.getItem('easy_school_currency');
+    return val === 'USD' ? 'USD' : 'BDT';
+  } catch (e) {
+    return 'BDT';
+  }
+}
+
+export function setPreferredCurrency(code: 'BDT' | 'USD') {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem('easy_school_currency', code);
+  } catch (e) {
+    // ignore
+  }
 }
 
 export function formatNumber(value: number): string {

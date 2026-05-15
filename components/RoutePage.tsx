@@ -36,6 +36,7 @@ import { SearchFilterBar } from "@/components/shared/SearchFilterBar";
 import { StatCard } from "@/components/shared/StatCard";
 import { apiClient } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 interface RoutePageProps {
   title: string;
@@ -82,10 +83,7 @@ type PageConfig = {
   metrics: Array<{ label: string; get: (items: any[], raw: any) => React.ReactNode; icon: React.ComponentType<{ className?: string }> }>;
 };
 
-const money = (value: any) => {
-  const amount = Number(value || 0);
-  return `BDT ${amount.toLocaleString()}`;
-};
+const money = (value: any) => formatCurrency(Number(value || 0));
 
 const formatDate = (value: any) => {
   if (!value) return "N/A";

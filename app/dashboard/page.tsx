@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
 import { UserRole } from "@/types";
 
 type DashboardSummary = {
@@ -136,7 +137,7 @@ function normalizeNotices(data: any): NoticeItem[] {
 }
 
 function money(value: number) {
-  return `BDT ${value.toLocaleString()}`;
+  return formatCurrency(Number(value || 0));
 }
 
 function roleLabel(role?: UserRole) {

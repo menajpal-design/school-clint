@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
 import { calculatePlanDue, schoolPlans } from '@/lib/plans';
+import { formatCurrency } from '@/lib/utils';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Institution name is required'),
@@ -328,7 +329,7 @@ export default function InstitutionProfilePage() {
                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
                             {schoolPlans.map((plan) => (
-                              <SelectItem key={plan.code} value={plan.code}>{plan.name} - BDT {plan.monthlyPrice}/mo</SelectItem>
+                              <SelectItem key={plan.code} value={plan.code}>{plan.name} - {formatCurrency(plan.monthlyPrice)}/mo</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -354,7 +355,7 @@ export default function InstitutionProfilePage() {
                         <Select onValueChange={(value) => field.onChange(value === 'true')} value={String(field.value)}>
                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
-                            <SelectItem value="true">EASY SCHOOL storage - BDT 100/month</SelectItem>
+                            <SelectItem value="true">EASY SCHOOL storage - {formatCurrency(100)}/month</SelectItem>
                             <SelectItem value="false">Own MongoDB URI and ImgBB API - no extra cost</SelectItem>
                           </SelectContent>
                         </Select>
@@ -388,7 +389,7 @@ export default function InstitutionProfilePage() {
                       <FormItem><FormLabel>TrxID</FormLabel><FormControl><Input placeholder="Payment transaction ID" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <div className="md:col-span-2 rounded-md border bg-muted/40 p-4 text-sm">
-                      Plan due: BDT {billingDue.baseAmount.toLocaleString()} + storage BDT {billingDue.storageAmount.toLocaleString()} = <span className="font-semibold">BDT {billingDue.total.toLocaleString()}</span>. Yearly discount: {billingDue.plan.yearlyDiscountPercent}%.
+                      Plan due: {formatCurrency(billingDue.baseAmount)} + storage {formatCurrency(billingDue.storageAmount)} = <span className="font-semibold">{formatCurrency(billingDue.total)}</span>. Yearly discount: {billingDue.plan.yearlyDiscountPercent}%.
                     </div>
                   </CardContent>
                 </Card>
