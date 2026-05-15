@@ -327,7 +327,10 @@ export const api = {
     getStudents: (params?: any) => apiClient.get('/attendance/students', params ? { params } : undefined),
     getReports: (params?: any) => apiClient.get('/attendance/reports', params ? { params } : undefined),
     getMine: (params?: any) => apiClient.get('/attendance/me', params ? { params } : undefined),
+    markMine: (data: any) => apiClient.post('/attendance/me/mark', data),
     getStudentAttendance: (studentId: string) => apiClient.get(`/attendance/student/${studentId}`),
+    getPeople: (params?: any) => apiClient.get('/attendance/people', params ? { params } : undefined),
+    getPersonAttendance: (personType: string, personId: string) => apiClient.get(`/attendance/person/${personType}/${personId}`),
   },
 
   // Finance

@@ -6,8 +6,10 @@ import { CalendarDays, UserCheck } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
+import { authManager } from "@/lib/auth";
 import { formatDate } from "@/lib/utils";
 
 type AttendanceRecord = { _id: string; date: string; status: "present" | "absent" | "late" | "leave"; studentId?: { rollNumber?: string; userId?: { name: string } }; classId?: { name: string }; sectionId?: { name: string } };
@@ -27,6 +29,7 @@ export default function MyAttendancePage() {
   const [summary, setSummary] = useState({ total: 0, present: 0, absent: 0, late: 0, leave: 0 });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const isHead = authManager.hasRole("head");
 
   const load = async () => {
     setLoading(true);
@@ -46,13 +49,40 @@ export default function MyAttendancePage() {
 
   useEffect(() => { load().catch(() => undefined); }, [month, year]);
 
+  const markSelf = async (status: AttendanceRecord["status"] = "present") => {
+    setLoading(true);
+    setMessage("");
+    try {
+      const now = new Date();
+      const markDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      await api.attendance.markMine({ date: markDate, status });
+      setYear(now.getFullYear());
+      setMonth(now.getMonth() + 1);
+      await load();
+      setMessage("Your attendance has been marked.");
+    } catch (err: any) {
+      setMessage(err?.message || "Failed to mark your attendance.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const byDate = useMemo(() => new Map(records.map((item) => [Number(dateKey(item.date).slice(8, 10)), item.status])), [records]);
   const firstWeekday = new Date(year, month - 1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
 
   return (
     <div className="space-y-5">
-      <PageHeader title="My Attendance" description="Monthly attendance summary, calendar view and history." icon={UserCheck} status={<Badge variant="outline">{month}/{year}</Badge>} />
+      <PageHeader
+        title="My Attendance"
+        description="Monthly attendance summary, calendar view and history."
+        icon={UserCheck}
+        status={<Badge variant="outline">{month}/{year}</Badge>}
+        actions={isHead ? [
+          <Button key="mark-present" size="sm" onClick={() => markSelf("present")} disabled={loading}>Mark My Present</Button>,
+          <Button key="mark-late" size="sm" variant="outline" onClick={() => markSelf("late")} disabled={loading}>Mark Late</Button>,
+        ] : undefined}
+      />
 
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-2">
@@ -71,7 +101,7 @@ export default function MyAttendancePage() {
 
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         {message ? (
-          <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">{message}</div>
+          <div className="rounded-md border border-border bg-popover p-4 text-sm text-foreground">{message}</div>
         ) : (
           <div className="grid grid-cols-7 gap-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <div key={day} className="text-center text-xs font-semibold text-muted-foreground">{day}</div>)}

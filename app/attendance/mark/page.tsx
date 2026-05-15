@@ -19,8 +19,9 @@ import { authManager } from "@/lib/auth";
 import { getPrintInstitution, makeQrDataUrl } from "@/lib/export-utils";
 
 type Status = "present" | "absent" | "late" | "leave";
+type PersonType = "student" | "teacher";
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
-type Student = { _id: string; rollNumber: string; userId?: { name: string; avatar?: string }; classId?: { _id: string }; sectionId?: { _id: string; name: string }; status?: Status; presentCount?: number; attendanceRecords?: Array<{ date: string; status: Status }> };
+type Student = { _id: string; profileId?: string; personType?: PersonType; rollNumber?: string; employeeId?: string; designation?: string; department?: string; userId?: { _id?: string; name: string; avatar?: string; role?: string }; classId?: { _id: string }; sectionId?: { _id: string; name: string }; status?: Status; presentCount?: number; attendanceRecords?: Array<{ date: string; status: Status }> };
 
 const today = () => new Date().toISOString().slice(0, 10);
 const dateKey = (value?: string | Date) => {
@@ -44,6 +45,7 @@ export default function AttendanceMarkPage() {
   const { addToast } = useToast();
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [personType, setPersonType] = useState<PersonType>("student");
   const [classId, setClassId] = useState("");
   const [sectionId, setSectionId] = useState("");
   const [date, setDate] = useState(today());
@@ -60,6 +62,8 @@ export default function AttendanceMarkPage() {
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
+  const canManageTeachers = authManager.hasRole(['head', 'assistant_head']);
+  const activePeopleLabel = personType === "teacher" ? "teachers" : "students";
   const currentCalendarStudent = useMemo(() => {
     if (!calendarStudent) return null;
     const matchingStudent = students.find((student) => student._id === calendarStudent._id);
@@ -81,7 +85,9 @@ export default function AttendanceMarkPage() {
   // Fetch and set fresh attendance history for a student into calendarStudent
   const fetchCalendarStudent = async (studentId: string) => {
     try {
-      const res = await api.attendance.getStudentAttendance(studentId) as { attendance: Array<{ date: string; status: Status }> };
+      const res = personType === "teacher"
+        ? await api.attendance.getPersonAttendance("teacher", studentId) as { attendance: Array<{ date: string; status: Status }> }
+        : await api.attendance.getStudentAttendance(studentId) as { attendance: Array<{ date: string; status: Status }> };
       const records = (res.attendance || []).map((r) => ({ date: dateKey(r.date), status: r.status }));
       const stu = students.find(s => s._id === studentId) || { _id: studentId } as Student;
       const presentCount = records.filter((r) => r.status === 'present').length;
@@ -105,12 +111,17 @@ export default function AttendanceMarkPage() {
   };
 
   const loadStudents = async (overrideDate?: string) => {
-    if (!classId) return [] as Student[];
+    if (personType === "student" && !classId) return [] as Student[];
     const usedDate = overrideDate || date;
-    const data = await api.attendance.getStudents({ classId, sectionId: sectionId || undefined }) as { students: Student[] };
-    const attendance = await api.attendance.getAll({ classId, sectionId: sectionId || undefined, date: usedDate }) as { attendance: any[] };
-    const statusByStudent = new Map((attendance.attendance || []).map((item) => [String(item.studentId?._id || item.studentId), item.status]));
-    const baseStudents = (data.students || []).map((student) => ({ ...student, status: (statusByStudent.get(student._id) as Status) || "absent" }));
+    const data = await api.attendance.getPeople({ personType, classId: personType === "student" ? classId : undefined, sectionId: personType === "student" ? sectionId || undefined : undefined }) as { people: Student[] };
+    const attendance = await api.attendance.getAll({
+      classId: personType === "student" ? classId : undefined,
+      sectionId: personType === "student" ? sectionId || undefined : undefined,
+      userType: personType === "teacher" ? "teacher" : undefined,
+      date: usedDate,
+    }) as { attendance: any[] };
+    const statusByStudent = new Map((attendance.attendance || []).map((item) => [String(personType === "teacher" ? item.userId?._id || item.userId : item.studentId?._id || item.studentId), item.status]));
+    const baseStudents = (data.people || []).map((student) => ({ ...student, personType, status: (statusByStudent.get(student._id) as Status) || "absent" }));
 
     // Fetch individual student attendance history to compute month present counts
     const [yearStr, monthStr] = usedDate.split('-');
@@ -119,7 +130,9 @@ export default function AttendanceMarkPage() {
 
     const withCounts = await Promise.all(baseStudents.map(async (student) => {
       try {
-        const res = await api.attendance.getStudentAttendance(student._id) as { attendance: Array<{ date: string; status: Status }> };
+        const res = personType === "teacher"
+          ? await api.attendance.getPersonAttendance("teacher", student._id) as { attendance: Array<{ date: string; status: Status }> }
+          : await api.attendance.getStudentAttendance(student._id) as { attendance: Array<{ date: string; status: Status }> };
         const records = (res.attendance || []).map((r) => ({ date: dateKey(r.date), status: r.status }));
         const presentCount = records.filter((r) => r.status === 'present').length;
         return { ...student, attendanceRecords: records, presentCount } as Student;
@@ -133,21 +146,30 @@ export default function AttendanceMarkPage() {
   };
 
   useEffect(() => { loadClasses().catch(() => undefined); }, []);
-  useEffect(() => { if (classId) loadStudents(); }, [classId, sectionId, date]);
+  useEffect(() => { if (personType === "teacher" || classId) loadStudents(); }, [personType, classId, sectionId, date]);
 
   const setAll = (status: Status) => setStudents((current) => current.map((student) => ({ ...student, status })));
   const setOne = (id: string, status: Status) => setStudents((current) => current.map((student) => student._id === id ? { ...student, status } : student));
 
   const className = selectedClass?.name || "Selected class";
+  const rosterName = personType === "teacher" ? "Teachers" : className;
+  const idLabel = personType === "teacher" ? "Employee ID" : "Roll";
+  const groupLabel = personType === "teacher" ? "Department" : "Class";
+  const subGroupLabel = personType === "teacher" ? "Designation" : "Section";
+  const personIdValue = (student: Student) => student.rollNumber || student.employeeId || "-";
+  const groupValue = (student: Student) => personType === "teacher" ? student.department || "-" : className;
+  const subGroupValue = (student: Student) => personType === "teacher" ? student.designation || "-" : student.sectionId?.name || (sectionId ? sections.find((section) => section._id === sectionId)?.name : "All sections") || "-";
+
   const exportClassExcel = () => {
-    const headers = ["Roll", "Name", "Class", "Section", "Selected Date", "Date Status", "Total", "Present", "Absent", "Late", "Leave"];
+    const headers = [idLabel, "Name", "Type", groupLabel, subGroupLabel, "Selected Date", "Date Status", "Total", "Present", "Absent", "Late", "Leave"];
     const rows = students.map((student) => {
       const summary = summarizeRecords(student.attendanceRecords);
       return [
-        student.rollNumber || "-",
+        personIdValue(student),
         student.userId?.name || "-",
-        className,
-        student.sectionId?.name || (sectionId ? sections.find((section) => section._id === sectionId)?.name : "All sections") || "-",
+        personType,
+        groupValue(student),
+        subGroupValue(student),
         date,
         student.status || "-",
         summary.total,
@@ -158,7 +180,7 @@ export default function AttendanceMarkPage() {
       ];
     });
     const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
-    downloadFile(`\uFEFF${csv}`, `attendance-${className.replace(/\s+/g, "-").toLowerCase()}-${date}.csv`, "text/csv;charset=utf-8");
+    downloadFile(`\uFEFF${csv}`, `attendance-${rosterName.replace(/\s+/g, "-").toLowerCase()}-${date}.csv`, "text/csv;charset=utf-8");
   };
 
   const exportClassPdf = async () => {
@@ -167,11 +189,11 @@ export default function AttendanceMarkPage() {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 36;
-    const qrDataUrl = await makeQrDataUrl(JSON.stringify({ title: "Class Attendance", className, date, records: students.length, generatedAt: new Date().toISOString() }), 96);
+    const qrDataUrl = await makeQrDataUrl(JSON.stringify({ title: "Attendance", rosterName, personType, date, records: students.length, generatedAt: new Date().toISOString() }), 96);
     const columns = [
-      { label: "Roll", width: 70 },
+      { label: idLabel, width: 70 },
       { label: "Name", width: 170 },
-      { label: "Section", width: 90 },
+      { label: subGroupLabel, width: 90 },
       { label: "Date Status", width: 88 },
       { label: "Total", width: 58 },
       { label: "Present", width: 65 },
@@ -189,7 +211,7 @@ export default function AttendanceMarkPage() {
       doc.text(institution.name, margin, 24);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.text(`Class Attendance | ${className} | ${date} | Students: ${students.length}`, margin, 44);
+      doc.text(`${personType === "teacher" ? "Teacher" : "Student"} Attendance | ${rosterName} | ${date} | Records: ${students.length}`, margin, 44);
       if (institution.address) doc.text(institution.address, margin, 58);
       doc.addImage(qrDataUrl, "PNG", pageWidth - margin - 54, 14, 48, 48);
     };
@@ -210,7 +232,7 @@ export default function AttendanceMarkPage() {
     drawHeader();
     drawTableHeader(88);
     let y = 116;
-    const rows = students.length ? students : [{ _id: "empty", rollNumber: "-", userId: { name: "No students found" }, status: undefined, attendanceRecords: [] } as Student];
+    const rows = students.length ? students : [{ _id: "empty", rollNumber: "-", userId: { name: "No records found" }, status: undefined, attendanceRecords: [] } as Student];
     rows.forEach((student, index) => {
       if (y > pageHeight - 44) {
         doc.addPage();
@@ -224,9 +246,9 @@ export default function AttendanceMarkPage() {
       }
       const summary = summarizeRecords(student.attendanceRecords);
       const values = [
-        student.rollNumber || "-",
+        personIdValue(student),
         student.userId?.name || "-",
-        student.sectionId?.name || "-",
+        subGroupValue(student),
         student.status || "-",
         summary.total,
         summary.present,
@@ -245,13 +267,13 @@ export default function AttendanceMarkPage() {
       });
       y += 24;
     });
-    doc.save(`attendance-${className.replace(/\s+/g, "-").toLowerCase()}-${date}.pdf`);
+    doc.save(`attendance-${rosterName.replace(/\s+/g, "-").toLowerCase()}-${date}.pdf`);
   };
 
   const exportStudentExcel = (student: Student) => {
-    const headers = ["Date", "Status", "Roll", "Name", "Class", "Section"];
-    const rows = (student.attendanceRecords || []).map((record) => [record.date, record.status, student.rollNumber || "-", student.userId?.name || "-", className, student.sectionId?.name || "-"]);
-    const csv = [headers, ...(rows.length ? rows : [["-", "No records", student.rollNumber || "-", student.userId?.name || "-", className, student.sectionId?.name || "-"]])].map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const headers = ["Date", "Status", idLabel, "Name", "Type", groupLabel, subGroupLabel];
+    const rows = (student.attendanceRecords || []).map((record) => [record.date, record.status, personIdValue(student), student.userId?.name || "-", personType, groupValue(student), subGroupValue(student)]);
+    const csv = [headers, ...(rows.length ? rows : [["-", "No records", personIdValue(student), student.userId?.name || "-", personType, groupValue(student), subGroupValue(student)]])].map((row) => row.map(csvCell).join(",")).join("\r\n");
     downloadFile(`\uFEFF${csv}`, `attendance-${student.rollNumber || student._id}-${student.userId?.name || "student"}.csv`, "text/csv;charset=utf-8");
   };
 
@@ -262,7 +284,7 @@ export default function AttendanceMarkPage() {
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 42;
     const summary = summarizeRecords(student.attendanceRecords);
-    const qrDataUrl = await makeQrDataUrl(JSON.stringify({ title: "Student Attendance", studentId: student._id, name: student.userId?.name, generatedAt: new Date().toISOString() }), 96);
+    const qrDataUrl = await makeQrDataUrl(JSON.stringify({ title: "Attendance", personType, personId: student._id, name: student.userId?.name, generatedAt: new Date().toISOString() }), 96);
 
     const drawHeader = () => {
       doc.setFillColor(15, 23, 42);
@@ -273,8 +295,8 @@ export default function AttendanceMarkPage() {
       doc.text(institution.name, margin, 26);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(`Attendance Calendar | ${student.userId?.name || "-"} | Roll: ${student.rollNumber || "-"}`, margin, 48);
-      doc.text(`Class: ${className} | Section: ${student.sectionId?.name || "-"}`, margin, 66);
+      doc.text(`Attendance Calendar | ${student.userId?.name || "-"} | ${idLabel}: ${personIdValue(student)}`, margin, 48);
+      doc.text(`${groupLabel}: ${groupValue(student)} | ${subGroupLabel}: ${subGroupValue(student)}`, margin, 66);
       doc.addImage(qrDataUrl, "PNG", pageWidth - margin - 54, 16, 48, 48);
     };
 
@@ -322,7 +344,9 @@ export default function AttendanceMarkPage() {
         classId,
         sectionId,
         date,
-        records: students.map((student) => ({ studentId: student._id, classId, sectionId: student.sectionId?._id || sectionId, date, status: student.status })),
+        records: students.map((student) => personType === "teacher"
+          ? ({ userId: student._id, userType: "teacher", date, status: student.status })
+          : ({ studentId: student._id, userType: "student", classId, sectionId: student.sectionId?._id || sectionId, date, status: student.status })),
       });
       await loadStudents(date);
       setMessage("Attendance saved.");
@@ -437,7 +461,7 @@ export default function AttendanceMarkPage() {
               {students.filter((student) => student.attendanceRecords?.some((record) => record.status === 'present' && record.date.slice(0, 7) === `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}` && Number(record.date.slice(8, 10)) === hoverDay)).length > 0 ? (
                 students.filter((student) => student.attendanceRecords?.some((record) => record.status === 'present' && record.date.slice(0, 7) === `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}` && Number(record.date.slice(8, 10)) === hoverDay)).map((student) => (
                   <div key={student._id} className="flex items-center justify-between py-1">
-                    <div className="truncate">{student.userId?.name} <span className="text-slate-500">({student.rollNumber})</span></div>
+                    <div className="truncate">{student.userId?.name} <span className="text-slate-500">({personIdValue(student)})</span></div>
                   </div>
                 ))
               ) : (
@@ -455,10 +479,10 @@ export default function AttendanceMarkPage() {
               {isTeacherOrUpperRole && (
                 <div className="flex gap-2 mb-2">
                   <Button size="sm" onClick={async () => {
-                    if (!classId) { setMessage('Select a class first.'); return; }
+                    if (personType === "student" && !classId) { setMessage('Select a class first.'); return; }
                     const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
                     try {
-                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'present' })) });
+                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => personType === "teacher" ? ({ userId: s._id, userType: "teacher", date: d, status: 'present' }) : ({ studentId: s._id, userType: "student", classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'present' })) });
                       setDate(d);
                       await loadStudents(d);
                       {
@@ -470,10 +494,10 @@ export default function AttendanceMarkPage() {
                     } catch (e:any) { setMessage(e?.message || 'Failed to mark.'); }
                   }}>Mark All Present</Button>
                   <Button size="sm" variant="outline" onClick={async () => {
-                    if (!classId) { setMessage('Select a class first.'); return; }
+                    if (personType === "student" && !classId) { setMessage('Select a class first.'); return; }
                     const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
                     try {
-                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => ({ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'absent' })) });
+                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => personType === "teacher" ? ({ userId: s._id, userType: "teacher", date: d, status: 'absent' }) : ({ studentId: s._id, userType: "student", classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'absent' })) });
                       setDate(d);
                       await loadStudents(d);
                       {
@@ -491,7 +515,7 @@ export default function AttendanceMarkPage() {
                     const presentList = students.filter(s => s.attendanceRecords?.some(r => r.date === selectedDayKey && r.status === 'present'));
                     const w = window.open('', '_blank');
                     if (w) {
-                      w.document.write(`<html><head><title>Attendance ${d}</title></head><body><h3>Present on ${d}</h3><ul>${presentList.map(p => `<li>${p.userId?.name} (${p.rollNumber})</li>`).join('')}</ul></body></html>`);
+                      w.document.write(`<html><head><title>Attendance ${d}</title></head><body><h3>Present on ${d}</h3><ul>${presentList.map(p => `<li>${p.userId?.name} (${personIdValue(p)})</li>`).join('')}</ul></body></html>`);
                       w.document.close();
                       w.print();
                     }
@@ -504,7 +528,7 @@ export default function AttendanceMarkPage() {
                 return (
                   <div key={s._id} className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <div className="truncate text-sm font-medium">{s.userId?.name} <span className="text-slate-500">({s.rollNumber})</span></div>
+                      <div className="truncate text-sm font-medium">{s.userId?.name} <span className="text-slate-500">({personIdValue(s)})</span></div>
                       <div className="flex gap-2">
                         {(['present','absent','late','leave'] as Status[]).map((st) => (
                           <Button
@@ -512,10 +536,10 @@ export default function AttendanceMarkPage() {
                             size="sm"
                             variant={status === st ? 'default' : 'outline'}
                             onClick={async () => {
-                              if (!classId) { setMessage('Select a class first.'); return; }
+                              if (personType === "student" && !classId) { setMessage('Select a class first.'); return; }
                               const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
                               try {
-                                await api.attendance.mark({ classId, sectionId, date: d, records: [{ studentId: s._id, classId, sectionId: s.sectionId?._id || sectionId, date: d, status: st }] });
+                                await api.attendance.mark({ classId, sectionId, date: d, records: [personType === "teacher" ? { userId: s._id, userType: "teacher", date: d, status: st } : { studentId: s._id, userType: "student", classId, sectionId: s.sectionId?._id || sectionId, date: d, status: st }] });
                                 setDate(d);
                                 await loadStudents(d);
                                 await fetchCalendarStudent(s._id);
@@ -562,21 +586,33 @@ export default function AttendanceMarkPage() {
       />
 
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-3">
-          <label className="space-y-2">
+        <div className="grid gap-3 md:grid-cols-4">
+          {canManageTeachers && (
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-slate-700">Attendance For</span>
+              <Select value={personType} onValueChange={(value) => { setPersonType(value as PersonType); setSectionId(""); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Students</SelectItem>
+                  <SelectItem value="teacher">Teachers</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
+          )}
+          {personType === "student" && <label className="space-y-2">
             <span className="text-sm font-medium text-slate-700">Class</span>
             <Select value={classId} onValueChange={(value) => { setClassId(value); setSectionId(""); }}>
               <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
               <SelectContent>{classes.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
             </Select>
-          </label>
-          <label className="space-y-2">
+          </label>}
+          {personType === "student" && <label className="space-y-2">
             <span className="text-sm font-medium text-slate-700">Section</span>
             <Select value={sectionId || "all"} onValueChange={(value) => setSectionId(value === "all" ? "" : value)}>
               <SelectTrigger><SelectValue placeholder="All sections" /></SelectTrigger>
               <SelectContent><SelectItem value="all">All sections</SelectItem>{sections.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
             </Select>
-          </label>
+          </label>}
           <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Date</span><Input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
         </div>
       </section>
@@ -589,7 +625,7 @@ export default function AttendanceMarkPage() {
             <div>
               <DialogTitle>Attendance calendar</DialogTitle>
               <DialogDescription>
-                {currentCalendarStudent?.userId?.name} — {currentCalendarStudent?.rollNumber}
+                {currentCalendarStudent ? `${currentCalendarStudent.userId?.name || "-"} - ${personIdValue(currentCalendarStudent)}` : "Attendance calendar"}
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -625,7 +661,7 @@ export default function AttendanceMarkPage() {
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 p-4">
-          <div className="text-sm font-medium text-slate-700">{students.length} students</div>
+          <div className="text-sm font-medium text-slate-700">{students.length} {activePeopleLabel}</div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setAll("present")}>All Present</Button>
             <Button type="button" variant="outline" onClick={() => setAll("absent")}>All Absent</Button>
@@ -636,7 +672,7 @@ export default function AttendanceMarkPage() {
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
               <TableHead>Photo</TableHead>
-              <TableHead>Roll</TableHead>
+              <TableHead>{idLabel}</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Total Present</TableHead>
               <TableHead>Status</TableHead>
@@ -644,7 +680,7 @@ export default function AttendanceMarkPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {students.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">No students found.</TableCell></TableRow> : students.map((student) => {
+            {students.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">No {activePeopleLabel} found.</TableCell></TableRow> : students.map((student) => {
               const isPresentHighlight = isTeacherOrUpperRole && student.status === "present";
               return (
                 <TableRow 
@@ -654,7 +690,7 @@ export default function AttendanceMarkPage() {
                   )}
                 >
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
-                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{student.rollNumber}</TableCell>
+                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{personIdValue(student)}</TableCell>
                   <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
                   <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button type="button" variant="ghost" size="sm" onClick={async () => { setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); await fetchCalendarStudent(student._id); setCalendarOpen(true); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
                   <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
