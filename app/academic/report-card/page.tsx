@@ -55,10 +55,17 @@ export default function ReportCardPage() {
         api.academic.exams.getAll() as Promise<{ exams: ExamItem[] }>,
       ]);
       const firstClass = classRes.classes?.[0]?._id || "";
+      const params = new URLSearchParams(window.location.search);
+      const queryClassId = params.get("classId") || "";
+      const querySectionId = params.get("sectionId") || "";
+      const queryExamId = params.get("examId") || "";
+      const queryStudentId = params.get("studentId") || "";
       setClasses(classRes.classes || []);
       setExams(examRes.exams || []);
-      setClassId((current) => current || firstClass);
-      setExamId((current) => current || examRes.exams?.find((exam) => exam.classId?._id === firstClass)?._id || "");
+      setClassId((current) => current || queryClassId || firstClass);
+      setSectionId((current) => current || querySectionId);
+      setStudentId((current) => current || queryStudentId);
+      setExamId((current) => current || queryExamId || examRes.exams?.find((exam) => exam.classId?._id === (queryClassId || firstClass))?._id || "");
     } catch (err: any) {
       setError(err?.message || "Failed to load report-card filters");
     } finally {
@@ -87,7 +94,7 @@ export default function ReportCardPage() {
 
   useEffect(() => { loadLookups(); }, []);
   useEffect(() => { loadStudents().catch(() => setStudents([])); }, [classId, sectionId]);
-  useEffect(() => { loadReportCard(); }, [studentId, examId]);
+  useEffect(() => { loadReportCard(); }, [studentId, examId, classId, sectionId]);
 
   const downloadPdf = async () => {
     await downloadElementPdf(previewRef.current, `${reportCard?.studentName || "report-card"}.pdf`);

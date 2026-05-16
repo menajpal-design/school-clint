@@ -2,10 +2,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Bell, LogOut, Settings, User, Globe } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Menu, X, Bell, LogOut, Settings, User, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 import { api } from '@/lib/api';
+import { getMenuForUser } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 
 interface NavbarProps {
@@ -14,11 +16,13 @@ interface NavbarProps {
 }
 
 export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
+  const router = useRouter();
   const { user, logout } = useAuth();
   const { can } = usePermission();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [language, setLanguage] = useState('en');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
   const profileRef = useRef<HTMLDivElement | null>(null);
 
@@ -69,6 +73,18 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
     window.location.href = '/login';
   };
 
+  const runGlobalSearch = () => {
+    const term = globalSearch.trim().toLowerCase();
+    if (!term || !user) return;
+    const routes = getMenuForUser(user).flatMap((item) => [item, ...(item.children || [])]);
+    const match = routes.find((item) => item.label.toLowerCase().includes(term) || item.href.toLowerCase().includes(term));
+    if (match) {
+      setShowMobileSearch(false);
+      setGlobalSearch('');
+      router.push(match.href);
+    }
+  };
+
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
@@ -110,7 +126,12 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           <input
             type="search"
             placeholder="Search..."
-              className="w-full rounded-lg border border-border bg-muted px-4 py-2 text-sm focus:border-primary focus:bg-background focus:outline-none"
+            value={globalSearch}
+            onChange={(event) => setGlobalSearch(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') runGlobalSearch();
+            }}
+            className="w-full rounded-lg border border-border bg-muted px-4 py-2 text-sm focus:border-primary focus:bg-background focus:outline-none"
           />
         </div>
 
@@ -121,7 +142,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
             className="rounded-lg p-2 hover:bg-muted"
             aria-label="Toggle search"
           >
-            <Globe className="h-5 w-5 text-muted-foreground" />
+            <Search className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
 
@@ -171,7 +192,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
             </button>
 
               {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 max-w-xs rounded-lg border border-border bg-popover shadow-lg">
+              <div className="absolute right-0 mt-2 w-[min(calc(100vw-2rem),20rem)] rounded-lg border border-border bg-popover shadow-lg">
                 <div className="flex items-center justify-between px-3 py-2">
                   <div className="text-sm font-medium">Notifications</div>
                   <button className="text-xs text-primary" onClick={async () => { try { await api.notifications.markAll(); setNotifications((prev)=>prev.map(n=>({ ...n, isRead: true }))); setUnreadCount(0); } catch(e){} }}>Mark all</button>
@@ -249,6 +270,26 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           </div>
         </div>
       </div>
+      {showMobileSearch && (
+        <div className="border-t border-border px-4 py-3 lg:hidden">
+          <div className="flex gap-2">
+            <input
+              type="search"
+              autoFocus
+              value={globalSearch}
+              onChange={(event) => setGlobalSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') runGlobalSearch();
+              }}
+              placeholder="Search menu..."
+              className="min-w-0 flex-1 rounded-lg border border-border bg-muted px-3 py-2 text-sm focus:border-primary focus:bg-background focus:outline-none"
+            />
+            <button onClick={runGlobalSearch} className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
+              Go
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

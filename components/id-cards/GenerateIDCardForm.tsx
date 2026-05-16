@@ -164,9 +164,9 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-6" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(900px, 1fr)', gap: '24px', width: '100%', minWidth: 0 }}>
+    <div className="grid w-full min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
       {/* Form Section */}
-      <div style={{ minWidth: 0 }}>
+      <div className="min-w-0">
         <Card>
           <CardHeader>
             <CardTitle>Generate ID Card</CardTitle>
@@ -299,7 +299,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
       </div>
 
       {/* Download Section */}
-      <div>
+      <div className="min-w-0">
         <Card>
           <CardHeader>
             <CardTitle>Download PDF</CardTitle>

@@ -35,7 +35,7 @@ export default function AttendanceReportsPage() {
   const [classId, setClassId] = useState("");
   const [sectionId, setSectionId] = useState("");
   const [personId, setPersonId] = useState("");
-  const [personType, setPersonType] = useState<"student" | "teacher">("student");
+  const [personType, setPersonType] = useState<"student" | "teacher" | "staff">("student");
   const [startDate, setStartDate] = useState(firstDay());
   const [endDate, setEndDate] = useState(today());
   const [reports, setReports] = useState<RecordItem[]>([]);
@@ -68,7 +68,7 @@ export default function AttendanceReportsPage() {
         sectionId: personType === "student" ? sectionId || undefined : undefined,
         personId: personId || undefined,
         personType,
-        userType: personType === "teacher" ? "teacher" : undefined,
+        userType: personType === "teacher" ? "teacher" : personType === 'staff' ? 'staff' : undefined,
       }) as any;
       setReports(data.reports || []);
       setComparison(data.comparison || []);
@@ -231,10 +231,10 @@ export default function AttendanceReportsPage() {
         <div className="grid gap-3 md:grid-cols-5">
           <Field label="Start"><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
           <Field label="End"><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
-          <Select label="Type" value={personType} onChange={(value) => { setPersonType(value as "student" | "teacher"); setPersonId(""); }}><option value="student">Students</option><option value="teacher">Teachers</option></Select>
+          <Select label="Type" value={personType} onChange={(value) => { setPersonType(value as "student" | "teacher" | "staff"); setPersonId(""); }}><option value="student">Students</option><option value="teacher">Teachers</option><option value="staff">Staff</option></Select>
           {personType === "student" && <Select label="Class" value={classId} onChange={(value) => { setClassId(value); setSectionId(""); setPersonId(""); }}><option value="">All classes</option>{classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Select>}
           {personType === "student" && <Select label="Section" value={sectionId} onChange={(value) => { setSectionId(value); setPersonId(""); }}><option value="">All sections</option>{sections.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Select>}
-          <Select label={personType === "teacher" ? "Teacher" : "Student"} value={personId} onChange={setPersonId}><option value="">All {personType === "teacher" ? "teachers" : "students"}</option>{people.map((item) => <option key={item._id} value={item._id}>{item.rollNumber ? `${item.rollNumber} - ` : ""}{item.userId?.name}</option>)}</Select>
+          <Select label={personType === "teacher" ? "Teacher" : personType === 'staff' ? 'Staff' : "Student"} value={personId} onChange={setPersonId}><option value="">All {personType === "teacher" ? "teachers" : personType === 'staff' ? 'staff' : "students"}</option>{people.map((item) => <option key={item._id} value={item._id}>{item.rollNumber ? `${item.rollNumber} - ` : ""}{item.userId?.name}</option>)}</Select>
         </div>
       </section>
 

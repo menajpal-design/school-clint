@@ -19,7 +19,7 @@ import { authManager } from "@/lib/auth";
 import { getPrintInstitution, makeQrDataUrl } from "@/lib/export-utils";
 
 type Status = "present" | "absent" | "late" | "leave";
-type PersonType = "student" | "teacher";
+type PersonType = "student" | "teacher" | "staff";
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
 type Student = { _id: string; profileId?: string; personType?: PersonType; rollNumber?: string; employeeId?: string; designation?: string; department?: string; userId?: { _id?: string; name: string; avatar?: string; role?: string }; classId?: { _id: string }; sectionId?: { _id: string; name: string }; status?: Status; presentCount?: number; attendanceRecords?: Array<{ date: string; status: Status }> };
 
@@ -63,7 +63,7 @@ export default function AttendanceMarkPage() {
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
   const canManageTeachers = authManager.hasRole(['head', 'assistant_head']);
-  const activePeopleLabel = personType === "teacher" ? "teachers" : "students";
+  const activePeopleLabel = personType === "teacher" ? "teachers" : personType === "staff" ? "staff" : "students";
   const currentCalendarStudent = useMemo(() => {
     if (!calendarStudent) return null;
     const matchingStudent = students.find((student) => student._id === calendarStudent._id);
@@ -85,9 +85,9 @@ export default function AttendanceMarkPage() {
   // Fetch and set fresh attendance history for a student into calendarStudent
   const fetchCalendarStudent = async (studentId: string) => {
     try {
-      const res = personType === "teacher"
-        ? await api.attendance.getPersonAttendance("teacher", studentId) as { attendance: Array<{ date: string; status: Status }> }
-        : await api.attendance.getStudentAttendance(studentId) as { attendance: Array<{ date: string; status: Status }> };
+        const res = personType === "teacher" || personType === "staff"
+          ? await api.attendance.getPersonAttendance(personType === 'staff' ? 'staff' : 'teacher', studentId) as { attendance: Array<{ date: string; status: Status }> }
+          : await api.attendance.getStudentAttendance(studentId) as { attendance: Array<{ date: string; status: Status }> };
       const records = (res.attendance || []).map((r) => ({ date: dateKey(r.date), status: r.status }));
       const stu = students.find(s => s._id === studentId) || { _id: studentId } as Student;
       const presentCount = records.filter((r) => r.status === 'present').length;
@@ -130,8 +130,8 @@ export default function AttendanceMarkPage() {
 
     const withCounts = await Promise.all(baseStudents.map(async (student) => {
       try {
-        const res = personType === "teacher"
-          ? await api.attendance.getPersonAttendance("teacher", student._id) as { attendance: Array<{ date: string; status: Status }> }
+        const res = personType === "teacher" || personType === "staff"
+          ? await api.attendance.getPersonAttendance(personType === 'staff' ? 'staff' : 'teacher', student._id) as { attendance: Array<{ date: string; status: Status }> }
           : await api.attendance.getStudentAttendance(student._id) as { attendance: Array<{ date: string; status: Status }> };
         const records = (res.attendance || []).map((r) => ({ date: dateKey(r.date), status: r.status }));
         const presentCount = records.filter((r) => r.status === 'present').length;
@@ -146,7 +146,7 @@ export default function AttendanceMarkPage() {
   };
 
   useEffect(() => { loadClasses().catch(() => undefined); }, []);
-  useEffect(() => { if (personType === "teacher" || classId) loadStudents(); }, [personType, classId, sectionId, date]);
+  useEffect(() => { if (personType === "teacher" || personType === 'staff' || classId) loadStudents(); }, [personType, classId, sectionId, date]);
 
   const setAll = (status: Status) => setStudents((current) => current.map((student) => ({ ...student, status })));
   const setOne = (id: string, status: Status) => setStudents((current) => current.map((student) => student._id === id ? { ...student, status } : student));
@@ -595,6 +595,7 @@ export default function AttendanceMarkPage() {
                 <SelectContent>
                   <SelectItem value="student">Students</SelectItem>
                   <SelectItem value="teacher">Teachers</SelectItem>
+                  {canManageTeachers && <SelectItem value="staff">Staff</SelectItem>}
                 </SelectContent>
               </Select>
             </label>

@@ -22,7 +22,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
         />
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 lg:p-6 lg:ml-0">
+        <main className="min-w-0 flex-1 overflow-y-auto bg-gray-50 p-4 lg:ml-0 lg:p-6">
           {children}
         </main>
       </div>

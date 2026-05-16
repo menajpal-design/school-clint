@@ -117,7 +117,7 @@ export function TeacherModal({ isOpen, onClose, data, onSave }: {
     >
       {(data, onChange) => (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Name</label>
               <input
@@ -137,7 +137,7 @@ export function TeacherModal({ isOpen, onClose, data, onSave }: {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Designation</label>
               <input
@@ -157,7 +157,7 @@ export function TeacherModal({ isOpen, onClose, data, onSave }: {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
               <input
@@ -177,7 +177,7 @@ export function TeacherModal({ isOpen, onClose, data, onSave }: {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Institution Address</label>
               <input
@@ -197,7 +197,7 @@ export function TeacherModal({ isOpen, onClose, data, onSave }: {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Institution Phone</label>
               <input
@@ -258,7 +258,7 @@ export function StudentModal({ isOpen, onClose, data, onSave }: {
     >
       {(data, onChange) => (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Name</label>
               <input
@@ -278,7 +278,7 @@ export function StudentModal({ isOpen, onClose, data, onSave }: {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Session</label>
               <input
@@ -298,7 +298,7 @@ export function StudentModal({ isOpen, onClose, data, onSave }: {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
               <input
@@ -318,7 +318,7 @@ export function StudentModal({ isOpen, onClose, data, onSave }: {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Institution Address</label>
               <input
@@ -338,7 +338,7 @@ export function StudentModal({ isOpen, onClose, data, onSave }: {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Institution Phone</label>
               <input
@@ -390,7 +390,7 @@ export function AdmitModal({ isOpen, onClose, data, onSave }: {
     >
       {(data, onChange) => (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Name</label>
               <input
@@ -410,7 +410,7 @@ export function AdmitModal({ isOpen, onClose, data, onSave }: {
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Session</label>
               <input
@@ -452,7 +452,7 @@ export function AdmitModal({ isOpen, onClose, data, onSave }: {
             <label className="block text-sm font-semibold text-gray-700 mb-2">Exam Schedule</label>
             <div className="space-y-2">
               {data.examData.map((exam, index) => (
-                <div key={index} className="grid grid-cols-3 gap-2 p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="grid gap-2 rounded-lg bg-gray-50 p-3 sm:grid-cols-3">
                   <input
                     type="text"
                     placeholder="Subject"

@@ -1,13 +1,15 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Edit, Download, Printer } from 'lucide-react'
 import StudentCard from './StudentIDCard'
 import TeacherCard from './TeacherIDCard'
 import AdmitCard from './AdmitCard'
 import { TeacherModal, StudentModal, AdmitModal, TeacherData, StudentData, AdmitData } from './EditModals'
+import { downloadElementPdf } from '@/lib/export-utils'
 
 const IDCardGenerator = () => {
+  const previewRef = useRef<HTMLDivElement | null>(null)
   const [activeTab, setActiveTab] = useState<'student' | 'teacher' | 'admit'>('student')
 
   // Sample data
@@ -73,9 +75,9 @@ const IDCardGenerator = () => {
     window.print()
   }
 
-  const handleDownload = () => {
-    // This would typically use html2canvas or similar library
-    alert('Download functionality would be implemented with html2canvas/PDF generation')
+  const handleDownload = async () => {
+    const filename = activeTab === 'admit' ? `admit-card-${admitData.roll || admitData.id}` : `${activeTab}-id-${activeTab === 'student' ? studentData.id : teacherData.id}`
+    await downloadElementPdf(previewRef.current, `${filename}.pdf`)
   }
 
   return (
@@ -141,7 +143,7 @@ const IDCardGenerator = () => {
             </div>
 
             {/* Card Display */}
-            <div className="flex justify-center">
+            <div ref={previewRef} className="flex justify-center overflow-x-auto print:overflow-visible">
               {activeTab === 'student' && <StudentCard {...studentData} />}
               {activeTab === 'teacher' && <TeacherCard {...teacherData} />}
               {activeTab === 'admit' && <AdmitCard {...admitData} />}
