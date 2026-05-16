@@ -117,7 +117,6 @@ const dictionary: Record<string, string> = {
   'Make private': 'প্রাইভেট করুন',
   'Routine ready': 'রুটিন প্রস্তুত',
   'Routine incomplete': 'রুটিন অসম্পূর্ণ',
-  'Class Routine': 'ক্লাস রুটিন',
   'Add Routine': 'রুটিন যোগ করুন',
   'Edit Class Routine': 'ক্লাস রুটিন এডিট',
   'Add Class Routine': 'ক্লাস রুটিন যোগ',
