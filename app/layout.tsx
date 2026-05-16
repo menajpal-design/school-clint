@@ -7,6 +7,11 @@ import { MobileTableEnhancer } from '@/components/layout/MobileTableEnhancer'
 export const metadata: Metadata = {
   title: 'EASY SCHOOL - School Management System',
   description: 'Complete School/Madrasah Management System',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/apple-icon.svg',
+  },
 }
 
 export default function RootLayout({
