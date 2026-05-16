@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { ToastProvider } from '@/hooks/useToast'
+import { LanguageProvider } from '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
 
 export const metadata: Metadata = {
   title: 'EASY SCHOOL - School Management System',
@@ -15,9 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-background">
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <LanguageProvider>
+          <ToastProvider>
+            <LanguageSwitcher />
+            {children}
+          </ToastProvider>
+        </LanguageProvider>
       </body>
     </html>
   )
