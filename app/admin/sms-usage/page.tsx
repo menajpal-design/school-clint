@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { BarChart3, Building2, CalendarDays, MessageSquareText, RefreshCw, Send, XCircle } from "lucide-react";
+import { BarChart3, Building2, CalendarDays, MessageSquare, RefreshCw, Send, XCircle } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +46,7 @@ export default function AdminSmsUsagePage() {
 
   const stats = [
     { label: "Institutions", value: summary.totalInstitutions || 0, icon: Building2 },
-    { label: "Total SMS", value: summary.totalSms || 0, icon: MessageSquareText },
+    { label: "Total SMS", value: summary.totalSms || 0, icon: MessageSquare },
     { label: "Sent SMS", value: summary.sentSms || 0, icon: Send },
     { label: "Failed SMS", value: summary.failedSms || 0, icon: XCircle },
   ];
