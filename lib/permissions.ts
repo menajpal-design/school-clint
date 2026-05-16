@@ -89,6 +89,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Overview', href: '/attendance', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Mark Attendance', href: '/attendance/mark', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Reports', href: '/attendance/reports', roles: ['head', 'assistant_head', 'class_teacher'] },
+      { label: 'SMS Monitoring', href: '/sms-monitoring', roles: ['head', 'assistant_head'] },
       { label: 'My Attendance', href: '/attendance/my-attendance', roles: ['head', 'student', 'parent'] },
     ],
   },
