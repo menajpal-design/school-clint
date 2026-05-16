@@ -44,7 +44,7 @@ export const menuConfig: MenuItemConfig[] = [
     roles: ['head', 'assistant_head', 'staff', 'student', 'teacher'],
     icon: 'CreditCard',
     children: [
-      { label: 'My Card', href: '/id-cards/my-card', roles: ['student', 'teacher', 'staff'] },
+      { label: 'My Card', href: '/id-cards/my-card', roles: ['head', 'assistant_head', 'student', 'teacher', 'staff'] },
       { label: 'Generate Card', href: '/id-cards/generate', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Admit Card', href: '/id-cards/admit-card', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Bulk Generate', href: '/id-cards/bulk-generate', roles: ['head', 'assistant_head'] },
@@ -161,6 +161,7 @@ export const menuConfig: MenuItemConfig[] = [
     children: [
       { label: 'My Profile', href: '/profile', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
       { label: 'Change Password', href: '/profile/change-password', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
+      { label: 'My ID Card', href: '/id-cards/my-card', roles: ['head', 'assistant_head', 'student', 'teacher', 'staff'] },
       { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
     ],
   },
