@@ -12,7 +12,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 mobile-app-layout">
+    <div className="flex min-h-screen flex-col bg-gray-50 pt-16 mobile-app-layout">
       <Navbar
         onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
         isMobileMenuOpen={isSidebarOpen}
