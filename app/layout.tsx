@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { ToastProvider } from '@/hooks/useToast'
 import { LanguageProvider } from '@/lib/i18n'
-import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
 import { MobileTableEnhancer } from '@/components/layout/MobileTableEnhancer'
 
 export const metadata: Metadata = {
@@ -20,7 +19,6 @@ export default function RootLayout({
       <body className="min-h-screen bg-background">
         <LanguageProvider>
           <ToastProvider>
-            <LanguageSwitcher />
             <MobileTableEnhancer />
             {children}
           </ToastProvider>
