@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils"
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="w-full overflow-x-auto print:overflow-visible">
-      <table ref={ref} className={cn("min-w-full caption-bottom text-sm", className)} {...props} />
+    <div className="mobile-table-scroll w-full overflow-x-auto rounded-lg print:overflow-visible" role="region" aria-label="Scrollable table" tabIndex={0}>
+      <table ref={ref} className={cn("mobile-friendly-table min-w-[760px] caption-bottom text-sm md:min-w-full", className)} {...props} />
     </div>
   )
 )
@@ -32,7 +32,7 @@ TableFooter.displayName = "TableFooter"
 
 const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTMLTableRowElement>>(
   ({ className, ...props }, ref) => (
-    <tr ref={ref} className={cn("border-b transition-colors hover:bg-muted", className)} {...props} />
+    <tr ref={ref} className={cn("border-b transition-colors hover:bg-muted/70", className)} {...props} />
   )
 )
 TableRow.displayName = "TableRow"
@@ -41,7 +41,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
-      className={cn("h-11 px-4 text-left align-middle text-xs font-semibold uppercase text-muted-foreground", className)}
+      className={cn("h-11 whitespace-nowrap px-3 text-left align-middle text-[11px] font-semibold uppercase tracking-wide text-muted-foreground md:px-4 md:text-xs", className)}
       {...props}
     />
   )
@@ -50,7 +50,7 @@ TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn("px-4 py-3 align-middle text-foreground", className)} {...props} />
+    <td ref={ref} className={cn("max-w-[240px] whitespace-nowrap px-3 py-3 align-middle text-sm text-foreground md:max-w-none md:px-4", className)} {...props} />
   )
 )
 TableCell.displayName = "TableCell"
