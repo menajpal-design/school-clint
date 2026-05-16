@@ -9,6 +9,8 @@ interface MenuItemConfig {
   children?: MenuItemConfig[];
 }
 
+const smsMonitoringRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
+
 export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Admin',
@@ -33,7 +35,7 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'SMS Monitoring',
     href: '/sms-monitoring',
-    roles: ['head', 'assistant_head'],
+    roles: smsMonitoringRoles,
     icon: 'Bell',
   },
   {
@@ -89,7 +91,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Overview', href: '/attendance', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Mark Attendance', href: '/attendance/mark', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Reports', href: '/attendance/reports', roles: ['head', 'assistant_head', 'class_teacher'] },
-      { label: 'SMS Monitoring', href: '/sms-monitoring', roles: ['head', 'assistant_head'] },
+      { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
       { label: 'My Attendance', href: '/attendance/my-attendance', roles: ['head', 'student', 'parent'] },
     ],
   },
@@ -103,6 +105,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Fees', href: '/finance/fees', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'Collections', href: '/finance/collections', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'Salary', href: '/finance/salary', roles: ['head'] },
+      { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
       { label: 'Reports', href: '/finance/reports', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'My Fees', href: '/finance/my-fees', roles: ['student', 'parent'] },
     ],
@@ -117,6 +120,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Memo', href: '/documents/memo', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Upload', href: '/documents/upload', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Management', href: '/documents/manage', roles: ['head', 'assistant_head'] },
+      { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
     ],
   },
   {
@@ -128,6 +132,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Overview', href: '/users-roles', roles: ['admin', 'super_admin', 'head'] },
       { label: 'All Users', href: '/users-roles/all', roles: ['admin', 'super_admin', 'head'] },
       { label: 'Roles & Permissions', href: '/users-roles/permissions', roles: ['admin', 'super_admin', 'head'] },
+      { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
     ],
   },
   {
@@ -156,6 +161,7 @@ export const menuConfig: MenuItemConfig[] = [
     children: [
       { label: 'My Profile', href: '/profile', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
       { label: 'Change Password', href: '/profile/change-password', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
+      { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
     ],
   },
   {
