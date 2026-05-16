@@ -63,6 +63,13 @@ const quickLinks = [
     tone: "bg-rose-50 text-rose-700",
   },
   {
+    title: "Final Promotion",
+    description: "Promote final exam students to next class with manual override.",
+    href: "/academic/promotions",
+    icon: GraduationCap,
+    tone: "bg-purple-50 text-purple-700",
+  },
+  {
     title: "Report Cards",
     description: "Preview, print and download student report cards.",
     href: "/academic/report-card",
@@ -165,7 +172,7 @@ export default function AcademicPage() {
     <div className="space-y-6 p-4 md:p-6">
       <PageHeader
         title="Academic Overview"
-        description="Manage classes, subjects, exams, results and report card workflows from one academic control center."
+        description="Manage classes, subjects, exams, results, promotion and report card workflows from one academic control center."
         icon={LayoutList}
         status={<Badge variant="outline" className={dataSource === 'live' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : dataSource === 'empty' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-blue-200 bg-blue-50 text-blue-700'}>{dataSource === 'live' ? 'Live academic data' : dataSource === 'empty' ? 'No live academic data yet' : 'Loading live academic data'}</Badge>}
         actions={[
@@ -187,6 +194,12 @@ export default function AcademicPage() {
               Exams
             </Link>
           </Button>,
+          <Button key="promotion" size="sm" asChild>
+            <Link href="/academic/promotions">
+              <GraduationCap className="mr-2 h-4 w-4" />
+              Final Promotion
+            </Link>
+          </Button>,
         ]}
       />
 
@@ -204,7 +217,7 @@ export default function AcademicPage() {
         ))}
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         {quickLinks.map((link) => {
           const Icon = link.icon;
           return (
