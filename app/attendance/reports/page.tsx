@@ -284,7 +284,9 @@ export default function AttendanceReportsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <>
+      <style>{`@media print{ .no-print{display:none!important} .print-only{display:block!important} } @media screen{ .print-only{display:none!important} }`}</style>
+      <div className="space-y-5 no-print">
       <PageHeader
         title="Attendance Reports"
         description="Analyze attendance by date, class, section and person."
@@ -411,7 +413,50 @@ export default function AttendanceReportsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+
+      {/* Print-only full summary table */}
+      <div className="print-only p-4">
+        <h2 className="text-lg font-semibold mb-3">Attendance Summary (Printable)</h2>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'left' }}>Name</th>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'left' }}>Roll</th>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'left' }}>Class</th>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'left' }}>Section</th>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>Total</th>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>Present</th>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>Absent</th>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>Late</th>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>Leave</th>
+              <th style={{ border: '1px solid #ddd', padding: 8, textAlign: 'left' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {peopleSummaries.length === 0 ? (
+              <tr><td colSpan={10} style={{ border: '1px solid #ddd', padding: 12, textAlign: 'center' }}>No people found for selected filters.</td></tr>
+            ) : peopleSummaries.map((p: any) => (
+              <tr key={p.id}>
+                <td style={{ border: '1px solid #ddd', padding: 8 }}>{p.name}</td>
+                <td style={{ border: '1px solid #ddd', padding: 8 }}>{p.roll}</td>
+                <td style={{ border: '1px solid #ddd', padding: 8 }}>{p.className}</td>
+                <td style={{ border: '1px solid #ddd', padding: 8 }}>{p.section}</td>
+                <td style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>{p.total}</td>
+                <td style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>{p.present}</td>
+                <td style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>{p.absent}</td>
+                <td style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>{p.late}</td>
+                <td style={{ border: '1px solid #ddd', padding: 8, textAlign: 'right' }}>{p.leave}</td>
+                <td style={{ border: '1px solid #ddd', padding: 8 }}>
+                  <button onClick={() => exportPersonCsv(p.id)} style={{ marginRight: 8, padding: '4px 8px', border: '1px solid #cbd5e1', background: 'white' }}>CSV</button>
+                  <button onClick={() => exportPersonPdf(p.id)} style={{ padding: '4px 8px', border: '1px solid #cbd5e1', background: 'white' }}>PDF</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
