@@ -179,3 +179,56 @@ export function getClosureDaysCount(startDate?: string, endDate?: string) {
   const diff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   return diff + 1;
 }
+
+export type AppControlSettings = {
+  routineAutoPublishAfterApproval: boolean;
+  routinePdfIncludeTeacherName: boolean;
+  routineRequireAssistantApproval: boolean;
+  leaveAutoMarkAttendance: boolean;
+  leaveColor: string;
+  weekendColor: string;
+  closureColor: string;
+  presentColor: string;
+  absentColor: string;
+  smsLogRetentionDays: number;
+  smsWarnAtPercent: number;
+  idCardDefaultFormat: 'pdf' | 'png';
+  mobileTableMode: 'scroll' | 'card';
+  mobilePrintMode: 'pdf' | 'print';
+};
+
+const DEFAULT_APP_CONTROL_SETTINGS: AppControlSettings = {
+  routineAutoPublishAfterApproval: true,
+  routinePdfIncludeTeacherName: true,
+  routineRequireAssistantApproval: false,
+  leaveAutoMarkAttendance: true,
+  leaveColor: '#bae6fd',
+  weekendColor: '#ddd6fe',
+  closureColor: '#fed7aa',
+  presentColor: '#bbf7d0',
+  absentColor: '#fecaca',
+  smsLogRetentionDays: 30,
+  smsWarnAtPercent: 80,
+  idCardDefaultFormat: 'pdf',
+  mobileTableMode: 'card',
+  mobilePrintMode: 'pdf',
+};
+
+export function getAppControlSettings(): AppControlSettings {
+  if (typeof window === 'undefined') return DEFAULT_APP_CONTROL_SETTINGS;
+  try {
+    const raw = window.localStorage.getItem('easy_school_app_control_settings');
+    if (!raw) return DEFAULT_APP_CONTROL_SETTINGS;
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_APP_CONTROL_SETTINGS, ...(parsed || {}) } as AppControlSettings;
+  } catch (e) {
+    return DEFAULT_APP_CONTROL_SETTINGS;
+  }
+}
+
+export function setAppControlSettings(settings: AppControlSettings) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem('easy_school_app_control_settings', JSON.stringify(settings));
+  } catch (e) {}
+}
