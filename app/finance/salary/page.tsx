@@ -22,22 +22,36 @@ export default function SalaryPage() {
   const [drafts, setDrafts] = useState<Record<string, any>>({});
   const [previews, setPreviews] = useState<Record<string, any>>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const load = async () => {
-    const data = await api.finance.salary() as any;
-    setEmployees(data.employees || []);
-    setSalaries(data.salaries || []);
+    setLoading(true);
+    setError("");
+    try {
+      const data = await api.finance.salary() as any;
+      setEmployees(data.employees || []);
+      setSalaries(data.salaries || []);
+    } catch (err: any) {
+      setError(err?.message || "Failed to load salary information.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load().catch(() => undefined); }, []);
 
   const value = (employee: any, key: string, fallback = 0) => drafts[employee._id]?.[key] ?? (key === "basicSalary" ? employee.salary || fallback : fallback);
-  const setValue = (id: string, key: string, val: number) => setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: val } }));
+  const setValue = (id: string, key: string, val: number) => setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: Math.max(0, val || 0) } }));
   const rowKey = (employee: any) => `${employee.employeeType}-${employee._id}`;
 
   const previewSalary = async (employee: any) => {
     const key = rowKey(employee);
+    if (Number(value(employee, "basicSalary")) <= 0) return setError("Basic salary must be greater than zero.");
     setLoadingId(key);
+    setError("");
+    setMessage("");
     try {
       const query = new URLSearchParams({
         employeeId: employee._id,
@@ -50,6 +64,9 @@ export default function SalaryPage() {
       });
       const data = await apiClient.get(`/payroll/salary-attendance/preview?${query.toString()}`) as any;
       setPreviews((prev) => ({ ...prev, [key]: data }));
+      setMessage(`Preview ready for ${employee.userId?.name || "employee"}.`);
+    } catch (err: any) {
+      setError(err?.message || "Failed to preview salary.");
     } finally {
       setLoadingId(null);
     }
@@ -57,7 +74,10 @@ export default function SalaryPage() {
 
   const process = async (employee: any) => {
     const key = rowKey(employee);
+    if (Number(value(employee, "basicSalary")) <= 0) return setError("Basic salary must be greater than zero.");
     setLoadingId(key);
+    setError("");
+    setMessage("");
     try {
       const data = await apiClient.post('/payroll/salary-attendance/process', {
         employeeId: employee._id,
@@ -69,7 +89,10 @@ export default function SalaryPage() {
         bonus: value(employee, "bonus"),
       }) as any;
       setPreviews((prev) => ({ ...prev, [key]: data.preview || data }));
+      setMessage(`Salary processed for ${employee.userId?.name || "employee"}.`);
       await load();
+    } catch (err: any) {
+      setError(err?.message || "Failed to process salary.");
     } finally {
       setLoadingId(null);
     }
@@ -113,11 +136,13 @@ export default function SalaryPage() {
     <RoleGuard roles={["head"]} fallback={<div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Salary information is visible to the Head only.</div>}>
       <div className="space-y-5">
         <PageHeader title="Salary Processing" description="Head can set salary and process teacher/staff payroll using attendance deduction." icon={Landmark} />
+        {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+        {message && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
         <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="grid gap-3 md:grid-cols-3">
-            <input className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={(e) => setMonth(e.target.value)} placeholder="Month, e.g. May" />
-            <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
-            <Button variant="outline" onClick={() => load().catch(() => undefined)}><RefreshCw className="mr-2 h-4 w-4" />Reload Employees</Button>
+            <label className="space-y-2"><span className="text-sm font-medium">Month</span><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={(e) => setMonth(e.target.value)} placeholder="Month, e.g. May" /></label>
+            <label className="space-y-2"><span className="text-sm font-medium">Year</span><Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} /></label>
+            <div className="flex items-end"><Button variant="outline" onClick={() => load().catch(() => undefined)} disabled={loading} className="w-full"><RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />{loading ? "Loading..." : "Reload Employees"}</Button></div>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">Rule: absent days are deducted by per-day salary. Late and leave days are shown for review but not deducted automatically.</p>
         </section>
@@ -137,7 +162,7 @@ export default function SalaryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {employees.length === 0 ? <TableRow><TableCell colSpan={8} className="h-28 text-center text-slate-500">No teacher or staff employee found.</TableCell></TableRow> : employees.map((e) => {
+              {loading ? <TableRow><TableCell colSpan={8} className="h-28 text-center text-slate-500">Loading employees...</TableCell></TableRow> : employees.length === 0 ? <TableRow><TableCell colSpan={8} className="h-28 text-center text-slate-500">No teacher or staff employee found.</TableCell></TableRow> : employees.map((e) => {
                 const key = rowKey(e);
                 const preview = previews[key];
                 const attendanceDeduction = Number(preview?.attendanceSummary?.attendanceDeduction || 0);
@@ -149,20 +174,20 @@ export default function SalaryPage() {
                     <div className="text-xs text-muted-foreground">{e.employeeId || e.userId?.email || "-"}</div>
                   </TableCell>
                   <TableCell className="capitalize">{e.employeeType}</TableCell>
-                  <TableCell><Input className="w-28" type="number" value={value(e,"basicSalary")} onChange={(ev) => setValue(e._id,"basicSalary",Number(ev.target.value))} /></TableCell>
-                  <TableCell><Input className="w-28" type="number" value={value(e,"deduction")} onChange={(ev) => setValue(e._id,"deduction",Number(ev.target.value))} /></TableCell>
-                  <TableCell><Input className="w-28" type="number" value={value(e,"bonus")} onChange={(ev) => setValue(e._id,"bonus",Number(ev.target.value))} /></TableCell>
+                  <TableCell><Input className="w-full min-w-[7rem] md:w-28" min={0} type="number" value={value(e,"basicSalary")} onChange={(ev) => setValue(e._id,"basicSalary",Number(ev.target.value))} /></TableCell>
+                  <TableCell><Input className="w-full min-w-[7rem] md:w-28" min={0} type="number" value={value(e,"deduction")} onChange={(ev) => setValue(e._id,"deduction",Number(ev.target.value))} /></TableCell>
+                  <TableCell><Input className="w-full min-w-[7rem] md:w-28" min={0} type="number" value={value(e,"bonus")} onChange={(ev) => setValue(e._id,"bonus",Number(ev.target.value))} /></TableCell>
                   <TableCell>
                     {preview ? <div className="space-y-1 text-xs">
-                      <div><Badge variant="outline">P {preview.attendanceSummary?.presentDays || 0}</Badge> <Badge variant="outline">A {preview.attendanceSummary?.absentDays || 0}</Badge></div>
+                      <div className="flex flex-wrap gap-1"><Badge variant="outline">P {preview.attendanceSummary?.presentDays || 0}</Badge><Badge variant="outline">A {preview.attendanceSummary?.absentDays || 0}</Badge></div>
                       <div>Late: {preview.attendanceSummary?.lateDays || 0} | Leave: {preview.attendanceSummary?.leaveDays || 0}</div>
                       <div className="font-medium text-red-600">Deduct: {formatCurrency(attendanceDeduction)}</div>
                     </div> : <span className="text-xs text-muted-foreground">Click Preview</span>}
                   </TableCell>
                   <TableCell className="font-semibold">{formatCurrency(net)}</TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" disabled={isLoading} onClick={() => previewSalary(e)}><Calculator className="mr-2 h-4 w-4" />Preview</Button>
+                    <div className="grid gap-2 sm:flex sm:flex-wrap">
+                      <Button size="sm" variant="outline" disabled={isLoading} onClick={() => previewSalary(e)}><Calculator className="mr-2 h-4 w-4" />{isLoading ? "Wait" : "Preview"}</Button>
                       <Button size="sm" disabled={isLoading} onClick={() => process(e)}>Process</Button>
                       <Button size="sm" variant="outline" onClick={() => printSlip(e)}><FileText className="mr-2 h-4 w-4" />Slip</Button>
                     </div>
@@ -181,7 +206,7 @@ export default function SalaryPage() {
           <Table>
             <TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>Month</TableHead><TableHead>Type</TableHead><TableHead>Gross</TableHead><TableHead>Attendance Deduction</TableHead><TableHead>Net</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
             <TableBody>
-              {salaries.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-slate-500">No processed salary yet.</TableCell></TableRow> : salaries.slice(0, 12).map((salary: any) => (
+              {loading ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-slate-500">Loading salary history...</TableCell></TableRow> : salaries.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-slate-500">No processed salary yet.</TableCell></TableRow> : salaries.slice(0, 12).map((salary: any) => (
                 <TableRow key={salary._id}>
                   <TableCell>{salary.month} {salary.year}</TableCell>
                   <TableCell className="capitalize">{salary.employeeType}</TableCell>
