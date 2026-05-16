@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, CheckCircle2, MessageSquareText, RefreshCw, Send, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, MessageSquare, RefreshCw, Send, XCircle } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,7 +44,7 @@ export default function SmsMonitoringPage() {
   const notSentRecipients = useMemo(() => recipients.filter((item: any) => !item.smsSent), [recipients]);
 
   const stats = [
-    { label: "Monthly SMS Limit", value: data?.limit?.monthlySmsLimit || 0, icon: MessageSquareText },
+    { label: "Monthly SMS Limit", value: data?.limit?.monthlySmsLimit || 0, icon: MessageSquare },
     { label: "Used This Month", value: data?.limit?.usedThisMonth || 0, icon: Send },
     { label: "Remaining", value: data?.limit?.remainingThisMonth || 0, icon: CheckCircle2 },
     { label: "Not Sent", value: data?.summary?.notSentRecipients || 0, icon: XCircle },
