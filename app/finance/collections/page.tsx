@@ -7,7 +7,7 @@ import { WebcamScanner } from "@/components/id-cards/WebcamScanner";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { printHtml } from "@/lib/export-utils";
@@ -23,11 +23,28 @@ export default function CollectionsPage() {
   const [receipt, setReceipt] = useState<any>(null);
   const [scanOpen, setScanOpen] = useState(false);
 
+  const loadInstitution = async () => {
+    try {
+      const data = await api.institution.profile() as any;
+      if (data?.institution && typeof window !== "undefined") {
+        localStorage.setItem("printInstitution", JSON.stringify(data.institution));
+        localStorage.setItem("institution", JSON.stringify(data.institution));
+      }
+    } catch {
+      // Keep existing local institution data if profile cannot be loaded.
+    }
+  };
+
   const load = async () => {
     const data = await api.finance.collections({ search }) as any;
     setStudents(data.students || []);
   };
-  useEffect(() => { load().catch(() => undefined); }, []);
+
+  useEffect(() => {
+    loadInstitution();
+    load().catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const collect = async () => {
     if (!selected) return;
@@ -36,8 +53,9 @@ export default function CollectionsPage() {
   };
 
   const choose = (student: any) => { setSelected(student); setAmount(student.dueAmount || 0); };
-  const printReceipt = () => {
+  const printReceipt = async () => {
     if (!receipt) return;
+    await loadInstitution();
     printHtml("Fee Receipt", `
       <main class="print-card">
         <p class="print-title">Fee Receipt</p>
@@ -75,7 +93,6 @@ export default function CollectionsPage() {
     <Dialog open={scanOpen} onOpenChange={setScanOpen}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Scan ID Card</DialogTitle></DialogHeader><WebcamScanner enabled={scanOpen} onScan={(code) => {
       setSearch(code);
       setScanOpen(false);
-      // Trigger search after setting the code
       setTimeout(() => load(), 100);
     }} /></DialogContent></Dialog>
   </div>;
