@@ -83,7 +83,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
   }, []);
 
   return (
-    <nav className="sticky top-0 z-40 w-full overflow-x-hidden border-b border-border bg-background/95 backdrop-blur">
+    <nav className="fixed left-0 right-0 top-0 z-50 w-full overflow-x-hidden border-b border-border bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85">
       <div className="grid h-16 w-full grid-cols-[auto_1fr] items-center gap-1 px-2 sm:grid-cols-[auto_1fr_auto] sm:px-4 lg:px-6">
         <div className="flex min-w-0 items-center gap-1 sm:gap-3">
           <button onClick={onMenuClick} className="rounded-lg p-2 hover:bg-muted lg:hidden" aria-label="Toggle menu">
