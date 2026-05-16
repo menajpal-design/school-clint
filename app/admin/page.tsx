@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Building2, CheckCircle2, Clock, MessageSquareText, ShieldCheck, Users } from 'lucide-react';
+import { Building2, CheckCircle2, Clock, MessageSquare, ShieldCheck, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,7 +50,7 @@ export default function AdminPage() {
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/subscriptions">Subscriptions</Link></Button>
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/select-school">Select School</Link></Button>
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/users">Manage Users</Link></Button>
-          <Button asChild variant="outline" className="justify-start"><Link href="/admin/sms-usage"><MessageSquareText className="mr-2 h-4 w-4" />SMS Usage</Link></Button>
+          <Button asChild variant="outline" className="justify-start"><Link href="/admin/sms-usage"><MessageSquare className="mr-2 h-4 w-4" />SMS Usage</Link></Button>
         </CardContent>
       </Card>
     </div>
