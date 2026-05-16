@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { CreditCard, Landmark, WalletCards } from "lucide-react";
 
 import { LineChartCard } from "@/components/charts/LineChartCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -22,7 +24,12 @@ export default function FinancePage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Finance Dashboard" description="Collections, dues, salaries and recent payment activity." icon={Landmark} />
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <PageHeader title="Finance Dashboard" description="Collections, dues, salaries and recent payment activity." icon={Landmark} />
+        <Button asChild>
+          <Link href="/finance/salary">Head Salary Setup</Link>
+        </Button>
+      </div>
       <div className="grid gap-4 md:grid-cols-5">
         <StatCard label="Total Collection" value={formatCurrency(summary.totalCollection || 0)} icon={WalletCards} tone="emerald" />
         <StatCard label="Total Due" value={formatCurrency(summary.totalDue || 0)} icon={CreditCard} tone="rose" />
