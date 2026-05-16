@@ -122,3 +122,42 @@ export function downloadBlob(blob: Blob, filename: string) {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+export type AttendanceSettings = {
+  defaultType: 'all' | 'student' | 'teacher' | 'staff';
+  includeHeadAsTeacher: boolean;
+  defaultDateRange: 'month' | '7days' | 'custom';
+  printColumns: string[];
+  exportCsv: boolean;
+  exportPdf: boolean;
+};
+
+const DEFAULT_ATTENDANCE_SETTINGS: AttendanceSettings = {
+  defaultType: 'student',
+  includeHeadAsTeacher: true,
+  defaultDateRange: 'month',
+  printColumns: ['Name', 'Roll', 'Class', 'Section', 'Total', 'Present', 'Absent', 'Late', 'Leave'],
+  exportCsv: true,
+  exportPdf: true,
+};
+
+export function getAttendanceSettings(): AttendanceSettings {
+  if (typeof window === 'undefined') return DEFAULT_ATTENDANCE_SETTINGS;
+  try {
+    const raw = window.localStorage.getItem('easy_school_attendance_settings');
+    if (!raw) return DEFAULT_ATTENDANCE_SETTINGS;
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_ATTENDANCE_SETTINGS, ...(parsed || {}) } as AttendanceSettings;
+  } catch (e) {
+    return DEFAULT_ATTENDANCE_SETTINGS;
+  }
+}
+
+export function setAttendanceSettings(s: AttendanceSettings) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem('easy_school_attendance_settings', JSON.stringify(s));
+  } catch (e) {
+    // ignore
+  }
+}

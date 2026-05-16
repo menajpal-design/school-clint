@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { getPrintInstitution, makeQrDataUrl } from "@/lib/export-utils";
-import { downloadFile, formatDate } from "@/lib/utils";
+import { downloadFile, formatDate, getAttendanceSettings } from "@/lib/utils";
 
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
 type Person = { _id: string; rollNumber?: string; userId?: { name: string } };
@@ -36,8 +36,18 @@ export default function AttendanceReportsPage() {
   const [classId, setClassId] = useState("");
   const [sectionId, setSectionId] = useState("");
   const [personId, setPersonId] = useState("");
-  const [personType, setPersonType] = useState<"student" | "teacher" | "staff" | "all">("student");
-  const [startDate, setStartDate] = useState(firstDay());
+  const attendanceSettings = getAttendanceSettings();
+  const [personType, setPersonType] = useState<"student" | "teacher" | "staff" | "all">(() => attendanceSettings.defaultType as any);
+  const [startDate, setStartDate] = useState(() => {
+    const range = attendanceSettings.defaultDateRange;
+    if (range === '7days') {
+      const d = new Date();
+      d.setDate(d.getDate() - 6);
+      return d.toISOString().slice(0,10);
+    }
+    if (range === 'month') return firstDay();
+    return firstDay();
+  });
   const [endDate, setEndDate] = useState(today());
   const [reports, setReports] = useState<RecordItem[]>([]);
   const [comparison, setComparison] = useState<any[]>([]);
@@ -77,7 +87,8 @@ export default function AttendanceReportsPage() {
         const fullReports: RecordItem[] = data.reports || [];
         let filtered: RecordItem[] = fullReports;
         if (personType === 'teacher') {
-          filtered = fullReports.filter((r) => r.userType === 'teacher' || ['head', 'assistant_head'].includes(r.userId?.role || ''));
+          const includeHeadAssistant = attendanceSettings.includeHeadAsTeacher;
+          filtered = fullReports.filter((r) => r.userType === 'teacher' || (includeHeadAssistant && ['head', 'assistant_head'].includes(r.userId?.role || '')));
         } else if (personType === 'student') {
           filtered = fullReports.filter((r) => !!r.studentId);
         } else if (personType === 'staff') {
