@@ -386,22 +386,9 @@ export default function AttendanceReportsPage() {
                     <div className="text-2xl font-bold text-sky-600">{personSummary?.leave || 0}</div>
                   </div>
                 </div>
-                <Table className="text-sm">
-                  <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead className="text-xs">Date</TableHead>
-                      <TableHead className="text-xs">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {personRecords.length === 0 ? <TableRow><TableCell colSpan={2} className="text-center py-4 text-slate-500">No records</TableCell></TableRow> : personRecords.map((r, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="text-xs">{r.date}</TableCell>
-                        <TableCell className="text-xs"><Badge variant="outline" className="capitalize">{r.status}</Badge></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="text-sm">
+                  <div className="text-center py-4 text-slate-600">Detailed per-date records are available via the CSV / PDF download buttons.</div>
+                </div>
               </div>
             );
           })()}
