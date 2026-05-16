@@ -55,13 +55,9 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
 
-  html {
-    scroll-behavior: smooth;
-  }
+  html { scroll-behavior: smooth; }
 
   body {
     @apply bg-background text-foreground antialiased;
@@ -73,9 +69,7 @@
     min-height: 100vh;
   }
 
-  ::selection {
-    background: hsl(var(--primary) / 0.20);
-  }
+  ::selection { background: hsl(var(--primary) / 0.20); }
 }
 
 @layer components {
@@ -83,9 +77,7 @@
   .page-shell,
   main[class*="space-y"],
   div[class*="space-y-5"],
-  div[class*="space-y-6"] {
-    color: hsl(var(--foreground));
-  }
+  div[class*="space-y-6"] { color: hsl(var(--foreground)); }
 
   .card,
   [class*="bg-card"],
@@ -110,9 +102,7 @@
   }
 
   button[class*="bg-primary"]:hover,
-  a[class*="bg-primary"]:hover {
-    filter: brightness(0.97);
-  }
+  a[class*="bg-primary"]:hover { filter: brightness(0.97); }
 
   input,
   select,
@@ -131,45 +121,100 @@
 
   table thead tr,
   tr[class*="bg-muted"],
-  tr[class*="bg-slate-50"] {
-    background: linear-gradient(90deg, hsl(224 78% 44% / 0.08), hsl(199 89% 48% / 0.08));
+  tr[class*="bg-slate-50"] { background: linear-gradient(90deg, hsl(224 78% 44% / 0.08), hsl(199 89% 48% / 0.08)); }
+
+  table tbody tr:hover { background: hsl(214 45% 96% / 0.72); }
+
+  .mobile-table-scroll {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
   }
 
-  table tbody tr:hover {
-    background: hsl(214 45% 96% / 0.72);
+  .mobile-table-scroll:focus {
+    outline: 2px solid hsl(var(--ring) / 0.25);
+    outline-offset: 2px;
   }
 
-  .badge-success {
-    border-color: hsl(var(--success) / 0.25);
-    background: hsl(var(--success) / 0.10);
-    color: hsl(var(--success));
+  .mobile-table-scroll::after {
+    content: "Swipe →";
+    display: none;
+    position: sticky;
+    left: 0;
+    bottom: 0;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.72rem;
+    color: hsl(var(--muted-foreground));
+    background: linear-gradient(90deg, hsl(var(--card)), hsl(var(--card) / 0));
   }
 
-  .badge-warning {
-    border-color: hsl(var(--warning) / 0.30);
-    background: hsl(var(--warning) / 0.12);
-    color: hsl(32 95% 34%);
+  .mobile-friendly-table th,
+  .mobile-friendly-table td { vertical-align: middle; }
+
+  .mobile-friendly-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .badge-info {
-    border-color: hsl(var(--info) / 0.25);
-    background: hsl(var(--info) / 0.10);
-    color: hsl(var(--info));
+  .mobile-friendly-table td:first-child,
+  .mobile-friendly-table th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: hsl(var(--card));
+    box-shadow: 8px 0 14px hsl(222 47% 11% / 0.04);
+  }
+
+  .mobile-friendly-table thead th:first-child {
+    background: hsl(214 45% 96%);
+    z-index: 3;
+  }
+
+  .badge-success { border-color: hsl(var(--success) / 0.25); background: hsl(var(--success) / 0.10); color: hsl(var(--success)); }
+  .badge-warning { border-color: hsl(var(--warning) / 0.30); background: hsl(var(--warning) / 0.12); color: hsl(32 95% 34%); }
+  .badge-info { border-color: hsl(var(--info) / 0.25); background: hsl(var(--info) / 0.10); color: hsl(var(--info)); }
+
+  @media (max-width: 768px) {
+    .mobile-table-scroll {
+      margin-left: -0.25rem;
+      margin-right: -0.25rem;
+      border-radius: 0.85rem;
+    }
+
+    .mobile-table-scroll::after { display: block; }
+
+    .mobile-friendly-table {
+      font-size: 0.82rem;
+    }
+
+    .mobile-friendly-table th {
+      height: 2.4rem;
+      padding: 0.55rem 0.65rem;
+      font-size: 0.68rem;
+    }
+
+    .mobile-friendly-table td {
+      padding: 0.65rem;
+      max-width: 180px;
+    }
+
+    .mobile-friendly-table input,
+    .mobile-friendly-table select,
+    .mobile-friendly-table button {
+      min-height: 2.15rem;
+    }
   }
 }
 
 @media print {
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    color-adjust: exact !important;
-  }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+  body, html { margin: 0 !important; padding: 0 !important; background: #ffffff !important; }
 
-  body, html {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #ffffff !important;
-  }
+  .mobile-table-scroll { overflow: visible !important; border: 0 !important; }
+  .mobile-friendly-table { min-width: 100% !important; }
+  .mobile-friendly-table td:first-child,
+  .mobile-friendly-table th:first-child { position: static !important; box-shadow: none !important; }
 
   .professional-id-card {
     width: 800px !important;
@@ -200,9 +245,7 @@
     max-width: 100% !important;
     height: auto !important;
   }
-}
 
-@media print {
   .admit-card {
     width: 186mm !important;
     height: 131.5mm !important;
@@ -225,38 +268,12 @@
     padding: 0 !important;
   }
 
-  .admit-card .admit-photo {
-    width: 38mm !important;
-    height: 34mm !important;
-    overflow: hidden !important;
-  }
-
-  .admit-card .admit-qr {
-    width: 32mm !important;
-    height: 34mm !important;
-    padding: 3mm !important;
-  }
-
-  .admit-card main {
-    padding-right: 0 !important;
-  }
-
-  .admit-card .admit-info-line {
-    min-height: 7mm !important;
-    font-size: 11px !important;
-    line-height: 1.2 !important;
-  }
-
-  .admit-card table {
-    font-size: 10px !important;
-    table-layout: fixed !important;
-    word-break: break-word !important;
-  }
-
-  .admit-card img {
-    max-width: 100% !important;
-    height: auto !important;
-  }
+  .admit-card .admit-photo { width: 38mm !important; height: 34mm !important; overflow: hidden !important; }
+  .admit-card .admit-qr { width: 32mm !important; height: 34mm !important; padding: 3mm !important; }
+  .admit-card main { padding-right: 0 !important; }
+  .admit-card .admit-info-line { min-height: 7mm !important; font-size: 11px !important; line-height: 1.2 !important; }
+  .admit-card table { font-size: 10px !important; table-layout: fixed !important; word-break: break-word !important; }
+  .admit-card img { max-width: 100% !important; height: auto !important; }
 }
 
 .professional-id-card {
