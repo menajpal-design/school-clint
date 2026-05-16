@@ -3,6 +3,7 @@ import './globals.css'
 import { ToastProvider } from '@/hooks/useToast'
 import { LanguageProvider } from '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
+import { MobileTableEnhancer } from '@/components/layout/MobileTableEnhancer'
 
 export const metadata: Metadata = {
   title: 'EASY SCHOOL - School Management System',
@@ -20,6 +21,7 @@ export default function RootLayout({
         <LanguageProvider>
           <ToastProvider>
             <LanguageSwitcher />
+            <MobileTableEnhancer />
             {children}
           </ToastProvider>
         </LanguageProvider>
