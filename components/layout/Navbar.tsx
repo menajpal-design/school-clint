@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, X, Bell, LogOut, Settings, User, Search, Languages } from 'lucide-react';
+import { Menu, X, Bell, LogOut, Settings, User, Search, Languages, Mail } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 import { api } from '@/lib/api';
@@ -25,7 +25,6 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
   const [globalSearch, setGlobalSearch] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
   const profileRef = useRef<HTMLDivElement | null>(null);
-
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
@@ -55,7 +54,6 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
       loadNotices();
       loadMessages();
     }, 30000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -85,22 +83,22 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
   }, []);
 
   return (
-    <nav className="sticky top-0 z-40 w-full border-b border-border bg-background">
-      <div className="flex h-16 items-center justify-between px-4 lg:px-6">
-        <div className="flex items-center gap-4">
+    <nav className="sticky top-0 z-40 w-full overflow-x-hidden border-b border-border bg-background/95 backdrop-blur">
+      <div className="flex h-16 min-w-0 items-center justify-between gap-1 px-2 sm:px-4 lg:px-6">
+        <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-3">
           <button onClick={onMenuClick} className="rounded-lg p-2 hover:bg-muted lg:hidden" aria-label="Toggle menu">
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
 
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-foreground">
+          <Link href="/dashboard" className="flex min-w-0 items-center gap-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-foreground shadow-sm">
               <span className="text-sm font-bold text-white">E</span>
             </div>
             <span className="hidden font-bold text-foreground sm:inline-block">EASY SCHOOL</span>
           </Link>
         </div>
 
-        <div className="hidden max-w-md flex-1 lg:flex">
+        <div className="hidden max-w-md flex-1 px-4 lg:flex">
           <input
             type="search"
             placeholder="Search..."
@@ -111,18 +109,14 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           />
         </div>
 
-        <div className="lg:hidden">
-          <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="rounded-lg p-2 hover:bg-muted" aria-label="Toggle search">
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2 lg:gap-3">
+          <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="rounded-lg p-2 hover:bg-muted lg:hidden" aria-label="Toggle search">
             <Search className="h-5 w-5 text-muted-foreground" />
           </button>
-        </div>
 
-        <div className="flex items-center gap-2 lg:gap-4">
           <Link href="/messages" title="Messages" className="relative rounded-lg p-2 hover:bg-muted">
-            <svg className="h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-            </svg>
-            {unreadMessages > 0 && <span className="absolute -right-0.5 -top-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">{unreadMessages > 99 ? '99+' : unreadMessages}</span>}
+            <Mail className="h-5 w-5 text-muted-foreground" />
+            {unreadMessages > 0 && <span className="absolute -right-0.5 -top-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">{unreadMessages > 99 ? '99+' : unreadMessages}</span>}
           </Link>
 
           <div className="relative">
@@ -138,11 +132,11 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
               }
             }} className="relative rounded-lg p-2 hover:bg-muted" title="Notifications">
               <Bell className="h-5 w-5 text-muted-foreground" />
-              {unreadCount > 0 && <span className="absolute -right-0.5 -top-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">{unreadCount}</span>}
+              {unreadCount > 0 && <span className="absolute -right-0.5 -top-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">{unreadCount}</span>}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-[min(calc(100vw-2rem),20rem)] rounded-lg border border-border bg-popover shadow-lg">
+              <div className="absolute right-0 mt-2 w-[min(calc(100vw-1rem),20rem)] rounded-lg border border-border bg-popover shadow-lg">
                 <div className="flex items-center justify-between px-3 py-2">
                   <div className="text-sm font-medium">Notifications</div>
                   <button className="text-xs text-primary" onClick={async () => { try { await api.notifications.markAll(); setNotifications((prev)=>prev.map(n=>({ ...n, isRead: true }))); setUnreadCount(0); } catch(e){} }}>Mark all</button>
@@ -152,9 +146,9 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
                   {notifications.map((n) => (
                     <div key={n._id} className={"flex cursor-pointer items-start gap-2 border-t px-3 py-2 last:border-b " + (n.isRead ? 'bg-popover' : 'bg-blue-50')} onClick={async () => { try { await api.notifications.markRead(n._id); setNotifications((prev)=>prev.map(x=>x._id===n._id?{...x,isRead:true}:x)); setUnreadCount((c)=>Math.max(0,c-1)); if (n.link) window.location.href = n.link; } catch(e){} }}>
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold">N</div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{n.title}</div>
-                        {n.body && <div className="text-xs text-muted-foreground">{n.body}</div>}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-medium">{n.title}</div>
+                        {n.body && <div className="line-clamp-2 text-xs text-muted-foreground">{n.body}</div>}
                         <div className="text-xs text-muted-foreground">{new Date(n.createdAt).toLocaleString()}</div>
                       </div>
                     </div>
@@ -166,14 +160,14 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
 
           {can('download:idcard') && <Link href="/id-cards/my-card" className="hidden rounded-lg p-2 hover:bg-muted md:block"><span className="text-xs font-semibold text-muted-foreground">ID Card</span></Link>}
 
-          <div className="flex items-center gap-1 rounded-lg border border-border bg-background px-2 py-1" translate="no" title="Language">
-            <Languages className="h-4 w-4 text-muted-foreground" />
-            <button type="button" onClick={() => language !== 'en' && setLanguage('en')} className={`rounded-md px-2 py-1 text-xs font-semibold ${language === 'en' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>EN</button>
-            <button type="button" onClick={() => language !== 'bn' && setLanguage('bn')} className={`rounded-md px-2 py-1 text-xs font-semibold ${language === 'bn' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>BN</button>
+          <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-border bg-background px-1 py-1 shadow-sm" translate="no" title="Language">
+            <Languages className="hidden h-4 w-4 text-muted-foreground sm:block" />
+            <button type="button" onClick={() => language !== 'en' && setLanguage('en')} className={`rounded-full px-2 py-1 text-[11px] font-semibold ${language === 'en' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>EN</button>
+            <button type="button" onClick={() => language !== 'bn' && setLanguage('bn')} className={`rounded-full px-2 py-1 text-[11px] font-semibold ${language === 'bn' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>BN</button>
           </div>
 
-          <div className="relative" ref={profileRef}>
-            <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted" aria-haspopup="true">
+          <div className="relative hidden sm:block" ref={profileRef}>
+            <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-muted" aria-haspopup="true">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-sm font-semibold text-white">{user?.name?.charAt(0) || 'U'}</div>
               <span className="hidden text-sm font-medium text-foreground lg:inline">{user?.name || 'User'}</span>
             </button>
@@ -190,7 +184,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
         </div>
       </div>
       {showMobileSearch && (
-        <div className="border-t border-border px-4 py-3 lg:hidden">
+        <div className="border-t border-border px-3 py-3 lg:hidden">
           <div className="flex gap-2">
             <input type="search" autoFocus value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') runGlobalSearch(); }} placeholder="Search menu..." className="min-w-0 flex-1 rounded-lg border border-border bg-muted px-3 py-2 text-sm focus:border-primary focus:bg-background focus:outline-none" />
             <button onClick={runGlobalSearch} className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">Go</button>
