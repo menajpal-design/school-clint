@@ -4,7 +4,18 @@ import { downloadFile } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
 
 export function getPrintInstitution() {
-  const institution = authManager.getUser()?.institution as any;
+  const userInstitution = (authManager.getUser() as any)?.institution;
+  let storedInstitution: any = null;
+
+  if (typeof window !== "undefined") {
+    try {
+      storedInstitution = JSON.parse(localStorage.getItem("printInstitution") || localStorage.getItem("institution") || "null");
+    } catch {
+      storedInstitution = null;
+    }
+  }
+
+  const institution = storedInstitution?.name ? storedInstitution : userInstitution;
   return {
     name: institution?.name || "EASY SCHOOL",
     address: institution?.address || "",
@@ -91,7 +102,7 @@ const inlineImages = async (root: HTMLElement) => {
   }));
 };
 
-  const pageShell = (title: string, body: string, styles = "") => `
+const pageShell = (title: string, body: string, styles = "") => `
   <!doctype html>
   <html>
     <head>
@@ -109,7 +120,6 @@ const inlineImages = async (root: HTMLElement) => {
         .institution-logo img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
         .institution-info h1 { margin: 0; font-size: 22px; line-height: 1.15; color: #0f172a; }
         .institution-info p { margin: 3px 0 0; font-size: 12px; color: #475569; }
-        /* Force print sizing to A4 content area (A4 minus 12mm margins each side = 186mm) */
         .print-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; }
         .admit-card, .professional-id-card { width: 186mm !important; max-width: 186mm !important; box-sizing: border-box !important; break-inside: avoid !important; page-break-inside: avoid !important; }
         .admit-card { height: 131.5mm !important; }
@@ -144,7 +154,6 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   const jsPDF = (await import("jspdf")).default;
   await document.fonts?.ready?.catch(() => undefined);
 
-  // Normalize zoom to 100% for consistent output
   const originalZoom = document.documentElement.style.zoom;
   const originalBodyZoom = document.body.style.zoom;
   document.documentElement.style.zoom = '1';
@@ -155,12 +164,8 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   captureTarget.style.left = "-10000px";
   captureTarget.style.top = "0";
   
-  // Detect card type and compute capture dimensions from mm so output matches A4 layout
-  const isAdmitCard = target.classList.contains('admit-card');
   const mmToPx = (mm: number) => Math.round((mm / 25.4) * 96);
-  // A4 content width (210mm - 12mm margins each side) = 186mm
   const captureWidth = mmToPx(186);
-  // Use same aspect ratio as design (850x600) to compute height
   const captureHeight = Math.round(captureWidth * (600 / 850));
   
   captureTarget.style.width = `${captureWidth}px`;
@@ -175,7 +180,6 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   clonedTarget.style.zoom = "1";
   clonedTarget.style.transform = "scale(1)";
   
-  // Force zoom: 1 on all child elements to override any responsive scaling
   const forceZoom = (el: Element) => {
     if (el instanceof HTMLElement) {
       el.style.zoom = "1";
@@ -190,12 +194,11 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   captureTarget.appendChild(clonedTarget);
   document.body.appendChild(captureTarget);
 
-  // Use 1:1 scale since we're already using fixed pixel dimensions
   const currentZoom = window.devicePixelRatio || 1;
   const scale = 1 / currentZoom;
   
   const canvas = await html2canvas(captureTarget, {
-    scale: scale,
+    scale,
     backgroundColor: "#ffffff",
     useCORS: true,
     allowTaint: true,
@@ -207,41 +210,30 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   });
   document.body.removeChild(captureTarget);
 
-  // Restore original zoom
   document.documentElement.style.zoom = originalZoom;
   document.body.style.zoom = originalBodyZoom;
 
-  // Create PDF with A4 size (210mm x 297mm)
   const pdf = new jsPDF("p", "mm", "a4");
-  const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
-  const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
   const marginX = 10;
   const marginY = 10;
-  const availableWidth = pageWidth - marginX * 2; // 190mm
+  const availableWidth = pageWidth - marginX * 2;
   const aspectRatio = canvas.width / canvas.height;
   const imgWidth = availableWidth;
   const imgHeight = imgWidth / aspectRatio;
   const imgData = canvas.toDataURL("image/png");
-  
-  // Center horizontally, position from top
   const offsetX = (pageWidth - imgWidth) / 2;
   const offsetY = marginY;
 
-  // Add image to first page
   if (imgHeight <= pageHeight - marginY * 2) {
-    // Fits on one page
     pdf.addImage(imgData, "PNG", offsetX, offsetY, imgWidth, imgHeight);
   } else {
-    // Multi-page handling
     let remainingHeight = imgHeight;
     let y = offsetY;
-    
-    // Add as much as possible on first page
     const firstPageHeight = pageHeight - marginY * 2;
     pdf.addImage(imgData, "PNG", offsetX, y, imgWidth, imgHeight);
     remainingHeight -= firstPageHeight;
-
-    // Add remaining on subsequent pages
     while (remainingHeight > 0) {
       y = marginY - (imgHeight - remainingHeight);
       pdf.addPage();
@@ -257,7 +249,6 @@ export async function printElement(target: HTMLElement | null, title = "Print") 
   if (!target) return;
   await document.fonts?.ready?.catch(() => undefined);
 
-  // Normalize zoom to 100% for consistent printing
   const originalZoom = document.documentElement.style.zoom;
   const originalBodyZoom = document.body.style.zoom;
   document.documentElement.style.zoom = '1';
@@ -301,7 +292,6 @@ export async function printElement(target: HTMLElement | null, title = "Print") 
   
   setTimeout(() => {
     popup.print();
-    // Restore original zoom after print dialog closes
     setTimeout(() => {
       document.documentElement.style.zoom = originalZoom;
       document.body.style.zoom = originalBodyZoom;
