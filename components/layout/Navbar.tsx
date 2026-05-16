@@ -83,8 +83,8 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
   }, []);
 
   return (
-    <nav className="fixed left-0 right-0 top-0 z-50 w-full overflow-x-hidden border-b border-border bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85">
-      <div className="grid h-16 w-full grid-cols-[auto_1fr] items-center gap-1 px-2 sm:grid-cols-[auto_1fr_auto] sm:px-4 lg:px-6">
+    <nav className="fixed left-0 right-0 top-0 z-50 w-full overflow-visible border-b border-border bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85">
+      <div className="grid h-16 w-full grid-cols-[auto_1fr] items-center gap-1 overflow-visible px-2 sm:grid-cols-[auto_1fr_auto] sm:px-4 lg:px-6">
         <div className="flex min-w-0 items-center gap-1 sm:gap-3">
           <button onClick={onMenuClick} className="rounded-lg p-2 hover:bg-muted lg:hidden" aria-label="Toggle menu">
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -109,7 +109,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           />
         </div>
 
-        <div className="flex min-w-0 items-center justify-end gap-0.5 sm:gap-2 lg:gap-3">
+        <div className="flex min-w-0 items-center justify-end gap-0.5 overflow-visible sm:gap-2 lg:gap-3">
           <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="rounded-lg p-2 hover:bg-muted lg:hidden" aria-label="Toggle search">
             <Search className="h-5 w-5 text-muted-foreground" />
           </button>
@@ -136,7 +136,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-[min(calc(100vw-1rem),20rem)] rounded-lg border border-border bg-popover shadow-lg">
+              <div className="absolute right-0 top-full z-[100] mt-2 w-[min(calc(100vw-1rem),20rem)] rounded-lg border border-border bg-popover shadow-xl">
                 <div className="flex items-center justify-between px-3 py-2">
                   <div className="text-sm font-medium">Notifications</div>
                   <button className="text-xs text-primary" onClick={async () => { try { await api.notifications.markAll(); setNotifications((prev)=>prev.map(n=>({ ...n, isRead: true }))); setUnreadCount(0); } catch(e){} }}>Mark all</button>
@@ -166,14 +166,14 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
             <button type="button" onClick={() => language !== 'bn' && setLanguage('bn')} className={`rounded-full px-1.5 py-1 text-[10px] font-semibold md:px-2 md:text-[11px] ${language === 'bn' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>BN</button>
           </div>
 
-          <div className="relative" ref={profileRef}>
+          <div className="relative overflow-visible" ref={profileRef}>
             <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center rounded-full p-0.5 hover:bg-muted md:gap-2 md:rounded-lg md:px-2 md:py-2" aria-haspopup="true" title="Profile">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-xs font-semibold text-white md:h-8 md:w-8 md:text-sm">{user?.name?.charAt(0) || 'U'}</div>
               <span className="hidden text-sm font-medium text-foreground lg:inline">{user?.name || 'User'}</span>
             </button>
 
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-lg border border-border bg-popover shadow-lg">
+              <div className="absolute right-0 top-full z-[100] mt-2 w-48 rounded-lg border border-border bg-popover shadow-xl">
                 <Link href="/profile" className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted"><User className="h-4 w-4" />My Profile</Link>
                 <Link href="/settings" className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted"><Settings className="h-4 w-4" />Settings</Link>
                 <hr className="my-1 border-border" />
