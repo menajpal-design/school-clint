@@ -38,14 +38,14 @@ export function PageHeader({ title, description, icon: Icon, status, actions = [
 
       if (act.href) {
         return (
-          <Link key={index} href={act.href} className={"no-underline"}>
-            <Button variant={act.active ? "default" : "outline"} size="sm" className="flex items-center gap-2">{content}</Button>
+          <Link key={index} href={act.href} className="no-underline">
+            <Button variant={act.active ? "default" : "outline"} size="sm" className="flex items-center gap-2 rounded-xl">{content}</Button>
           </Link>
         );
       }
 
       return (
-        <Button key={index} variant={act.active ? "default" : "outline"} size="sm" onClick={act.onClick} className="flex items-center gap-2">
+        <Button key={index} variant={act.active ? "default" : "outline"} size="sm" onClick={act.onClick} className="flex items-center gap-2 rounded-xl">
           {content}
         </Button>
       );
@@ -54,17 +54,17 @@ export function PageHeader({ title, description, icon: Icon, status, actions = [
   };
 
   return (
-    <section className={cn("rounded-lg border border-border bg-card p-5 shadow-sm", className)}>
+    <section className={cn("page-gradient-card overflow-hidden rounded-2xl p-5", className)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-start gap-4">
           {Icon && (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
               <Icon className="h-6 w-6" />
             </div>
           )}
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">{title}</h1>
               {status}
             </div>
             {description && <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>}
