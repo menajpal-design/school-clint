@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { getPrintInstitution, makeQrDataUrl } from "@/lib/export-utils";
@@ -43,6 +44,8 @@ export default function AttendanceReportsPage() {
   const [trend, setTrend] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [detailPersonId, setDetailPersonId] = useState<string | null>(null);
+  const [detailPersonName, setDetailPersonName] = useState("");
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
@@ -315,7 +318,7 @@ export default function AttendanceReportsPage() {
 
       {/* Per-person summaries */}
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="p-4 border-b"><h3 className="text-sm font-semibold">People Summary</h3></div>
+        <div className="p-4 border-b"><h3 className="text-sm font-semibold">Attendance Summary ({startDate} to {endDate})</h3></div>
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -323,31 +326,20 @@ export default function AttendanceReportsPage() {
               <TableHead>Roll</TableHead>
               <TableHead>Class</TableHead>
               <TableHead>Section</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Present</TableHead>
-              <TableHead>Absent</TableHead>
-              <TableHead>Late</TableHead>
-              <TableHead>Leave</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="text-center">Present</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {peopleSummaries.length === 0 ? <TableRow><TableCell colSpan={10} className="h-24 text-center text-slate-500">No people found for selected filters.</TableCell></TableRow> : peopleSummaries.map((p: any) => (
+            {peopleSummaries.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-slate-500">No people found for selected filters.</TableCell></TableRow> : peopleSummaries.map((p: any) => (
               <TableRow key={p.id}>
-                <TableCell>{p.name}</TableCell>
+                <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell>{p.roll}</TableCell>
                 <TableCell>{p.className}</TableCell>
                 <TableCell>{p.section}</TableCell>
-                <TableCell>{p.total}</TableCell>
-                <TableCell className="text-emerald-600 font-medium">{p.present}</TableCell>
-                <TableCell className="text-rose-600 font-medium">{p.absent}</TableCell>
-                <TableCell className="text-amber-600 font-medium">{p.late}</TableCell>
-                <TableCell className="text-sky-600 font-medium">{p.leave}</TableCell>
+                <TableCell className="text-center"><span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-sm">{p.present}</span></TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => exportPersonCsv(p.id)}>CSV</Button>
-                    <Button size="sm" variant="outline" onClick={() => exportPersonPdf(p.id)}>PDF</Button>
-                  </div>
+                  <Button size="sm" onClick={() => { setDetailPersonId(p.id); setDetailPersonName(p.name); }}>View Report</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -365,6 +357,66 @@ export default function AttendanceReportsPage() {
           {reportRows.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">{loading ? "Loading reports..." : "No records found."}</TableCell></TableRow> : reportRows.map((item, index) => <TableRow key={`${item.date}-${item.roll}-${index}`}><TableCell>{item.date}</TableCell><TableCell>{item.name}</TableCell><TableCell>{item.roll}</TableCell><TableCell>{item.className}</TableCell><TableCell>{item.section}</TableCell><TableCell><Badge variant="outline" className="capitalize">{item.status}</Badge></TableCell></TableRow>)}
         </TableBody></Table>
       </section>
+
+      {/* Detail modal for per-person report */}
+      <Dialog open={detailPersonId !== null} onOpenChange={(open) => { if (!open) setDetailPersonId(null); }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Attendance Report - {detailPersonName}</DialogTitle>
+            <DialogDescription>
+              Period: {startDate} to {endDate}
+            </DialogDescription>
+          </DialogHeader>
+          {detailPersonId && (() => {
+            const personRecords = reports.filter(r => personIdOf(r) === detailPersonId).map((item) => ({ date: formatDate(dateKey(item.date)), name: item.studentId?.userId?.name || item.userId?.name || '-', roll: item.studentId?.rollNumber || (item.userType === 'teacher' ? 'Teacher' : '-'), className: item.classId?.name || (item.userType === 'teacher' ? 'Teachers' : '-'), section: item.sectionId?.name || item.userId?.role || '-', status: item.status || '-' }));
+            const personSummary = peopleSummaries.find((p: any) => p.id === detailPersonId);
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="p-3 bg-emerald-50 rounded-md text-center">
+                    <div className="text-sm text-slate-600">Present</div>
+                    <div className="text-2xl font-bold text-emerald-600">{personSummary?.present || 0}</div>
+                  </div>
+                  <div className="p-3 bg-rose-50 rounded-md text-center">
+                    <div className="text-sm text-slate-600">Absent</div>
+                    <div className="text-2xl font-bold text-rose-600">{personSummary?.absent || 0}</div>
+                  </div>
+                  <div className="p-3 bg-amber-50 rounded-md text-center">
+                    <div className="text-sm text-slate-600">Late</div>
+                    <div className="text-2xl font-bold text-amber-600">{personSummary?.late || 0}</div>
+                  </div>
+                  <div className="p-3 bg-sky-50 rounded-md text-center">
+                    <div className="text-sm text-slate-600">Leave</div>
+                    <div className="text-2xl font-bold text-sky-600">{personSummary?.leave || 0}</div>
+                  </div>
+                </div>
+                <Table className="text-sm">
+                  <TableHeader>
+                    <TableRow className="bg-slate-50">
+                      <TableHead className="text-xs">Date</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {personRecords.length === 0 ? <TableRow><TableCell colSpan={2} className="text-center py-4 text-slate-500">No records</TableCell></TableRow> : personRecords.map((r, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-xs">{r.date}</TableCell>
+                        <TableCell className="text-xs"><Badge variant="outline" className="capitalize">{r.status}</Badge></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            );
+          })()}
+          <div className="flex gap-2 justify-end border-t pt-4">
+            <Button variant="outline" onClick={() => setDetailPersonId(null)}>Close</Button>
+            {detailPersonId && <Button variant="outline" onClick={() => window.print()}>Print</Button>}
+            {detailPersonId && <Button variant="outline" onClick={() => exportPersonCsv(detailPersonId)}>Download CSV</Button>}
+            {detailPersonId && <Button variant="outline" onClick={() => exportPersonPdf(detailPersonId)}>Download PDF</Button>}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
