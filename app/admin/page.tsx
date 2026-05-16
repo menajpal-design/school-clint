@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Building2, CheckCircle2, Clock, ShieldCheck, Users } from 'lucide-react';
+import { Building2, CheckCircle2, Clock, MessageSquareText, ShieldCheck, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +26,7 @@ export default function AdminPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Manage schools, subscriptions, payments and platform users.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Manage schools, subscriptions, payments, SMS usage and platform users.</p>
         </div>
         <Button asChild><Link href="/admin/schools">Manage Schools</Link></Button>
       </div>
@@ -45,11 +45,12 @@ export default function AdminPage() {
       </div>
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Admin Tools</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-4">
+        <CardContent className="grid gap-3 sm:grid-cols-5">
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/schools">School Manage</Link></Button>
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/subscriptions">Subscriptions</Link></Button>
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/select-school">Select School</Link></Button>
           <Button asChild variant="outline" className="justify-start"><Link href="/admin/users">Manage Users</Link></Button>
+          <Button asChild variant="outline" className="justify-start"><Link href="/admin/sms-usage"><MessageSquareText className="mr-2 h-4 w-4" />SMS Usage</Link></Button>
         </CardContent>
       </Card>
     </div>
