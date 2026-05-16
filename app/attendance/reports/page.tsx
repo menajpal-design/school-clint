@@ -352,12 +352,6 @@ export default function AttendanceReportsPage() {
         <LineChartCard title="Attendance trend" data={trend.map((item) => ({ name: item.date, value: item.percentage || 0 }))} />
       </div>
 
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Date</TableHead><TableHead>Name</TableHead><TableHead>Roll</TableHead><TableHead>Class</TableHead><TableHead>Section</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>
-          {reportRows.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">{loading ? "Loading reports..." : "No records found."}</TableCell></TableRow> : reportRows.map((item, index) => <TableRow key={`${item.date}-${item.roll}-${index}`}><TableCell>{item.date}</TableCell><TableCell>{item.name}</TableCell><TableCell>{item.roll}</TableCell><TableCell>{item.className}</TableCell><TableCell>{item.section}</TableCell><TableCell><Badge variant="outline" className="capitalize">{item.status}</Badge></TableCell></TableRow>)}
-        </TableBody></Table>
-      </section>
-
       {/* Detail modal for per-person report */}
       <Dialog open={detailPersonId !== null} onOpenChange={(open) => { if (!open) setDetailPersonId(null); }}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
