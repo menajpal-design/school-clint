@@ -1,7 +1,14 @@
 "use client";
 
-import { downloadFile } from "@/lib/utils";
+import { downloadBlob, downloadFile } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
+
+const isMobileBrowser = () => {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+};
+
+const safeFilename = (value: string) => String(value || "print").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "print";
 
 export function getPrintInstitution() {
   const userInstitution = (authManager.getUser() as any)?.institution;
@@ -52,10 +59,7 @@ export async function makeQrDataUrl(value: string, width = 128) {
     width,
     margin: 1,
     errorCorrectionLevel: "M",
-    color: {
-      dark: "#0f172a",
-      light: "#ffffff",
-    },
+    color: { dark: "#0f172a", light: "#ffffff" },
   });
 }
 
@@ -72,7 +76,6 @@ const copyComputedStyles = (clone: HTMLElement, source: Element) => {
     const property = computed.item(index);
     clone.style.setProperty(property, computed.getPropertyValue(property), computed.getPropertyPriority(property));
   }
-
   const cloneChildren = Array.from(clone.children) as HTMLElement[];
   const sourceChildren = Array.from(source.children) as Element[];
   cloneChildren.forEach((child, index) => {
@@ -96,9 +99,7 @@ const inlineImages = async (root: HTMLElement) => {
         reader.readAsDataURL(blob);
       });
       img.setAttribute("src", dataUrl);
-    } catch (e) {
-      // Keep the original image source when it cannot be converted.
-    }
+    } catch (e) {}
   }));
 };
 
@@ -107,11 +108,12 @@ const pageShell = (title: string, body: string, styles = "") => `
   <html>
     <head>
       <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
       <title>${title}</title>
       <style>
         @page { size: A4; margin: 12mm; }
         * { box-sizing: border-box; }
-        body { margin: 0; color: #0f172a; font-family: Arial, Helvetica, sans-serif; background: #fff; }
+        html, body { margin: 0; color: #0f172a; font-family: Arial, Helvetica, sans-serif; background: #fff; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #cbd5e1; padding: 8px; font-size: 12px; text-align: left; }
         th { background: #f1f5f9; font-weight: 700; }
@@ -120,9 +122,7 @@ const pageShell = (title: string, body: string, styles = "") => `
         .institution-logo img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
         .institution-info h1 { margin: 0; font-size: 22px; line-height: 1.15; color: #0f172a; }
         .institution-info p { margin: 3px 0 0; font-size: 12px; color: #475569; }
-        .print-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; }
-        .admit-card, .professional-id-card { width: 186mm !important; max-width: 186mm !important; box-sizing: border-box !important; break-inside: avoid !important; page-break-inside: avoid !important; }
-        .admit-card { height: 131.5mm !important; }
+        .print-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; background: #fff; }
         .print-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
         .print-muted { color: #64748b; font-size: 12px; }
         .print-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
@@ -133,7 +133,6 @@ const pageShell = (title: string, body: string, styles = "") => `
         .print-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
         .print-qr { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; color: #475569; font-size: 10px; font-weight: 700; text-transform: uppercase; }
         .print-qr img { width: 82px; height: 82px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px; background: #fff; }
-        .print-footer { margin-top: 16px; display: flex; justify-content: flex-end; }
         ${styles}
       </style>
     </head>
@@ -148,170 +147,159 @@ export function downloadCsv(filename: string, rows: unknown[][]) {
   downloadFile(`\uFEFF${csv}`, filename, "text/csv;charset=utf-8");
 }
 
+export async function downloadHtmlAsPdf(title: string, bodyHtml: string, styles = "", filename?: string) {
+  const html2canvas = (await import("html2canvas")).default;
+  const jsPDF = (await import("jspdf")).default;
+  const wrapper = document.createElement("div");
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-9999px";
+  wrapper.style.top = "0";
+  wrapper.style.width = "794px";
+  wrapper.style.minHeight = "1123px";
+  wrapper.style.background = "#ffffff";
+  wrapper.style.padding = "45px";
+  wrapper.style.zIndex = "-1";
+  wrapper.innerHTML = pageShell(title, bodyHtml, styles).replace(/^[\s\S]*<body>/i, "").replace(/<\/body>[\s\S]*$/i, "");
+  document.body.appendChild(wrapper);
+  await document.fonts?.ready?.catch(() => undefined);
+  await inlineImages(wrapper);
+  const canvas = await html2canvas(wrapper, {
+    scale: 1.5,
+    backgroundColor: "#ffffff",
+    useCORS: true,
+    allowTaint: true,
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: 794,
+  });
+  document.body.removeChild(wrapper);
+
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imgWidth = pageWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  const imgData = canvas.toDataURL("image/png");
+  let heightLeft = imgHeight;
+  let position = 0;
+  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight;
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+  }
+  pdf.save(filename || `${safeFilename(title)}.pdf`);
+}
+
 export async function downloadElementPdf(target: HTMLElement | null, filename: string) {
   if (!target) return;
   const html2canvas = (await import("html2canvas")).default;
   const jsPDF = (await import("jspdf")).default;
   await document.fonts?.ready?.catch(() => undefined);
-
-  const originalZoom = document.documentElement.style.zoom;
-  const originalBodyZoom = document.body.style.zoom;
-  document.documentElement.style.zoom = '1';
-  document.body.style.zoom = '1';
-
-  const captureTarget = document.createElement("div");
-  captureTarget.style.position = "fixed";
-  captureTarget.style.left = "-10000px";
-  captureTarget.style.top = "0";
-  
-  const mmToPx = (mm: number) => Math.round((mm / 25.4) * 96);
-  const captureWidth = mmToPx(186);
-  const captureHeight = Math.round(captureWidth * (600 / 850));
-  
-  captureTarget.style.width = `${captureWidth}px`;
-  captureTarget.style.height = `${captureHeight}px`;
-  captureTarget.style.background = "#ffffff";
-  captureTarget.style.padding = "0";
-  captureTarget.style.overflow = "hidden";
-  captureTarget.style.zoom = "1";
-  captureTarget.style.transform = "scale(1)";
-  
+  const wrapper = document.createElement("div");
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-9999px";
+  wrapper.style.top = "0";
+  wrapper.style.background = "#ffffff";
+  wrapper.style.padding = "0";
+  wrapper.style.width = "794px";
+  wrapper.style.minHeight = "600px";
+  wrapper.style.overflow = "visible";
   const clonedTarget = target.cloneNode(true) as HTMLElement;
-  clonedTarget.style.zoom = "1";
-  clonedTarget.style.transform = "scale(1)";
-  
   const forceZoom = (el: Element) => {
     if (el instanceof HTMLElement) {
       el.style.zoom = "1";
-      el.style.transform = "scale(1)";
+      el.style.transform = "none";
     }
     Array.from(el.children).forEach(forceZoom);
   };
   forceZoom(clonedTarget);
-  
   copyComputedStyles(clonedTarget, target);
   await inlineImages(clonedTarget);
-  captureTarget.appendChild(clonedTarget);
-  document.body.appendChild(captureTarget);
-
-  const currentZoom = window.devicePixelRatio || 1;
-  const scale = 1 / currentZoom;
-  
-  const canvas = await html2canvas(captureTarget, {
-    scale,
+  wrapper.appendChild(clonedTarget);
+  document.body.appendChild(wrapper);
+  const canvas = await html2canvas(wrapper, {
+    scale: 1.5,
     backgroundColor: "#ffffff",
     useCORS: true,
     allowTaint: true,
     foreignObjectRendering: false,
     scrollX: 0,
     scrollY: 0,
-    windowWidth: captureWidth,
-    windowHeight: captureHeight,
+    windowWidth: 794,
   });
-  document.body.removeChild(captureTarget);
-
-  document.documentElement.style.zoom = originalZoom;
-  document.body.style.zoom = originalBodyZoom;
+  document.body.removeChild(wrapper);
 
   const pdf = new jsPDF("p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const marginX = 10;
-  const marginY = 10;
-  const availableWidth = pageWidth - marginX * 2;
-  const aspectRatio = canvas.width / canvas.height;
-  const imgWidth = availableWidth;
-  const imgHeight = imgWidth / aspectRatio;
+  const marginX = 8;
+  const marginY = 8;
+  const imgWidth = pageWidth - marginX * 2;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
   const imgData = canvas.toDataURL("image/png");
-  const offsetX = (pageWidth - imgWidth) / 2;
-  const offsetY = marginY;
-
-  if (imgHeight <= pageHeight - marginY * 2) {
-    pdf.addImage(imgData, "PNG", offsetX, offsetY, imgWidth, imgHeight);
-  } else {
-    let remainingHeight = imgHeight;
-    let y = offsetY;
-    const firstPageHeight = pageHeight - marginY * 2;
-    pdf.addImage(imgData, "PNG", offsetX, y, imgWidth, imgHeight);
-    remainingHeight -= firstPageHeight;
-    while (remainingHeight > 0) {
-      y = marginY - (imgHeight - remainingHeight);
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", offsetX, y, imgWidth, imgHeight);
-      remainingHeight -= pageHeight - marginY * 2;
-    }
+  let heightLeft = imgHeight;
+  let position = marginY;
+  pdf.addImage(imgData, "PNG", marginX, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight - marginY * 2;
+  while (heightLeft > 0) {
+    position = marginY - (imgHeight - heightLeft);
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", marginX, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight - marginY * 2;
   }
-
   pdf.save(filename);
 }
 
 export async function printElement(target: HTMLElement | null, title = "Print") {
   if (!target) return;
+  if (isMobileBrowser()) {
+    await downloadElementPdf(target, `${safeFilename(title)}.pdf`);
+    return;
+  }
   await document.fonts?.ready?.catch(() => undefined);
-
-  const originalZoom = document.documentElement.style.zoom;
-  const originalBodyZoom = document.body.style.zoom;
-  document.documentElement.style.zoom = '1';
-  document.body.style.zoom = '1';
-
   const cloned = target.cloneNode(true) as HTMLElement;
-  cloned.style.zoom = '1';
-  cloned.style.transform = 'scale(1)';
   copyComputedStyles(cloned, target);
   await inlineImages(cloned);
-  
-  const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-    .map((node) => node.outerHTML)
-    .join("");
-  
+  const styleTags = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((node) => node.outerHTML).join("");
   const popup = window.open("", "_blank", "width=1200,height=900");
-  if (!popup) return;
-  
-  const printContent = `
-    <style>
-      html, body { zoom: 1 !important; transform: scale(1) !important; }
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-      @media print {
-        html, body { zoom: 1 !important; transform: scale(1) !important; }
-        .professional-id-card { zoom: 1 !important; }
-        .admit-card { zoom: 1 !important; }
-      }
-    </style>
-    ${styleTags}
-    <main style="padding:20px; zoom: 1; transform: scale(1);">${cloned.outerHTML}</main>
-  `;
-  
+  if (!popup) {
+    await downloadElementPdf(target, `${safeFilename(title)}.pdf`);
+    return;
+  }
+  const printContent = `${styleTags}<main style="padding:20px; background:#fff;">${cloned.outerHTML}</main>`;
   popup.document.open();
   popup.document.write(pageShell(title, printContent));
   popup.document.close();
   popup.focus();
-  
   setTimeout(() => {
-    popup.print();
-    setTimeout(() => {
-      document.documentElement.style.zoom = originalZoom;
-      document.body.style.zoom = originalBodyZoom;
-    }, 500);
-  }, 300);
+    try { popup.print(); } catch (e) {}
+  }, 500);
 }
 
 export async function printHtml(title: string, bodyHtml: string, styles = "", qrValue?: string) {
   const qrDataUrl = await makeQrDataUrl(qrValue || qrPayload(title), 128);
-  const popup = window.open("", "_blank", "width=900,height=900");
-  if (!popup) return;
   const bodyWithQr = bodyHtml
     .replace('<main class="print-card">', `<main class="print-card">${institutionHeader()}<div class="print-heading"><div>`)
     .replace('<div class="print-grid"', `</div>${qrBlock(qrDataUrl)}</div><div class="print-grid"`);
+
+  if (isMobileBrowser()) {
+    await downloadHtmlAsPdf(title, bodyWithQr, styles, `${safeFilename(title)}.pdf`);
+    return;
+  }
+
+  const popup = window.open("", "_blank", "width=900,height=900");
+  if (!popup) {
+    await downloadHtmlAsPdf(title, bodyWithQr, styles, `${safeFilename(title)}.pdf`);
+    return;
+  }
   popup.document.open();
   popup.document.write(pageShell(title, bodyWithQr, styles));
   popup.document.close();
   popup.focus();
   setTimeout(() => {
-    popup.print();
-    popup.close();
-  }, 300);
+    try { popup.print(); } catch (e) {}
+  }, 500);
 }
