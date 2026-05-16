@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarX2, Save, Settings as SettingsIcon } from "lucide-react";
+import { CalendarX2, Palette, Save, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  AppControlSettings,
   AttendanceSettings,
   HolidaySettings,
+  getAppControlSettings,
   getAttendanceSettings,
   getClosureDaysCount,
   getHolidaySettings,
   getPreferredCurrency,
+  setAppControlSettings,
   setAttendanceSettings,
   setHolidaySettings,
   setPreferredCurrency,
@@ -34,12 +37,14 @@ function HeadSettings() {
   const [currency, setCurrency] = useState<'BDT' | 'USD'>(() => getPreferredCurrency());
   const [attendance, setAttendance] = useState<AttendanceSettings>(() => getAttendanceSettings());
   const [holiday, setHoliday] = useState<HolidaySettings>(() => getHolidaySettings());
+  const [appControl, setAppControl] = useState<AppControlSettings>(() => getAppControlSettings());
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     setCurrency(getPreferredCurrency());
     setAttendance(getAttendanceSettings());
     setHoliday(getHolidaySettings());
+    setAppControl(getAppControlSettings());
   }, []);
 
   const closureDays = useMemo(() => getClosureDaysCount(holiday.closureStartDate, holiday.closureEndDate), [holiday.closureStartDate, holiday.closureEndDate]);
@@ -59,6 +64,11 @@ function HeadSettings() {
     setMessage("Holiday and closure settings saved.");
   };
 
+  const saveAppControl = () => {
+    setAppControlSettings(appControl);
+    setMessage("App control settings saved.");
+  };
+
   const toggleWeeklyDay = (day: string) => {
     setHoliday((current) => ({
       ...current,
@@ -75,7 +85,7 @@ function HeadSettings() {
           <div className="rounded-xl bg-primary/10 p-3 text-primary"><SettingsIcon className="h-6 w-6" /></div>
           <div>
             <h1 className="text-2xl font-bold md:text-3xl">Head Settings</h1>
-            <p className="text-sm text-muted-foreground">Only the Head can control school-wide settings, weekly holidays and closure periods.</p>
+            <p className="text-sm text-muted-foreground">Only the Head can control school-wide settings, weekly holidays, routine approval, leave colors, SMS and print preferences.</p>
           </div>
         </div>
         {message && <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
@@ -85,7 +95,7 @@ function HeadSettings() {
         <Card>
           <CardHeader>
             <CardTitle>School Holiday & Closure Settings</CardTitle>
-            <CardDescription>Set weekly closed days and date range for special closure. These settings are saved for the school app.</CardDescription>
+            <CardDescription>Set weekly closed days and date range for special closure. Leave calendar and attendance calendar can use these rules.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <label className="flex items-center gap-2 rounded-lg border p-3">
@@ -126,6 +136,60 @@ function HeadSettings() {
             </div>
 
             <Button onClick={saveHoliday} className="w-full sm:w-auto"><Save className="mr-2 h-4 w-4" />Save holiday settings</Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" />Approval & Workflow Controls</CardTitle>
+            <CardDescription>Control routine approval, leave attendance behavior, SMS monitoring and mobile print/table preferences.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="flex items-center gap-2 rounded-lg border p-3">
+                <input type="checkbox" checked={appControl.routineAutoPublishAfterApproval} onChange={(e) => setAppControl({ ...appControl, routineAutoPublishAfterApproval: e.target.checked })} />
+                <span className="text-sm font-medium">Auto publish class routine after Head/Assistant approval</span>
+              </label>
+              <label className="flex items-center gap-2 rounded-lg border p-3">
+                <input type="checkbox" checked={appControl.routinePdfIncludeTeacherName} onChange={(e) => setAppControl({ ...appControl, routinePdfIncludeTeacherName: e.target.checked })} />
+                <span className="text-sm font-medium">Show teacher name in routine PDF</span>
+              </label>
+              <label className="flex items-center gap-2 rounded-lg border p-3">
+                <input type="checkbox" checked={appControl.routineRequireAssistantApproval} onChange={(e) => setAppControl({ ...appControl, routineRequireAssistantApproval: e.target.checked })} />
+                <span className="text-sm font-medium">Require assistant review before Head approval</span>
+              </label>
+              <label className="flex items-center gap-2 rounded-lg border p-3">
+                <input type="checkbox" checked={appControl.leaveAutoMarkAttendance} onChange={(e) => setAppControl({ ...appControl, leaveAutoMarkAttendance: e.target.checked })} />
+                <span className="text-sm font-medium">Approved leave auto marks attendance as Leave</span>
+              </label>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="space-y-2"><span className="text-sm font-medium">SMS log retention days</span><input className="h-10 w-full rounded-md border px-3 text-sm" type="number" min={1} value={appControl.smsLogRetentionDays} onChange={(e) => setAppControl({ ...appControl, smsLogRetentionDays: Number(e.target.value) || 30 })} /></label>
+              <label className="space-y-2"><span className="text-sm font-medium">SMS usage warning %</span><input className="h-10 w-full rounded-md border px-3 text-sm" type="number" min={1} max={100} value={appControl.smsWarnAtPercent} onChange={(e) => setAppControl({ ...appControl, smsWarnAtPercent: Number(e.target.value) || 80 })} /></label>
+              <label className="space-y-2"><span className="text-sm font-medium">ID card default format</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={appControl.idCardDefaultFormat} onChange={(e) => setAppControl({ ...appControl, idCardDefaultFormat: e.target.value as any })}><option value="pdf">PDF</option><option value="png">PNG</option></select></label>
+              <label className="space-y-2"><span className="text-sm font-medium">Mobile table mode</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={appControl.mobileTableMode} onChange={(e) => setAppControl({ ...appControl, mobileTableMode: e.target.value as any })}><option value="card">Card</option><option value="scroll">Horizontal scroll</option></select></label>
+              <label className="space-y-2"><span className="text-sm font-medium">Mobile print mode</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={appControl.mobilePrintMode} onChange={(e) => setAppControl({ ...appControl, mobilePrintMode: e.target.value as any })}><option value="pdf">PDF download</option><option value="print">System print</option></select></label>
+            </div>
+
+            <Button onClick={saveAppControl}><Save className="mr-2 h-4 w-4" />Save workflow controls</Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5" />Attendance Calendar Colors</CardTitle>
+            <CardDescription>These colors are used by leave list and attendance calendar design.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-5">
+              <ColorField label="Present" value={appControl.presentColor} onChange={(value) => setAppControl({ ...appControl, presentColor: value })} />
+              <ColorField label="Absent" value={appControl.absentColor} onChange={(value) => setAppControl({ ...appControl, absentColor: value })} />
+              <ColorField label="Leave" value={appControl.leaveColor} onChange={(value) => setAppControl({ ...appControl, leaveColor: value })} />
+              <ColorField label="Weekend" value={appControl.weekendColor} onChange={(value) => setAppControl({ ...appControl, weekendColor: value })} />
+              <ColorField label="School closed" value={appControl.closureColor} onChange={(value) => setAppControl({ ...appControl, closureColor: value })} />
+            </div>
+            <Button onClick={saveAppControl}><Save className="mr-2 h-4 w-4" />Save colors</Button>
           </CardContent>
         </Card>
 
@@ -210,4 +274,8 @@ function HeadSettings() {
       </div>
     </div>
   );
+}
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return <label className="space-y-2 rounded-lg border p-3"><span className="block text-sm font-medium">{label}</span><div className="flex items-center gap-2"><input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-9 w-12 rounded border" /><input className="h-9 min-w-0 flex-1 rounded border px-2 text-xs" value={value} onChange={(e) => onChange(e.target.value)} /></div></label>;
 }
