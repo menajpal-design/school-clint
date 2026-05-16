@@ -75,6 +75,7 @@ export const menuConfig: MenuItemConfig[] = [
     children: [
       { label: 'Overview', href: '/academic', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Classes', href: '/academic/classes', roles: ['head', 'assistant_head'] },
+      { label: 'Class Routine', href: '/academic/class-routine', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Subjects', href: '/academic/subjects', roles: ['head', 'assistant_head', 'subject_teacher'] },
       { label: 'Exams', href: '/academic/exams', roles: ['head', 'assistant_head', 'subject_teacher'] },
       { label: 'Results', href: '/academic/results', roles: ['head', 'assistant_head', 'subject_teacher'] },
@@ -177,19 +178,11 @@ export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
   return menuConfig.filter((item) => item.roles.includes(userRole));
 }
 
-// Role -> permissions mapping
 export const rolePermissions: Record<UserRole, string[]> = {
   admin: ['*'],
   super_admin: ['*'],
   head: ['*'],
-  assistant_head: [
-    'manage:assignedArea',
-    'generate:idcard',
-    'edit:idcard',
-    'download:idcard',
-    'manage:academic',
-    'post:notice',
-  ],
+  assistant_head: ['manage:assignedArea', 'generate:idcard', 'edit:idcard', 'download:idcard', 'manage:academic', 'post:notice'],
   class_teacher: ['manage:attendance', 'manage:class_students'],
   subject_teacher: ['manage:results'],
   teacher: ['manage:results'],
