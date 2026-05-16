@@ -26,16 +26,13 @@ export function formatDateTime(date: Date | string): string {
 }
 
 export function formatCurrency(value: number): string {
-  // Respect user preference stored in localStorage. Default to BDT (Taka).
   try {
     const preferred = (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('easy_school_currency')) || 'BDT';
     const amount = Number(value || 0);
     const formatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(amount);
     if (String(preferred).toUpperCase() === 'USD') return `$ ${formatted}`;
-    // Default: Bangladeshi Taka symbol
     return `৳ ${formatted}`;
   } catch (e) {
-    // Fallback
     return `৳ ${Number(value || 0).toLocaleString()}`;
   }
 }
@@ -54,9 +51,7 @@ export function setPreferredCurrency(code: 'BDT' | 'USD') {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem('easy_school_currency', code);
-  } catch (e) {
-    // ignore
-  }
+  } catch (e) {}
 }
 
 export function formatNumber(value: number): string {
@@ -77,34 +72,15 @@ export function truncateText(text: string, length: number): string {
   return text.slice(0, length) + '...';
 }
 
-export function generateFileContent(
-  data: any[],
-  format: 'csv' | 'json' = 'csv'
-): string {
-  if (format === 'json') {
-    return JSON.stringify(data, null, 2);
-  }
-
-  // CSV format
+export function generateFileContent(data: any[], format: 'csv' | 'json' = 'csv'): string {
+  if (format === 'json') return JSON.stringify(data, null, 2);
   if (!data || data.length === 0) return '';
-
   const headers = Object.keys(data[0]);
-  const csvContent = [
-    headers.join(','),
-    ...data.map((row) =>
-      headers
-        .map((header) => {
-          const value = row[header];
-          if (typeof value === 'string' && value.includes(',')) {
-            return `"${value}"`;
-          }
-          return value;
-        })
-        .join(',')
-    ),
-  ].join('\n');
-
-  return csvContent;
+  return [headers.join(','), ...data.map((row) => headers.map((header) => {
+    const value = row[header];
+    if (typeof value === 'string' && value.includes(',')) return `"${value}"`;
+    return value;
+  }).join(','))].join('\n');
 }
 
 export function downloadFile(content: string, filename: string, mimeType: string = 'text/plain') {
@@ -157,7 +133,49 @@ export function setAttendanceSettings(s: AttendanceSettings) {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem('easy_school_attendance_settings', JSON.stringify(s));
+  } catch (e) {}
+}
+
+export type HolidaySettings = {
+  weeklyClosedDays: string[];
+  closureStartDate: string;
+  closureEndDate: string;
+  closureReason: string;
+  enabled: boolean;
+};
+
+const DEFAULT_HOLIDAY_SETTINGS: HolidaySettings = {
+  weeklyClosedDays: ['Friday'],
+  closureStartDate: '',
+  closureEndDate: '',
+  closureReason: '',
+  enabled: true,
+};
+
+export function getHolidaySettings(): HolidaySettings {
+  if (typeof window === 'undefined') return DEFAULT_HOLIDAY_SETTINGS;
+  try {
+    const raw = window.localStorage.getItem('easy_school_holiday_settings');
+    if (!raw) return DEFAULT_HOLIDAY_SETTINGS;
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_HOLIDAY_SETTINGS, ...(parsed || {}) } as HolidaySettings;
   } catch (e) {
-    // ignore
+    return DEFAULT_HOLIDAY_SETTINGS;
   }
+}
+
+export function setHolidaySettings(settings: HolidaySettings) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem('easy_school_holiday_settings', JSON.stringify(settings));
+  } catch (e) {}
+}
+
+export function getClosureDaysCount(startDate?: string, endDate?: string) {
+  if (!startDate || !endDate) return 0;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0;
+  const diff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  return diff + 1;
 }
