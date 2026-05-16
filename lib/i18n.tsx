@@ -108,7 +108,6 @@ const dictionary: Record<string, string> = {
   'Language': 'ভাষা',
   'English': 'ইংরেজি',
   'Bangla': 'বাংলা',
-  'বাংলা': 'বাংলা',
   'English / বাংলা': 'English / বাংলা',
   'Create Exam': 'পরীক্ষা তৈরি',
   'Exam Management': 'পরীক্ষা ম্যানেজমেন্ট',
@@ -153,6 +152,9 @@ function applyDomLanguage(language: AppLanguage) {
   document.documentElement.lang = language === 'bn' ? 'bn' : 'en';
   document.documentElement.dir = 'ltr';
 
+  // English is the source language rendered by React. Do not mutate the DOM in English mode.
+  if (language === 'en') return;
+
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       if (shouldSkipElement(node.parentElement)) return NodeFilter.FILTER_REJECT;
@@ -186,10 +188,19 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (saved === 'bn' || saved === 'en') setLanguageState(saved);
   }, []);
 
+  const setLanguage = (nextLanguage: AppLanguage) => {
+    setLanguageState(nextLanguage);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('appLanguage', nextLanguage);
+      window.location.reload();
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') localStorage.setItem('appLanguage', language);
     const run = () => applyDomLanguage(language);
     run();
+    if (language === 'en') return undefined;
     const observer = new MutationObserver(() => window.requestAnimationFrame(run));
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     return () => observer.disconnect();
@@ -197,7 +208,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<LanguageContextValue>(() => ({
     language,
-    setLanguage: setLanguageState,
+    setLanguage,
     t: (text: string) => (language === 'bn' ? dictionary[text] || text : reverseDictionary[text] || text),
   }), [language]);
 
