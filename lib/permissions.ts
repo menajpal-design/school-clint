@@ -19,6 +19,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Overview', href: '/admin', roles: ['admin', 'super_admin'] },
       { label: 'School Manage', href: '/admin/schools', roles: ['admin', 'super_admin'] },
       { label: 'Subscriptions', href: '/admin/subscriptions', roles: ['admin', 'super_admin'] },
+      { label: 'SMS Usage', href: '/admin/sms-usage', roles: ['admin', 'super_admin'] },
       { label: 'Select School', href: '/admin/select-school', roles: ['admin', 'super_admin'] },
       { label: 'Manage Users', href: '/admin/users', roles: ['admin', 'super_admin'] },
     ],
@@ -28,6 +29,12 @@ export const menuConfig: MenuItemConfig[] = [
     href: '/dashboard',
     roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent'],
     icon: 'LayoutGrid',
+  },
+  {
+    label: 'SMS Monitoring',
+    href: '/sms-monitoring',
+    roles: ['head', 'assistant_head'],
+    icon: 'Bell',
   },
   {
     label: 'ID Card Management',
@@ -69,6 +76,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Subjects', href: '/academic/subjects', roles: ['head', 'assistant_head', 'subject_teacher'] },
       { label: 'Exams', href: '/academic/exams', roles: ['head', 'assistant_head', 'subject_teacher'] },
       { label: 'Results', href: '/academic/results', roles: ['head', 'assistant_head', 'subject_teacher'] },
+      { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
       { label: 'Report Card', href: '/academic/report-card', roles: ['student', 'parent'] },
     ],
   },
