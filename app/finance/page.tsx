@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CreditCard, Landmark, WalletCards } from "lucide-react";
+import { CreditCard, Landmark, RefreshCw, WalletCards } from "lucide-react";
 
 import { LineChartCard } from "@/components/charts/LineChartCard";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -14,22 +14,39 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function FinancePage() {
   const [summary, setSummary] = useState<any>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    api.finance.dashboard().then((data: any) => setSummary(data.summary || {})).catch(() => undefined);
-    api.dashboard.feeOverview().catch(() => undefined);
-  }, []);
+  const load = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await api.finance.dashboard() as any;
+      setSummary(data.summary || {});
+      api.dashboard.feeOverview().catch(() => undefined);
+    } catch (err: any) {
+      setError(err?.message || "Failed to load finance dashboard.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load().catch(() => undefined); }, []);
 
   const payments = summary.recentPayments || [];
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <PageHeader title="Finance Dashboard" description="Collections, dues, salaries and recent payment activity." icon={Landmark} />
-        <Button asChild>
-          <Link href="/finance/salary">Head Salary Setup</Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Finance Dashboard"
+        description="Collections, dues, salaries and recent payment activity."
+        icon={Landmark}
+        actions={[
+          { label: loading ? "Refreshing..." : "Refresh", icon: RefreshCw, onClick: load },
+          { label: "Head Salary Setup", href: "/finance/salary", active: true },
+        ]}
+      />
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       <div className="grid gap-4 md:grid-cols-5">
         <StatCard label="Total Collection" value={formatCurrency(summary.totalCollection || 0)} icon={WalletCards} tone="emerald" />
         <StatCard label="Total Due" value={formatCurrency(summary.totalDue || 0)} icon={CreditCard} tone="rose" />
@@ -40,7 +57,7 @@ export default function FinancePage() {
       <LineChartCard title="Monthly collection trend" data={summary.monthlyTrend || []} />
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Receipt</TableHead><TableHead>Student</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Date</TableHead></TableRow></TableHeader><TableBody>
-          {payments.length === 0 ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">No recent payments.</TableCell></TableRow> : payments.map((p: any) => <TableRow key={p._id}><TableCell>{p.receiptNumber}</TableCell><TableCell>{p.studentId?.userId?.name || p.studentId?.rollNumber || "-"}</TableCell><TableCell>{formatCurrency(p.amount || 0)}</TableCell><TableCell className="capitalize">{p.paymentMethod}</TableCell><TableCell>{formatDate(p.paymentDate)}</TableCell></TableRow>)}
+          {loading ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">Loading recent payments...</TableCell></TableRow> : payments.length === 0 ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">No recent payments.</TableCell></TableRow> : payments.map((p: any) => <TableRow key={p._id}><TableCell>{p.receiptNumber || "-"}</TableCell><TableCell>{p.studentId?.userId?.name || p.studentId?.rollNumber || "-"}</TableCell><TableCell>{formatCurrency(p.amount || 0)}</TableCell><TableCell className="capitalize">{p.paymentMethod || "-"}</TableCell><TableCell>{formatDate(p.paymentDate)}</TableCell></TableRow>)}
         </TableBody></Table>
       </section>
     </div>
