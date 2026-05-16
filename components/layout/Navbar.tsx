@@ -84,8 +84,8 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
 
   return (
     <nav className="sticky top-0 z-40 w-full overflow-x-hidden border-b border-border bg-background/95 backdrop-blur">
-      <div className="flex h-16 min-w-0 items-center justify-between gap-1 px-2 sm:px-4 lg:px-6">
-        <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-3">
+      <div className="grid h-16 w-full grid-cols-[auto_1fr] items-center gap-1 px-2 sm:grid-cols-[auto_1fr_auto] sm:px-4 lg:px-6">
+        <div className="flex min-w-0 items-center gap-1 sm:gap-3">
           <button onClick={onMenuClick} className="rounded-lg p-2 hover:bg-muted lg:hidden" aria-label="Toggle menu">
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -98,7 +98,7 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           </Link>
         </div>
 
-        <div className="hidden max-w-md flex-1 px-4 lg:flex">
+        <div className="hidden max-w-md px-4 lg:block">
           <input
             type="search"
             placeholder="Search..."
@@ -109,17 +109,17 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
           />
         </div>
 
-        <div className="flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2 lg:gap-3">
+        <div className="flex min-w-0 items-center justify-end gap-0.5 sm:gap-2 lg:gap-3">
           <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="rounded-lg p-2 hover:bg-muted lg:hidden" aria-label="Toggle search">
             <Search className="h-5 w-5 text-muted-foreground" />
           </button>
 
-          <Link href="/messages" title="Messages" className="relative rounded-lg p-2 hover:bg-muted">
+          <Link href="/messages" title="Messages" className="relative hidden rounded-lg p-2 hover:bg-muted min-[390px]:block">
             <Mail className="h-5 w-5 text-muted-foreground" />
             {unreadMessages > 0 && <span className="absolute -right-0.5 -top-0.5 inline-flex items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">{unreadMessages > 99 ? '99+' : unreadMessages}</span>}
           </Link>
 
-          <div className="relative">
+          <div className="relative hidden min-[360px]:block">
             <button onClick={async () => {
               setShowNotifications(!showNotifications);
               if (!showNotifications) {
@@ -160,10 +160,10 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
 
           {can('download:idcard') && <Link href="/id-cards/my-card" className="hidden rounded-lg p-2 hover:bg-muted md:block"><span className="text-xs font-semibold text-muted-foreground">ID Card</span></Link>}
 
-          <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-border bg-background px-1 py-1 shadow-sm" translate="no" title="Language">
-            <Languages className="hidden h-4 w-4 text-muted-foreground sm:block" />
-            <button type="button" onClick={() => language !== 'en' && setLanguage('en')} className={`rounded-full px-2 py-1 text-[11px] font-semibold ${language === 'en' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>EN</button>
-            <button type="button" onClick={() => language !== 'bn' && setLanguage('bn')} className={`rounded-full px-2 py-1 text-[11px] font-semibold ${language === 'bn' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>BN</button>
+          <div className="flex shrink-0 items-center rounded-full border border-border bg-background p-0.5 shadow-sm" translate="no" title="Language">
+            <Languages className="hidden h-4 w-4 text-muted-foreground sm:mx-1 sm:block" />
+            <button type="button" onClick={() => language !== 'en' && setLanguage('en')} className={`rounded-full px-1.5 py-1 text-[10px] font-semibold sm:px-2 sm:text-[11px] ${language === 'en' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>EN</button>
+            <button type="button" onClick={() => language !== 'bn' && setLanguage('bn')} className={`rounded-full px-1.5 py-1 text-[10px] font-semibold sm:px-2 sm:text-[11px] ${language === 'bn' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>BN</button>
           </div>
 
           <div className="relative hidden sm:block" ref={profileRef}>
