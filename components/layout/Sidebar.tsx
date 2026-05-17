@@ -14,6 +14,7 @@ const iconMap: { [key: string]: any } = {
   CreditCard: Icons.CreditCard,
   Building2: Icons.Building2,
   BookOpen: Icons.BookOpen,
+  CalendarDays: Icons.CalendarDays,
   CheckCircle2: Icons.CheckCircle2,
   DollarSign: Icons.DollarSign,
   FileText: Icons.FileText,
@@ -78,7 +79,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
@@ -86,7 +86,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           'fixed left-0 top-16 z-50 h-[calc(100vh-64px)] transform border-r border-border bg-background shadow-xl transition-transform duration-300 overflow-y-auto lg:relative lg:top-0 lg:z-auto lg:translate-x-0 lg:shadow-none',
@@ -96,7 +95,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         <div className={cn('space-y-1 p-2', collapsed ? 'px-2' : 'p-4')}>
           {menuItems.map((item) => {
-            const Icon = iconMap[item.icon || 'LayoutGrid'];
+            const Icon = iconMap[item.icon || 'LayoutGrid'] || Icons.LayoutGrid;
             const hasChildren = item.children && item.children.length > 0;
             const active = isActive(item.href);
             const expanded = expandedItems.has(item.href);
@@ -136,12 +135,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         : 'text-foreground hover:bg-muted'
                     )}
                   >
-                      <Icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.label}</span>}
+                    <Icon className="h-4 w-4" />
+                    {!collapsed && <span>{item.label}</span>}
                   </Link>
                 )}
 
-                {/* Submenu */}
                 {hasChildren && expanded && (
                   <div className="ml-3 space-y-1 border-l border-border pl-3">
                     {item.children?.map((child) => (
@@ -156,7 +154,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                             : 'text-muted-foreground hover:bg-popover'
                         )}
                       >
-                          {!collapsed && child.label}
+                        {!collapsed && child.label}
                       </Link>
                     ))}
                   </div>
@@ -165,7 +163,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             );
           })}
 
-          {/* Collapse toggle */}
           <div className="mt-4 flex items-center justify-center">
             <button
               onClick={() => { setCollapsed(!collapsed); try { localStorage.setItem('sidebarCollapsed', !collapsed ? '1' : '0'); } catch (e) {} }}
