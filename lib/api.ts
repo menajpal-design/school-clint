@@ -1,11 +1,19 @@
 import { getDemoMode } from './demo-store';
 import { demoRequest } from './demo-api';
 
-const REMOTE = 'https://school-server-b264c1a1fac6.herokuapp.com/api';
-const ENV = process.env.NEXT_PUBLIC_API_URL || '';
+const DEFAULT_API_TARGET = 'https://school-server-b264c1a1fac6.herokuapp.com';
+const ENV_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const ENV_API_TARGET = process.env.NEXT_PUBLIC_API_TARGET || DEFAULT_API_TARGET;
 const isBrowser = typeof window !== 'undefined';
 const isLocal = isBrowser && /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
-export const API_URL = isBrowser ? (isLocal && ENV ? ENV : '/api') : (ENV || REMOTE);
+
+const normalizeApiUrl = (value: string) => value.replace(/\/$/, '').replace(/\/api$/, '') + '/api';
+
+// Production browser uses the real server directly. Server CORS is controlled by ALLOWED_ORIGINS in server env.
+// Local browser may still use NEXT_PUBLIC_API_URL for development.
+export const API_URL = isBrowser
+  ? (isLocal && ENV_API_URL ? normalizeApiUrl(ENV_API_URL) : normalizeApiUrl(ENV_API_TARGET))
+  : normalizeApiUrl(ENV_API_URL || ENV_API_TARGET || DEFAULT_API_TARGET);
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -59,7 +67,7 @@ class ApiClient {
 
   private toError(err: any) {
     const raw = typeof err?.message === 'string' ? err.message : (typeof err === 'string' ? err : 'Server connection failed');
-    const message = raw.includes('abort') || raw.includes('signal') ? 'Server response timeout. Please restart dyno or check API_TARGET.' : raw;
+    const message = raw.includes('abort') || raw.includes('signal') ? 'Server response timeout. Please restart dyno or check database/API.' : raw;
     this.toast(message);
     return { message, error: err };
   }
