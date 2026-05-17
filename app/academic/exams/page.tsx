@@ -121,7 +121,7 @@ export default function ExamsPage() {
     body.append("expiryDate", "");
     body.append("idCardRenewal", "false");
     body.append("targetRoles", "all");
-    await api.notices.create(body);
+    await apiClient.post('/notices', body, { headers: { 'Content-Type': 'multipart/form-data' } });
   };
 
   const loadData = async () => {
