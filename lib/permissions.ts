@@ -11,7 +11,7 @@ interface MenuItemConfig {
 
 const smsMonitoringRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
 const holidayRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff'];
-const academicViewRoles: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'];
+const academicViewRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent'];
 
 export const menuConfig: MenuItemConfig[] = [
   {
@@ -28,6 +28,7 @@ export const menuConfig: MenuItemConfig[] = [
   { label: 'Dashboard', href: '/dashboard', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent'], icon: 'LayoutGrid' },
   { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles, icon: 'Bell' },
   { label: 'Holiday List', href: '/holidays', roles: holidayRoles, icon: 'CalendarDays' },
+  { label: 'Syllabus', href: '/academic/syllabus', roles: academicViewRoles, icon: 'BookOpenCheck' },
   {
     label: 'ID Card Management', href: '/id-cards', roles: ['head', 'assistant_head', 'staff', 'student', 'teacher', 'parent'], icon: 'CreditCard',
     children: [
@@ -54,15 +55,15 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Academic', href: '/academic', roles: academicViewRoles, icon: 'BookOpen',
     children: [
-      { label: 'Overview', href: '/academic', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
+      { label: 'Overview', href: '/academic', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'] },
       { label: 'Classes', href: '/academic/classes', roles: ['head', 'assistant_head'] },
       { label: 'Syllabus', href: '/academic/syllabus', roles: academicViewRoles },
       { label: 'Class Routine', href: '/academic/class-routine', roles: academicViewRoles },
       { label: 'Exam Routine', href: '/academic/exam-routine', roles: academicViewRoles },
       { label: 'Holiday List', href: '/holidays', roles: holidayRoles },
-      { label: 'Subjects', href: '/academic/subjects', roles: ['head', 'assistant_head', 'subject_teacher'] },
-      { label: 'Exams', href: '/academic/exams', roles: ['head', 'assistant_head', 'subject_teacher'] },
-      { label: 'Results', href: '/academic/results', roles: ['head', 'assistant_head', 'subject_teacher'] },
+      { label: 'Subjects', href: '/academic/subjects', roles: ['head', 'assistant_head', 'subject_teacher', 'teacher'] },
+      { label: 'Exams', href: '/academic/exams', roles: ['head', 'assistant_head', 'subject_teacher', 'teacher'] },
+      { label: 'Results', href: '/academic/results', roles: ['head', 'assistant_head', 'subject_teacher', 'teacher'] },
       { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
       { label: 'Report Card', href: '/academic/report-card', roles: ['student', 'parent'] },
     ],
