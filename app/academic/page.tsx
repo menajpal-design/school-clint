@@ -50,10 +50,17 @@ const quickLinks = [
   },
   {
     title: "Exams",
-    description: "Create exam routines, types and schedules.",
+    description: "Create exam types, subjects, marks and schedules.",
     href: "/academic/exams",
     icon: CalendarClock,
     tone: "bg-amber-50 text-amber-700",
+  },
+  {
+    title: "Exam Routine",
+    description: "Publish, edit, print and download exam routine in Bangla or English.",
+    href: "/academic/exam-routine",
+    icon: CalendarClock,
+    tone: "bg-cyan-50 text-cyan-700",
   },
   {
     title: "Results",
@@ -172,7 +179,7 @@ export default function AcademicPage() {
     <div className="space-y-6 p-4 md:p-6">
       <PageHeader
         title="Academic Overview"
-        description="Manage classes, subjects, exams, results, promotion and report card workflows from one academic control center."
+        description="Manage classes, subjects, exams, exam routine, results, promotion and report card workflows from one academic control center."
         icon={LayoutList}
         status={<Badge variant="outline" className={dataSource === 'live' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : dataSource === 'empty' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-blue-200 bg-blue-50 text-blue-700'}>{dataSource === 'live' ? 'Live academic data' : dataSource === 'empty' ? 'No live academic data yet' : 'Loading live academic data'}</Badge>}
         actions={[
@@ -182,16 +189,16 @@ export default function AcademicPage() {
               Classes
             </Link>
           </Button>,
-          <Button key="subjects" variant="outline" size="sm" asChild>
-            <Link href="/academic/subjects">
-              <BookOpen className="mr-2 h-4 w-4" />
-              Subjects
-            </Link>
-          </Button>,
           <Button key="exams" variant="outline" size="sm" asChild>
             <Link href="/academic/exams">
               <CalendarClock className="mr-2 h-4 w-4" />
               Exams
+            </Link>
+          </Button>,
+          <Button key="exam-routine" variant="outline" size="sm" asChild>
+            <Link href="/academic/exam-routine">
+              <CalendarClock className="mr-2 h-4 w-4" />
+              Exam Routine
             </Link>
           </Button>,
           <Button key="promotion" size="sm" asChild>
@@ -217,7 +224,7 @@ export default function AcademicPage() {
         ))}
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-7">
         {quickLinks.map((link) => {
           const Icon = link.icon;
           return (
