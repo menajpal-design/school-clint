@@ -11,6 +11,7 @@ interface MenuItemConfig {
 
 const smsMonitoringRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
 const holidayRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff'];
+const academicViewRoles: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'];
 
 export const menuConfig: MenuItemConfig[] = [
   {
@@ -51,12 +52,13 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Academic', href: '/academic', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'], icon: 'BookOpen',
+    label: 'Academic', href: '/academic', roles: academicViewRoles, icon: 'BookOpen',
     children: [
       { label: 'Overview', href: '/academic', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Classes', href: '/academic/classes', roles: ['head', 'assistant_head'] },
-      { label: 'Class Routine', href: '/academic/class-routine', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'] },
-      { label: 'Exam Routine', href: '/academic/exam-routine', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'] },
+      { label: 'Syllabus', href: '/academic/syllabus', roles: academicViewRoles },
+      { label: 'Class Routine', href: '/academic/class-routine', roles: academicViewRoles },
+      { label: 'Exam Routine', href: '/academic/exam-routine', roles: academicViewRoles },
       { label: 'Holiday List', href: '/holidays', roles: holidayRoles },
       { label: 'Subjects', href: '/academic/subjects', roles: ['head', 'assistant_head', 'subject_teacher'] },
       { label: 'Exams', href: '/academic/exams', roles: ['head', 'assistant_head', 'subject_teacher'] },
