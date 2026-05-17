@@ -12,7 +12,7 @@ import { formatDate } from "@/lib/utils";
 
 type Lang = "bn" | "en";
 type EditRow = { subjectId: string; subjectName: string; subjectCode?: string; date: string; duration: number; totalMarks: number; passingMarks: number };
-type ExamRoutine = { _id?: string; id?: string; name: string; type?: string; classId?: any; sectionId?: any; startDate?: string; endDate?: string; status?: string; isPublished?: boolean; subjectMarks?: any[]; instructions?: string; syllabus?: string; approvalRequired?: boolean };
+type ExamRoutine = { _id?: string; id?: string; name: string; type?: string; classId?: any; className?: string; sectionId?: any; startDate?: string; endDate?: string; status?: string; isPublished?: boolean; subjectMarks?: any[]; instructions?: string; syllabus?: string; approvalRequired?: boolean };
 
 const manageRoles = ["head", "assistant_head", "admin", "super_admin", "subject_teacher"];
 const t = {
