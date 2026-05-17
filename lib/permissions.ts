@@ -10,13 +10,11 @@ interface MenuItemConfig {
 }
 
 const smsMonitoringRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
+const holidayRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff'];
 
 export const menuConfig: MenuItemConfig[] = [
   {
-    label: 'Admin',
-    href: '/admin',
-    roles: ['admin', 'super_admin'],
-    icon: 'ShieldCheck',
+    label: 'Admin', href: '/admin', roles: ['admin', 'super_admin'], icon: 'ShieldCheck',
     children: [
       { label: 'Overview', href: '/admin', roles: ['admin', 'super_admin'] },
       { label: 'School Manage', href: '/admin/schools', roles: ['admin', 'super_admin'] },
@@ -26,23 +24,11 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Manage Users', href: '/admin/users', roles: ['admin', 'super_admin'] },
     ],
   },
+  { label: 'Dashboard', href: '/dashboard', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent'], icon: 'LayoutGrid' },
+  { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles, icon: 'Bell' },
+  { label: 'Holiday List', href: '/holidays', roles: holidayRoles, icon: 'CalendarDays' },
   {
-    label: 'Dashboard',
-    href: '/dashboard',
-    roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent'],
-    icon: 'LayoutGrid',
-  },
-  {
-    label: 'SMS Monitoring',
-    href: '/sms-monitoring',
-    roles: smsMonitoringRoles,
-    icon: 'Bell',
-  },
-  {
-    label: 'ID Card Management',
-    href: '/id-cards',
-    roles: ['head', 'assistant_head', 'staff', 'student', 'teacher', 'parent'],
-    icon: 'CreditCard',
+    label: 'ID Card Management', href: '/id-cards', roles: ['head', 'assistant_head', 'staff', 'student', 'teacher', 'parent'], icon: 'CreditCard',
     children: [
       { label: 'My Card', href: '/id-cards/my-card', roles: ['head', 'assistant_head', 'student', 'teacher', 'staff', 'parent'] },
       { label: 'Generate Card', href: '/id-cards/generate', roles: ['head', 'assistant_head', 'staff'] },
@@ -54,10 +40,7 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Institution',
-    href: '/institution',
-    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'],
-    icon: 'Building2',
+    label: 'Institution', href: '/institution', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'], icon: 'Building2',
     children: [
       { label: 'Profile', href: '/institution/profile', roles: ['head', 'assistant_head'] },
       { label: 'Students', href: '/institution/students', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'] },
@@ -68,15 +51,13 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Academic',
-    href: '/academic',
-    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'],
-    icon: 'BookOpen',
+    label: 'Academic', href: '/academic', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'], icon: 'BookOpen',
     children: [
       { label: 'Overview', href: '/academic', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Classes', href: '/academic/classes', roles: ['head', 'assistant_head'] },
       { label: 'Class Routine', href: '/academic/class-routine', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'] },
       { label: 'Exam Routine', href: '/academic/exam-routine', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'] },
+      { label: 'Holiday List', href: '/holidays', roles: holidayRoles },
       { label: 'Subjects', href: '/academic/subjects', roles: ['head', 'assistant_head', 'subject_teacher'] },
       { label: 'Exams', href: '/academic/exams', roles: ['head', 'assistant_head', 'subject_teacher'] },
       { label: 'Results', href: '/academic/results', roles: ['head', 'assistant_head', 'subject_teacher'] },
@@ -85,23 +66,18 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Attendance',
-    href: '/attendance',
-    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'],
-    icon: 'CheckCircle2',
+    label: 'Attendance', href: '/attendance', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'], icon: 'CheckCircle2',
     children: [
       { label: 'Overview', href: '/attendance', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Mark Attendance', href: '/attendance/mark', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Reports', href: '/attendance/reports', roles: ['head', 'assistant_head', 'class_teacher'] },
+      { label: 'Holiday List', href: '/holidays', roles: holidayRoles },
       { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
       { label: 'My Attendance', href: '/attendance/my-attendance', roles: ['head', 'student', 'parent'] },
     ],
   },
   {
-    label: 'Finance',
-    href: '/finance',
-    roles: ['head', 'assistant_head', 'finance_officer', 'student', 'parent'],
-    icon: 'DollarSign',
+    label: 'Finance', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer', 'student', 'parent'], icon: 'DollarSign',
     children: [
       { label: 'Overview', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'Fees', href: '/finance/fees', roles: ['head', 'assistant_head', 'finance_officer'] },
@@ -113,10 +89,7 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Documents',
-    href: '/documents',
-    roles: ['head', 'assistant_head', 'staff', 'parent', 'student'],
-    icon: 'FileText',
+    label: 'Documents', href: '/documents', roles: ['head', 'assistant_head', 'staff', 'parent', 'student'], icon: 'FileText',
     children: [
       { label: 'Overview', href: '/documents', roles: ['head', 'assistant_head', 'staff', 'student', 'parent'] },
       { label: 'Memo', href: '/documents/memo', roles: ['head', 'assistant_head', 'staff'] },
@@ -126,10 +99,7 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Users & Roles',
-    href: '/users-roles',
-    roles: ['admin', 'super_admin', 'head'],
-    icon: 'Users',
+    label: 'Users & Roles', href: '/users-roles', roles: ['admin', 'super_admin', 'head'], icon: 'Users',
     children: [
       { label: 'Overview', href: '/users-roles', roles: ['admin', 'super_admin', 'head'] },
       { label: 'All Users', href: '/users-roles/all', roles: ['admin', 'super_admin', 'head'] },
@@ -141,10 +111,7 @@ export const menuConfig: MenuItemConfig[] = [
   { label: 'Parent Portal', href: '/parent-portal', roles: ['parent'], icon: 'Home' },
   { label: 'Notice Board', href: '/notices', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent', 'staff'], icon: 'Bell' },
   {
-    label: 'Profile & Auth',
-    href: '/profile',
-    roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'],
-    icon: 'User',
+    label: 'Profile & Auth', href: '/profile', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'], icon: 'User',
     children: [
       { label: 'My Profile', href: '/profile', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
       { label: 'Change Password', href: '/profile/change-password', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
@@ -160,18 +127,12 @@ export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
 }
 
 export const rolePermissions: Record<UserRole, string[]> = {
-  admin: ['*'],
-  super_admin: ['*'],
-  head: ['*'],
+  admin: ['*'], super_admin: ['*'], head: ['*'],
   assistant_head: ['manage:assignedArea', 'generate:idcard', 'edit:idcard', 'download:idcard', 'manage:academic', 'post:notice'],
   class_teacher: ['manage:attendance', 'manage:class_students'],
-  subject_teacher: ['manage:results'],
-  teacher: ['manage:results'],
-  finance_officer: ['manage:finance', 'view:payments'],
-  staff: ['manage:idcard', 'download:idcard'],
-  student: ['view:own'],
-  parent: ['view:child'],
-  committee_member: ['post:notice'],
+  subject_teacher: ['manage:results'], teacher: ['manage:results'],
+  finance_officer: ['manage:finance', 'view:payments'], staff: ['manage:idcard', 'download:idcard'],
+  student: ['view:own'], parent: ['view:child'], committee_member: ['post:notice'],
 };
 
 export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
