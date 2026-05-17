@@ -11,12 +11,29 @@ import { useAuth } from "@/hooks/useAuth";
 
 const manageRoles = ["head", "assistant_head", "admin", "super_admin"];
 const bd = (date?: string) => date ? new Date(date).toLocaleDateString("bn-BD") : "-";
-const toInputDate = (date?: string) => date ? new Date(date).toISOString().slice(0, 10) : "";
+
+const weeklyOptions = [
+  { label: "Friday + Saturday", labelBn: "শুক্রবার + শনিবার", days: [5, 6] },
+  { label: "Friday only", labelBn: "শুধু শুক্রবার", days: [5] },
+  { label: "Saturday only", labelBn: "শুধু শনিবার", days: [6] },
+  { label: "Custom", labelBn: "কাস্টম", days: [] },
+];
+const dayOptions = [
+  { value: 0, label: "Sunday", labelBn: "রবিবার" },
+  { value: 1, label: "Monday", labelBn: "সোমবার" },
+  { value: 2, label: "Tuesday", labelBn: "মঙ্গলবার" },
+  { value: 3, label: "Wednesday", labelBn: "বুধবার" },
+  { value: 4, label: "Thursday", labelBn: "বৃহস্পতিবার" },
+  { value: 5, label: "Friday", labelBn: "শুক্রবার" },
+  { value: 6, label: "Saturday", labelBn: "শনিবার" },
+];
 
 export default function HolidaysPage() {
   const { user } = useAuth();
   const canManage = manageRoles.includes(user?.role || "");
   const [year, setYear] = useState(String(new Date().getFullYear()));
+  const [weeklyMode, setWeeklyMode] = useState("friday_saturday");
+  const [weeklyDays, setWeeklyDays] = useState<number[]>([5, 6]);
   const [holidays, setHolidays] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -27,7 +44,7 @@ export default function HolidaysPage() {
     setLoading(true);
     setError("");
     try {
-      const data = await apiClient.get(`/holidays?year=${year}`) as any;
+      const data = await apiClient.get(`/holidays?year=${year}&weeklyDays=${weeklyDays.join(",")}`) as any;
       setHolidays(data.holidays || []);
     } catch (err: any) {
       setError(err?.message || "Failed to load holiday list.");
@@ -40,18 +57,40 @@ export default function HolidaysPage() {
 
   const summary = useMemo(() => ({
     total: holidays.length,
-    closed: holidays.filter((item) => item.isSchoolClosed).length,
+    closed: holidays.filter((item) => item.isEnabled !== false && item.isSchoolClosed).length,
     govt: holidays.filter((item) => item.type === "government").length,
     weekend: holidays.filter((item) => item.type === "weekend").length,
   }), [holidays]);
 
+  const selectWeeklyMode = (mode: string) => {
+    setWeeklyMode(mode);
+    if (mode === "friday_saturday") setWeeklyDays([5, 6]);
+    if (mode === "friday") setWeeklyDays([5]);
+    if (mode === "saturday") setWeeklyDays([6]);
+  };
+
+  const toggleCustomDay = (day: number) => {
+    setWeeklyMode("custom");
+    setWeeklyDays((days) => days.includes(day) ? days.filter((item) => item !== day) : [...days, day].sort());
+  };
+
   const seedBangladesh = async () => {
     setMessage(""); setError("");
     try {
-      const res = await apiClient.post('/holidays/seed/bangladesh', { year: Number(year), includeWeekends: true, weeklyDays: [5] }) as any;
+      const selectedDays = weeklyDays.length ? weeklyDays : [5, 6];
+      const res = await apiClient.post('/holidays/seed/bangladesh', { year: Number(year), includeWeekends: true, weeklyDays: selectedDays }) as any;
       setMessage(res.message || "Bangladesh holiday list added.");
       await load();
     } catch (err: any) { setError(err?.message || "Failed to seed Bangladesh holidays."); }
+  };
+
+  const bulkStatus = async (isEnabled: boolean) => {
+    setMessage(""); setError("");
+    try {
+      const res = await apiClient.patch('/holidays/bulk-status', { year: Number(year), isEnabled }) as any;
+      setMessage(res.message || (isEnabled ? "All holidays enabled." : "All holidays disabled."));
+      await load();
+    } catch (err: any) { setError(err?.message || "Failed to update all holidays."); }
   };
 
   const saveHoliday = async () => {
@@ -68,8 +107,8 @@ export default function HolidaysPage() {
   const updateClosed = async (holiday: any, isSchoolClosed: boolean) => {
     setMessage(""); setError("");
     try {
-      await apiClient.put(`/holidays/${holiday._id}`, { isSchoolClosed });
-      setMessage(isSchoolClosed ? "School closed enabled for this holiday." : "School closed disabled for this date.");
+      await apiClient.put(`/holidays/${holiday._id}`, { isSchoolClosed, isEnabled: isSchoolClosed });
+      setMessage(isSchoolClosed ? "School closed enabled for this holiday." : "School open/disabled for this holiday.");
       await load();
     } catch (err: any) { setError(err?.message || "Failed to update holiday."); }
   };
@@ -78,7 +117,7 @@ export default function HolidaysPage() {
     setMessage(""); setError("");
     try {
       await apiClient.delete(`/holidays/${id}`);
-      setMessage("Holiday deleted.");
+      setMessage("Holiday disabled/opened for this institution.");
       await load();
     } catch (err: any) { setError(err?.message || "Failed to delete holiday."); }
   };
@@ -87,12 +126,12 @@ export default function HolidaysPage() {
     <div className="space-y-5">
       <PageHeader
         title="Holiday List"
-        description="বাংলাদেশের নিয়ম অনুযায়ী ছুটির তালিকা। এই তালিকা অনুযায়ী স্কুল off থাকবে, attendance present/absent না হয়ে holiday হিসেবে ধরবে।"
+        description="বাংলাদেশের নিয়ম অনুযায়ী ছুটির তালিকা। ডিফল্ট সাপ্তাহিক ছুটি শুক্রবার + শনিবার; প্রয়োজন হলে একদিন করা যাবে।"
         icon={CalendarDays}
         status={<Badge variant="outline">{summary.total} days</Badge>}
         actions={[
           <Button key="refresh" variant="outline" size="sm" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
-          canManage && <Button key="seed" size="sm" onClick={seedBangladesh}><Plus className="mr-2 h-4 w-4" />Add Bangladesh Holidays</Button>,
+          canManage && <Button key="seed" size="sm" onClick={seedBangladesh}><Plus className="mr-2 h-4 w-4" />Update Bangladesh Holidays</Button>,
         ].filter(Boolean) as any}
       />
 
@@ -107,11 +146,24 @@ export default function HolidaysPage() {
       </section>
 
       <section className="rounded-lg border bg-card p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm font-medium">Year</label>
-          <input value={year} onChange={(e) => setYear(e.target.value)} className="h-10 w-32 rounded-md border px-3 text-sm" />
-          <p className="text-sm text-muted-foreground">ধর্মীয়/চাঁদভিত্তিক ছুটি Head edit করে ঠিক করতে পারবে।</p>
+        <div className="grid gap-4 lg:grid-cols-[140px_1fr] lg:items-start">
+          <div>
+            <label className="mb-2 block text-sm font-medium">Year</label>
+            <input value={year} onChange={(e) => setYear(e.target.value)} className="h-10 w-32 rounded-md border px-3 text-sm" />
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-medium">Weekly Holiday Setting</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="flex items-center gap-2 rounded-md border p-3 text-sm"><input type="radio" checked={weeklyMode === "friday_saturday"} onChange={() => selectWeeklyMode("friday_saturday")} /> শুক্রবার + শনিবার</label>
+              <label className="flex items-center gap-2 rounded-md border p-3 text-sm"><input type="radio" checked={weeklyMode === "friday"} onChange={() => selectWeeklyMode("friday")} /> শুধু শুক্রবার</label>
+              <label className="flex items-center gap-2 rounded-md border p-3 text-sm"><input type="radio" checked={weeklyMode === "saturday"} onChange={() => selectWeeklyMode("saturday")} /> শুধু শনিবার</label>
+              <label className="flex items-center gap-2 rounded-md border p-3 text-sm"><input type="radio" checked={weeklyMode === "custom"} onChange={() => setWeeklyMode("custom")} /> কাস্টম</label>
+            </div>
+            {weeklyMode === "custom" && <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{dayOptions.map((day) => <label key={day.value} className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"><input type="checkbox" checked={weeklyDays.includes(day.value)} onChange={() => toggleCustomDay(day.value)} /> {day.labelBn}</label>)}</div>}
+            <p className="mt-2 text-sm text-muted-foreground">Update Bangladesh Holidays চাপলে এই weekly setting অনুযায়ী সাপ্তাহিক ছুটি তৈরি হবে।</p>
+          </div>
         </div>
+        {canManage && <div className="mt-4 flex flex-wrap gap-2 border-t pt-4"><Button onClick={seedBangladesh}>Apply Weekly Holiday & Update List</Button><Button variant="outline" onClick={() => bulkStatus(true)}>Enable All Holidays</Button><Button variant="destructive" onClick={() => bulkStatus(false)}>Disable All Holidays</Button></div>}
       </section>
 
       {canManage && <section className="rounded-lg border bg-card p-4 shadow-sm">
@@ -134,12 +186,12 @@ export default function HolidaysPage() {
           <table className="w-full min-w-[760px] text-sm">
             <thead><tr className="border-b text-left"><th className="p-2">Date</th><th className="p-2">Holiday</th><th className="p-2">Type</th><th className="p-2">School Status</th><th className="p-2">Action</th></tr></thead>
             <tbody>
-              {holidays.length === 0 ? <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No holidays found. Click “Add Bangladesh Holidays”.</td></tr> : holidays.map((holiday) => <tr key={holiday._id} className="border-b">
+              {holidays.length === 0 ? <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No holidays found. Click “Update Bangladesh Holidays”.</td></tr> : holidays.map((holiday) => <tr key={holiday._id} className="border-b opacity-100">
                 <td className="p-2">{bd(holiday.startDate)}{holiday.endDate && new Date(holiday.startDate).toDateString() !== new Date(holiday.endDate).toDateString() ? ` - ${bd(holiday.endDate)}` : ""}</td>
                 <td className="p-2"><div className="font-medium">{holiday.titleBn || holiday.title}</div><div className="text-xs text-muted-foreground">{holiday.title}</div></td>
                 <td className="p-2"><Badge variant="outline" className="capitalize">{holiday.type}</Badge></td>
-                <td className="p-2"><Badge variant={holiday.isSchoolClosed ? "default" : "outline"}>{holiday.isSchoolClosed ? "School Off" : "Open"}</Badge></td>
-                <td className="p-2"><div className="flex gap-2">{canManage && <><Button size="sm" variant="outline" onClick={() => updateClosed(holiday, !holiday.isSchoolClosed)}>{holiday.isSchoolClosed ? "Open" : "Close"}</Button><Button size="sm" variant="destructive" onClick={() => removeHoliday(holiday._id)}><Trash2 className="h-4 w-4" /></Button></>}</div></td>
+                <td className="p-2"><Badge variant={holiday.isEnabled !== false && holiday.isSchoolClosed ? "default" : "outline"}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "School Off" : "Open"}</Badge></td>
+                <td className="p-2"><div className="flex gap-2">{canManage && <><Button size="sm" variant="outline" onClick={() => updateClosed(holiday, !(holiday.isEnabled !== false && holiday.isSchoolClosed))}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "Open" : "Close"}</Button><Button size="sm" variant="destructive" onClick={() => removeHoliday(holiday._id)}><Trash2 className="h-4 w-4" /></Button></>}</div></td>
               </tr>)}
             </tbody>
           </table>
