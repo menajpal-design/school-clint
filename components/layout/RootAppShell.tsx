@@ -27,9 +27,7 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  if (isPublicRoute(pathname)) {
-    return <>{children}</>;
-  }
+  if (isPublicRoute(pathname)) return <>{children}</>;
 
   if (isLoading) {
     return (
@@ -44,22 +42,15 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
-    return <>{children}</>;
-  }
+  if (!user) return <>{children}</>;
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 pt-16 mobile-app-layout">
-      <Navbar
-        onMenuClick={() => setIsSidebarOpen((open) => !open)}
-        isMobileMenuOpen={isSidebarOpen}
-      />
+    <div className="easy-root-shell flex min-h-screen flex-col bg-gray-50 pt-16 mobile-app-layout" data-app-shell="root">
+      <Navbar onMenuClick={() => setIsSidebarOpen((open) => !open)} isMobileMenuOpen={isSidebarOpen} />
       <div className="flex min-h-0 flex-1 mobile-content-shell">
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         <main className="min-w-0 flex-1 bg-gray-50 p-3 pb-20 md:p-4 lg:ml-0 lg:p-6 mobile-main-content">
-          <div className="mx-auto w-full max-w-[1600px] min-w-0">
-            {children}
-          </div>
+          <div className="mx-auto w-full max-w-[1600px] min-w-0">{children}</div>
         </main>
       </div>
     </div>
