@@ -41,10 +41,10 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'ID Card Management',
     href: '/id-cards',
-    roles: ['head', 'assistant_head', 'staff', 'student', 'teacher'],
+    roles: ['head', 'assistant_head', 'staff', 'student', 'teacher', 'parent'],
     icon: 'CreditCard',
     children: [
-      { label: 'My Card', href: '/id-cards/my-card', roles: ['head', 'assistant_head', 'student', 'teacher', 'staff'] },
+      { label: 'My Card', href: '/id-cards/my-card', roles: ['head', 'assistant_head', 'student', 'teacher', 'staff', 'parent'] },
       { label: 'Generate Card', href: '/id-cards/generate', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Admit Card', href: '/id-cards/admit-card', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Bulk Generate', href: '/id-cards/bulk-generate', roles: ['head', 'assistant_head'] },
@@ -70,12 +70,13 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Academic',
     href: '/academic',
-    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'],
+    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'],
     icon: 'BookOpen',
     children: [
       { label: 'Overview', href: '/academic', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
       { label: 'Classes', href: '/academic/classes', roles: ['head', 'assistant_head'] },
-      { label: 'Class Routine', href: '/academic/class-routine', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
+      { label: 'Class Routine', href: '/academic/class-routine', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'] },
+      { label: 'Exam Routine', href: '/academic/exam-routine', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'] },
       { label: 'Subjects', href: '/academic/subjects', roles: ['head', 'assistant_head', 'subject_teacher'] },
       { label: 'Exams', href: '/academic/exams', roles: ['head', 'assistant_head', 'subject_teacher'] },
       { label: 'Results', href: '/academic/results', roles: ['head', 'assistant_head', 'subject_teacher'] },
@@ -86,7 +87,7 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Attendance',
     href: '/attendance',
-    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'],
+    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'],
     icon: 'CheckCircle2',
     children: [
       { label: 'Overview', href: '/attendance', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
@@ -99,7 +100,7 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Finance',
     href: '/finance',
-    roles: ['head', 'assistant_head', 'finance_officer'],
+    roles: ['head', 'assistant_head', 'finance_officer', 'student', 'parent'],
     icon: 'DollarSign',
     children: [
       { label: 'Overview', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer'] },
@@ -114,10 +115,10 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Documents',
     href: '/documents',
-    roles: ['head', 'assistant_head', 'staff'],
+    roles: ['head', 'assistant_head', 'staff', 'parent', 'student'],
     icon: 'FileText',
     children: [
-      { label: 'Overview', href: '/documents', roles: ['head', 'assistant_head', 'staff'] },
+      { label: 'Overview', href: '/documents', roles: ['head', 'assistant_head', 'staff', 'student', 'parent'] },
       { label: 'Memo', href: '/documents/memo', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Upload', href: '/documents/upload', roles: ['head', 'assistant_head', 'staff'] },
       { label: 'Management', href: '/documents/manage', roles: ['head', 'assistant_head'] },
@@ -136,24 +137,9 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
     ],
   },
-  {
-    label: 'Committee',
-    href: '/committee',
-    roles: ['head', 'assistant_head', 'committee_member'],
-    icon: 'Users2',
-  },
-  {
-    label: 'Parent Portal',
-    href: '/parent-portal',
-    roles: ['parent'],
-    icon: 'Home',
-  },
-  {
-    label: 'Notice Board',
-    href: '/notices',
-    roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent', 'staff'],
-    icon: 'Bell',
-  },
+  { label: 'Committee', href: '/committee', roles: ['head', 'assistant_head', 'committee_member'], icon: 'Users2' },
+  { label: 'Parent Portal', href: '/parent-portal', roles: ['parent'], icon: 'Home' },
+  { label: 'Notice Board', href: '/notices', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent', 'staff'], icon: 'Bell' },
   {
     label: 'Profile & Auth',
     href: '/profile',
@@ -162,16 +148,11 @@ export const menuConfig: MenuItemConfig[] = [
     children: [
       { label: 'My Profile', href: '/profile', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
       { label: 'Change Password', href: '/profile/change-password', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'] },
-      { label: 'My ID Card', href: '/id-cards/my-card', roles: ['head', 'assistant_head', 'student', 'teacher', 'staff'] },
+      { label: 'My ID Card', href: '/id-cards/my-card', roles: ['head', 'assistant_head', 'student', 'teacher', 'staff', 'parent'] },
       { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
     ],
   },
-  {
-    label: 'Settings',
-    href: '/settings',
-    roles: ['admin', 'super_admin', 'head', 'assistant_head'],
-    icon: 'Settings',
-  },
+  { label: 'Settings', href: '/settings', roles: ['admin', 'super_admin', 'head', 'assistant_head'], icon: 'Settings' },
 ];
 
 export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
@@ -217,8 +198,5 @@ export function getMenuForUser(user?: User | null) {
   if (!user) return [];
   return menuConfig
     .filter((item) => item.roles.includes(user.role))
-    .map((item) => ({
-      ...item,
-      children: item.children?.filter((child) => child.roles.includes(user.role))
-    }));
+    .map((item) => ({ ...item, children: item.children?.filter((child) => child.roles.includes(user.role)) }));
 }
