@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
-import { printHtml } from "@/lib/export-utils";
+import { getPrintInstitution, makeQrDataUrl, printHtml } from "@/lib/export-utils";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const safeText = (value: unknown) => String(value ?? "-").replace(/[&<>'\"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char] || char));
@@ -33,6 +33,7 @@ export default function MyFeesPage() {
   const [payments, setPayments] = useState<any[]>([]);
   const [children, setChildren] = useState<any[]>([]);
   const [childId, setChildId] = useState("");
+  const [institutionProfile, setInstitutionProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [printingId, setPrintingId] = useState("");
   const [error, setError] = useState("");
@@ -41,11 +42,15 @@ export default function MyFeesPage() {
     setLoading(true);
     setError("");
     try {
-      const data = await api.finance.myFees() as any;
-      setFees(data.myFees || []);
-      setPayments(data.payments || []);
-      setChildren(data.children || []);
-      setChildId((current) => current || data.children?.[0]?._id || "");
+      const [feeData, profileData] = await Promise.all([
+        api.finance.myFees() as Promise<any>,
+        api.institution.profile().catch(() => null) as Promise<any>,
+      ]);
+      setFees(feeData.myFees || []);
+      setPayments(feeData.payments || []);
+      setChildren(feeData.children || []);
+      setChildId((current) => current || feeData.children?.[0]?._id || "");
+      setInstitutionProfile(profileData?.institution || profileData?.profile || null);
     } catch (err: any) {
       setError(err?.message || "Failed to load fee information.");
     } finally {
@@ -71,10 +76,45 @@ export default function MyFeesPage() {
     const collectedBy = payment.collectedBy?.name || payment.createdBy?.name || "Accounts Office";
     const paymentDate = payment.paymentDate || payment.createdAt || new Date();
     const amount = Number(payment.amount || 0);
+    const printInstitution = getPrintInstitution();
+    const institution = {
+      name: institutionProfile?.name || printInstitution.name || "EASY SCHOOL",
+      address: institutionProfile?.address || printInstitution.address || "",
+      phone: institutionProfile?.phone || printInstitution.phone || "",
+      email: institutionProfile?.email || printInstitution.email || "",
+      logo: institutionProfile?.logo || printInstitution.logo || "",
+      eiin: institutionProfile?.eiin || institutionProfile?.EIIN || "",
+      website: institutionProfile?.website || "",
+    };
+    const qrPayload = JSON.stringify({
+      type: "fee_receipt",
+      receiptNumber: receiptNo,
+      institution: institution.name,
+      student: studentName,
+      roll: meta.roll,
+      amount,
+      paymentDate,
+      generatedAt: new Date().toISOString(),
+    });
+    const qrDataUrl = await makeQrDataUrl(qrPayload, 132);
     setPrintingId(String(payment._id || receiptNo));
 
     const body = `
       <main class="print-card professional-receipt">
+        <section class="institution-receipt-header">
+          <div class="institution-logo-box">${institution.logo ? `<img src="${safeText(institution.logo)}" alt="Institution logo" />` : "LOGO"}</div>
+          <div class="institution-main-info">
+            <h1>${safeText(institution.name)}</h1>
+            ${institution.address ? `<p>${safeText(institution.address)}</p>` : ""}
+            ${(institution.phone || institution.email) ? `<p>${[institution.phone, institution.email].filter(Boolean).map(safeText).join(" | ")}</p>` : ""}
+            ${(institution.eiin || institution.website) ? `<p>${institution.eiin ? `EIIN: ${safeText(institution.eiin)}` : ""}${institution.eiin && institution.website ? " | " : ""}${institution.website ? safeText(institution.website) : ""}</p>` : ""}
+          </div>
+          <div class="receipt-qr-box">
+            <img src="${qrDataUrl}" alt="Receipt QR Code" />
+            <span>Scan to verify</span>
+          </div>
+        </section>
+
         <section class="receipt-topline">
           <div>
             <p class="receipt-label">Official Money Receipt</p>
@@ -128,7 +168,7 @@ export default function MyFeesPage() {
           </table>
         </section>
 
-        <section class="receipt-note"><b>Note:</b> Please preserve this receipt for future reference. For any mismatch, contact the accounts office with the receipt number.</section>
+        <section class="receipt-note"><b>Note:</b> Please preserve this receipt for future reference. For any mismatch, contact the accounts office with the receipt number. Mobile devices will download the receipt as PDF if printing is not supported.</section>
 
         <section class="receipt-signatures">
           <div><span></span><b>Accounts Officer</b><small>${safeText(collectedBy)}</small></div>
@@ -141,7 +181,14 @@ export default function MyFeesPage() {
     const styles = `
       .professional-receipt { border: 1px solid #cbd5e1; border-radius: 12px; padding: 24px; position: relative; overflow: hidden; }
       .professional-receipt:before { content: "PAID"; position: absolute; left: 70px; bottom: 80px; transform: rotate(-28deg); font-size: 94px; font-weight: 900; letter-spacing: .25em; color: rgba(15,23,42,.035); }
-      .receipt-topline { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 18px; }
+      .institution-receipt-header { display: grid; grid-template-columns: 76px 1fr 108px; align-items: center; gap: 14px; border-bottom: 3px solid #0f172a; padding-bottom: 14px; margin-bottom: 18px; }
+      .institution-logo-box { width: 70px; height: 70px; border: 1px solid #cbd5e1; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 11px; font-weight: 800; overflow: hidden; background: #fff; }
+      .institution-logo-box img { width: 100%; height: 100%; object-fit: contain; padding: 5px; }
+      .institution-main-info h1 { margin: 0; font-size: 22px; color: #0f172a; line-height: 1.2; text-transform: uppercase; }
+      .institution-main-info p { margin: 4px 0 0; color: #475569; font-size: 11px; line-height: 1.4; }
+      .receipt-qr-box { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #475569; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+      .receipt-qr-box img { width: 86px; height: 86px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px; background: #fff; }
+      .receipt-topline { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; border-bottom: 1px solid #cbd5e1; padding-bottom: 16px; margin-bottom: 18px; }
       .receipt-label { margin: 0 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .24em; color: #64748b; font-weight: 800; }
       .receipt-title { margin: 0; font-size: 28px; line-height: 1.1; color: #0f172a; }
       .receipt-muted { margin: 6px 0 0; font-size: 12px; color: #64748b; }
@@ -169,10 +216,11 @@ export default function MyFeesPage() {
       .receipt-signatures b { display: block; color: #0f172a; }
       .receipt-signatures small { display: block; margin-top: 3px; color: #64748b; }
       .seal-circle { display: inline-flex; width: 74px; height: 74px; border: 2px dashed #64748b; border-radius: 999px; align-items: center; justify-content: center; font-weight: 900; color: #64748b; margin-bottom: 8px; }
+      @media (max-width: 640px) { .receipt-summary, .receipt-two-col { grid-template-columns: 1fr; } .institution-receipt-header { grid-template-columns: 58px 1fr; } .receipt-qr-box { grid-column: 1 / -1; justify-self: center; } }
     `;
 
     try {
-      await printHtml(receiptTitle(receiptNo), body, styles, JSON.stringify({ type: "fee_receipt", receiptNumber: receiptNo, student: studentName, amount, date: paymentDate }));
+      await printHtml(receiptTitle(receiptNo), body, styles, qrPayload);
     } finally {
       setPrintingId("");
     }
@@ -181,9 +229,9 @@ export default function MyFeesPage() {
   return <div className="space-y-5">
     <PageHeader
       title="My Fees"
-      description="View dues, paid amount, next payment date and professional money receipts."
+      description="View dues, paid amount, next payment date and professional money receipts with QR verification."
       icon={WalletCards}
-      status={<Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">Professional Receipt</Badge>}
+      status={<Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">QR Receipt</Badge>}
       actions={[<Button key="refresh" size="sm" variant="outline" onClick={load} disabled={loading}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>]}
     />
 
@@ -204,7 +252,7 @@ export default function MyFeesPage() {
           <div className="flex items-center gap-2 text-emerald-700"><CheckCircle2 className="h-5 w-5" /><span className="font-semibold">Latest payment received</span></div>
           <p className="mt-1 text-sm text-muted-foreground">Receipt: {latestPayment.receiptNumber || "-"} • {formatCurrency(latestPayment.amount || 0)} • {formatDate(latestPayment.paymentDate || latestPayment.createdAt)}</p>
         </div>
-        <Button size="sm" onClick={() => printReceipt(latestPayment)} disabled={!!printingId}><Printer className="mr-2 h-4 w-4" />Print Latest Receipt</Button>
+        <Button size="sm" onClick={() => printReceipt(latestPayment)} disabled={!!printingId}><Printer className="mr-2 h-4 w-4" />Print / PDF Receipt</Button>
       </div>
     </section>}
 
@@ -215,9 +263,9 @@ export default function MyFeesPage() {
     </section>
 
     <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-      <div className="border-b p-4"><h2 className="font-semibold">Professional Payment Receipts</h2><p className="text-sm text-muted-foreground">Download or print official receipt with student details, amount table, signatures, seal and verification QR.</p></div>
-      <div className="hidden md:block"><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>Receipt</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Loading payments...</TableCell></TableRow> : visiblePayments.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No payment receipts found.</TableCell></TableRow> : visiblePayments.map((p) => <TableRow key={p._id}><TableCell className="font-medium">{p.receiptNumber || "-"}</TableCell><TableCell>{formatCurrency(p.amount || 0)}</TableCell><TableCell>{p.paymentMethod || "-"}</TableCell><TableCell>{formatDate(p.paymentDate || p.createdAt)}</TableCell><TableCell><Badge variant="outline" className="capitalize">{p.status || "paid"}</Badge></TableCell><TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => printReceipt(p)} disabled={printingId === String(p._id)}><Download className="mr-2 h-4 w-4" />{printingId === String(p._id) ? "Opening..." : "Professional Receipt"}</Button></TableCell></TableRow>)}</TableBody></Table></div>
-      <div className="grid gap-3 p-4 md:hidden">{visiblePayments.length === 0 ? <p className="text-center text-sm text-muted-foreground">No payment receipts found.</p> : visiblePayments.map((p) => <div key={p._id} className="rounded-lg border p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-medium">{p.receiptNumber || "Receipt"}</p><p className="text-sm text-muted-foreground">{formatDate(p.paymentDate || p.createdAt)} • {p.paymentMethod || "-"}</p></div><Badge variant="outline">{p.status || "paid"}</Badge></div><div className="mt-3 flex items-center justify-between"><p className="text-lg font-bold">{formatCurrency(p.amount || 0)}</p><Button size="sm" variant="outline" onClick={() => printReceipt(p)} disabled={printingId === String(p._id)}><FileText className="mr-2 h-4 w-4" />Receipt</Button></div></div>)}</div>
+      <div className="border-b p-4"><h2 className="font-semibold">Professional Payment Receipts</h2><p className="text-sm text-muted-foreground">Official receipt includes institution profile, student details, QR code, amount table, signatures and seal. Mobile device will download PDF if print is unavailable.</p></div>
+      <div className="hidden md:block"><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>Receipt</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Loading payments...</TableCell></TableRow> : visiblePayments.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No payment receipts found.</TableCell></TableRow> : visiblePayments.map((p) => <TableRow key={p._id}><TableCell className="font-medium">{p.receiptNumber || "-"}</TableCell><TableCell>{formatCurrency(p.amount || 0)}</TableCell><TableCell>{p.paymentMethod || "-"}</TableCell><TableCell>{formatDate(p.paymentDate || p.createdAt)}</TableCell><TableCell><Badge variant="outline" className="capitalize">{p.status || "paid"}</Badge></TableCell><TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => printReceipt(p)} disabled={printingId === String(p._id)}><Download className="mr-2 h-4 w-4" />{printingId === String(p._id) ? "Opening..." : "QR Receipt"}</Button></TableCell></TableRow>)}</TableBody></Table></div>
+      <div className="grid gap-3 p-4 md:hidden">{visiblePayments.length === 0 ? <p className="text-center text-sm text-muted-foreground">No payment receipts found.</p> : visiblePayments.map((p) => <div key={p._id} className="rounded-lg border p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-medium">{p.receiptNumber || "Receipt"}</p><p className="text-sm text-muted-foreground">{formatDate(p.paymentDate || p.createdAt)} • {p.paymentMethod || "-"}</p></div><Badge variant="outline">{p.status || "paid"}</Badge></div><div className="mt-3 flex items-center justify-between"><p className="text-lg font-bold">{formatCurrency(p.amount || 0)}</p><Button size="sm" variant="outline" onClick={() => printReceipt(p)} disabled={printingId === String(p._id)}><FileText className="mr-2 h-4 w-4" />QR Receipt</Button></div></div>)}</div>
     </section>
   </div>;
 }
