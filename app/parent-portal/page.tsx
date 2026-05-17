@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Bell, BookOpen, CalendarDays, CreditCard, FileText, GraduationCap, HeartHandshake, IdCard, RefreshCw, UserRound } from "lucide-react";
+import { BookOpen, CalendarDays, CreditCard, FileText, GraduationCap, HeartHandshake, RefreshCw, UserRound } from "lucide-react";
 
 import { IDCardPreview } from "@/components/id-cards/IDCardPreview";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -97,7 +97,7 @@ export default function ParentPortalPage() {
           </Panel>
           <Panel title="Child ID Card">
             <IDCardPreview type="student" name={child?.userId?.name || "Student"} id={child?.rollNumber || "ID"} qrData={child?.idCard?.qrCodeData || child?.rollNumber || ""} barcode={child?.idCard?.barcodeData || child?.rollNumber || ""} />
-            <div className="mt-3"><Button asChild size="sm" variant="outline"><Link href="/id-cards/my-card"><IdCard className="mr-2 h-4 w-4" />Open ID Card</Link></Button></div>
+            <div className="mt-3"><Button asChild size="sm" variant="outline"><Link href="/id-cards/my-card"><CreditCard className="mr-2 h-4 w-4" />Open ID Card</Link></Button></div>
           </Panel>
         </section>
 
