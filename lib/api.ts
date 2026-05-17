@@ -2,8 +2,10 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 import { getDemoMode } from './demo-store';
 import { demoRequest } from './demo-api';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://school-server-b264c1a1fac6.herokuapp.com/api';
-  export const API_URL = API_BASE_URL;
+const DEFAULT_REMOTE_API = 'https://school-server-b264c1a1fac6.herokuapp.com/api';
+const ENV_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE_URL = ENV_API_URL || (typeof window !== 'undefined' ? '/api' : DEFAULT_REMOTE_API);
+export const API_URL = API_BASE_URL;
 
 interface ApiError {
   message: string;
@@ -12,133 +14,128 @@ interface ApiError {
 
 class ApiClient {
   private client: AxiosInstance;
+  private fallbackClient: AxiosInstance;
   private token: string | null = null;
+  private networkToastAt = 0;
 
   constructor() {
     this.client = axios.create({
       baseURL: API_BASE_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      timeout: 20000,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    this.fallbackClient = axios.create({
+      baseURL: DEFAULT_REMOTE_API,
+      timeout: 20000,
+      headers: { 'Content-Type': 'application/json' },
     });
 
-    // Request interceptor
-    this.client.interceptors.request.use(
-      (config) => {
-        const token = this.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        if (typeof window !== 'undefined') {
-          const selectedInstitutionId = localStorage.getItem('selectedInstitutionId');
-          if (selectedInstitutionId) {
-            config.headers['x-institution-id'] = selectedInstitutionId;
-          }
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    // Response interceptor
-    this.client.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          this.clearToken();
+    const attachRequest = (instance: AxiosInstance) => {
+      instance.interceptors.request.use(
+        (config) => {
+          const token = this.getToken();
+          if (token) config.headers.Authorization = `Bearer ${token}`;
           if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+            const selectedInstitutionId = localStorage.getItem('selectedInstitutionId');
+            if (selectedInstitutionId) config.headers['x-institution-id'] = selectedInstitutionId;
           }
+          return config;
+        },
+        (error) => Promise.reject(error)
+      );
+    };
+
+    const attachResponse = (instance: AxiosInstance) => {
+      instance.interceptors.response.use(
+        (response) => response,
+        (error) => {
+          if (error.response?.status === 401) {
+            this.clearToken();
+            if (typeof window !== 'undefined') window.location.href = '/login';
+          }
+          return Promise.reject(error);
         }
-        return Promise.reject(error);
-      }
-    );
+      );
+    };
+
+    attachRequest(this.client);
+    attachRequest(this.fallbackClient);
+    attachResponse(this.client);
+    attachResponse(this.fallbackClient);
   }
 
   setToken(token: string) {
     this.token = token;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('token', token);
-    }
+    if (typeof window !== 'undefined') localStorage.setItem('token', token);
   }
 
   getToken(): string | null {
     if (this.token) return this.token;
-    
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       if (token) this.token = token;
       return token;
     }
-    
     return null;
   }
 
   clearToken() {
     this.token = null;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+    if (typeof window !== 'undefined') localStorage.removeItem('token');
+  }
+
+  private async requestWithFallback<T>(method: 'get' | 'post' | 'put' | 'patch' | 'delete', url: string, data?: any, config?: any): Promise<T> {
+    try {
+      const response = method === 'get' || method === 'delete'
+        ? await this.client[method]<T>(url, config)
+        : await this.client[method]<T>(url, data, config);
+      return response.data;
+    } catch (error: any) {
+      const isNetwork = axios.isAxiosError(error) && (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response);
+      const isUsingProxy = typeof window !== 'undefined' && API_BASE_URL === '/api';
+      if (isNetwork && isUsingProxy) {
+        const response = method === 'get' || method === 'delete'
+          ? await this.fallbackClient[method]<T>(url, config)
+          : await this.fallbackClient[method]<T>(url, data, config);
+        return response.data;
+      }
+      throw error;
     }
   }
 
   async get<T>(url: string, config?: any): Promise<T> {
     try {
-      if (getDemoMode()) {
-        return await demoRequest('GET', url, undefined) as T;
-      }
-      const response = await this.client.get<T>(url, config);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+      if (getDemoMode()) return await demoRequest('GET', url, undefined) as T;
+      return await this.requestWithFallback<T>('get', url, undefined, config);
+    } catch (error) { throw this.handleError(error); }
   }
 
   async post<T>(url: string, data?: any, config?: any): Promise<T> {
     try {
-      if (getDemoMode()) {
-        return await demoRequest('POST', url, data) as T;
-      }
-      const response = await this.client.post<T>(url, data, config);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+      if (getDemoMode()) return await demoRequest('POST', url, data) as T;
+      return await this.requestWithFallback<T>('post', url, data, config);
+    } catch (error) { throw this.handleError(error); }
   }
 
   async put<T>(url: string, data?: any, config?: any): Promise<T> {
     try {
-      if (getDemoMode()) {
-        return await demoRequest('PUT', url, data) as T;
-      }
-      const response = await this.client.put<T>(url, data, config);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+      if (getDemoMode()) return await demoRequest('PUT', url, data) as T;
+      return await this.requestWithFallback<T>('put', url, data, config);
+    } catch (error) { throw this.handleError(error); }
   }
 
   async patch<T>(url: string, data?: any, config?: any): Promise<T> {
     try {
-      if (getDemoMode()) {
-        return await demoRequest('PATCH', url, data) as T;
-      }
-      const response = await this.client.patch<T>(url, data, config);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+      if (getDemoMode()) return await demoRequest('PATCH', url, data) as T;
+      return await this.requestWithFallback<T>('patch', url, data, config);
+    } catch (error) { throw this.handleError(error); }
   }
 
   async delete<T>(url: string, config?: any): Promise<T> {
     try {
-      if (getDemoMode()) {
-        return await demoRequest('DELETE', url, undefined) as T;
-      }
-      const response = await this.client.delete<T>(url, config);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+      if (getDemoMode()) return await demoRequest('DELETE', url, undefined) as T;
+      return await this.requestWithFallback<T>('delete', url, undefined, config);
+    } catch (error) { throw this.handleError(error); }
   }
 
   async getBlob(url: string, config?: any): Promise<Blob> {
@@ -148,14 +145,9 @@ class ApiClient {
         if (result instanceof Blob) return result;
         return new Blob([typeof result === 'string' ? result : JSON.stringify(result)], { type: 'application/octet-stream' });
       }
-      const response = await this.client.get(url, {
-        ...config,
-        responseType: 'blob',
-      });
+      const response = await this.client.get(url, { ...config, responseType: 'blob' });
       return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    } catch (error) { throw this.handleError(error); }
   }
 
   async postBlob(url: string, data?: any, config?: any): Promise<Blob> {
@@ -165,71 +157,45 @@ class ApiClient {
         if (result instanceof Blob) return result;
         return new Blob([typeof result === 'string' ? result : JSON.stringify(result)], { type: 'application/octet-stream' });
       }
-      const response = await this.client.post(url, data, {
-        ...config,
-        responseType: 'blob',
-      });
+      const response = await this.client.post(url, data, { ...config, responseType: 'blob' });
       return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    } catch (error) { throw this.handleError(error); }
   }
 
   private handleError(error: any): ApiError {
     if (axios.isAxiosError(error)) {
       const message = this.getErrorMessage(error);
-      // Don't emit error toasts for 404s - they're often expected and handled by the caller
-      // Don't emit for messages/stats/unread which is polled regularly
-      const shouldSuppressToast = error.response?.status === 404 || 
-                                  error.config?.url?.includes('/messages/stats/unread');
-      if (!shouldSuppressToast) {
-        this.emitErrorToast(message);
-      }
-      return {
-        message,
-        error: error.response?.data,
-      };
+      const shouldSuppressToast = error.response?.status === 404 || error.config?.url?.includes('/messages/stats/unread');
+      if (!shouldSuppressToast) this.emitErrorToast(message);
+      return { message, error: error.response?.data };
     }
     this.emitErrorToast('An unexpected error occurred');
-    return {
-      message: 'An unexpected error occurred',
-      error,
-    };
+    return { message: 'An unexpected error occurred', error };
   }
 
   private getErrorMessage(error: AxiosError<any>): string {
     const data = error.response?.data;
     const status = error.response?.status;
-
     if (status === 500 || status === 502 || status === 503 || status === 504) {
       if (typeof data?.message === 'string' && data.message !== 'Server error') return data.message;
       return 'সার্ভারে সমস্যা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।';
     }
-
     if (typeof data === 'string') return data;
     if (typeof data?.message === 'string') return data.message;
     if (typeof data?.error === 'string') return data.error;
     if (typeof data?.error?.message === 'string') return data.error.message;
-    if (Array.isArray(data?.errors) && data.errors.length) {
-      return data.errors.map((item: any) => item?.message || item).filter(Boolean).join(', ');
-    }
-
-    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      return 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। ইন্টারনেট বা সার্ভার চেক করুন।';
-    }
-
+    if (Array.isArray(data?.errors) && data.errors.length) return data.errors.map((item: any) => item?.message || item).filter(Boolean).join(', ');
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') return 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। Server deploy/CORS/API URL check করুন।';
     return error.message || 'Request failed';
   }
 
   private emitErrorToast(message: string) {
     if (typeof window === 'undefined' || !message) return;
+    const now = Date.now();
+    if (message.includes('সার্ভারের সাথে যোগাযোগ') && now - this.networkToastAt < 10000) return;
+    if (message.includes('সার্ভারের সাথে যোগাযোগ')) this.networkToastAt = now;
     window.dispatchEvent(new CustomEvent('app-toast', {
-      detail: {
-        title: 'Server error',
-        message,
-        type: 'error',
-        duration: 5000,
-      },
+      detail: { title: 'Server error', message, type: 'error', duration: 5000 },
     }));
   }
 }
@@ -238,7 +204,6 @@ export const apiClient = new ApiClient();
 
 // API Endpoints
 export const api = {
-  // Auth
   auth: {
     login: (data: any) => apiClient.post('/auth/login', data),
     register: (data: any) => apiClient.post('/auth/register', data),
@@ -262,7 +227,6 @@ export const api = {
     lookup: (params: any) => apiClient.get('/academic/public/results', { params }),
   },
 
-  // Users
   users: {
     getAll: () => apiClient.get('/users'),
     getAllUsers: () => apiClient.get('/users/all'),
@@ -277,7 +241,6 @@ export const api = {
     updatePermissions: (matrix: any) => apiClient.put('/users/permissions', { matrix }),
   },
 
-  // Students
   students: {
     getAll: () => apiClient.get('/students'),
     getById: (id: string) => apiClient.get(`/students/${id}`),
@@ -286,7 +249,6 @@ export const api = {
     delete: (id: string) => apiClient.delete(`/students/${id}`),
   },
 
-  // Teachers
   teachers: {
     getAll: () => apiClient.get('/teachers'),
     getById: (id: string) => apiClient.get(`/teachers/${id}`),
@@ -295,7 +257,6 @@ export const api = {
     delete: (id: string) => apiClient.delete(`/teachers/${id}`),
   },
 
-  // Staff
   staff: {
     getAll: () => apiClient.get('/staff'),
     getById: (id: string) => apiClient.get(`/staff/${id}`),
@@ -319,177 +280,43 @@ export const api = {
     users: (params?: any) => apiClient.get('/admin/users', params ? { params } : undefined),
   },
 
-  // Attendance
-  attendance: {
-    getAll: (params?: any) => apiClient.get('/attendance', params ? { params } : undefined),
-    mark: (data: any) => apiClient.post('/attendance/mark', data),
-    scanIdCard: (data: any) => apiClient.post('/attendance/scan-id-card', data),
-    getStudents: (params?: any) => apiClient.get('/attendance/students', params ? { params } : undefined),
-    getReports: (params?: any) => apiClient.get('/attendance/reports', params ? { params } : undefined),
-    getMine: (params?: any) => apiClient.get('/attendance/me', params ? { params } : undefined),
-    markMine: (data: any) => apiClient.post('/attendance/me/mark', data),
-    getStudentAttendance: (studentId: string) => apiClient.get(`/attendance/student/${studentId}`),
-    getPeople: (params?: any) => apiClient.get('/attendance/people', params ? { params } : undefined),
-    getPersonAttendance: (personType: string, personId: string) => apiClient.get(`/attendance/person/${personType}/${personId}`),
-  },
-
-  // Finance
-  finance: {
-    dashboard: () => apiClient.get('/finance'),
-    fees: {
-      getAll: () => apiClient.get('/finance/fees'),
-      getByStudent: (studentId: string) => apiClient.get(`/finance/fees/student/${studentId}`),
-      create: (data: any) => apiClient.post('/finance/fees', data),
-      update: (id: string, data: any) => apiClient.put(`/finance/fees/${id}`, data),
-    },
-    payments: {
-      getAll: () => apiClient.get('/finance/payments'),
-      create: (data: any) => apiClient.post('/finance/payments', data),
-    },
-    collections: (params?: any) => apiClient.get('/finance/collections', params ? { params } : undefined),
-    salary: () => apiClient.get('/finance/salary'),
-    processSalary: (data: any) => apiClient.post('/finance/salary/process', data),
-    reports: (params?: any) => apiClient.get('/finance/reports', params ? { params } : undefined),
-    myFees: (params?: any) => apiClient.get('/finance/my-fees', params ? { params } : undefined),
-  },
-
-  // ID Cards
-  idCards: {
-    getAll: () => apiClient.get('/id-cards'),
-    getMine: () => apiClient.get('/id-cards/me/card'),
-    getById: (id: string) => apiClient.get(`/id-cards/${id}`),
-    searchOwners: (params: any) => apiClient.get('/id-cards/owners/search', { params }),
-    create: (data: any) => apiClient.post('/id-cards', data),
-    generate: (data: any) => apiClient.post('/id-cards/generate', data),
-    renderPdf: (data: any) => apiClient.postBlob('/id-cards/render-pdf', data),
-    generateStudent: (studentId: string) => apiClient.get(`/id-cards/student/${studentId}`),
-    generateTeacher: (teacherId: string) => apiClient.get(`/id-cards/teacher/${teacherId}`),
-    generateStaff: (staffId: string) => apiClient.get(`/id-cards/staff/${staffId}`),
-    download: (id: string, format = 'pdf') => apiClient.getBlob(`/id-cards/${id}/download?format=${format}`),
-    email: (id: string, data: any) => apiClient.post(`/id-cards/${id}/email`, data),
-    bulkGenerate: (data: any) => apiClient.post('/id-cards/bulk', data),
-    verify: (code: string) => apiClient.post('/id-cards/verify', { code }),
-    renew: (id: string, data: any) => apiClient.post(`/id-cards/${id}/renew`, data),
-    stats: () => apiClient.get('/id-cards/reports/stats'),
-  },
-
-  // Dashboard
-  dashboard: {
-    stats: () => apiClient.get('/dashboard/stats'),
-    summary: () => apiClient.get('/dashboard/summary'),
-    charts: () => apiClient.get('/dashboard/charts'),
-    composition: () => apiClient.get('/dashboard/composition'),
-    attendanceOverview: () => apiClient.get('/dashboard/attendance-overview'),
-    feeOverview: () => apiClient.get('/dashboard/fee-overview'),
-    recentNotices: () => apiClient.get('/dashboard/recent-notices'),
-  },
-
-  // Notices
-  notices: {
-    getAll: () => apiClient.get('/notices'),
-    getById: (id: string) => apiClient.get(`/notices/${id}`),
-    create: (data: any, config?: any) => apiClient.post('/notices', data, data instanceof FormData ? {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      ...config,
-    } : config),
-    update: (id: string, data: any) => apiClient.put(`/notices/${id}`, data),
-    delete: (id: string) => apiClient.delete(`/notices/${id}`),
-  },
-
-  // Notifications
-  notifications: {
-    getAll: () => apiClient.get('/notifications'),
-    markRead: (id: string) => apiClient.post('/notifications/mark-read', { id }),
-    markAll: () => apiClient.post('/notifications/mark-all'),
-    create: (data: any) => apiClient.post('/notifications', data),
-  },
-
-  // Academic
   academic: {
     classes: {
       getAll: () => apiClient.get('/academic/classes'),
-      getById: (id: string) => apiClient.get(`/academic/classes/${id}`),
       create: (data: any) => apiClient.post('/academic/classes', data),
       update: (id: string, data: any) => apiClient.put(`/academic/classes/${id}`, data),
       delete: (id: string) => apiClient.delete(`/academic/classes/${id}`),
     },
+    sections: {
+      getAll: () => apiClient.get('/academic/sections'),
+      create: (data: any) => apiClient.post('/academic/sections', data),
+      update: (id: string, data: any) => apiClient.put(`/academic/sections/${id}`, data),
+      delete: (id: string) => apiClient.delete(`/academic/sections/${id}`),
+    },
     subjects: {
       getAll: () => apiClient.get('/academic/subjects'),
-      getById: (id: string) => apiClient.get(`/academic/subjects/${id}`),
       create: (data: any) => apiClient.post('/academic/subjects', data),
       update: (id: string, data: any) => apiClient.put(`/academic/subjects/${id}`, data),
       delete: (id: string) => apiClient.delete(`/academic/subjects/${id}`),
     },
     exams: {
       getAll: () => apiClient.get('/academic/exams'),
-      getById: (id: string) => apiClient.get(`/academic/exams/${id}`),
       create: (data: any) => apiClient.post('/academic/exams', data),
       update: (id: string, data: any) => apiClient.put(`/academic/exams/${id}`, data),
       delete: (id: string) => apiClient.delete(`/academic/exams/${id}`),
     },
     results: {
       getAll: () => apiClient.get('/academic/results'),
-      getEntry: (params: any) => apiClient.get('/academic/results', { params }),
-      getByStudent: (studentId: string) => apiClient.get(`/academic/results/student/${studentId}`),
       create: (data: any) => apiClient.post('/academic/results', data),
       update: (id: string, data: any) => apiClient.put(`/academic/results/${id}`, data),
-      saveDraft: (data: any) => apiClient.post('/academic/results/draft', data),
-      submitReview: (data: any) => apiClient.post('/academic/results/submit-review', data),
-      assistantApprove: (data: any) => apiClient.post('/academic/results/assistant-approve', data),
-      headApprove: (data: any) => apiClient.post('/academic/results/head-approve', data),
-      publish: (data: any) => apiClient.post('/academic/results/publish', data),
-    },
-    reportCard: {
-      get: (params?: any) => apiClient.get('/academic/report-card', params ? { params } : undefined),
-      students: (params?: any) => apiClient.get('/academic/report-card/students', params ? { params } : undefined),
+      delete: (id: string) => apiClient.delete(`/academic/results/${id}`),
     },
   },
 
-  // Documents
-  documents: {
-    getAll: (params?: any) => apiClient.get('/documents', params ? { params } : undefined),
-    manage: (params?: any) => apiClient.get('/documents/manage', params ? { params } : undefined),
-    upload: (data: FormData | Record<string, any>, config?: any) => apiClient.post('/documents/upload', data, data instanceof FormData ? {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      ...config,
-    } : config),
-    delete: (id: string) => apiClient.delete(`/documents/${id}`),
-  },
-
-  // Users and routes that have dedicated pages
-  committee: {
-    getAll: () => apiClient.get('/committee'),
-    create: (data: any) => apiClient.post('/committee', data),
-    update: (id: string, data: any) => apiClient.put(`/committee/${id}`, data),
-  },
-  parent: {
-    portal: () => apiClient.get('/parent/portal'),
-  },
-
-  // Backup
-  backup: {
-    getAll: () => apiClient.get('/backup'),
-    create: (data: any) => apiClient.post('/backup', data),
-    restore: (id: string) => apiClient.post(`/backup/${id}/restore`),
-    export: (collections?: string[]) => apiClient.get('/backup/export', { params: collections ? { collections: collections.join(',') } : undefined, responseType: 'blob' }),
-    import: (data: any) => apiClient.post('/backup/import', data),
-  },
-
-  // Messages & Email
-  messages: {
-    getInbox: () => apiClient.get('/messages/inbox'),
-    getSent: () => apiClient.get('/messages/sent'),
-    getById: (id: string) => apiClient.get(`/messages/${id}`),
-    send: (data: any) => apiClient.post('/messages/send', data),
-    markAsRead: (id: string) => apiClient.patch(`/messages/${id}/read`),
-    delete: (id: string) => apiClient.delete(`/messages/${id}`),
-    getUnreadCount: async () => {
-      try {
-        return await apiClient.get('/messages/stats/unread');
-      } catch (error: any) {
-        if (error?.response?.status === 404) return { success: true, unreadCount: 0 };
-        throw error;
-      }
-    },
+  finance: {
+    myFees: () => apiClient.get('/finance/my-fees'),
+    fees: () => apiClient.get('/finance/fees'),
+    payments: () => apiClient.get('/finance/payments'),
+    collections: () => apiClient.get('/finance/collections'),
   },
 };
