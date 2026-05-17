@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 
@@ -10,9 +10,19 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [hasRootShell, setHasRootShell] = useState(false);
+
+  useEffect(() => {
+    setHasRootShell(Boolean(document.querySelector('[data-app-shell="root"]')));
+  }, []);
+
+  // RootAppShell already provides Navbar + Sidebar. This prevents double menu/sidebar.
+  if (hasRootShell) {
+    return <>{children}</>;
+  }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 pt-16 mobile-app-layout">
+    <div className="easy-app-shell flex min-h-screen flex-col bg-gray-50 pt-16 mobile-app-layout" data-app-shell="app">
       <Navbar
         onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
         isMobileMenuOpen={isSidebarOpen}
