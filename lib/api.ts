@@ -9,7 +9,7 @@ export const API_URL = isBrowser ? (isLocal && ENV ? ENV : '/api') : (ENV || REM
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-async function withTimeout(input: RequestInfo | URL, init: RequestInit = {}, ms = 25000) {
+async function withTimeout(input: RequestInfo | URL, init: RequestInit = {}, ms = 90000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try { return await fetch(input, { ...init, signal: controller.signal }); }
@@ -41,15 +41,10 @@ class ApiClient {
     const qs = config?.params ? `?${new URLSearchParams(Object.entries(config.params).filter(([, v]) => v !== undefined && v !== null) as any).toString()}` : '';
     const body = method === 'GET' || method === 'DELETE' ? undefined : (data instanceof FormData ? data : JSON.stringify(data || {}));
     const init: RequestInit = { method, headers: this.headers(body instanceof FormData ? body : data, config.headers), body, credentials: 'include' };
-    const primaryUrl = `${API_URL}${url}${qs}`;
     try {
-      const res = await withTimeout(primaryUrl, init, 25000);
+      const res = await withTimeout(`${API_URL}${url}${qs}`, init, 90000);
       return await this.parse<T>(res);
     } catch (e: any) {
-      if (isBrowser && API_URL === '/api') {
-        const res = await withTimeout(`${REMOTE}${url}${qs}`, init, 60000);
-        return await this.parse<T>(res);
-      }
       throw this.toError(e);
     }
   }
@@ -63,9 +58,10 @@ class ApiClient {
   }
 
   private toError(err: any) {
-    const message = typeof err?.message === 'string' ? err.message : (typeof err === 'string' ? err : 'Server connection failed');
-    this.toast(message.includes('abort') ? 'Server response timeout. Please try again.' : message);
-    return { message: message.includes('abort') ? 'Server response timeout. Please try again.' : message, error: err };
+    const raw = typeof err?.message === 'string' ? err.message : (typeof err === 'string' ? err : 'Server connection failed');
+    const message = raw.includes('abort') || raw.includes('signal') ? 'Server response timeout. Please restart dyno or check API_TARGET.' : raw;
+    this.toast(message);
+    return { message, error: err };
   }
 
   private toast(message: string) {
@@ -81,8 +77,8 @@ class ApiClient {
   put<T>(url: string, data?: any, config?: any) { return this.request<T>('PUT', url, data, config); }
   patch<T>(url: string, data?: any, config?: any) { return this.request<T>('PATCH', url, data, config); }
   delete<T>(url: string, config?: any) { return this.request<T>('DELETE', url, undefined, config); }
-  async getBlob(url: string, config?: any) { const res = await withTimeout(`${API_URL}${url}`, { headers: this.headers(undefined, config?.headers) }, 60000); return await res.blob(); }
-  async postBlob(url: string, data?: any, config?: any) { const res = await withTimeout(`${API_URL}${url}`, { method: 'POST', headers: this.headers(data, config?.headers), body: JSON.stringify(data || {}) }, 60000); return await res.blob(); }
+  async getBlob(url: string, config?: any) { const res = await withTimeout(`${API_URL}${url}`, { headers: this.headers(undefined, config?.headers) }, 90000); return await res.blob(); }
+  async postBlob(url: string, data?: any, config?: any) { const res = await withTimeout(`${API_URL}${url}`, { method: 'POST', headers: this.headers(data, config?.headers), body: JSON.stringify(data || {}) }, 90000); return await res.blob(); }
 }
 
 export const apiClient = new ApiClient();
