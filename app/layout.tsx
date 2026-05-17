@@ -4,6 +4,7 @@ import { ToastProvider } from '@/hooks/useToast'
 import { LanguageProvider } from '@/lib/i18n'
 import { MobileTableEnhancer } from '@/components/layout/MobileTableEnhancer'
 import { ImageUploadGuard } from '@/components/layout/ImageUploadGuard'
+import { RootAppShell } from '@/components/layout/RootAppShell'
 
 export const metadata: Metadata = {
   title: 'EASY SCHOOL - School Management System',
@@ -27,7 +28,7 @@ export default function RootLayout({
           <ToastProvider>
             <MobileTableEnhancer />
             <ImageUploadGuard />
-            {children}
+            <RootAppShell>{children}</RootAppShell>
           </ToastProvider>
         </LanguageProvider>
       </body>
