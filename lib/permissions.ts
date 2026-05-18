@@ -111,6 +111,13 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   { label: 'Committee', href: '/committee', roles: ['head', 'assistant_head', 'committee_member'], icon: 'Users2' },
+  {
+    label: 'Library', href: '/library', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff'], icon: 'BookOpen',
+    children: [
+      { label: 'Books', href: '/library/books', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff'] },
+      { label: 'Loans', href: '/library/loans', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff'] },
+    ],
+  },
   { label: 'Parent Portal', href: '/parent-portal', roles: ['parent'], icon: 'Home' },
   { label: 'Notice Board', href: '/notices', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent', 'staff'], icon: 'Bell' },
   {
