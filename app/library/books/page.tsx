@@ -132,11 +132,18 @@ export default function BooksPage() {
                   <div>
                     <p className="font-medium text-slate-900">{book.title}</p>
                     <p className="text-sm text-slate-600">{book.author}</p>
+                          {book.qrCodeValue && <p className="mt-1 text-xs text-slate-400">QR: {book.qrCodeValue}</p>}
                   </div>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
                     {book.copiesAvailable}/{book.copiesTotal}
                   </span>
                 </div>
+                      {book.qrCodeDataUrl && (
+                        <div className="mt-3 flex items-center gap-3">
+                          <img src={book.qrCodeDataUrl} alt={`QR code for ${book.title}`} className="h-24 w-24 rounded-lg border border-slate-200 bg-white p-1" />
+                          <p className="text-xs text-slate-500">Scan this QR code to identify the book during issue or return.</p>
+                        </div>
+                      )}
                 <p className="mt-2 text-sm text-slate-500">{book.category || 'General'} {book.location ? `• ${book.location}` : ''}</p>
                 <div className="mt-4 flex items-center justify-between gap-2">
                   <p className="text-xs text-slate-400">{book.isbn || 'No ISBN'}</p>
