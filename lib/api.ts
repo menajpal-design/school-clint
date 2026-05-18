@@ -1,19 +1,20 @@
 import { getDemoMode } from './demo-store';
 import { demoRequest } from './demo-api';
 
-const DEFAULT_API_TARGET = 'https://school-server-b264c1a1fac6.herokuapp.com';
-const ENV_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-const ENV_API_TARGET = process.env.NEXT_PUBLIC_API_TARGET || DEFAULT_API_TARGET;
 const isBrowser = typeof window !== 'undefined';
 const isLocal = isBrowser && /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
 
 const normalizeApiUrl = (value: string) => value.replace(/\/$/, '').replace(/\/api$/, '') + '/api';
 
-// Production browser uses the real server directly. Server CORS is controlled by ALLOWED_ORIGINS in server env.
-// Local browser may still use NEXT_PUBLIC_API_URL for development.
+// Use same-origin /api in the browser so production and local builds go through the
+// Next.js proxy route instead of baking in a remote backend URL.
+const defaultBrowserApiUrl = isBrowser ? '/api' : '';
+const envApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+const envApiTarget = process.env.NEXT_PUBLIC_API_TARGET || '';
+
 export const API_URL = isBrowser
-  ? (isLocal && ENV_API_URL ? normalizeApiUrl(ENV_API_URL) : normalizeApiUrl(ENV_API_TARGET))
-  : normalizeApiUrl(ENV_API_URL || ENV_API_TARGET || DEFAULT_API_TARGET);
+  ? (isLocal && envApiUrl ? normalizeApiUrl(envApiUrl) : (defaultBrowserApiUrl || normalizeApiUrl(envApiTarget || envApiUrl || '/api')))
+  : normalizeApiUrl(envApiTarget || envApiUrl || '/api');
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -112,6 +113,7 @@ export const api: any = {
   publicResults: { schools: (p?: any) => apiClient.get('/academic/public/results/schools', { params: p }), options: (p?: any) => apiClient.get('/academic/public/results/options', { params: p }), lookup: (p: any) => apiClient.get('/academic/public/results', { params: p }) },
   users: { ...crud('/users'), getAllUsers: () => apiClient.get('/users/all'), updateStatus: (id: string, isActive: boolean) => apiClient.patch(`/users/${id}/status`, { isActive }), updateRole: (id: string, role: string) => apiClient.patch(`/users/${id}/role`, { role }), resetPassword: (id: string, password?: string) => apiClient.post(`/users/${id}/reset-password`, password ? { password } : undefined), permissions: () => apiClient.get('/users/permissions'), updatePermissions: (matrix: any) => apiClient.put('/users/permissions', { matrix }) },
   students: crud('/students'), teachers: crud('/teachers'), staff: crud('/staff'), documents: crud('/documents'), notices: crud('/notices'), idCards: idCardApi, payroll: crud('/payroll'), promotions: crud('/promotions'), holidays: crud('/holidays'),
+  library: { books: crud('/library/books'), loans: crud('/library/loans'), issue: (d: any) => apiClient.post('/library/loans/issue', d), return: (d: any) => apiClient.post('/library/loans/return', d) },
   institution: { plans: () => apiClient.get('/institution/plans'), profile: () => apiClient.get('/institution/profile'), updateProfile: (d: any) => apiClient.put('/institution/profile', d), recordPayment: (d: any) => apiClient.post('/institution/billing/payment', d) },
   admin: { schools: (p?: any) => apiClient.get('/admin/schools', { params: p }), updateSchool: (id: string, d: any) => apiClient.patch(`/admin/schools/${id}`, d), verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`), selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`), users: (p?: any) => apiClient.get('/admin/users', { params: p }) },
   academic: { classes: crud('/academic/classes'), sections: crud('/academic/sections'), subjects: crud('/academic/subjects'), exams: crud('/academic/exams'), results: crud('/academic/results'), reportCard: { students: (p: any) => apiClient.get('/academic/report-card/students', { params: p }), get: (p: any) => apiClient.get('/academic/report-card', { params: p }) } },
