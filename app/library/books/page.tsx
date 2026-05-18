@@ -14,6 +14,9 @@ export default function BooksPage() {
     const load = async () => {
       setLoading(true);
       try {
+        if (!api || !api.library || !api.library.books) {
+          throw new Error('Library API not available');
+        }
         const data = await api.library.books.getAll();
         if (mounted) setBooks(Array.isArray(data) ? data : []);
       } catch (e: any) {

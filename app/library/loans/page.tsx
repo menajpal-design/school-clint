@@ -14,6 +14,9 @@ export default function LoansPage() {
     const load = async () => {
       setLoading(true);
       try {
+        if (!api || !api.library || !api.library.loans) {
+          throw new Error('Library API not available');
+        }
         const data = await api.library.loans.getAll();
         if (mounted) setLoans(Array.isArray(data) ? data : []);
       } catch (e: any) {
