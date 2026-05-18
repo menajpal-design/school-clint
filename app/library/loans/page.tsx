@@ -1,8 +1,22 @@
-'use client';
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+
+const fetchLoans = async () => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const selectedInstitutionId = typeof window !== 'undefined' ? localStorage.getItem('selectedInstitutionId') : null;
+  const res = await fetch('/api/library/loans', {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(selectedInstitutionId ? { 'x-institution-id': selectedInstitutionId } : {}),
+    },
+    credentials: 'include',
+  });
+  const text = await res.text();
+  const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
+  if (!res.ok) throw new Error((data as any)?.message || res.statusText || 'Failed to load loans');
+  return Array.isArray(data) ? data : [];
+};
 
 export default function LoansPage() {
   const [loans, setLoans] = useState<any[]>([]);
@@ -14,10 +28,7 @@ export default function LoansPage() {
     const load = async () => {
       setLoading(true);
       try {
-        if (!api || !api.library || !api.library.loans) {
-          throw new Error('Library API not available');
-        }
-        const data = await api.library.loans.getAll();
+        const data = await fetchLoans();
         if (mounted) setLoans(Array.isArray(data) ? data : []);
       } catch (e: any) {
         setError(e?.message || 'Failed to load loans');
