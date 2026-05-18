@@ -117,6 +117,6 @@ export const api: any = {
   academic: { classes: crud('/academic/classes'), sections: crud('/academic/sections'), subjects: crud('/academic/subjects'), exams: crud('/academic/exams'), results: crud('/academic/results'), reportCard: { students: (p: any) => apiClient.get('/academic/report-card/students', { params: p }), get: (p: any) => apiClient.get('/academic/report-card', { params: p }) } },
   attendance: { ...crud('/attendance'), mark: (d: any) => apiClient.post('/attendance/mark', d), reports: (p?: any) => apiClient.get('/attendance/reports', { params: p }), me: (p?: any) => apiClient.get('/attendance/me', { params: p }) },
   finance: { myFees: () => apiClient.get('/finance/my-fees'), fees: () => apiClient.get('/finance/fees'), payments: () => apiClient.get('/finance/payments'), collections: () => apiClient.get('/finance/collections'), reports: (p?: any) => apiClient.get('/finance/reports', { params: p }) },
-  notifications: { getAll: () => apiClient.get('/notifications'), markRead: (id: string) => apiClient.patch(`/notifications/${id}/read`) },
+  notifications: { getAll: () => apiClient.get('/notifications'), markRead: (id: string) => apiClient.patch(`/notifications/${id}/read`), markAll: () => apiClient.patch('/notifications/read-all') },
   messages: { getAll: () => apiClient.get('/messages'), unread: () => apiClient.get('/messages/stats/unread'), send: (d: any) => apiClient.post('/messages', d) },
 };
