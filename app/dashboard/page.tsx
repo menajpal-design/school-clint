@@ -358,7 +358,7 @@ export default function Dashboard() {
             <Card className={`border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-xl ${isFullAdmin ? 'xl:col-span-4' : 'xl:col-span-7'}`}>
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-bold text-slate-900">Attendance Overview</CardTitle>
-                <CardDescription className="text-slate-600">Today's attendance statistics</CardDescription>
+                <CardDescription className="text-slate-600">Today&apos;s attendance statistics</CardDescription>
               </CardHeader>
               <CardContent>
                 <BarChartCard title="Attendance Overview" data={attendance} xKey="name" yKey="value" />

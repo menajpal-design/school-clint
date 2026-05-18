@@ -136,7 +136,7 @@ export default function InstitutionBackupPage() {
             <DatabaseBackup className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-slate-900">Backup & Restore</h1>
-          <p className="mt-2 text-lg text-slate-600">Secure your institution's data with professional backup solutions</p>
+          <p className="mt-2 text-lg text-slate-600">Secure your institution&apos;s data with professional backup solutions</p>
         </div>
 
         {status && (

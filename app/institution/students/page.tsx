@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CalendarCheck, CreditCard, Download, Edit, Eye, GraduationCap, Plus, Search, UserRound, type LucideIcon } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -229,14 +228,14 @@ export default function InstitutionStudentsPage() {
     student.isActive === false ? 'Inactive' : 'Active',
   ])), [filteredStudents]);
 
-  const exportExcel = async () => {
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet([
+  const exportCsv = async () => {
+    const csvEscape = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const rows = [
       ['#', 'Student Name', 'Student Email', 'Student Phone', 'Roll', 'Class', 'Section', 'Admission Date', 'Date of Birth', 'Blood Group', 'Address', 'Guardian Name', 'Guardian Phone', 'Guardian Email', 'Status'],
       ...exportRows,
-    ]);
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
-    XLSX.writeFile(workbook, `students-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    ];
+    const csv = rows.map((row) => row.map(csvEscape).join(',')).join('\n');
+    downloadFile(csv, `students-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8');
   };
 
   const exportPdf = async () => {
@@ -366,9 +365,9 @@ export default function InstitutionStudentsPage() {
           <p className="mt-2 text-sm text-muted-foreground">Student list, class/section filter, admission details, guardian account, fee setup, and ID card shortcuts.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={exportExcel} disabled={!filteredStudents.length}>
+          <Button variant="outline" onClick={exportCsv} disabled={!filteredStudents.length}>
             <Download className="mr-2 h-4 w-4" />
-            Download Excel
+            Download CSV
           </Button>
           <Button variant="outline" onClick={exportPdf} disabled={!filteredStudents.length}>
             <Download className="mr-2 h-4 w-4" />

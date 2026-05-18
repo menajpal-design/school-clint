@@ -11,7 +11,7 @@ import { api } from "@/lib/api";
 
 export default function ReportsPage() {
   const [stats, setStats] = useState<any>({});
-  useEffect(() => { api.idCards.stats().then((s) => setStats(s as any)).catch(() => undefined); }, []);
+  useEffect(() => { api.idCards.stats().then((s: any) => setStats(s)).catch(() => undefined); }, []);
   const pie = (stats.byType || []).map((item: any) => ({ name: item._id || "unknown", value: item.count || 0 }));
   return <div className="space-y-5">
     <PageHeader title="ID Card Reports" description="Track issued cards, downloads, expiries and renewal requests." icon={BadgeCheck} />

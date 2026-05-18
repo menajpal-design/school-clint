@@ -91,6 +91,19 @@ class ApiClient {
 
 export const apiClient = new ApiClient();
 const crud = (base: string) => ({ getAll: (params?: any) => apiClient.get(base, { params }), getById: (id: string) => apiClient.get(`${base}/${id}`), create: (data: any) => apiClient.post(base, data), update: (id: string, data: any) => apiClient.put(`${base}/${id}`, data), delete: (id: string) => apiClient.delete(`${base}/${id}`) });
+const idCardApi = {
+  ...crud('/id-cards'),
+  getMine: () => apiClient.get('/id-cards/me/card'),
+  stats: () => apiClient.get('/id-cards/reports/stats'),
+  searchOwners: (params?: any) => apiClient.get('/id-cards/owners/search', { params }),
+  generate: (data: any) => apiClient.post('/id-cards/generate', data),
+  bulkGenerate: (data: any) => apiClient.post('/id-cards/bulk', data),
+  renew: (id: string, data?: any) => apiClient.post(`/id-cards/${id}/renew`, data),
+  verify: (data: any) => apiClient.post('/id-cards/verify', data),
+  download: (id: string, format: 'pdf' | 'png' = 'pdf') => apiClient.getBlob(`/id-cards/${id}/download?format=${format}`),
+  renderPdf: (data: any) => apiClient.postBlob('/id-cards/render-pdf', data),
+  email: (id: string, data: any) => apiClient.post(`/id-cards/${id}/email`, data),
+};
 
 export const api: any = {
   auth: { login: (d: any) => apiClient.post('/auth/login', d), register: (d: any) => apiClient.post('/auth/register', d), forgotPassword: (d: any) => apiClient.post('/auth/forgot-password', d), profile: () => apiClient.get('/auth/profile'), updateProfile: (d: any) => apiClient.put('/auth/profile', d), changePassword: (d: any) => apiClient.post('/auth/change-password', d) },
@@ -98,7 +111,7 @@ export const api: any = {
   admissions: { schools: (p?: any) => apiClient.get('/admissions/public/schools', { params: p }), apply: (d: any) => apiClient.post('/admissions/public/apply', d), getAll: () => apiClient.get('/admissions'), accept: (id: string, d?: any) => apiClient.post(`/admissions/${id}/accept`, d), reject: (id: string) => apiClient.post(`/admissions/${id}/reject`) },
   publicResults: { schools: (p?: any) => apiClient.get('/academic/public/results/schools', { params: p }), options: (p?: any) => apiClient.get('/academic/public/results/options', { params: p }), lookup: (p: any) => apiClient.get('/academic/public/results', { params: p }) },
   users: { ...crud('/users'), getAllUsers: () => apiClient.get('/users/all'), updateStatus: (id: string, isActive: boolean) => apiClient.patch(`/users/${id}/status`, { isActive }), updateRole: (id: string, role: string) => apiClient.patch(`/users/${id}/role`, { role }), resetPassword: (id: string, password?: string) => apiClient.post(`/users/${id}/reset-password`, password ? { password } : undefined), permissions: () => apiClient.get('/users/permissions'), updatePermissions: (matrix: any) => apiClient.put('/users/permissions', { matrix }) },
-  students: crud('/students'), teachers: crud('/teachers'), staff: crud('/staff'), documents: crud('/documents'), notices: crud('/notices'), idCards: crud('/id-cards'), payroll: crud('/payroll'), promotions: crud('/promotions'), holidays: crud('/holidays'),
+  students: crud('/students'), teachers: crud('/teachers'), staff: crud('/staff'), documents: crud('/documents'), notices: crud('/notices'), idCards: idCardApi, payroll: crud('/payroll'), promotions: crud('/promotions'), holidays: crud('/holidays'),
   institution: { plans: () => apiClient.get('/institution/plans'), profile: () => apiClient.get('/institution/profile'), updateProfile: (d: any) => apiClient.put('/institution/profile', d), recordPayment: (d: any) => apiClient.post('/institution/billing/payment', d) },
   admin: { schools: (p?: any) => apiClient.get('/admin/schools', { params: p }), updateSchool: (id: string, d: any) => apiClient.patch(`/admin/schools/${id}`, d), verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`), selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`), users: (p?: any) => apiClient.get('/admin/users', { params: p }) },
   academic: { classes: crud('/academic/classes'), sections: crud('/academic/sections'), subjects: crud('/academic/subjects'), exams: crud('/academic/exams'), results: crud('/academic/results'), reportCard: { students: (p: any) => apiClient.get('/academic/report-card/students', { params: p }), get: (p: any) => apiClient.get('/academic/report-card', { params: p }) } },

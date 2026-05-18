@@ -13,7 +13,7 @@ import { api } from "@/lib/api";
 export default function IDCardsIndex() {
   const { user } = useAuth();
   const [stats, setStats] = useState<any>({});
-  useEffect(() => { api.idCards.stats().then((s) => setStats(s as any)).catch(() => undefined); }, []);
+  useEffect(() => { api.idCards.stats().then((s: any) => setStats(s)).catch(() => undefined); }, []);
   const canManageCards = ["head", "assistant_head", "staff"].includes(String(user?.role || ""));
   const canViewAdminCards = ["head", "assistant_head"].includes(String(user?.role || ""));
   const headerActions = canManageCards

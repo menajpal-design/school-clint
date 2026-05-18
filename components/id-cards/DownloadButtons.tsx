@@ -181,7 +181,7 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
 
   const print = () => {
     if (hasFormData) {
-      api.idCards.renderPdf(formData).then((blob) => {
+      api.idCards.renderPdf(formData).then((blob: Blob) => {
         const url = URL.createObjectURL(blob)
         const popup = window.open(url, '_blank')
         if (popup) {

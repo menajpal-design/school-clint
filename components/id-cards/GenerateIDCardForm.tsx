@@ -273,7 +273,7 @@ export function GenerateIDCardForm({ defaultCardType }: { defaultCardType?: Form
                     <Input {...register('dateOfBirth')} type="date" />
                   </div>
                   <div>
-                    <label className="text-sm">Father's Name</label>
+                    <label className="text-sm">Father&apos;s Name</label>
                     <Input {...register('fatherName')} placeholder="e.g., Mr. Rajesh Kumar" />
                   </div>
                   <div>
