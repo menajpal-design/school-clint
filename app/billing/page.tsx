@@ -21,6 +21,7 @@ declare global {
         orderId?: string;
         customerName?: string;
         customerPhone?: string;
+        preferredMethods?: string[];
         onComplete?: (result: any) => void;
       }) => void;
     };
@@ -35,6 +36,12 @@ type BillingInfo = {
   planCode: string;
   billingCycle: 'monthly' | 'yearly';
   useEasySchoolStorage: boolean;
+  receivedAmount: string;
+  paymentGateway: string;
+  paymentOrderId: string;
+  paymentTime: string;
+  paymentTrxId: string;
+  paymentSenderNumber: string;
 };
 
 type PopupPaymentResult = {
@@ -42,7 +49,10 @@ type PopupPaymentResult = {
   paymentReference?: string;
   customerReference?: string;
   orderId?: string;
+  paymentOrderId?: string;
   paymentTime?: string;
+  paymentTrxId?: string;
+  paymentSenderNumber?: string;
   receivedAmount: number;
 };
 
@@ -58,6 +68,12 @@ export default function BillingPage() {
     planCode: 'students_100',
     billingCycle: 'monthly',
     useEasySchoolStorage: true,
+    receivedAmount: '',
+    paymentGateway: 'bkash',
+    paymentOrderId: '',
+    paymentTime: '',
+    paymentTrxId: '',
+    paymentSenderNumber: '',
   });
 
   const logout = () => {
@@ -84,6 +100,12 @@ export default function BillingPage() {
           planCode: billing.planCode || 'students_100',
           billingCycle: billing.billingCycle === 'yearly' ? 'yearly' : 'monthly',
           useEasySchoolStorage: billing.useEasySchoolStorage !== false,
+          receivedAmount: billing.receivedAmount ? String(billing.receivedAmount) : '',
+          paymentGateway: billing.paymentGateway || 'bkash',
+          paymentOrderId: billing.paymentOrderId || '',
+          paymentTime: billing.paymentTime ? String(billing.paymentTime) : '',
+          paymentTrxId: billing.paymentTrxId || '',
+          paymentSenderNumber: billing.paymentSenderNumber || '',
         });
       })
       .finally(() => setLoading(false));
@@ -131,27 +153,41 @@ export default function BillingPage() {
     }
 
     const callbackUrl = `${window.location.origin}${window.location.pathname}`;
-    const orderId = `BILL-${institution?._id || Date.now()}`;
-    const paymentTime = new Date().toISOString();
+    const orderId = billingInfo.paymentOrderId || `BILL-${institution?._id || Date.now()}`;
+    const paymentTime = billingInfo.paymentTime || new Date().toISOString();
     setStatus('Opening popup payment...');
     window.GatewayWidget.open({
       amount: due.total,
       callback: callbackUrl,
       orderId,
-      customerPhone: institution?.phone || '',
+      customerPhone: billingInfo.paymentSenderNumber || institution?.phone || '',
       onComplete: (result: any) => {
+        const trxId = result?.trxId || result?.transactionId || result?.trx_id || result?.orderId || result?.order_id || orderId;
+        const senderNumber = result?.payer_number || result?.payerNumber || result?.senderNumber || result?.mobileNumber || result?.phone || billingInfo.paymentSenderNumber || '';
+        const gateway = result?.gateway || result?.paymentGateway || billingInfo.paymentGateway || 'bkash';
         const receivedAmount = Number(result?.amount ?? result?.paidAmount ?? due.total);
-        const payment: PopupPaymentResult = {
-          paymentGateway: result?.gateway || result?.paymentGateway || 'popup',
-          paymentReference: result?.trxId || result?.transactionId || result?.trx_id || result?.orderId || result?.order_id || orderId,
-          customerReference: result?.payer_number || result?.payerNumber || result?.senderNumber || result?.mobileNumber || result?.phone || '',
-          orderId: result?.orderId || result?.order_id || orderId,
-          paymentTime: result?.payment_time || result?.paymentTime || result?.time || paymentTime,
-          receivedAmount,
-        };
+        const verifiedOrderId = result?.orderId || result?.order_id || orderId;
+        const verifiedPaymentTime = result?.payment_time || result?.paymentTime || result?.time || paymentTime;
 
-        setStatus(result?.message || 'Popup payment completed. Saving payment details...');
-        void submitPopupPayment(payment);
+        setBillingInfo((prev) => ({
+          ...prev,
+          paymentGateway: gateway,
+          paymentOrderId: verifiedOrderId,
+          paymentTime: verifiedPaymentTime,
+          paymentTrxId: trxId || prev.paymentTrxId,
+          paymentSenderNumber: senderNumber || prev.paymentSenderNumber,
+          receivedAmount: String(receivedAmount),
+        }));
+
+        setStatus(result?.message || 'Payment completed. Saving payment details...');
+        void submitPopupPayment({
+          paymentGateway: gateway,
+          paymentOrderId: verifiedOrderId,
+          paymentTime: verifiedPaymentTime,
+          paymentTrxId: trxId,
+          paymentSenderNumber: senderNumber,
+          receivedAmount,
+        });
       },
     });
   };
