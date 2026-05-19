@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import { CreditCard, Loader2, LogOut } from 'lucide-react';
 import { api } from '@/lib/api';
 import { authManager } from '@/lib/auth';
@@ -13,13 +14,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+declare global {
+  interface Window {
+    GatewayWidget?: {
+      open: (options: {
+        amount: number;
+        callback?: string;
+        onComplete?: (result: any) => void;
+      }) => void;
+    };
+  }
+}
+
+const paymentWidgetUrl = process.env.NEXT_PUBLIC_PAYMENT_WIDGET_URL || 'https://your-gateway.example.com/widget.js';
+
+type BillingForm = {
+  planCode: string;
+  billingCycle: string;
+  useEasySchoolStorage: boolean;
+  receivedAmount: string;
+  paymentGateway: string;
+  paymentTrxId: string;
+  paymentSenderNumber: string;
+};
+
+type PaymentOverride = Partial<Omit<BillingForm, 'receivedAmount'>> & {
+  receivedAmount?: number;
+};
+
 export default function BillingPage() {
   const router = useRouter();
   const { user: authUser, isLoading: authLoading } = useAuth();
   const [institution, setInstitution] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
-  const [form, setForm] = useState({
+  const [isWidgetReady, setIsWidgetReady] = useState(false);
+  const [form, setForm] = useState<BillingForm>({
     planCode: 'students_100',
     billingCycle: 'monthly',
     useEasySchoolStorage: true,
@@ -67,18 +97,58 @@ export default function BillingPage() {
     [form]
   );
 
-  const submitPayment = async () => {
+  const submitPayment = async (paymentOverride: PaymentOverride = {}) => {
     setStatus('Submitting payment...');
     try {
-      const response = await api.institution.recordPayment({
+      const receivedAmount = Number(paymentOverride.receivedAmount ?? (form.receivedAmount || due.total));
+      const payload = {
         ...form,
-        receivedAmount: Number(form.receivedAmount || due.total),
+        ...paymentOverride,
+        receivedAmount,
+      };
+      const response = await api.institution.recordPayment({
+        ...payload,
       }) as any;
       setInstitution(response.institution);
       setStatus(response.message || 'Payment submitted. Admin will verify and activate your school.');
     } catch (error: any) {
       setStatus(error?.message || 'Payment submit failed.');
     }
+  };
+
+  const openPopupPayment = () => {
+    if (typeof window === 'undefined' || !window.GatewayWidget?.open) {
+      setStatus('Payment widget is not loaded yet.');
+      return;
+    }
+
+    const callbackUrl = `${window.location.origin}${window.location.pathname}`;
+    window.GatewayWidget.open({
+      amount: due.total,
+      callback: callbackUrl,
+      onComplete: (result: any) => {
+        const trxId = result?.trxId || result?.transactionId || result?.trx_id || '';
+        const senderNumber = result?.senderNumber || result?.mobileNumber || result?.phone || '';
+        const gateway = result?.gateway || result?.paymentGateway || form.paymentGateway || 'bkash';
+        const receivedAmount = Number(result?.amount ?? result?.paidAmount ?? due.total);
+
+        setForm((prev) => ({
+          ...prev,
+          paymentGateway: gateway,
+          paymentTrxId: trxId || prev.paymentTrxId,
+          paymentSenderNumber: senderNumber || prev.paymentSenderNumber,
+          receivedAmount: String(receivedAmount),
+        }));
+
+        setStatus(result?.message || 'Payment completed. Saving payment details...');
+        void submitPayment({
+          paymentGateway: gateway,
+          paymentTrxId: trxId,
+          paymentSenderNumber: senderNumber,
+          receivedAmount,
+        });
+      },
+    });
   };
 
   if (loading || authLoading) {
@@ -99,6 +169,12 @@ export default function BillingPage() {
 
   return (
     <main className="min-h-screen bg-background p-4 sm:p-8">
+      <Script
+        id="payment-widget"
+        src={paymentWidgetUrl}
+        strategy="afterInteractive"
+        onLoad={() => setIsWidgetReady(true)}
+      />
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -112,7 +188,7 @@ export default function BillingPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> Pay School Bill</CardTitle>
-              <CardDescription>Send payment to bKash 0179007328, then submit TrxID and sender number.</CardDescription>
+              <CardDescription>Pay through the hosted popup widget.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div>
@@ -152,7 +228,7 @@ export default function BillingPage() {
               </div>
               <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-slate-600">{status}</p>
-                <Button onClick={submitPayment}>Pay / Submit Payment</Button>
+                <Button onClick={openPopupPayment} disabled={!isWidgetReady}>Pay with Popup</Button>
               </div>
             </CardContent>
           </Card>
