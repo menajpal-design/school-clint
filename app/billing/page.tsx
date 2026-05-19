@@ -7,11 +7,10 @@ import { CreditCard, Loader2, LogOut } from 'lucide-react';
 import { api } from '@/lib/api';
 import { authManager } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
-import { calculatePlanDue, schoolPlans } from '@/lib/plans';
+import { calculatePlanDue, getPlanByCode } from '@/lib/plans';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 declare global {
   interface Window {
@@ -27,9 +26,9 @@ declare global {
 
 const paymentWidgetUrl = process.env.NEXT_PUBLIC_PAYMENT_WIDGET_URL || 'https://your-gateway.example.com/widget.js';
 
-type BillingForm = {
+type BillingInfo = {
   planCode: string;
-  billingCycle: string;
+  billingCycle: 'monthly' | 'yearly';
   useEasySchoolStorage: boolean;
 };
 
@@ -48,7 +47,7 @@ export default function BillingPage() {
   const [status, setStatus] = useState('');
   const [isWidgetReady, setIsWidgetReady] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
-  const [form, setForm] = useState<BillingForm>({
+  const [billingInfo, setBillingInfo] = useState<BillingInfo>({
     planCode: 'students_100',
     billingCycle: 'monthly',
     useEasySchoolStorage: true,
@@ -74,9 +73,9 @@ export default function BillingPage() {
         const item = data.institution || {};
         const billing = item.billing || {};
         setInstitution(item);
-        setForm({
+        setBillingInfo({
           planCode: billing.planCode || 'students_100',
-          billingCycle: billing.billingCycle || 'monthly',
+          billingCycle: billing.billingCycle === 'yearly' ? 'yearly' : 'monthly',
           useEasySchoolStorage: billing.useEasySchoolStorage !== false,
         });
       })
@@ -84,9 +83,11 @@ export default function BillingPage() {
   }, [router, authUser]);
 
   const due = useMemo(
-    () => calculatePlanDue(form.planCode, form.billingCycle as 'monthly' | 'yearly', form.useEasySchoolStorage),
-    [form]
+    () => calculatePlanDue(billingInfo.planCode, billingInfo.billingCycle, billingInfo.useEasySchoolStorage),
+    [billingInfo]
   );
+
+  const plan = getPlanByCode(billingInfo.planCode);
 
   const submitPopupPayment = async (payment: PopupPaymentResult) => {
     setStatus('Submitting popup payment...');
@@ -99,7 +100,7 @@ export default function BillingPage() {
       }
 
       const response = await api.institution.recordPayment({
-        ...form,
+        ...billingInfo,
         paymentGateway: payment.paymentGateway || 'popup',
         paymentTrxId: payment.paymentReference || '',
         paymentSenderNumber: payment.customerReference || '',
@@ -165,73 +166,60 @@ export default function BillingPage() {
         onLoad={() => setIsWidgetReady(true)}
         onError={() => setStatus('Payment popup failed to load. Check NEXT_PUBLIC_PAYMENT_WIDGET_URL.')}
       />
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Billing Required</h1>
-            <p className="mt-2 text-sm text-slate-600">Please pay the bill before continuing. This page uses popup payment only and does not accept manual payment fields.</p>
+            <p className="mt-2 text-sm text-slate-600">এই page-এ কোনো manual form নেই। Pay with Popup চাপলে payment popup খুলবে, সেখানে প্রয়োজনীয় তথ্য দেওয়া হবে।</p>
           </div>
           <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> Pay School Bill</CardTitle>
-              <CardDescription>Registration bills and monthly bills are paid only through the hosted popup.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium">Plan</label>
-                <Select value={form.planCode} onValueChange={(value) => setForm((prev) => ({ ...prev, planCode: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {schoolPlans.map((plan) => <SelectItem key={plan.code} value={plan.code}>{plan.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> Pay School Bill</CardTitle>
+            <CardDescription>Registration bill এবং monthly bill শুধু hosted popup payment দিয়ে pay হবে।</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-lg border bg-card p-4">
+                <div className="text-sm text-slate-500">Plan</div>
+                <div className="mt-1 font-semibold">{plan.name}</div>
               </div>
-              <div>
-                <label className="text-sm font-medium">Billing Cycle</label>
-                <Select value={form.billingCycle} onValueChange={(value) => setForm((prev) => ({ ...prev, billingCycle: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="rounded-lg border bg-card p-4">
+                <div className="text-sm text-slate-500">Billing Cycle</div>
+                <div className="mt-1 font-semibold capitalize">{billingInfo.billingCycle}</div>
               </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium">Storage</label>
-                <Select value={String(form.useEasySchoolStorage)} onValueChange={(value) => setForm((prev) => ({ ...prev, useEasySchoolStorage: value === 'true' }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">EASY SCHOOL storage - {formatCurrency(100)}/month</SelectItem>
-                    <SelectItem value="false">Own MongoDB + ImgBB - no cost</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="rounded-lg border bg-card p-4">
+                <div className="text-sm text-slate-500">Storage</div>
+                <div className="mt-1 font-semibold">{billingInfo.useEasySchoolStorage ? `EASY SCHOOL storage - ${formatCurrency(100)}/month` : 'Own MongoDB + ImgBB - no cost'}</div>
               </div>
-              <div className="rounded-lg border bg-card p-4 text-sm md:col-span-2">
-                Due amount: {formatCurrency(due.baseAmount)} + storage {formatCurrency(due.storageAmount)} = <span className="font-semibold">{formatCurrency(due.total)}</span>
-              </div>
-              <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-slate-600">{status}</p>
-                <Button onClick={openPopupPayment} disabled={!isWidgetReady || isPaying}>{isPaying ? 'Saving...' : 'Pay with Popup'}</Button>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{institution?.name || 'School'}</CardTitle>
-              <CardDescription>Current billing status</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="rounded-md border p-3"><span className="text-slate-500">Status</span><div className="font-semibold">{institution?.isActive ? 'Active' : 'Pending / Inactive'}</div></div>
-              <div className="rounded-md border p-3"><span className="text-slate-500">Billing</span><div className="font-semibold">{institution?.billing?.billingStatus || 'pending'}</div></div>
-              <div className="rounded-md border p-3"><span className="text-slate-500">Paid</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.receivedAmount || 0))}</div></div>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="rounded-lg border bg-slate-50 p-4 text-sm">
+              Due amount: {formatCurrency(due.baseAmount)} + storage {formatCurrency(due.storageAmount)} = <span className="font-semibold">{formatCurrency(due.total)}</span>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-slate-600">{status}</p>
+              <Button onClick={openPopupPayment} disabled={!isWidgetReady || isPaying} className="w-full sm:w-auto">
+                {isPaying ? 'Saving...' : 'Pay with Popup'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{institution?.name || 'School'}</CardTitle>
+            <CardDescription>Current billing status</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-sm md:grid-cols-3">
+            <div className="rounded-md border p-3"><span className="text-slate-500">Status</span><div className="font-semibold">{institution?.isActive ? 'Active' : 'Pending / Inactive'}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">Billing</span><div className="font-semibold">{institution?.billing?.billingStatus || 'pending'}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">Paid</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.receivedAmount || 0))}</div></div>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
