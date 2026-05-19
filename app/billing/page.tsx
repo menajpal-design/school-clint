@@ -17,11 +17,15 @@ declare global {
     GATEWAY_WIDGET_URL?: string;
     GatewayWidget?: {
       open: (options: {
+        apiKey?: string;
+        domain?: string;
         amount: number;
         callback?: string;
         orderId?: string;
         customerName?: string;
         customerPhone?: string;
+        receiverNumber?: string;
+        paymentMethods?: string[];
         preferredMethods?: string[];
         onComplete?: (result: any) => void;
       }) => void;
@@ -29,12 +33,14 @@ declare global {
   }
 }
 
-// The widget script is served by the gateway API, but checkout UI lives on the
-// gateway client portal. Configure both explicitly so the widget never falls
-// back to the merchant domain for /checkout.html.
-const gatewayScriptOrigin = 'https://payment-gateway-server-ten.vercel.app';
-const gatewayCheckoutOrigin = 'https://gateway-client-rho.vercel.app';
-const paymentWidgetUrl = `${gatewayScriptOrigin}/widget.js`;
+// GatewayFlow expects the widget script and checkout origin to be the gateway
+// server origin, not the merchant website or client portal.
+const gatewayOrigin = 'https://payment-gateway-server-ten.vercel.app';
+const paymentWidgetUrl = `${gatewayOrigin}/widget.js`;
+const gatewayApiKey = process.env.NEXT_PUBLIC_GATEWAY_API_KEY || 'pg_live_ebb11c91cb7d814c0949eeebbc549524fc0debe8543a9a40';
+const configuredGatewayDomain = process.env.NEXT_PUBLIC_GATEWAY_DOMAIN || '';
+const gatewayReceiverNumber = process.env.NEXT_PUBLIC_GATEWAY_RECEIVER_NUMBER || '';
+const gatewayPaymentMethods = ['bkash', 'nagad'];
 
 type BillingInfo = {
   planCode: string;
@@ -156,15 +162,21 @@ export default function BillingPage() {
       return;
     }
 
-    window.GATEWAY_WIDGET_URL = gatewayCheckoutOrigin;
+    window.GATEWAY_WIDGET_URL = gatewayOrigin;
+    const domain = configuredGatewayDomain || window.location.hostname;
     const callbackUrl = `${window.location.origin}${window.location.pathname}`;
     const orderId = billingInfo.paymentOrderId || `BILL-${institution?._id || Date.now()}`;
     const paymentTime = billingInfo.paymentTime || new Date().toISOString();
     setStatus('Opening popup payment...');
     window.GatewayWidget.open({
+      apiKey: gatewayApiKey,
+      domain,
       amount: due.total,
       callback: callbackUrl,
       orderId,
+      receiverNumber: gatewayReceiverNumber || undefined,
+      paymentMethods: gatewayPaymentMethods,
+      preferredMethods: gatewayPaymentMethods,
       customerPhone: billingInfo.paymentSenderNumber || institution?.phone || '',
       onComplete: (result: any) => {
         const trxId = result?.trxId || result?.transactionId || result?.trx_id || result?.orderId || result?.order_id || orderId;
@@ -219,13 +231,13 @@ export default function BillingPage() {
         id="payment-widget-config"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
-          __html: `window.GATEWAY_WIDGET_URL = ${JSON.stringify(gatewayCheckoutOrigin)};`,
+          __html: `window.GATEWAY_WIDGET_URL = ${JSON.stringify(gatewayOrigin)};`,
         }}
       />
       <Script
         id="payment-widget"
         src={paymentWidgetUrl}
-        data-gateway-url={gatewayCheckoutOrigin}
+        data-gateway-url={gatewayOrigin}
         strategy="afterInteractive"
         onLoad={() => {
           const gw = (window as any).GatewayWidget;
