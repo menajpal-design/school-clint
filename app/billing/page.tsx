@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 declare global {
   interface Window {
+    GATEWAY_WIDGET_URL?: string;
     GatewayWidget?: {
       open: (options: {
         amount: number;
@@ -28,9 +29,12 @@ declare global {
   }
 }
 
-// Hardcoded gateway host and widget URL (no env variable required)
-const rawWidgetUrl = 'https://payment-gateway-server-ten.vercel.app';
-const paymentWidgetUrl = `${rawWidgetUrl.replace(/\/+$/, '')}/widget.js`;
+// The widget script is served by the gateway API, but checkout UI lives on the
+// gateway client portal. Configure both explicitly so the widget never falls
+// back to the merchant domain for /checkout.html.
+const gatewayScriptOrigin = 'https://payment-gateway-server-ten.vercel.app';
+const gatewayCheckoutOrigin = 'https://gateway-client-rho.vercel.app';
+const paymentWidgetUrl = `${gatewayScriptOrigin}/widget.js`;
 
 type BillingInfo = {
   planCode: string;
@@ -152,6 +156,7 @@ export default function BillingPage() {
       return;
     }
 
+    window.GATEWAY_WIDGET_URL = gatewayCheckoutOrigin;
     const callbackUrl = `${window.location.origin}${window.location.pathname}`;
     const orderId = billingInfo.paymentOrderId || `BILL-${institution?._id || Date.now()}`;
     const paymentTime = billingInfo.paymentTime || new Date().toISOString();
@@ -211,8 +216,16 @@ export default function BillingPage() {
   return (
     <main className="min-h-screen bg-background p-4 sm:p-8">
       <Script
+        id="payment-widget-config"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `window.GATEWAY_WIDGET_URL = ${JSON.stringify(gatewayCheckoutOrigin)};`,
+        }}
+      />
+      <Script
         id="payment-widget"
         src={paymentWidgetUrl}
+        data-gateway-url={gatewayCheckoutOrigin}
         strategy="afterInteractive"
         onLoad={() => {
           const gw = (window as any).GatewayWidget;
