@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowRight, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { api, apiClient } from '@/lib/api';
 import { authManager } from '@/lib/auth';
 import { useToast } from '@/hooks/useToast';
 import { User } from '@/types';
-import { getPlanByCode } from '@/lib/plans';
+import { calculatePlanDue, getPlanByCode } from '@/lib/plans';
+import { formatCurrency } from '@/lib/utils';
 
 const DEFAULT_INSTITUTION_ID = process.env.NEXT_PUBLIC_DEFAULT_INSTITUTION_ID || '';
 
@@ -25,9 +26,6 @@ const registerSchema = z.object({
   role: z.enum(['head']).default('head'),
   planCode: z.string().optional(),
   billingCycle: z.enum(['monthly', 'yearly']).default('monthly'),
-  paymentTrxId: z.string().optional(),
-  paymentSenderNumber: z.string().optional(),
-  receivedAmount: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -49,7 +47,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: 'head', planCode: 'students_100', billingCycle: 'monthly', paymentTrxId: '', paymentSenderNumber: '', receivedAmount: '' },
+    defaultValues: { role: 'head', planCode: 'students_100', billingCycle: 'monthly' },
   });
 
   useEffect(() => {
@@ -60,10 +58,10 @@ export default function RegisterPage() {
     setSelectedBillingCycle(billingCycle);
     setValue('planCode', planCode);
     setValue('billingCycle', billingCycle);
-    setValue('paymentTrxId', params.get('trxId') || '');
-    setValue('paymentSenderNumber', params.get('sender') || '');
-    setValue('receivedAmount', params.get('amount') || '');
   }, [setValue]);
+
+  const selectedPlan = getPlanByCode(selectedPlanCode);
+  const due = calculatePlanDue(selectedPlanCode, selectedBillingCycle, true);
 
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
@@ -77,10 +75,8 @@ export default function RegisterPage() {
         planCode: data.planCode || selectedPlanCode,
         billingCycle: data.billingCycle || selectedBillingCycle,
         institutionName: data.institutionName,
-        paymentGateway: 'bkash',
-        paymentTrxId: data.paymentTrxId,
-        paymentSenderNumber: data.paymentSenderNumber,
-        receivedAmount: Number(data.receivedAmount || 0),
+        paymentGateway: 'popup',
+        receivedAmount: 0,
         ...(DEFAULT_INSTITUTION_ID ? { institutionId: DEFAULT_INSTITUTION_ID } : {}),
       }) as { token?: string; user?: User; data?: { token: string; user: User } };
 
@@ -93,11 +89,11 @@ export default function RegisterPage() {
 
       addToast({
         title: 'Success',
-        message: 'Account created successfully.',
+        message: 'Account created successfully. Please complete billing by popup payment.',
         type: 'success',
       });
 
-      router.push('/dashboard');
+      router.push('/billing');
     } catch (error: any) {
       addToast({
         title: 'Error',
@@ -112,163 +108,76 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md bg-card rounded-lg shadow-xl overflow-hidden border border-border">
-        {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-center">
           <h1 className="text-3xl font-bold text-white mb-2">EASY SCHOOL</h1>
           <p className="text-blue-100">School Management System</p>
         </div>
 
-        {/* Content */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-4">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Create Account</h2>
           <input type="hidden" {...register('planCode')} />
           <input type="hidden" {...register('billingCycle')} />
+
           <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
-            Selected plan: <span className="font-semibold">{getPlanByCode(selectedPlanCode).name}</span> · <span className="font-semibold capitalize">{selectedBillingCycle}</span>. Payment is not required during registration.
-          </div>
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
-            <div>
-              <div className="font-semibold text-gray-800">Payment</div>
-              <p className="text-sm text-gray-600">Pay to bKash 0179007328, then add transaction details. Admin can activate after verification.</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Transaction ID</label>
-              <input {...register('paymentTrxId')} placeholder="DDR0KZ5CDU" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sender Number</label>
-                <input {...register('paymentSenderNumber')} placeholder="01XXXXXXXXX" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
-                <input {...register('receivedAmount')} type="number" placeholder="300" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
-              </div>
-            </div>
+            Selected plan: <span className="font-semibold">{selectedPlan.name}</span> · <span className="font-semibold capitalize">{selectedBillingCycle}</span>
+            <div className="mt-1 font-semibold">Payable by popup after registration: {formatCurrency(due.total)}</div>
           </div>
 
-          {/* Name */}
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+            <div className="flex items-center gap-2 font-semibold"><CreditCard className="h-4 w-4" /> Popup payment only</div>
+            <p className="mt-1">Registration করার পরে Billing page থেকে শুধু popup payment হবে। Billing number, Transaction ID, Sender number বা Paid amount manually দিতে হবে না।</p>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
-            </label>
-            <input
-              {...register('name')}
-              type="text"
-              placeholder="John Doe"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <input {...register('name')} type="text" placeholder="John Doe" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
           </div>
 
-          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Institution Name
-            </label>
-            <input
-              {...register('institutionName')}
-              type="text"
-              placeholder="Your school or madrasah"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Institution Name</label>
+            <input {...register('institutionName')} type="text" placeholder="Your school or madrasah" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
             {errors.institutionName && <p className="text-red-500 text-sm mt-1">{errors.institutionName.message}</p>}
           </div>
 
-          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              {...register('email')}
-              type="email"
-              placeholder="user@example.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <input {...register('email')} type="email" placeholder="user@example.com" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
           </div>
 
-          {/* Phone */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number (Optional)
-            </label>
-            <input
-              {...register('phone')}
-              type="tel"
-              placeholder="+1234567890"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number (Optional)</label>
+            <input {...register('phone')} type="tel" placeholder="+1234567890" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
           </div>
 
-          {/* Role */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              User Role
-            </label>
-            <select
-              {...register('role')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-1">User Role</label>
+            <select {...register('role')} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
               <option value="head">Institution Head</option>
             </select>
             {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>}
           </div>
 
-          {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              {...register('password')}
-              type="password"
-              placeholder="••••••••"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input {...register('password')} type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
           </div>
 
-          {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password
-            </label>
-            <input
-              {...register('confirmPassword')}
-              type="password"
-              placeholder="••••••••"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <input {...register('confirmPassword')} type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
             {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>}
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="animate-spin h-5 w-5" />
-                Creating Account...
-              </>
-            ) : (
-              <>
-                Create Account
-                <ArrowRight className="h-5 w-5" />
-              </>
-            )}
+          <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2">
+            {isLoading ? (<><Loader2 className="animate-spin h-5 w-5" />Creating Account...</>) : (<>Create Account<ArrowRight className="h-5 w-5" /></>)}
           </button>
 
-          {/* Login Link */}
           <p className="text-center text-gray-600 text-sm">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
-              Login here
-            </Link>
+            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">Login here</Link>
           </p>
         </form>
       </div>
