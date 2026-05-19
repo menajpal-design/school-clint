@@ -18,13 +18,17 @@ declare global {
       open: (options: {
         amount: number;
         callback?: string;
+        orderId?: string;
+        customerName?: string;
+        customerPhone?: string;
         onComplete?: (result: any) => void;
       }) => void;
     };
   }
 }
 
-const paymentWidgetUrl = process.env.NEXT_PUBLIC_PAYMENT_WIDGET_URL || 'https://your-gateway.example.com/widget.js';
+const rawWidgetUrl = 'https://payment-gateway-server-ten.vercel.app';
+const paymentWidgetUrl = `${rawWidgetUrl.replace(/\/+$/, '')}/widget.js`;
 
 type BillingInfo = {
   planCode: string;
@@ -36,6 +40,8 @@ type PopupPaymentResult = {
   paymentGateway?: string;
   paymentReference?: string;
   customerReference?: string;
+  orderId?: string;
+  paymentTime?: string;
   receivedAmount: number;
 };
 
@@ -102,6 +108,8 @@ export default function BillingPage() {
       const response = await api.institution.recordPayment({
         ...billingInfo,
         paymentGateway: payment.paymentGateway || 'popup',
+        paymentOrderId: payment.orderId || payment.paymentReference || '',
+        paymentTime: payment.paymentTime || new Date().toISOString(),
         paymentTrxId: payment.paymentReference || '',
         paymentSenderNumber: payment.customerReference || '',
         receivedAmount: popupAmount,
@@ -122,16 +130,22 @@ export default function BillingPage() {
     }
 
     const callbackUrl = `${window.location.origin}${window.location.pathname}`;
+    const orderId = `BILL-${institution?._id || Date.now()}`;
+    const paymentTime = new Date().toISOString();
     setStatus('Opening popup payment...');
     window.GatewayWidget.open({
       amount: due.total,
       callback: callbackUrl,
+      orderId,
+      customerPhone: institution?.phone || '',
       onComplete: (result: any) => {
         const receivedAmount = Number(result?.amount ?? result?.paidAmount ?? due.total);
         const payment: PopupPaymentResult = {
           paymentGateway: result?.gateway || result?.paymentGateway || 'popup',
-          paymentReference: result?.trxId || result?.transactionId || result?.trx_id || '',
-          customerReference: result?.senderNumber || result?.mobileNumber || result?.phone || '',
+          paymentReference: result?.trxId || result?.transactionId || result?.trx_id || result?.orderId || result?.order_id || orderId,
+          customerReference: result?.payer_number || result?.payerNumber || result?.senderNumber || result?.mobileNumber || result?.phone || '',
+          orderId: result?.orderId || result?.order_id || orderId,
+          paymentTime: result?.payment_time || result?.paymentTime || result?.time || paymentTime,
           receivedAmount,
         };
 
@@ -163,8 +177,15 @@ export default function BillingPage() {
         id="payment-widget"
         src={paymentWidgetUrl}
         strategy="afterInteractive"
-        onLoad={() => setIsWidgetReady(true)}
-        onError={() => setStatus('Payment popup failed to load. Check NEXT_PUBLIC_PAYMENT_WIDGET_URL.')}
+        onLoad={() => {
+          setIsWidgetReady(true);
+          try { (window as any).GATEWAY_WIDGET_URL = rawWidgetUrl.replace(/\/+$/, ''); } catch (e) {}
+        }}
+        onError={() => {
+          setIsWidgetReady(false);
+          setStatus('Payment popup failed to load. Check gateway host or network.');
+          console.error('Failed to load payment widget script:', paymentWidgetUrl);
+        }}
       />
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
