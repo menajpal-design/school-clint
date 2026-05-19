@@ -27,6 +27,7 @@ declare global {
   }
 }
 
+// Hardcoded gateway host and widget URL (no env variable required)
 const rawWidgetUrl = 'https://payment-gateway-server-ten.vercel.app';
 const paymentWidgetUrl = `${rawWidgetUrl.replace(/\/+$/, '')}/widget.js`;
 
