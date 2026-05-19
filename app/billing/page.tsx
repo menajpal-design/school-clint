@@ -178,8 +178,12 @@ export default function BillingPage() {
         src={paymentWidgetUrl}
         strategy="afterInteractive"
         onLoad={() => {
-          setIsWidgetReady(true);
+          const gw = (window as any).GatewayWidget;
+          const ready = Boolean(gw && typeof gw.open === 'function');
+          setIsWidgetReady(ready);
           try { (window as any).GATEWAY_WIDGET_URL = rawWidgetUrl.replace(/\/+$/, ''); } catch (e) {}
+          if (ready) setStatus('');
+          else setStatus('Payment widget loaded but GatewayWidget is unavailable.');
         }}
         onError={() => {
           setIsWidgetReady(false);
