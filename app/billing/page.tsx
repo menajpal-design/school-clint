@@ -11,7 +11,6 @@ import { calculatePlanDue, schoolPlans } from '@/lib/plans';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 declare global {
@@ -32,14 +31,13 @@ type BillingForm = {
   planCode: string;
   billingCycle: string;
   useEasySchoolStorage: boolean;
-  receivedAmount: string;
-  paymentGateway: string;
-  paymentTrxId: string;
-  paymentSenderNumber: string;
 };
 
-type PaymentOverride = Partial<Omit<BillingForm, 'receivedAmount'>> & {
-  receivedAmount?: number;
+type PopupPaymentResult = {
+  paymentGateway?: string;
+  paymentReference?: string;
+  customerReference?: string;
+  receivedAmount: number;
 };
 
 export default function BillingPage() {
@@ -49,14 +47,11 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
   const [isWidgetReady, setIsWidgetReady] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
   const [form, setForm] = useState<BillingForm>({
     planCode: 'students_100',
     billingCycle: 'monthly',
     useEasySchoolStorage: true,
-    receivedAmount: '',
-    paymentGateway: 'bkash',
-    paymentTrxId: '',
-    paymentSenderNumber: '',
   });
 
   const logout = () => {
@@ -83,10 +78,6 @@ export default function BillingPage() {
           planCode: billing.planCode || 'students_100',
           billingCycle: billing.billingCycle || 'monthly',
           useEasySchoolStorage: billing.useEasySchoolStorage !== false,
-          receivedAmount: billing.receivedAmount ? String(billing.receivedAmount) : '',
-          paymentGateway: billing.paymentGateway || 'bkash',
-          paymentTrxId: billing.paymentTrxId || '',
-          paymentSenderNumber: billing.paymentSenderNumber || '',
         });
       })
       .finally(() => setLoading(false));
@@ -97,56 +88,54 @@ export default function BillingPage() {
     [form]
   );
 
-  const submitPayment = async (paymentOverride: PaymentOverride = {}) => {
-    setStatus('Submitting payment...');
+  const submitPopupPayment = async (payment: PopupPaymentResult) => {
+    setStatus('Submitting popup payment...');
+    setIsPaying(true);
     try {
-      const receivedAmount = Number(paymentOverride.receivedAmount ?? (form.receivedAmount || due.total));
-      const payload = {
-        ...form,
-        ...paymentOverride,
-        receivedAmount,
-      };
+      const popupAmount = Number(payment.receivedAmount || 0);
+      if (!popupAmount || popupAmount !== Number(due.total)) {
+        setStatus(`Payment amount mismatch. Required amount is ${formatCurrency(due.total)}.`);
+        return;
+      }
+
       const response = await api.institution.recordPayment({
-        ...payload,
+        ...form,
+        paymentGateway: payment.paymentGateway || 'popup',
+        paymentTrxId: payment.paymentReference || '',
+        paymentSenderNumber: payment.customerReference || '',
+        receivedAmount: popupAmount,
       }) as any;
       setInstitution(response.institution);
-      setStatus(response.message || 'Payment submitted. Admin will verify and activate your school.');
+      setStatus(response.message || 'Popup payment submitted successfully.');
     } catch (error: any) {
-      setStatus(error?.message || 'Payment submit failed.');
+      setStatus(error?.message || 'Popup payment submit failed.');
+    } finally {
+      setIsPaying(false);
     }
   };
 
   const openPopupPayment = () => {
     if (typeof window === 'undefined' || !window.GatewayWidget?.open) {
-      setStatus('Payment widget is not loaded yet.');
+      setStatus('Payment popup is not loaded yet. Please try again.');
       return;
     }
 
     const callbackUrl = `${window.location.origin}${window.location.pathname}`;
+    setStatus('Opening popup payment...');
     window.GatewayWidget.open({
       amount: due.total,
       callback: callbackUrl,
       onComplete: (result: any) => {
-        const trxId = result?.trxId || result?.transactionId || result?.trx_id || '';
-        const senderNumber = result?.senderNumber || result?.mobileNumber || result?.phone || '';
-        const gateway = result?.gateway || result?.paymentGateway || form.paymentGateway || 'bkash';
         const receivedAmount = Number(result?.amount ?? result?.paidAmount ?? due.total);
-
-        setForm((prev) => ({
-          ...prev,
-          paymentGateway: gateway,
-          paymentTrxId: trxId || prev.paymentTrxId,
-          paymentSenderNumber: senderNumber || prev.paymentSenderNumber,
-          receivedAmount: String(receivedAmount),
-        }));
-
-        setStatus(result?.message || 'Payment completed. Saving payment details...');
-        void submitPayment({
-          paymentGateway: gateway,
-          paymentTrxId: trxId,
-          paymentSenderNumber: senderNumber,
+        const payment: PopupPaymentResult = {
+          paymentGateway: result?.gateway || result?.paymentGateway || 'popup',
+          paymentReference: result?.trxId || result?.transactionId || result?.trx_id || '',
+          customerReference: result?.senderNumber || result?.mobileNumber || result?.phone || '',
           receivedAmount,
-        });
+        };
+
+        setStatus(result?.message || 'Popup payment completed. Saving payment details...');
+        void submitPopupPayment(payment);
       },
     });
   };
@@ -160,7 +149,7 @@ export default function BillingPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background p-6 text-center">
         <div className="space-y-4">
-          <p className="text-xl font-semibold">আপনার প্রতিষ্ঠান প্রধানের সাথে যোগাযোগ করুন।</p>
+          <p className="text-xl font-semibold">Contact the institution head.</p>
           <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
         </div>
       </main>
@@ -174,12 +163,13 @@ export default function BillingPage() {
         src={paymentWidgetUrl}
         strategy="afterInteractive"
         onLoad={() => setIsWidgetReady(true)}
+        onError={() => setStatus('Payment popup failed to load. Check NEXT_PUBLIC_PAYMENT_WIDGET_URL.')}
       />
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Billing Required</h1>
-            <p className="mt-2 text-sm text-slate-600">আপনার অনুমতি নেই, আগে বিল পরিশোধ করুন। Admin payment verify করলে school active হবে।</p>
+            <p className="mt-2 text-sm text-slate-600">Please pay the bill before continuing. This page uses popup payment only and does not accept manual payment fields.</p>
           </div>
           <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
         </div>
@@ -188,7 +178,7 @@ export default function BillingPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> Pay School Bill</CardTitle>
-              <CardDescription>Pay through the hosted popup widget.</CardDescription>
+              <CardDescription>Registration bills and monthly bills are paid only through the hosted popup.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div>
@@ -210,7 +200,7 @@ export default function BillingPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label className="text-sm font-medium">Storage</label>
                 <Select value={String(form.useEasySchoolStorage)} onValueChange={(value) => setForm((prev) => ({ ...prev, useEasySchoolStorage: value === 'true' }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -220,15 +210,12 @@ export default function BillingPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Input placeholder="Paid amount" type="number" value={form.receivedAmount} onChange={(event) => setForm((prev) => ({ ...prev, receivedAmount: event.target.value }))} />
-              <Input placeholder="Transaction ID" value={form.paymentTrxId} onChange={(event) => setForm((prev) => ({ ...prev, paymentTrxId: event.target.value }))} />
-              <Input placeholder="Sender number" value={form.paymentSenderNumber} onChange={(event) => setForm((prev) => ({ ...prev, paymentSenderNumber: event.target.value }))} />
               <div className="rounded-lg border bg-card p-4 text-sm md:col-span-2">
                 Due amount: {formatCurrency(due.baseAmount)} + storage {formatCurrency(due.storageAmount)} = <span className="font-semibold">{formatCurrency(due.total)}</span>
               </div>
               <div className="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-slate-600">{status}</p>
-                <Button onClick={openPopupPayment} disabled={!isWidgetReady}>Pay with Popup</Button>
+                <Button onClick={openPopupPayment} disabled={!isWidgetReady || isPaying}>{isPaying ? 'Saving...' : 'Pay with Popup'}</Button>
               </div>
             </CardContent>
           </Card>
