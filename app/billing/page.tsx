@@ -7,10 +7,11 @@ import { CreditCard, Loader2, LogOut } from 'lucide-react';
 import { api } from '@/lib/api';
 import { authManager } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
-import { calculatePlanDue, getPlanByCode } from '@/lib/plans';
+import { calculatePlanDue, getPlanByCode, schoolPlans } from '@/lib/plans';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 declare global {
   interface Window {
@@ -267,6 +268,48 @@ export default function BillingPage() {
             <CardDescription>Registration bill এবং monthly bill শুধু hosted popup payment দিয়ে pay হবে।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="space-y-2">
+                <span className="text-sm font-medium">Subscription Plan</span>
+                <Select
+                  value={billingInfo.planCode}
+                  onValueChange={(value) => setBillingInfo((current) => ({ ...current, planCode: value }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {schoolPlans.map((item) => (
+                      <SelectItem key={item.code} value={item.code}>
+                        {item.name} - {formatCurrency(item.monthlyPrice)}/mo
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium">Billing Cycle</span>
+                <Select
+                  value={billingInfo.billingCycle}
+                  onValueChange={(value) => setBillingInfo((current) => ({ ...current, billingCycle: value as 'monthly' | 'yearly' }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly subscription</SelectItem>
+                    <SelectItem value="yearly">Yearly subscription</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
+
+              <label className="flex items-center gap-3 rounded-md border px-3 py-2">
+                <input
+                  type="checkbox"
+                  checked={billingInfo.useEasySchoolStorage}
+                  onChange={(event) => setBillingInfo((current) => ({ ...current, useEasySchoolStorage: event.target.checked }))}
+                />
+                <span className="text-sm font-medium">Use EASY SCHOOL storage</span>
+              </label>
+            </div>
+
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-lg border bg-card p-4">
                 <div className="text-sm text-slate-500">Plan</div>
