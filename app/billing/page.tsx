@@ -142,10 +142,10 @@ export default function BillingPage() {
       const response = await api.institution.recordPayment({
         ...billingInfo,
         paymentGateway: payment.paymentGateway || 'popup',
-        paymentOrderId: payment.orderId || payment.paymentReference || '',
+        paymentOrderId: payment.paymentOrderId || payment.orderId || '',
         paymentTime: payment.paymentTime || new Date().toISOString(),
-        paymentTrxId: payment.paymentReference || '',
-        paymentSenderNumber: payment.customerReference || '',
+        paymentTrxId: payment.paymentTrxId || payment.paymentReference || '',
+        paymentSenderNumber: payment.paymentSenderNumber || payment.customerReference || '',
         receivedAmount: popupAmount,
       }) as any;
       setInstitution(response.institution);
