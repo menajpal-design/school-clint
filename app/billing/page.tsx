@@ -149,6 +149,19 @@ export default function BillingPage() {
         receivedAmount: popupAmount,
       }) as any;
       setInstitution(response.institution);
+      if (response?.institution?.isActive) {
+        try {
+          const profileResponse = await api.auth.profile() as any;
+          const freshUser = profileResponse?.user || profileResponse;
+          if (freshUser) {
+            authManager.setUser(freshUser);
+          }
+          router.refresh();
+          router.replace('/dashboard');
+        } catch (profileError) {
+          console.warn('Failed to refresh auth session after payment:', profileError);
+        }
+      }
       setStatus(response.message || 'Popup payment submitted successfully.');
     } catch (error: any) {
       setStatus(error?.message || 'Popup payment submit failed.');
