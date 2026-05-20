@@ -12,6 +12,7 @@ interface MenuItemConfig {
 const smsMonitoringRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
 const holidayRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff'];
 const academicViewRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent'];
+const attendanceManageRoles: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
 
 export const menuConfig: MenuItemConfig[] = [
   {
@@ -20,6 +21,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Overview', href: '/admin', roles: ['admin', 'super_admin'] },
       { label: 'School Manage', href: '/admin/schools', roles: ['admin', 'super_admin'] },
       { label: 'Subscriptions', href: '/admin/subscriptions', roles: ['admin', 'super_admin'] },
+      { label: 'Accounting', href: '/admin/accounting', roles: ['admin', 'super_admin'] },
       { label: 'SMS Usage', href: '/admin/sms-usage', roles: ['admin', 'super_admin'] },
       { label: 'Select School', href: '/admin/select-school', roles: ['admin', 'super_admin'] },
       { label: 'Manage Users', href: '/admin/users', roles: ['admin', 'super_admin'] },
@@ -69,14 +71,15 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Attendance', href: '/attendance', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent'], icon: 'CheckCircle2',
+    label: 'Attendance', href: '/attendance', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent'], icon: 'CheckCircle2',
     children: [
-      { label: 'Overview', href: '/attendance', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
-      { label: 'Mark Attendance', href: '/attendance/mark', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher'] },
-      { label: 'Reports', href: '/attendance/reports', roles: ['head', 'assistant_head', 'class_teacher'] },
+      { label: 'Overview', href: '/attendance', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'] },
+      { label: 'Mark Attendance', href: '/attendance/mark', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'] },
+      { label: 'All Present Scanner', href: '/attendance/all-present', roles: attendanceManageRoles },
+      { label: 'Reports', href: '/attendance/reports', roles: ['head', 'assistant_head', 'class_teacher', 'teacher'] },
       { label: 'Holiday List', href: '/holidays', roles: holidayRoles },
       { label: 'SMS Monitoring', href: '/sms-monitoring', roles: smsMonitoringRoles },
-      { label: 'My Attendance', href: '/attendance/my-attendance', roles: ['head', 'student', 'parent'] },
+      { label: 'My Attendance', href: '/attendance/my-attendance', roles: ['head', 'teacher', 'staff', 'student', 'parent'] },
     ],
   },
   {
