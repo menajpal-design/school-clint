@@ -65,6 +65,74 @@ type PopupPaymentResult = {
   paymentTrxId?: string;
   paymentSenderNumber?: string;
   receivedAmount: number;
+  rawResponse?: any;
+};
+
+const normalizePopupPaymentResult = (result: any, fallback: { orderId: string; paymentTime: string; amount: number; gateway: string; senderNumber?: string }): PopupPaymentResult => {
+  const verification = result?.verification || result?.data?.verification || {};
+  const payload = result?.data || result || {};
+
+  const paymentTrxId =
+    payload.transaction_id ||
+    payload.payment_ref ||
+    payload.transactionId ||
+    payload.trxId ||
+    payload.trx_id ||
+    verification.transaction_id ||
+    verification.payment_ref ||
+    verification.transactionId ||
+    verification.trxId ||
+    '';
+
+  const paymentOrderId =
+    payload.orderId ||
+    payload.order_id ||
+    payload.paymentOrderId ||
+    verification.orderId ||
+    verification.order_id ||
+    fallback.orderId;
+
+  const paymentSenderNumber =
+    payload.payer_number ||
+    payload.payerNumber ||
+    payload.senderNumber ||
+    payload.mobileNumber ||
+    payload.phone ||
+    verification.payer_number ||
+    verification.payerNumber ||
+    fallback.senderNumber ||
+    '';
+
+  const receivedAmount = Number(
+    payload.amount ??
+    payload.paidAmount ??
+    payload.receivedAmount ??
+    verification.amount ??
+    fallback.amount
+  );
+
+  const paymentTime =
+    payload.verifiedAt ||
+    payload.verified_at ||
+    payload.payment_time ||
+    payload.paymentTime ||
+    payload.time ||
+    verification.verifiedAt ||
+    verification.verified_at ||
+    fallback.paymentTime;
+
+  return {
+    paymentGateway: payload.gateway || payload.paymentGateway || fallback.gateway || 'popup',
+    paymentOrderId,
+    orderId: paymentOrderId,
+    paymentTime,
+    paymentTrxId,
+    paymentReference: paymentTrxId,
+    paymentSenderNumber,
+    customerReference: paymentSenderNumber,
+    receivedAmount,
+    rawResponse: result,
+  };
 };
 
 export default function BillingPage() {
@@ -147,6 +215,9 @@ export default function BillingPage() {
         paymentTrxId: payment.paymentTrxId || payment.paymentReference || '',
         paymentSenderNumber: payment.paymentSenderNumber || payment.customerReference || '',
         receivedAmount: popupAmount,
+        popupPaymentStatus: payment.rawResponse?.status || payment.rawResponse?.data?.status,
+        popupVerification: payment.rawResponse?.verification || payment.rawResponse?.data?.verification,
+        popupPaymentResponse: payment.rawResponse,
       }) as any;
       setInstitution(response.institution);
       if (response?.institution?.isActive) {
@@ -193,32 +264,26 @@ export default function BillingPage() {
       preferredMethods: gatewayPaymentMethods,
       customerPhone: billingInfo.paymentSenderNumber || institution?.phone || '',
       onComplete: (result: any) => {
-        const trxId = result?.trxId || result?.transactionId || result?.trx_id || result?.orderId || result?.order_id || orderId;
-        const senderNumber = result?.payer_number || result?.payerNumber || result?.senderNumber || result?.mobileNumber || result?.phone || billingInfo.paymentSenderNumber || '';
-        const gateway = result?.gateway || result?.paymentGateway || billingInfo.paymentGateway || 'bkash';
-        const receivedAmount = Number(result?.amount ?? result?.paidAmount ?? due.total);
-        const verifiedOrderId = result?.orderId || result?.order_id || orderId;
-        const verifiedPaymentTime = result?.payment_time || result?.paymentTime || result?.time || paymentTime;
+        const normalizedPayment = normalizePopupPaymentResult(result, {
+          orderId,
+          paymentTime,
+          amount: due.total,
+          gateway: billingInfo.paymentGateway || 'popup',
+          senderNumber: billingInfo.paymentSenderNumber || institution?.phone || '',
+        });
 
         setBillingInfo((prev) => ({
           ...prev,
-          paymentGateway: gateway,
-          paymentOrderId: verifiedOrderId,
-          paymentTime: verifiedPaymentTime,
-          paymentTrxId: trxId || prev.paymentTrxId,
-          paymentSenderNumber: senderNumber || prev.paymentSenderNumber,
-          receivedAmount: String(receivedAmount),
+          paymentGateway: normalizedPayment.paymentGateway || prev.paymentGateway,
+          paymentOrderId: normalizedPayment.paymentOrderId || prev.paymentOrderId,
+          paymentTime: normalizedPayment.paymentTime || prev.paymentTime,
+          paymentTrxId: normalizedPayment.paymentTrxId || prev.paymentTrxId,
+          paymentSenderNumber: normalizedPayment.paymentSenderNumber || prev.paymentSenderNumber,
+          receivedAmount: String(normalizedPayment.receivedAmount),
         }));
 
         setStatus(result?.message || 'Payment completed. Saving payment details...');
-        void submitPopupPayment({
-          paymentGateway: gateway,
-          paymentOrderId: verifiedOrderId,
-          paymentTime: verifiedPaymentTime,
-          paymentTrxId: trxId,
-          paymentSenderNumber: senderNumber,
-          receivedAmount,
-        });
+        void submitPopupPayment(normalizedPayment);
       },
     });
   };
