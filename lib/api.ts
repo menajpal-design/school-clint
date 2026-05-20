@@ -62,7 +62,17 @@ class ApiClient {
     if (res.status === 401) { this.clearToken(); if (isBrowser) window.location.href = '/login'; }
     const text = await res.text();
     const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
-    if (!res.ok) throw this.toError(data || { message: res.statusText });
+    if (!res.ok) {
+      if (isBrowser && (res.status === 428 || data?.code === 'STORAGE_CONFIG_REQUIRED')) {
+        const message = data?.message || 'দয়া করে MongoDB URL এবং ImgBB API Key সেট করুন।';
+        this.toast(message, 'Storage configuration required');
+        const redirectTo = data?.redirectTo || '/settings';
+        if (window.location.pathname !== redirectTo) {
+          window.location.href = redirectTo;
+        }
+      }
+      throw this.toError(data || { message: res.statusText });
+    }
     return data as T;
   }
 
@@ -73,12 +83,12 @@ class ApiClient {
     return { message, error: err };
   }
 
-  private toast(message: string) {
+  private toast(message: string, title = 'API Error') {
     if (!isBrowser) return;
     const now = Date.now();
     if (now - this.lastToast < 8000) return;
     this.lastToast = now;
-    window.dispatchEvent(new CustomEvent('app-toast', { detail: { title: 'API Error', message, type: 'error', duration: 5000 } }));
+    window.dispatchEvent(new CustomEvent('app-toast', { detail: { title, message, type: 'error', duration: 6000 } }));
   }
 
   get<T>(url: string, config?: any) { return this.request<T>('GET', url, undefined, config); }
