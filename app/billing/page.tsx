@@ -65,6 +65,8 @@ type PopupPaymentResult = {
   paymentTrxId?: string;
   paymentSenderNumber?: string;
   receivedAmount: number;
+  paymentStatus?: string;
+  verificationPayload?: any;
 };
 
 export default function BillingPage() {
@@ -147,6 +149,8 @@ export default function BillingPage() {
         paymentTrxId: payment.paymentTrxId || payment.paymentReference || '',
         paymentSenderNumber: payment.paymentSenderNumber || payment.customerReference || '',
         receivedAmount: popupAmount,
+        paymentStatus: payment.paymentStatus || 'verified',
+        verification: payment.verificationPayload || {},
       }) as any;
       setInstitution(response.institution);
       if (response?.institution?.isActive) {
@@ -243,6 +247,8 @@ export default function BillingPage() {
           paymentTrxId: trxId,
           paymentSenderNumber: senderNumber,
           paymentReference: result?.payment_ref || verification?.payment_ref,
+          paymentStatus: result?.status || 'verified',
+          verificationPayload: result,
           receivedAmount,
         });
       },
