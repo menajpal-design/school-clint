@@ -30,11 +30,6 @@ const showAppToast = (title: string, message: string, type: 'success' | 'error' 
   window.dispatchEvent(new CustomEvent('app-toast', { detail: { title, message, type, duration: 4500 } }));
 };
 
-const autoEmailFor = (name: any, type: 'student' | 'parent') => {
-  const slug = String(name || type).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || type;
-  return `${type}-${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@${type}.local`;
-};
-
 class ApiClient {
   private currentToken: string | null = null;
   private lastToast = 0;
@@ -77,9 +72,7 @@ class ApiClient {
         const message = data?.message || 'দয়া করে MongoDB URL এবং ImgBB API Key সেট করুন।';
         this.toast(message, 'Storage configuration required');
         const redirectTo = data?.redirectTo || '/settings';
-        if (window.location.pathname !== redirectTo) {
-          window.location.href = redirectTo;
-        }
+        if (window.location.pathname !== redirectTo) window.location.href = redirectTo;
       }
       throw this.toError(data || { message: res.statusText });
     }
@@ -116,14 +109,17 @@ const studentApi = {
   ...crud('/students'),
   create: async (data: any) => {
     const payload = { ...data };
-    if (!String(payload.email || '').trim()) payload.email = autoEmailFor(payload.name, 'student');
-    if (payload.autoParentAccount !== false && !String(payload.guardianEmail || '').trim()) payload.guardianEmail = autoEmailFor(payload.guardianName || 'guardian', 'parent');
+    delete payload.email;
+    delete payload.guardianEmail;
     const result = await apiClient.post('/students', payload);
-    showAppToast('Student admitted', 'Student profile saved and login account created.', 'success');
+    showAppToast('Student admitted', 'Username and password generated successfully.', 'success');
     return result;
   },
   update: async (id: string, data: any) => {
-    const result = await apiClient.put(`/students/${id}`, data);
+    const payload = { ...data };
+    delete payload.email;
+    delete payload.guardianEmail;
+    const result = await apiClient.put(`/students/${id}`, payload);
     showAppToast('Student updated', 'Student information saved successfully.', 'success');
     return result;
   },
@@ -149,7 +145,7 @@ export const api: any = {
   publicResults: { schools: (p?: any) => apiClient.get('/academic/public/results/schools', { params: p }), options: (p?: any) => apiClient.get('/academic/public/results/options', { params: p }), lookup: (p: any) => apiClient.get('/academic/public/results', { params: p }) },
   users: { ...crud('/users'), getAllUsers: () => apiClient.get('/users/all'), updateStatus: (id: string, isActive: boolean) => apiClient.patch(`/users/${id}/status`, { isActive }), updateRole: (id: string, role: string) => apiClient.patch(`/users/${id}/role`, { role }), resetPassword: (id: string, password?: string) => apiClient.post(`/users/${id}/reset-password`, password ? { password } : undefined), permissions: () => apiClient.get('/users/permissions'), updatePermissions: (matrix: any) => apiClient.put('/users/permissions', { matrix }) },
   students: studentApi, teachers: crud('/teachers'), staff: crud('/staff'), documents: crud('/documents'), notices: crud('/notices'), idCards: idCardApi, payroll: crud('/payroll'), promotions: crud('/promotions'), holidays: crud('/holidays'),
-  library: { books: crud('/library/books'), loans: crud('/library/loans'), issue: (d: any) => apiClient.post('/library/loans/issue', d), return: (d: any) => apiClient.post('/library/loans/return', d) },
+  library: { books: crud('/library/books'), loans: crud('/library/loans'), issue: (d: any) => apiClient.post('/library/loans/issue', d), return: (d: any) => apiClient.post('/library/loans/return') },
   institution: { plans: () => apiClient.get('/institution/plans'), profile: () => apiClient.get('/institution/profile'), updateProfile: (d: any) => apiClient.put('/institution/profile', d), recordPayment: (d: any) => apiClient.post('/institution/billing/payment', d) },
   admin: { schools: (p?: any) => apiClient.get('/admin/schools', { params: p }), accounting: (p?: any) => apiClient.get('/admin/accounting', { params: p }), updateSchool: (id: string, d: any) => apiClient.patch(`/admin/schools/${id}`, d), verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`), selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`), users: (p?: any) => apiClient.get('/admin/users', { params: p }) },
   academic: { classes: crud('/academic/classes'), sections: crud('/academic/sections'), subjects: crud('/academic/subjects'), exams: crud('/academic/exams'), results: crud('/academic/results'), reportCard: { students: (p: any) => apiClient.get('/academic/report-card/students', { params: p }), get: (p: any) => apiClient.get('/academic/report-card', { params: p }) } },
