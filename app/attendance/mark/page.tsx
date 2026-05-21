@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/attendance-api-compat";
 import { useEffect, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
 import { Camera, ClipboardCheck, Download, FileSpreadsheet, FileText, Save, Calendar as CalendarIcon } from "lucide-react";
@@ -117,17 +118,13 @@ export default function AttendanceMarkPage() {
     const attendance = await api.attendance.getAll({
       classId: personType === "student" ? classId : undefined,
       sectionId: personType === "student" ? sectionId || undefined : undefined,
-      userType: personType === "teacher" ? "teacher" : undefined,
+      userType: personType === "teacher" ? "teacher" : personType === "staff" ? "staff" : undefined,
       date: usedDate,
     }) as { attendance: any[] };
-    const statusByStudent = new Map((attendance.attendance || []).map((item) => [String(personType === "teacher" ? item.userId?._id || item.userId : item.studentId?._id || item.studentId), item.status]));
+    const statusByStudent = new Map((attendance.attendance || []).map((item) => [String(personType === "teacher" || personType === "staff" ? item.userId?._id || item.userId : item.studentId?._id || item.studentId), item.status]));
     const baseStudents = (data.people || []).map((student) => ({ ...student, personType, status: (statusByStudent.get(student._id) as Status) || "absent" }));
 
     // Fetch individual student attendance history to compute month present counts
-    const [yearStr, monthStr] = usedDate.split('-');
-    const month = Number(monthStr);
-    const year = Number(yearStr);
-
     const withCounts = await Promise.all(baseStudents.map(async (student) => {
       try {
         const res = personType === "teacher" || personType === "staff"
@@ -152,13 +149,13 @@ export default function AttendanceMarkPage() {
   const setOne = (id: string, status: Status) => setStudents((current) => current.map((student) => student._id === id ? { ...student, status } : student));
 
   const className = selectedClass?.name || "Selected class";
-  const rosterName = personType === "teacher" ? "Teachers" : className;
-  const idLabel = personType === "teacher" ? "Employee ID" : "Roll";
-  const groupLabel = personType === "teacher" ? "Department" : "Class";
-  const subGroupLabel = personType === "teacher" ? "Designation" : "Section";
+  const rosterName = personType === "teacher" ? "Teachers" : personType === "staff" ? "Staff" : className;
+  const idLabel = personType === "teacher" || personType === "staff" ? "Employee ID" : "Roll";
+  const groupLabel = personType === "teacher" || personType === "staff" ? "Department" : "Class";
+  const subGroupLabel = personType === "teacher" || personType === "staff" ? "Designation" : "Section";
   const personIdValue = (student: Student) => student.rollNumber || student.employeeId || "-";
-  const groupValue = (student: Student) => personType === "teacher" ? student.department || "-" : className;
-  const subGroupValue = (student: Student) => personType === "teacher" ? student.designation || "-" : student.sectionId?.name || (sectionId ? sections.find((section) => section._id === sectionId)?.name : "All sections") || "-";
+  const groupValue = (student: Student) => personType === "teacher" || personType === "staff" ? student.department || "-" : className;
+  const subGroupValue = (student: Student) => personType === "teacher" || personType === "staff" ? student.designation || "-" : student.sectionId?.name || (sectionId ? sections.find((section) => section._id === sectionId)?.name : "All sections") || "-";
 
   const exportClassExcel = () => {
     const headers = [idLabel, "Name", "Type", groupLabel, subGroupLabel, "Selected Date", "Date Status", "Total", "Present", "Absent", "Late", "Leave"];
@@ -211,7 +208,7 @@ export default function AttendanceMarkPage() {
       doc.text(institution.name, margin, 24);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.text(`${personType === "teacher" ? "Teacher" : "Student"} Attendance | ${rosterName} | ${date} | Records: ${students.length}`, margin, 44);
+      doc.text(`${personType === "teacher" ? "Teacher" : personType === "staff" ? "Staff" : "Student"} Attendance | ${rosterName} | ${date} | Records: ${students.length}`, margin, 44);
       if (institution.address) doc.text(institution.address, margin, 58);
       doc.addImage(qrDataUrl, "PNG", pageWidth - margin - 54, 14, 48, 48);
     };
@@ -344,8 +341,8 @@ export default function AttendanceMarkPage() {
         classId,
         sectionId,
         date,
-        records: students.map((student) => personType === "teacher"
-          ? ({ userId: student._id, userType: "teacher", date, status: student.status })
+        records: students.map((student) => personType === "teacher" || personType === "staff"
+          ? ({ userId: student._id, userType: personType, date, status: student.status })
           : ({ studentId: student._id, userType: "student", classId, sectionId: student.sectionId?._id || sectionId, date, status: student.status })),
       });
       await loadStudents(date);
@@ -368,14 +365,15 @@ export default function AttendanceMarkPage() {
       return;
     }
     try {
-      const data = await api.attendance.scanIdCard({ code: codeToScan }) as { student?: Student };
-      if (data.student) {
-        setOne(data.student._id, "present");
+      const data = await api.attendance.scanIdCard({ code: codeToScan }) as { student?: Student; teacher?: Student; staff?: Student; userType?: PersonType };
+      const found = data.student || data.teacher || data.staff;
+      if (found) {
+        setOne(found._id, "present");
         setScanOpen(false);
         setScanCode("");
-        setMessage(`✓ ${data.student.userId?.name} marked as present.`);
+        setMessage(`✓ ${found.userId?.name} marked as present.`);
         await loadStudents(date);
-        notify("Marked present", `${data.student.userId?.name} is marked present.`, "success");
+        notify("Marked present", `${found.userId?.name} is marked present.`, "success");
       }
     } catch (err: any) {
       const errorMessage = err?.message || "Scan failed.";
@@ -482,7 +480,7 @@ export default function AttendanceMarkPage() {
                     if (personType === "student" && !classId) { setMessage('Select a class first.'); return; }
                     const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
                     try {
-                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => personType === "teacher" ? ({ userId: s._id, userType: "teacher", date: d, status: 'present' }) : ({ studentId: s._id, userType: "student", classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'present' })) });
+                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => personType === "teacher" || personType === "staff" ? ({ userId: s._id, userType: personType, date: d, status: 'present' }) : ({ studentId: s._id, userType: "student", classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'present' })) });
                       setDate(d);
                       await loadStudents(d);
                       {
@@ -497,7 +495,7 @@ export default function AttendanceMarkPage() {
                     if (personType === "student" && !classId) { setMessage('Select a class first.'); return; }
                     const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
                     try {
-                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => personType === "teacher" ? ({ userId: s._id, userType: "teacher", date: d, status: 'absent' }) : ({ studentId: s._id, userType: "student", classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'absent' })) });
+                      await api.attendance.mark({ classId, sectionId, date: d, records: students.map(s => personType === "teacher" || personType === "staff" ? ({ userId: s._id, userType: personType, date: d, status: 'absent' }) : ({ studentId: s._id, userType: "student", classId, sectionId: s.sectionId?._id || sectionId, date: d, status: 'absent' })) });
                       setDate(d);
                       await loadStudents(d);
                       {
@@ -539,20 +537,27 @@ export default function AttendanceMarkPage() {
                               if (personType === "student" && !classId) { setMessage('Select a class first.'); return; }
                               const d = `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2,'0')}-${String(calendarSelectedDay).padStart(2,'0')}`;
                               try {
-                                await api.attendance.mark({ classId, sectionId, date: d, records: [personType === "teacher" ? { userId: s._id, userType: "teacher", date: d, status: st } : { studentId: s._id, userType: "student", classId, sectionId: s.sectionId?._id || sectionId, date: d, status: st }] });
-                                setDate(d);
-                                await loadStudents(d);
+                                await api.attendance.mark({
+                                  classId,
+                                  sectionId,
+                                  date: d,
+                                  records: [personType === "teacher" || personType === "staff" ? ({ userId: s._id, userType: personType, date: d, status: st }) : ({ studentId: s._id, userType: "student", classId, sectionId: s.sectionId?._id || sectionId, date: d, status: st })]
+                                });
                                 await fetchCalendarStudent(s._id);
-                                setMessage(`Marked ${s.userId?.name} as ${st}.`);
-                              } catch (e:any) { setMessage(e?.message || 'Failed to update attendance.'); }
+                                await loadStudents(d);
+                                setMessage(`${s.userId?.name} marked ${st} for ${d}.`);
+                                notify('Attendance updated', `${s.userId?.name} marked ${st}.`, 'success');
+                              } catch (e:any) {
+                                const errorMessage = e?.message || 'Failed to update attendance.';
+                                setMessage(errorMessage);
+                                notify('Attendance update failed', errorMessage, 'error');
+                              }
                             }}
-                          >
-                            {st}
-                          </Button>
+                          >{st}</Button>
                         ))}
                       </div>
                     </div>
-                    <div className="text-xs text-slate-500">{record ? `Status: ${status}` : 'No record'}</div>
+                    <div className="text-xs text-slate-500">Current: {status}</div>
                   </div>
                 );
               })}
@@ -566,161 +571,47 @@ export default function AttendanceMarkPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Attendance Marking"
-        description="Mark daily class attendance with bulk actions and ID card scan support."
+        title="Mark Attendance"
+        description="Select a roster and date, then mark present, absent, late or leave."
         icon={ClipboardCheck}
+        status={<Badge variant="outline">{students.length} {activePeopleLabel}</Badge>}
         actions={[
-          <Button key="id-card-scan" variant="outline" size="sm" onClick={() => setScanOpen(true)}>
-            <Camera className="mr-2 h-4 w-4" />
-            ID Card Scan
-          </Button>,
-          <Button key="export-class-excel" variant="outline" size="sm" onClick={exportClassExcel} disabled={!students.length}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Excel
-          </Button>,
-          <Button key="export-class-pdf" variant="outline" size="sm" onClick={exportClassPdf} disabled={!students.length}>
-            <FileText className="mr-2 h-4 w-4" />
-            PDF
-          </Button>,
+          <Button key="scan" variant="outline" size="sm" onClick={() => setScanOpen(true)}><Camera className="mr-2 h-4 w-4" />Scan ID Card</Button>,
+          <Button key="excel" variant="outline" size="sm" onClick={exportClassExcel}><FileSpreadsheet className="mr-2 h-4 w-4" />CSV</Button>,
+          <Button key="pdf" variant="outline" size="sm" onClick={exportClassPdf}><FileText className="mr-2 h-4 w-4" />PDF</Button>,
+          <Button key="save" size="sm" onClick={save} disabled={saving || !students.length}><Save className="mr-2 h-4 w-4" />{saving ? "Saving..." : "Save"}</Button>,
         ]}
       />
+      {message && <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">{message}</div>}
 
-      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-4">
-          {canManageTeachers && (
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">Attendance For</span>
-              <Select value={personType} onValueChange={(value) => { setPersonType(value as PersonType); setSectionId(""); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Students</SelectItem>
-                  <SelectItem value="teacher">Teachers</SelectItem>
-                  {canManageTeachers && <SelectItem value="staff">Staff</SelectItem>}
-                </SelectContent>
-              </Select>
-            </label>
-          )}
-          {personType === "student" && <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">Class</span>
-            <Select value={classId} onValueChange={(value) => { setClassId(value); setSectionId(""); }}>
-              <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
-              <SelectContent>{classes.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
-            </Select>
-          </label>}
-          {personType === "student" && <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">Section</span>
-            <Select value={sectionId || "all"} onValueChange={(value) => setSectionId(value === "all" ? "" : value)}>
-              <SelectTrigger><SelectValue placeholder="All sections" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">All sections</SelectItem>{sections.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent>
-            </Select>
-          </label>}
-          <label className="space-y-2"><span className="text-sm font-medium text-slate-700">Date</span><Input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
-        </div>
+      <section className="grid gap-3 rounded-lg border bg-card p-4 shadow-sm md:grid-cols-4">
+        <label className="space-y-2"><span className="text-sm font-medium">Roster</span><Select value={personType} onValueChange={(value: PersonType) => setPersonType(value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="student">Students</SelectItem>{canManageTeachers && <SelectItem value="teacher">Teachers</SelectItem>}{canManageTeachers && <SelectItem value="staff">Staff</SelectItem>}</SelectContent></Select></label>
+        {personType === "student" && <label className="space-y-2"><span className="text-sm font-medium">Class</span><Select value={classId || undefined} onValueChange={setClassId}><SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger><SelectContent>{classes.map((item) => <SelectItem key={item._id} value={item._id}>{item.name}</SelectItem>)}</SelectContent></Select></label>}
+        {personType === "student" && <label className="space-y-2"><span className="text-sm font-medium">Section</span><Select value={sectionId || "all"} onValueChange={(value) => setSectionId(value === "all" ? "" : value)}><SelectTrigger><SelectValue placeholder="All sections" /></SelectTrigger><SelectContent><SelectItem value="all">All sections</SelectItem>{sections.map((section) => <SelectItem key={section._id} value={section._id}>{section.name}</SelectItem>)}</SelectContent></Select></label>}
+        <label className="space-y-2"><span className="text-sm font-medium">Date</span><Input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
       </section>
 
-      {message && <div className="rounded-lg border border-border bg-popover px-4 py-3 text-sm text-foreground">{message}</div>}
+      <section className="flex flex-wrap gap-2 rounded-lg border bg-card p-4 shadow-sm">
+        <Button variant="outline" onClick={() => setAll("present")}>All Present</Button>
+        <Button variant="outline" onClick={() => setAll("absent")}>All Absent</Button>
+        <Button variant="outline" onClick={() => setAll("late")}>All Late</Button>
+        <Button variant="outline" onClick={() => setAll("leave")}>All Leave</Button>
+      </section>
 
-      <Dialog open={calendarOpen} onOpenChange={setCalendarOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader className="flex flex-row items-start justify-between space-y-0">
-            <div>
-              <DialogTitle>Attendance calendar</DialogTitle>
-              <DialogDescription>
-                {currentCalendarStudent ? `${currentCalendarStudent.userId?.name || "-"} - ${personIdValue(currentCalendarStudent)}` : "Attendance calendar"}
-              </DialogDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setCalendarViewYear(calendarViewYear - 1)}>-</Button>
-              <div className="text-sm font-medium">{calendarViewYear}</div>
-              <Button variant="outline" size="sm" onClick={() => setCalendarViewYear(calendarViewYear + 1)}>+</Button>
-            </div>
-          </DialogHeader>
-          <div className="mt-4 space-y-4">
-            {/* Month selector */}
-            <div className="flex flex-wrap gap-2">
-              {Array.from({ length: 12 }).map((_, idx) => {
-                const month = idx + 1;
-                const isCurrent = currentCalendarStudent?.attendanceRecords?.some(r => r.date.slice(0, 7) === `${calendarViewYear}-${String(month).padStart(2, '0')}` && r.status === 'present');
-                const isSelected = calendarSelectedMonth === month;
-                return (
-                  <Button key={month} variant={isSelected ? 'secondary' : isCurrent ? 'outline' : 'ghost'} size="sm" onClick={() => { setCalendarSelectedMonth(month); setCalendarSelectedDay(null); }}>
-                    {new Date(0, idx).toLocaleString(undefined, { month: 'short' })}
-                  </Button>
-                );
-              })}
-            </div>
-
-            {/* Render selected month calendar */}
-            {currentCalendarStudent && (
-              <div>
-                {renderMonthCalendar(currentCalendarStudent, `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}`)}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 p-4">
-          <div className="text-sm font-medium text-slate-700">{students.length} {activePeopleLabel}</div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => setAll("present")}>All Present</Button>
-            <Button type="button" variant="outline" onClick={() => setAll("absent")}>All Absent</Button>
-            <Button type="button" onClick={save} disabled={saving}><Save className="mr-2 h-4 w-4" />{saving ? "Saving..." : "Save Attendance"}</Button>
-          </div>
-        </div>
+      <section className="overflow-hidden rounded-lg border bg-card shadow-sm">
         <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
-              <TableHead>Photo</TableHead>
-              <TableHead>{idLabel}</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Total Present</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
+          <TableHeader><TableRow><TableHead>{idLabel}</TableHead><TableHead>Name</TableHead><TableHead>{groupLabel}</TableHead><TableHead>{subGroupLabel}</TableHead><TableHead>Present Count</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
           <TableBody>
-            {students.length === 0 ? <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-500">No {activePeopleLabel} found.</TableCell></TableRow> : students.map((student) => {
-              const isPresentHighlight = isTeacherOrUpperRole && student.status === "present";
-              return (
-                <TableRow 
-                  key={student._id} 
-                  className={cn(
-                    isPresentHighlight && "bg-emerald-50 hover:bg-emerald-100"
-                  )}
-                >
-                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="h-10 w-10 overflow-hidden rounded-md bg-slate-100">{student.userId?.avatar && <img src={student.userId.avatar} alt="" className="h-full w-full object-cover" />}</div></TableCell>
-                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>{personIdValue(student)}</TableCell>
-                  <TableCell className={cn("font-medium text-slate-950", isPresentHighlight && "bg-emerald-50")}>{student.userId?.name}</TableCell>
-                  <TableCell className="whitespace-nowrap text-sm">{typeof student.presentCount === 'number' ? <div className="flex items-center gap-2"><span className="font-semibold">{student.presentCount}</span><Button type="button" variant="ghost" size="sm" onClick={async () => { setCalendarViewYear(Number(date.split('-')[0])); setCalendarSelectedMonth(Number(date.split('-')[1])); setCalendarSelectedDay(null); await fetchCalendarStudent(student._id); setCalendarOpen(true); }}><CalendarIcon className="h-4 w-4" /></Button></div> : '-'}</TableCell>
-                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}> <div className="flex flex-wrap gap-2">{(["present","absent","late","leave"] as Status[]).map((status) => <Button key={status} type="button" size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", isPresentHighlight && status === "present" && "bg-emerald-500 text-white border-emerald-500") } onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell>
-                  <TableCell className={cn(isPresentHighlight && "bg-emerald-50")}>
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => exportStudentExcel(student)}><FileSpreadsheet className="h-4 w-4" /></Button>
-                      <Button type="button" variant="outline" size="sm" onClick={() => exportStudentPdf(student)}><Download className="h-4 w-4" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {students.length === 0 ? <TableRow><TableCell colSpan={7} className="h-28 text-center text-muted-foreground">No {activePeopleLabel} loaded. Check roster/class and refresh.</TableCell></TableRow> : students.map((student) => <TableRow key={student._id}><TableCell>{personIdValue(student)}</TableCell><TableCell className="font-medium">{student.userId?.name || "Unnamed"}</TableCell><TableCell>{groupValue(student)}</TableCell><TableCell>{subGroupValue(student)}</TableCell><TableCell>{student.presentCount || 0}</TableCell><TableCell><div className="flex flex-wrap gap-2">{(["present", "absent", "late", "leave"] as Status[]).map((status) => <Button key={status} size="sm" variant={student.status === status ? "default" : "outline"} className={cn("capitalize", status === "present" && student.status === status && "bg-emerald-600 hover:bg-emerald-700", status === "absent" && student.status === status && "bg-rose-600 hover:bg-rose-700", status === "late" && student.status === status && "bg-amber-500 hover:bg-amber-600", status === "leave" && student.status === status && "bg-sky-600 hover:bg-sky-700")} onClick={() => setOne(student._id, status)}>{status}</Button>)}</div></TableCell><TableCell className="text-right"><div className="flex justify-end gap-2"><Button size="sm" variant="outline" onClick={async () => { setCalendarOpen(true); setCalendarStudent(student); await fetchCalendarStudent(student._id); }}><CalendarIcon className="mr-1 h-4 w-4" />Calendar</Button><Button size="sm" variant="outline" onClick={() => exportStudentExcel(student)}><Download className="h-4 w-4" /></Button><Button size="sm" variant="outline" onClick={() => exportStudentPdf(student)}><FileText className="h-4 w-4" /></Button></div></TableCell></TableRow>)}
           </TableBody>
         </Table>
       </section>
 
       <Dialog open={scanOpen} onOpenChange={setScanOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>ID Card Scan</DialogTitle><DialogDescription>Use your device camera to scan ID card QR codes, or enter the code manually.</DialogDescription></DialogHeader>
-          <WebcamScanner enabled={scanOpen} onScan={(code) => {
-            setScanCode(code);
-            scan(code);
-          }} />
-          <div className="mt-4 space-y-2 border-t pt-4">
-            <label className="text-sm font-medium text-slate-700">Manual Entry</label>
-            <Input value={scanCode} onChange={(event) => setScanCode(event.target.value)} placeholder="Or paste ID card code here" />
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setScanOpen(false)}>Cancel</Button><Button onClick={() => scan()}>Mark Present</Button></DialogFooter>
-        </DialogContent>
+        <DialogContent className="max-w-xl"><DialogHeader><DialogTitle>Scan ID card</DialogTitle><DialogDescription>Scan a QR/barcode or enter the card code manually.</DialogDescription></DialogHeader><WebcamScanner onDetected={(code) => scan(code)} onError={(err) => notify("Camera error", err, "error")} /><div className="flex gap-2"><Input value={scanCode} onChange={(event) => setScanCode(event.target.value)} placeholder="Card code" /><Button onClick={() => scan()}>Mark</Button></div></DialogContent>
+      </Dialog>
+      <Dialog open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{currentCalendarStudent?.userId?.name || "Attendance Calendar"}</DialogTitle><DialogDescription>{personIdValue(currentCalendarStudent || {} as Student)} • {date}</DialogDescription></DialogHeader>{currentCalendarStudent && renderMonthCalendar(currentCalendarStudent, `${calendarViewYear}-${String(calendarSelectedMonth).padStart(2, '0')}-01`)}<DialogFooter><Button variant="outline" onClick={() => setCalendarOpen(false)}>Close</Button></DialogFooter></DialogContent>
       </Dialog>
     </div>
   );
