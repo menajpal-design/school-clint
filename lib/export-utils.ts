@@ -198,28 +198,44 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   const html2canvas = (await import("html2canvas")).default;
   const jsPDF = (await import("jspdf")).default;
   await document.fonts?.ready?.catch(() => undefined);
+
+  const fullWidth = Math.max(target.scrollWidth, target.offsetWidth, target.getBoundingClientRect().width, 794);
+  const fullHeight = Math.max(target.scrollHeight, target.offsetHeight, target.getBoundingClientRect().height, 600);
+  const isWide = fullWidth > fullHeight * 0.72;
+
   const wrapper = document.createElement("div");
   wrapper.style.position = "fixed";
-  wrapper.style.left = "-9999px";
+  wrapper.style.left = "-99999px";
   wrapper.style.top = "0";
   wrapper.style.background = "#ffffff";
   wrapper.style.padding = "0";
-  wrapper.style.width = "794px";
-  wrapper.style.minHeight = "600px";
+  wrapper.style.width = `${fullWidth}px`;
+  wrapper.style.minWidth = `${fullWidth}px`;
+  wrapper.style.minHeight = `${fullHeight}px`;
   wrapper.style.overflow = "visible";
+  wrapper.style.zIndex = "-1";
+
   const clonedTarget = target.cloneNode(true) as HTMLElement;
-  const forceZoom = (el: Element) => {
+  const forceFullCapture = (el: Element) => {
     if (el instanceof HTMLElement) {
       el.style.zoom = "1";
       el.style.transform = "none";
+      el.style.maxWidth = "none";
+      el.style.overflow = "visible";
+      if (el === clonedTarget) {
+        el.style.width = `${fullWidth}px`;
+        el.style.minWidth = `${fullWidth}px`;
+      }
     }
-    Array.from(el.children).forEach(forceZoom);
+    Array.from(el.children).forEach(forceFullCapture);
   };
-  forceZoom(clonedTarget);
+
   copyComputedStyles(clonedTarget, target);
+  forceFullCapture(clonedTarget);
   await inlineImages(clonedTarget);
   wrapper.appendChild(clonedTarget);
   document.body.appendChild(wrapper);
+
   const canvas = await html2canvas(wrapper, {
     scale: 1.5,
     backgroundColor: "#ffffff",
@@ -228,15 +244,18 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
     foreignObjectRendering: false,
     scrollX: 0,
     scrollY: 0,
-    windowWidth: 794,
+    width: fullWidth,
+    height: Math.max(wrapper.scrollHeight, fullHeight),
+    windowWidth: fullWidth,
+    windowHeight: Math.max(wrapper.scrollHeight, fullHeight),
   });
   document.body.removeChild(wrapper);
 
-  const pdf = new jsPDF("p", "mm", "a4");
+  const pdf = new jsPDF(isWide ? "l" : "p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const marginX = 8;
-  const marginY = 8;
+  const marginX = 5;
+  const marginY = 5;
   const imgWidth = pageWidth - marginX * 2;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
   const imgData = canvas.toDataURL("image/png");
