@@ -6,8 +6,6 @@ const isLocal = isBrowser && /^(localhost|127\.0\.0\.1)$/i.test(window.location.
 
 const normalizeApiUrl = (value: string) => value.replace(/\/$/, '').replace(/\/api$/, '') + '/api';
 
-// Use same-origin /api in the browser so production and local builds go through the
-// Next.js proxy route instead of baking in a remote backend URL.
 const defaultBrowserApiUrl = isBrowser ? '/api' : '';
 const envApiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 const envApiTarget = process.env.NEXT_PUBLIC_API_TARGET || '';
@@ -107,6 +105,32 @@ export const apiClient = new ApiClient();
 const crud = (base: string) => ({ getAll: (params?: any) => apiClient.get(base, { params }), getById: (id: string) => apiClient.get(`${base}/${id}`), create: (data: any) => apiClient.post(base, data), update: (id: string, data: any) => apiClient.put(`${base}/${id}`, data), delete: (id: string) => apiClient.delete(`${base}/${id}`) });
 const studentApi = {
   ...crud('/students'),
+  getAll: async (params?: any) => {
+    const data: any = await apiClient.get('/students', { params });
+    const students = Array.isArray(data?.students) ? data.students : [];
+    if (students.length) return { ...data, students };
+    try {
+      const usersData: any = await apiClient.get('/users', { params });
+      const users = Array.isArray(usersData?.users) ? usersData.users : [];
+      const studentUsers = users
+        .filter((user: any) => user?.role === 'student')
+        .map((user: any) => ({
+          _id: `user-${user._id}`,
+          rollNumber: user.rollNumber || '',
+          admissionDate: user.createdAt,
+          isActive: user.isActive !== false,
+          userId: { _id: user._id, name: user.name, username: user.username, phone: user.phone, avatar: user.avatar },
+          classId: user.classId || undefined,
+          sectionId: user.sectionId || undefined,
+          parentId: undefined,
+          guardianName: '',
+          guardianPhone: '',
+        }));
+      return { ...data, students: studentUsers, fallbackFromUsers: true };
+    } catch {
+      return { ...data, students };
+    }
+  },
   create: async (data: any) => {
     const payload = { ...data };
     delete payload.email;
