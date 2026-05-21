@@ -48,12 +48,25 @@ const writeJson = (key: string, value: any[]) => {
   if (typeof window === "undefined") return;
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
 };
+const idOf = (item: any) => String(item?._id || item || "");
 const normalizeSubjects = (items: any[]) => items.map((item) => ({
   ...item,
   _id: String(item._id || item.id || item.code || item.name || Math.random()),
   name: item.name || item.subjectName || item.code || "Subject",
   classId: item.classId,
 }));
+const normalizeClasses = (items: any[]) => items
+  .map((item) => typeof item === "object" ? item : { _id: String(item), name: String(item) })
+  .filter((item) => item?._id || item?.name)
+  .map((item, index) => ({ ...item, _id: String(item._id || item.id || item.name || `class-${index}`), name: item.name || item.className || `Class ${index + 1}` }));
+const uniqueById = (items: any[]) => {
+  const map = new Map<string, any>();
+  items.forEach((item) => {
+    const id = idOf(item);
+    if (id && !map.has(id)) map.set(id, item);
+  });
+  return Array.from(map.values());
+};
 
 export default function ClassRoutinePage() {
   const { user } = useAuth();
@@ -82,9 +95,16 @@ export default function ClassRoutinePage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const selectedClass = classes.find((item) => item._id === classId);
+  const routineClasses = useMemo(() => normalizeClasses(routines.map((routine) => routine.classId).filter(Boolean)), [routines]);
+  const formClassOption = useMemo(() => {
+    if (!form.classId) return [];
+    const fromEditing = editing?.classId && idOf(editing.classId) === String(form.classId) ? editing.classId : null;
+    return normalizeClasses([fromEditing || { _id: form.classId, name: "Selected Class" }]);
+  }, [editing, form.classId]);
+  const classOptions = useMemo(() => uniqueById([...normalizeClasses(classes), ...routineClasses, ...formClassOption]), [classes, routineClasses, formClassOption]);
+  const selectedClass = classOptions.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item: any) => item.isActive !== false) || [];
-  const formClass = classes.find((item) => item._id === form.classId);
+  const formClass = classOptions.find((item) => item._id === form.classId);
   const classSubjects = useMemo(() => {
     const matched = subjects.filter((subject) => !form.classId || String(subject.classId?._id || subject.classId || "") === String(form.classId));
     return matched.length ? matched : subjects;
@@ -101,12 +121,16 @@ export default function ClassRoutinePage() {
     if (isViewOnly) return;
     setError("");
     try {
-      const [classResponse, subjectResponse, teacherResponse] = await Promise.all([
-        api.academic.classes.getAll().catch(() => ({ classes: readJson(CLASS_CACHE_KEY) })) as Promise<any>,
+      const [classResponse, subjectResponse, teacherResponse, academicFallback] = await Promise.all([
+        api.academic.classes.getAll().catch(() => ({ classes: [] })) as Promise<any>,
         api.academic.subjects.getAll().catch(() => ({ subjects: readJson(SUBJECT_CACHE_KEY) })) as Promise<any>,
         api.teachers.getAll().catch(() => ({ teachers: readJson(TEACHER_CACHE_KEY) })) as Promise<any>,
+        apiClient.get("/academic").catch(() => ({})) as Promise<any>,
       ]);
-      const nextClasses = Array.isArray(classResponse.classes) && classResponse.classes.length ? classResponse.classes : readJson(CLASS_CACHE_KEY);
+      const apiClasses = Array.isArray(classResponse.classes) ? classResponse.classes : [];
+      const academicClasses = Array.isArray(academicFallback?.classes) ? academicFallback.classes : [];
+      const cachedClasses = readJson(CLASS_CACHE_KEY);
+      const nextClasses = uniqueById(normalizeClasses(apiClasses.length ? apiClasses : academicClasses.length ? academicClasses : cachedClasses));
       const nextSubjects = Array.isArray(subjectResponse.subjects) && subjectResponse.subjects.length ? normalizeSubjects(subjectResponse.subjects) : normalizeSubjects(readJson(SUBJECT_CACHE_KEY));
       const nextTeachers = Array.isArray(teacherResponse.teachers) && teacherResponse.teachers.length ? teacherResponse.teachers : readJson(TEACHER_CACHE_KEY);
       setClasses(nextClasses);
@@ -117,9 +141,10 @@ export default function ClassRoutinePage() {
       writeJson(TEACHER_CACHE_KEY, nextTeachers);
       const firstClass = nextClasses?.[0]?._id || "";
       setClassId((current) => current || firstClass);
-      if (!nextSubjects.length) setMessage("Subject পাওয়া যায়নি। আগে Academic > Subjects থেকে subject add করুন, তারপর routine edit করুন।");
+      if (!nextClasses.length) setMessage("Class পাওয়া যায়নি। আগে Academic > Classes থেকে class add করুন, তারপর routine edit/add করুন।");
+      else if (!nextSubjects.length) setMessage("Subject পাওয়া যায়নি। আগে Academic > Subjects থেকে subject add করুন, তারপর routine edit করুন।");
     } catch (err: any) {
-      setClasses(readJson(CLASS_CACHE_KEY));
+      setClasses(normalizeClasses(readJson(CLASS_CACHE_KEY)));
       setSubjects(normalizeSubjects(readJson(SUBJECT_CACHE_KEY)));
       setTeachers(readJson(TEACHER_CACHE_KEY));
       setError(err?.message || "Failed to load class/subject/teacher list");
@@ -136,7 +161,10 @@ export default function ClassRoutinePage() {
       if (statusFilter && !isViewOnly) params.set("status", statusFilter);
       const endpoint = isViewOnly ? `/class-routines/my?${params.toString()}` : `/class-routines?${params.toString()}`;
       const data = await apiClient.get(endpoint) as any;
-      setRoutines(data.routines || []);
+      const nextRoutines = data.routines || [];
+      setRoutines(nextRoutines);
+      const fromRoutines = normalizeClasses(nextRoutines.map((routine: any) => routine.classId).filter(Boolean));
+      if (fromRoutines.length) setClasses((current) => uniqueById([...normalizeClasses(current), ...fromRoutines]));
     } catch (err: any) {
       setError(err?.message || "Failed to load class routines");
     } finally {
@@ -144,17 +172,20 @@ export default function ClassRoutinePage() {
     }
   };
 
-  useEffect(() => { loadLookups().catch(() => undefined); }, [isViewOnly]);
+  useEffect(() => { loadLookups().catch(() => undefined); }, [isViewOnly, role]);
   useEffect(() => { loadRoutines(); }, [classId, sectionId, statusFilter, isViewOnly]);
 
   const openCreate = () => {
+    const firstClass = classId || classOptions[0]?._id || classes[0]?._id || "";
     setEditing(null);
-    setForm({ ...emptyForm, classId: classId || classes[0]?._id || "", sectionId: sectionId || "", status: canApprove ? "approved" : "proposed", isPublic: canApprove });
+    setForm({ ...emptyForm, classId: firstClass, sectionId: sectionId || "", status: canApprove ? "approved" : "proposed", isPublic: canApprove });
     setOpen(true);
   };
 
   const openEdit = (routine: any) => {
     setEditing(routine);
+    const routineClass = normalizeClasses([routine.classId]).filter(Boolean);
+    if (routineClass.length) setClasses((current) => uniqueById([...normalizeClasses(current), ...routineClass]));
     setForm({
       classId: routine.classId?._id || routine.classId || "",
       sectionId: routine.sectionId?._id || routine.sectionId || "",
@@ -256,8 +287,8 @@ export default function ClassRoutinePage() {
 
       {!isViewOnly && <section className="rounded-lg border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-4">
-          <label className="space-y-2"><span className="text-sm font-medium">Class</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={classId} onChange={(e) => { setClassId(e.target.value); setSectionId(""); }}><option value="">All classes</option>{classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label>
-          <label className="space-y-2"><span className="text-sm font-medium">Section</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={sectionId} onChange={(e) => setSectionId(e.target.value)}><option value="">All sections</option>{sections.map((item: any) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label>
+          <label className="space-y-2"><span className="text-sm font-medium">Class</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={classId} onChange={(e) => { setClassId(e.target.value); setSectionId(""); }}><option value="">All classes</option>{classOptions.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label>
+          <label className="space-y-2"><span className="text-sm font-medium">Section</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={sectionId} onChange={(e) => setSectionId(e.target.value)}><option value="">All sections</option>{sections.map((item: any) => <option key={item._id || item.name} value={item._id || item.name}>{item.name}</option>)}</select></label>
           <label className="space-y-2"><span className="text-sm font-medium">Status</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option value="">All status</option><option value="proposed">Proposed</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="draft">Draft</option></select></label>
           <div className="flex items-end"><Button variant="outline" onClick={loadRoutines} className="w-full">Apply Filter</Button></div>
         </div>
@@ -351,8 +382,8 @@ export default function ClassRoutinePage() {
         <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle>{editing ? "Edit Class Routine" : canApprove ? "Create Class Routine" : "Propose Class Routine"}</DialogTitle><DialogDescription>Teachers can submit proposal. Head or Assistant Head can approve and publish.</DialogDescription></DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Class"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.classId} onChange={(e) => setForm({ ...form, classId: e.target.value, sectionId: "", subjectId: "" })}><option value="">Select class</option>{classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></Field>
-            <Field label="Section"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.sectionId} onChange={(e) => setForm({ ...form, sectionId: e.target.value })}><option value="">All sections</option>{(formClass?.sections || []).map((item: any) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></Field>
+            <Field label="Class"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.classId} onChange={(e) => setForm({ ...form, classId: e.target.value, sectionId: "", subjectId: "" })}><option value="">Select class</option>{classOptions.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></Field>
+            <Field label="Section"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.sectionId} onChange={(e) => setForm({ ...form, sectionId: e.target.value })}><option value="">All sections</option>{(formClass?.sections || []).map((item: any) => <option key={item._id || item.name} value={item._id || item.name}>{item.name}</option>)}</select></Field>
             <Field label="Subject"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })}><option value="">{classSubjects.length ? "Select subject" : "No subject found"}</option>{classSubjects.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></Field>
             <Field label="Teacher"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.teacherId} onChange={(e) => setForm({ ...form, teacherId: e.target.value })}><option value="">Select teacher</option>{teachers.map((item: any) => <option key={item.userId?._id || item._id} value={item.userId?._id || item._id}>{item.userId?.name || item.name || item.employeeId}</option>)}</select></Field>
             <Field label="Day"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.dayOfWeek} onChange={(e) => setForm({ ...form, dayOfWeek: e.target.value })}>{days.map((day) => <option key={day} value={day}>{prettyDay(day)}</option>)}</select></Field>
@@ -363,6 +394,7 @@ export default function ClassRoutinePage() {
             <Field label="Proposal Note"><Input value={form.proposalNote} onChange={(e) => setForm({ ...form, proposalNote: e.target.value })} /></Field>
             {canApprove && <><Field label="Status"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}><option value="draft">Draft</option><option value="proposed">Proposed</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></Field><label className="flex items-center gap-3 rounded-lg border p-3"><input type="checkbox" checked={form.isPublic} onChange={(e) => setForm({ ...form, isPublic: e.target.checked })} /><span className="text-sm font-medium">Publish for students/parents</span></label></>}
           </div>
+          {!classOptions.length && <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">Class not found. Go to Academic &gt; Classes and add class first, then refresh this page.</div>}
           {!classSubjects.length && <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">Subject not found. Go to Academic &gt; Subjects and add subject first, then refresh this page.</div>}
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button disabled={saving || !form.classId || !form.dayOfWeek || !form.startTime || !form.endTime} onClick={saveRoutine}>{saving ? "Saving..." : canApprove ? "Save Routine" : "Submit Proposal"}</Button></DialogFooter>
         </DialogContent>
