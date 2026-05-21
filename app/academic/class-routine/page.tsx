@@ -14,6 +14,9 @@ import { useAuth } from "@/hooks/useAuth";
 
 const days = ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"];
 const periods = ["1", "2", "3", "4", "Break", "5", "6", "7"];
+const SUBJECT_CACHE_KEY = "easy-school-subject-cache-v2";
+const CLASS_CACHE_KEY = "easy-school-syllabus-class-cache-v1";
+const TEACHER_CACHE_KEY = "easy-school-routine-teacher-cache-v1";
 const headRoles = ["head", "assistant_head", "admin", "super_admin"];
 const proposalRoles = ["class_teacher", "subject_teacher", "teacher"];
 const viewOnlyRoles = ["student", "parent"];
@@ -37,6 +40,20 @@ const emptyForm = {
 
 const prettyDay = (day: string) => day.charAt(0).toUpperCase() + day.slice(1);
 const periodSort = (value: string) => value.toLowerCase().includes("break") ? 4.5 : Number(String(value).replace(/[^0-9]/g, "")) || 99;
+const readJson = (key: string) => {
+  if (typeof window === "undefined") return [] as any[];
+  try { const data = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(data) ? data : []; } catch { return []; }
+};
+const writeJson = (key: string, value: any[]) => {
+  if (typeof window === "undefined") return;
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
+};
+const normalizeSubjects = (items: any[]) => items.map((item) => ({
+  ...item,
+  _id: String(item._id || item.id || item.code || item.name || Math.random()),
+  name: item.name || item.subjectName || item.code || "Subject",
+  classId: item.classId,
+}));
 
 export default function ClassRoutinePage() {
   const { user } = useAuth();
@@ -69,7 +86,7 @@ export default function ClassRoutinePage() {
   const sections = selectedClass?.sections?.filter((item: any) => item.isActive !== false) || [];
   const formClass = classes.find((item) => item._id === form.classId);
   const classSubjects = useMemo(() => {
-    const matched = subjects.filter((subject) => !form.classId || subject.classId?._id === form.classId || subject.classId === form.classId);
+    const matched = subjects.filter((subject) => !form.classId || String(subject.classId?._id || subject.classId || "") === String(form.classId));
     return matched.length ? matched : subjects;
   }, [subjects, form.classId]);
   const filteredRoutines = routines.filter((routine) => !statusFilter || routine.status === statusFilter);
@@ -82,16 +99,31 @@ export default function ClassRoutinePage() {
 
   const loadLookups = async () => {
     if (isViewOnly) return;
-    const [classResponse, subjectResponse, teacherResponse] = await Promise.all([
-      api.academic.classes.getAll() as Promise<any>,
-      api.academic.subjects.getAll() as Promise<any>,
-      api.teachers.getAll() as Promise<any>,
-    ]);
-    setClasses(classResponse.classes || []);
-    setSubjects(subjectResponse.subjects || []);
-    setTeachers(teacherResponse.teachers || []);
-    const firstClass = classResponse.classes?.[0]?._id || "";
-    setClassId((current) => current || firstClass);
+    setError("");
+    try {
+      const [classResponse, subjectResponse, teacherResponse] = await Promise.all([
+        api.academic.classes.getAll().catch(() => ({ classes: readJson(CLASS_CACHE_KEY) })) as Promise<any>,
+        api.academic.subjects.getAll().catch(() => ({ subjects: readJson(SUBJECT_CACHE_KEY) })) as Promise<any>,
+        api.teachers.getAll().catch(() => ({ teachers: readJson(TEACHER_CACHE_KEY) })) as Promise<any>,
+      ]);
+      const nextClasses = Array.isArray(classResponse.classes) && classResponse.classes.length ? classResponse.classes : readJson(CLASS_CACHE_KEY);
+      const nextSubjects = Array.isArray(subjectResponse.subjects) && subjectResponse.subjects.length ? normalizeSubjects(subjectResponse.subjects) : normalizeSubjects(readJson(SUBJECT_CACHE_KEY));
+      const nextTeachers = Array.isArray(teacherResponse.teachers) && teacherResponse.teachers.length ? teacherResponse.teachers : readJson(TEACHER_CACHE_KEY);
+      setClasses(nextClasses);
+      setSubjects(nextSubjects);
+      setTeachers(nextTeachers);
+      writeJson(CLASS_CACHE_KEY, nextClasses);
+      writeJson(SUBJECT_CACHE_KEY, nextSubjects);
+      writeJson(TEACHER_CACHE_KEY, nextTeachers);
+      const firstClass = nextClasses?.[0]?._id || "";
+      setClassId((current) => current || firstClass);
+      if (!nextSubjects.length) setMessage("Subject পাওয়া যায়নি। আগে Academic > Subjects থেকে subject add করুন, তারপর routine edit করুন।");
+    } catch (err: any) {
+      setClasses(readJson(CLASS_CACHE_KEY));
+      setSubjects(normalizeSubjects(readJson(SUBJECT_CACHE_KEY)));
+      setTeachers(readJson(TEACHER_CACHE_KEY));
+      setError(err?.message || "Failed to load class/subject/teacher list");
+    }
   };
 
   const loadRoutines = async () => {
@@ -215,7 +247,7 @@ export default function ClassRoutinePage() {
         icon={CalendarDays}
         status={<Badge variant="outline">{filteredRoutines.length} routine items</Badge>}
         actions={[
-          <Button key="refresh" size="sm" variant="outline" onClick={loadRoutines}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
+          <Button key="refresh" size="sm" variant="outline" onClick={() => { loadLookups(); loadRoutines(); }}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
           <Button key="download" size="sm" variant="outline" onClick={downloadPdf}><Download className="mr-2 h-4 w-4" />PDF Download</Button>,
           canPropose && <Button key="preview-edit" size="sm" variant="outline" onClick={openPreviewEditor}><Edit2 className="mr-2 h-4 w-4" />Edit Routine</Button>,
           canPropose && <Button key="add" size="sm" onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{canApprove ? "Create Routine" : "Propose Routine"}</Button>,
@@ -321,7 +353,7 @@ export default function ClassRoutinePage() {
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Class"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.classId} onChange={(e) => setForm({ ...form, classId: e.target.value, sectionId: "", subjectId: "" })}><option value="">Select class</option>{classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></Field>
             <Field label="Section"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.sectionId} onChange={(e) => setForm({ ...form, sectionId: e.target.value })}><option value="">All sections</option>{(formClass?.sections || []).map((item: any) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></Field>
-            <Field label="Subject"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })}><option value="">Select subject</option>{classSubjects.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></Field>
+            <Field label="Subject"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: e.target.value })}><option value="">{classSubjects.length ? "Select subject" : "No subject found"}</option>{classSubjects.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></Field>
             <Field label="Teacher"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.teacherId} onChange={(e) => setForm({ ...form, teacherId: e.target.value })}><option value="">Select teacher</option>{teachers.map((item: any) => <option key={item.userId?._id || item._id} value={item.userId?._id || item._id}>{item.userId?.name || item.name || item.employeeId}</option>)}</select></Field>
             <Field label="Day"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.dayOfWeek} onChange={(e) => setForm({ ...form, dayOfWeek: e.target.value })}>{days.map((day) => <option key={day} value={day}>{prettyDay(day)}</option>)}</select></Field>
             <Field label="Period"><Input value={form.periodName} onChange={(e) => setForm({ ...form, periodName: e.target.value })} placeholder="1, 2, 3 or Break" /></Field>
@@ -331,6 +363,7 @@ export default function ClassRoutinePage() {
             <Field label="Proposal Note"><Input value={form.proposalNote} onChange={(e) => setForm({ ...form, proposalNote: e.target.value })} /></Field>
             {canApprove && <><Field label="Status"><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}><option value="draft">Draft</option><option value="proposed">Proposed</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></Field><label className="flex items-center gap-3 rounded-lg border p-3"><input type="checkbox" checked={form.isPublic} onChange={(e) => setForm({ ...form, isPublic: e.target.checked })} /><span className="text-sm font-medium">Publish for students/parents</span></label></>}
           </div>
+          {!classSubjects.length && <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">Subject not found. Go to Academic &gt; Subjects and add subject first, then refresh this page.</div>}
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button disabled={saving || !form.classId || !form.dayOfWeek || !form.startTime || !form.endTime} onClick={saveRoutine}>{saving ? "Saving..." : canApprove ? "Save Routine" : "Submit Proposal"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
@@ -350,6 +383,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <label className="space-y-2"><span className="text-sm font-medium">{label}</span>{children}</label>;
 }
 
-function Info({ label, value }: { label: string; value: React.ReactNode }) {
+function Info({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   return <div><div className="text-xs font-semibold uppercase text-muted-foreground">{label}</div><div className="text-sm font-medium text-slate-900">{value || "-"}</div></div>;
 }
