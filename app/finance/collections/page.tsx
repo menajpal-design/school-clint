@@ -7,11 +7,16 @@ import { WebcamScanner } from "@/components/id-cards/WebcamScanner";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { api } from "@/lib/api";
+import { api, apiClient } from "@/lib/api";
 import { printHtml } from "@/lib/export-utils";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+const financeApi = {
+  collections: (params: any) => apiClient.get('/finance/collections', { params }),
+  collectPayment: (data: any) => apiClient.post('/finance/payments', data),
+};
 
 export default function CollectionsPage() {
   const [search, setSearch] = useState("");
@@ -41,7 +46,7 @@ export default function CollectionsPage() {
     setLoading(true);
     setError("");
     try {
-      const data = await api.finance.collections({ search }) as any;
+      const data = await financeApi.collections({ search }) as any;
       setStudents(data.students || []);
     } catch (err: any) {
       setError(err?.message || "Failed to load students.");
@@ -64,7 +69,7 @@ export default function CollectionsPage() {
     setError("");
     setMessage("");
     try {
-      const data = await api.finance.payments.create({ studentId: selected._id, amount, paymentMethod, notes }) as any;
+      const data = await financeApi.collectPayment({ studentId: selected._id, amount, paymentMethod, notes }) as any;
       setReceipt(data.payment);
       setMessage("Payment collected successfully. Receipt is ready.");
       await load();
@@ -143,6 +148,6 @@ export default function CollectionsPage() {
 
     {receipt && <Card><CardContent className="p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="text-xl font-semibold">Receipt Preview</h2><p className="text-sm text-slate-500">{receipt.receiptNumber}</p></div><Button variant="outline" onClick={printReceipt} className="w-full sm:w-auto"><Printer className="mr-2 h-4 w-4" />Print Receipt</Button></div><div className="mt-4 grid gap-2 text-sm md:grid-cols-2"><p>Student: {receipt.studentId?.userId?.name || selected?.userId?.name}</p><p>Amount: {formatCurrency(receipt.amount || 0)}</p><p>Method: {receipt.paymentMethod}</p><p>Date: {formatDate(receipt.paymentDate || new Date())}</p></div></CardContent></Card>}
 
-    <Dialog open={scanOpen} onOpenChange={setScanOpen}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Scan ID Card</DialogTitle></DialogHeader><WebcamScanner enabled={scanOpen} onScan={(code) => { setSearch(code); setScanOpen(false); setTimeout(() => load(), 100); }} /></DialogContent></Dialog>
+    <Dialog open={scanOpen} onOpenChange={setScanOpen}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Scan ID Card</DialogTitle><DialogDescription>Scan a student ID card to search and collect fees.</DialogDescription></DialogHeader><WebcamScanner enabled={scanOpen} onScan={(code) => { setSearch(code); setScanOpen(false); setTimeout(() => load(), 100); }} /></DialogContent></Dialog>
   </div>;
 }
