@@ -12,6 +12,8 @@ import { printHtml } from "@/lib/export-utils";
 
 const manageRoles = ["head", "assistant_head", "admin", "super_admin", "subject_teacher", "class_teacher"];
 const SYLLABUS_CACHE_KEY = "easy-school-syllabus-cache-v2";
+const CLASS_CACHE_KEY = "easy-school-syllabus-class-cache-v1";
+const SUBJECT_CACHE_KEY = "easy-school-syllabus-subject-cache-v1";
 const termOptions = [
   { value: "full_year", label: "Full Year" },
   { value: "first_term", label: "First Term" },
@@ -41,14 +43,16 @@ const toast = (title: string, message: string, type: "success" | "error" | "info
   window.appToast?.({ title, message, type, duration: type === "success" ? 5500 : 7500 });
   window.dispatchEvent(new CustomEvent("app-toast", { detail: { title, message, type, duration: type === "success" ? 5500 : 7500 } }));
 };
-const readCache = () => {
+const readJson = (key: string) => {
   if (typeof window === "undefined") return [] as any[];
-  try { const items = JSON.parse(localStorage.getItem(SYLLABUS_CACHE_KEY) || "[]"); return Array.isArray(items) ? items : []; } catch { return []; }
+  try { const items = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(items) ? items : []; } catch { return []; }
 };
-const writeCache = (items: any[]) => {
+const writeJson = (key: string, items: any[]) => {
   if (typeof window === "undefined") return;
-  try { localStorage.setItem(SYLLABUS_CACHE_KEY, JSON.stringify(items)); } catch { /* ignore */ }
+  try { localStorage.setItem(key, JSON.stringify(items)); } catch { /* ignore */ }
 };
+const readCache = () => readJson(SYLLABUS_CACHE_KEY);
+const writeCache = (items: any[]) => writeJson(SYLLABUS_CACHE_KEY, items);
 const normalizeItem = (item: any, classes: any[], subjects: any[]) => {
   const classId = String(item.classId?._id || item.classId || "");
   const subjectId = String(item.subjectId?._id || item.subjectId || "");
@@ -100,13 +104,15 @@ export default function AcademicSyllabusPage() {
     setError("");
     try {
       const [classRes, subjectRes] = await Promise.all([
-        canManage ? api.academic.classes.getAll().catch(() => ({ classes: [] })) as Promise<any> : Promise.resolve({ classes: [] }),
-        canManage ? api.academic.subjects.getAll().catch(() => ({ subjects: [] })) as Promise<any> : Promise.resolve({ subjects: [] }),
+        api.academic.classes.getAll().catch(() => ({ classes: readJson(CLASS_CACHE_KEY) })) as Promise<any>,
+        api.academic.subjects.getAll().catch(() => ({ subjects: readJson(SUBJECT_CACHE_KEY) })) as Promise<any>,
       ]);
-      const nextClasses = classRes.classes || [];
-      const nextSubjects = subjectRes.subjects || [];
+      const nextClasses = Array.isArray(classRes.classes) && classRes.classes.length ? classRes.classes : readJson(CLASS_CACHE_KEY);
+      const nextSubjects = Array.isArray(subjectRes.subjects) && subjectRes.subjects.length ? subjectRes.subjects : readJson(SUBJECT_CACHE_KEY);
       setClasses(nextClasses);
       setSubjects(nextSubjects);
+      writeJson(CLASS_CACHE_KEY, nextClasses);
+      writeJson(SUBJECT_CACHE_KEY, nextSubjects);
 
       let liveList: any[] = [];
       try {
@@ -119,7 +125,9 @@ export default function AcademicSyllabusPage() {
       const finalList = liveList.length ? liveList : readCache();
       const normalized = mergeAndSetSyllabus(finalList, nextClasses, nextSubjects);
       setForm((current: any) => ({ ...current, classId: current.classId || nextClasses?.[0]?._id || "" }));
+      if (nextClasses.length || nextSubjects.length) showSuccess(`✅ Class/Subject loaded. Class: ${nextClasses.length}, Subject: ${nextSubjects.length}.`, "Class subject loaded / লোড হয়েছে");
       if (normalized.length) showSuccess(`✅ Syllabus list loaded successfully. মোট ${normalized.length}টি syllabus পাওয়া গেছে।`, "Syllabus loaded / লোড হয়েছে");
+      else if (!nextClasses.length) showInfo("ℹ️ Class পাওয়া যায়নি। আগে Academic > Classes থেকে class তৈরি করুন, তারপর syllabus add করুন।");
       else showInfo("ℹ️ এখনো কোনো syllabus নেই। Add Syllabus form থেকে নতুন syllabus তৈরি করুন।");
     } catch (err: any) {
       const cached = readCache();
@@ -127,14 +135,14 @@ export default function AcademicSyllabusPage() {
         setSyllabus(cached);
         showInfo(`ℹ️ Live API থেকে syllabus আসেনি, cached ${cached.length}টি syllabus দেখানো হচ্ছে।`, "Syllabus cache loaded");
       } else {
-        showError(`❌ Syllabus list load হয়নি। কারণ: ${err?.message || "Failed to load syllabus."}`);
+        showError(`❌ Syllabus/class/subject load হয়নি। কারণ: ${err?.message || "Failed to load syllabus."}`);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load().catch(() => undefined); }, []);
+  useEffect(() => { load().catch(() => undefined); }, [user?.role]);
 
   const updateChapter = (index: number, key: string, value: any) => {
     setForm((current: any) => ({ ...current, chapters: current.chapters.map((chapter: any, i: number) => i === index ? { ...chapter, [key]: value } : chapter) }));
