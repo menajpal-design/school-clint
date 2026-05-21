@@ -38,8 +38,8 @@ const SUBJECT_CACHE_KEY = "easy-school-subject-cache-v2";
 const emptyForm = (): SubjectForm => ({ name: "", code: "", type: "core", classId: "", teacherId: "", description: "", creditHours: 1, isActive: true });
 const toast = (title: string, message: string, type: "success" | "error" | "info" = "success") => {
   if (typeof window === "undefined") return;
-  window.appToast?.({ title, message, type, duration: type === "success" ? 4500 : 6500 });
-  window.dispatchEvent(new CustomEvent("app-toast", { detail: { title, message, type, duration: type === "success" ? 4500 : 6500 } }));
+  window.appToast?.({ title, message, type, duration: type === "success" ? 5500 : 7500 });
+  window.dispatchEvent(new CustomEvent("app-toast", { detail: { title, message, type, duration: type === "success" ? 5500 : 7500 } }));
 };
 const getId = (value: any) => String(value?._id || value || "");
 const getName = (value: any, fallback = "") => typeof value === "object" && value?.name ? value.name : fallback;
@@ -127,16 +127,16 @@ export default function SubjectsPage() {
       if (!normalized.length) normalized = readCachedSubjects();
       setSubjects(normalized);
       writeCachedSubjects(normalized);
-      if (normalized.length) showNotice("success", `${normalized.length} subject record loaded.`, "Subjects loaded");
-      else setNotice({ type: "info", message: "No subject found yet. Add a subject to create the first record." });
+      if (normalized.length) showNotice("success", `✅ Subject list loaded successfully. মোট ${normalized.length}টি subject পাওয়া গেছে।`, "Subjects loaded / লোড হয়েছে");
+      else setNotice({ type: "info", message: "ℹ️ এখনো কোনো subject নেই। Add Subject চাপ দিয়ে নতুন subject তৈরি করুন।" });
     } catch (err: any) {
       const cached = readCachedSubjects();
       if (cached.length) {
         setSubjects(cached);
-        showNotice("info", `Live subject API failed, showing ${cached.length} cached subject record.`, "Subjects cache loaded");
+        showNotice("info", `ℹ️ Live API থেকে subject আসেনি, cached ${cached.length}টি subject দেখানো হচ্ছে।`, "Subjects cache loaded");
       } else {
         const message = err?.message || "Failed to load subject data";
-        showNotice("error", message, "Subject API Error");
+        showNotice("error", `❌ Subject list load হয়নি। কারণ: ${message}`, "Subject API Error");
       }
     } finally { setLoading(false); }
   };
@@ -174,19 +174,19 @@ export default function SubjectsPage() {
       if (editingSubject) {
         const response: any = await api.academic.subjects.update(editingSubject._id, form);
         upsertLocalSubjects([response.subject || { ...form, _id: editingSubject._id }]);
-        showNotice("success", `${form.name} updated successfully.`, "Subject updated");
+        showNotice("success", `✅ Subject update হয়েছে: ${form.name}. List refresh হয়েছে।`, "Subject updated / আপডেট হয়েছে");
       } else {
         const bulkItems = parseBulkSubjects();
         const response: any = await api.academic.subjects.create(bulkItems.length > 0 ? { items: bulkItems } : form);
         const created = Array.isArray(response?.subjects) ? response.subjects : response?.subject ? [response.subject] : bulkItems.length ? bulkItems.map((item, index) => ({ ...item, _id: `local-${Date.now()}-${index}` })) : [{ ...form, _id: `local-${Date.now()}` }];
         const count = upsertLocalSubjects(created);
-        showNotice("success", `${count || 1} subject saved successfully. List updated.`, "Subject added");
+        showNotice("success", `✅ Subject add হয়েছে। ${count || 1}টি subject save হয়েছে এবং list update হয়েছে।`, "Subject added / যোগ হয়েছে");
       }
       setFormOpen(false);
       loadData().catch(() => undefined);
     } catch (err: any) {
       const message = err?.message || "Failed to save subject";
-      showNotice("error", message, "Subject Save Failed");
+      showNotice("error", `❌ Subject save হয়নি। কারণ: ${message}`, "Subject Save Failed / সেভ হয়নি");
     } finally { setSaving(false); }
   };
 
@@ -196,12 +196,12 @@ export default function SubjectsPage() {
       await api.academic.subjects.delete(deleteTarget._id);
       const next = subjects.filter((subject) => subject._id !== deleteTarget._id);
       setSubjects(next); writeCachedSubjects(next);
-      showNotice("success", `${deleteTarget.name} deleted successfully.`, "Subject deleted");
+      showNotice("success", `✅ Subject delete হয়েছে: ${deleteTarget.name}.`, "Subject deleted / ডিলিট হয়েছে");
       setDeleteTarget(null);
       loadData().catch(() => undefined);
     } catch (err: any) {
       const message = err?.message || "Failed to delete subject";
-      showNotice("error", message, "Subject Delete Failed");
+      showNotice("error", `❌ Subject delete হয়নি। কারণ: ${message}`, "Subject Delete Failed / ডিলিট হয়নি");
     } finally { setSaving(false); }
   };
 
