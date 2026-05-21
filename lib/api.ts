@@ -25,6 +25,11 @@ async function withTimeout(input: RequestInfo | URL, init: RequestInit = {}, ms 
   finally { clearTimeout(timer); }
 }
 
+const showAppToast = (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
+  if (!isBrowser) return;
+  window.dispatchEvent(new CustomEvent('app-toast', { detail: { title, message, type, duration: 4500 } }));
+};
+
 class ApiClient {
   private currentToken: string | null = null;
   private lastToast = 0;
@@ -102,6 +107,19 @@ class ApiClient {
 
 export const apiClient = new ApiClient();
 const crud = (base: string) => ({ getAll: (params?: any) => apiClient.get(base, { params }), getById: (id: string) => apiClient.get(`${base}/${id}`), create: (data: any) => apiClient.post(base, data), update: (id: string, data: any) => apiClient.put(`${base}/${id}`, data), delete: (id: string) => apiClient.delete(`${base}/${id}`) });
+const studentApi = {
+  ...crud('/students'),
+  create: async (data: any) => {
+    const result = await apiClient.post('/students', data);
+    showAppToast('Student admitted', 'Student profile saved and login account created.', 'success');
+    return result;
+  },
+  update: async (id: string, data: any) => {
+    const result = await apiClient.put(`/students/${id}`, data);
+    showAppToast('Student updated', 'Student information saved successfully.', 'success');
+    return result;
+  },
+};
 const idCardApi = {
   ...crud('/id-cards'),
   getMine: () => apiClient.get('/id-cards/me/card'),
@@ -122,7 +140,7 @@ export const api: any = {
   admissions: { schools: (p?: any) => apiClient.get('/admissions/public/schools', { params: p }), apply: (d: any) => apiClient.post('/admissions/public/apply', d), getAll: () => apiClient.get('/admissions'), accept: (id: string, d?: any) => apiClient.post(`/admissions/${id}/accept`, d), reject: (id: string) => apiClient.post(`/admissions/${id}/reject`) },
   publicResults: { schools: (p?: any) => apiClient.get('/academic/public/results/schools', { params: p }), options: (p?: any) => apiClient.get('/academic/public/results/options', { params: p }), lookup: (p: any) => apiClient.get('/academic/public/results', { params: p }) },
   users: { ...crud('/users'), getAllUsers: () => apiClient.get('/users/all'), updateStatus: (id: string, isActive: boolean) => apiClient.patch(`/users/${id}/status`, { isActive }), updateRole: (id: string, role: string) => apiClient.patch(`/users/${id}/role`, { role }), resetPassword: (id: string, password?: string) => apiClient.post(`/users/${id}/reset-password`, password ? { password } : undefined), permissions: () => apiClient.get('/users/permissions'), updatePermissions: (matrix: any) => apiClient.put('/users/permissions', { matrix }) },
-  students: crud('/students'), teachers: crud('/teachers'), staff: crud('/staff'), documents: crud('/documents'), notices: crud('/notices'), idCards: idCardApi, payroll: crud('/payroll'), promotions: crud('/promotions'), holidays: crud('/holidays'),
+  students: studentApi, teachers: crud('/teachers'), staff: crud('/staff'), documents: crud('/documents'), notices: crud('/notices'), idCards: idCardApi, payroll: crud('/payroll'), promotions: crud('/promotions'), holidays: crud('/holidays'),
   library: { books: crud('/library/books'), loans: crud('/library/loans'), issue: (d: any) => apiClient.post('/library/loans/issue', d), return: (d: any) => apiClient.post('/library/loans/return', d) },
   institution: { plans: () => apiClient.get('/institution/plans'), profile: () => apiClient.get('/institution/profile'), updateProfile: (d: any) => apiClient.put('/institution/profile', d), recordPayment: (d: any) => apiClient.post('/institution/billing/payment', d) },
   admin: { schools: (p?: any) => apiClient.get('/admin/schools', { params: p }), accounting: (p?: any) => apiClient.get('/admin/accounting', { params: p }), updateSchool: (id: string, d: any) => apiClient.patch(`/admin/schools/${id}`, d), verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`), selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`), users: (p?: any) => apiClient.get('/admin/users', { params: p }) },
