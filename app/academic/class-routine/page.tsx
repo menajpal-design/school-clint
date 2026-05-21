@@ -68,7 +68,10 @@ export default function ClassRoutinePage() {
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item: any) => item.isActive !== false) || [];
   const formClass = classes.find((item) => item._id === form.classId);
-  const classSubjects = useMemo(() => subjects.filter((subject) => !form.classId || subject.classId?._id === form.classId || subject.classId === form.classId), [subjects, form.classId]);
+  const classSubjects = useMemo(() => {
+    const matched = subjects.filter((subject) => !form.classId || subject.classId?._id === form.classId || subject.classId === form.classId);
+    return matched.length ? matched : subjects;
+  }, [subjects, form.classId]);
   const filteredRoutines = routines.filter((routine) => !statusFilter || routine.status === statusFilter);
   const grouped = days.map((day) => ({ day, items: filteredRoutines.filter((routine) => routine.dayOfWeek === day).sort((a, b) => String(a.startTime).localeCompare(String(b.startTime))) }));
   const printPeriods = useMemo(() => {
@@ -137,6 +140,11 @@ export default function ClassRoutinePage() {
       status: routine.status || (canApprove ? "approved" : "proposed"),
     });
     setOpen(true);
+  };
+
+  const openPreviewEditor = () => {
+    if (filteredRoutines.length > 0) openEdit(filteredRoutines[0]);
+    else openCreate();
   };
 
   const saveRoutine = async () => {
@@ -209,6 +217,7 @@ export default function ClassRoutinePage() {
         actions={[
           <Button key="refresh" size="sm" variant="outline" onClick={loadRoutines}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
           <Button key="download" size="sm" variant="outline" onClick={downloadPdf}><Download className="mr-2 h-4 w-4" />PDF Download</Button>,
+          canPropose && <Button key="preview-edit" size="sm" variant="outline" onClick={openPreviewEditor}><Edit2 className="mr-2 h-4 w-4" />Edit Routine</Button>,
           canPropose && <Button key="add" size="sm" onClick={openCreate}><Plus className="mr-2 h-4 w-4" />{canApprove ? "Create Routine" : "Propose Routine"}</Button>,
         ].filter(Boolean) as any}
       />
@@ -231,7 +240,10 @@ export default function ClassRoutinePage() {
             <h2 className="text-lg font-semibold">Routine Preview</h2>
             <p className="text-sm text-muted-foreground">PDF download will use this school routine format.</p>
           </div>
-          <Button variant="outline" onClick={downloadPdf}><FileText className="mr-2 h-4 w-4" />Download PDF</Button>
+          <div className="flex flex-wrap gap-2">
+            {canPropose && <Button variant="outline" onClick={openPreviewEditor}><Edit2 className="mr-2 h-4 w-4" />Edit Routine</Button>}
+            <Button variant="outline" onClick={downloadPdf}><FileText className="mr-2 h-4 w-4" />Download PDF</Button>
+          </div>
         </div>
         <div className="overflow-x-auto rounded-lg border bg-white p-2">
           <div ref={printRef} className="min-w-[920px] bg-white p-8 text-black">
@@ -273,6 +285,7 @@ export default function ClassRoutinePage() {
             </div>
           </div>
         </div>
+        {canPropose && <div className="mt-3 flex justify-end"><Button variant="outline" onClick={openPreviewEditor}><Edit2 className="mr-2 h-4 w-4" />Edit Routine from Preview</Button></div>}
       </section>
 
       {!isViewOnly && <section className="rounded-lg border bg-card shadow-sm">
