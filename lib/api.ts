@@ -100,17 +100,19 @@ class ApiClient {
 export const apiClient = new ApiClient();
 const crud = (base: string) => ({ getAll: (params?: any) => apiClient.get(base, { params }), getById: (id: string) => apiClient.get(`${base}/${id}`), create: (data: any) => apiClient.post(base, data), update: (id: string, data: any) => apiClient.put(`${base}/${id}`, data), delete: (id: string) => apiClient.delete(base + '/' + id) });
 const digits = (value: any) => String(value || '').replace(/\D/g, '');
+const serialRoll = (index: number) => String(index + 1).padStart(2, '0');
+const normalizeStudentRolls = (students: any[]) => students.map((student: any, index: number) => ({ ...student, rollNumber: student?.rollNumber || serialRoll(index) }));
 const buildStudentRowsFromUsers = (users: any[]) => {
   const parents = users.filter((user: any) => user?.role === 'parent');
   const parentsByPhone = new Map<string, any>();
   parents.forEach((parent: any) => { const phone = digits(parent.phone); if (phone && !parentsByPhone.has(phone)) parentsByPhone.set(phone, parent); });
   return users
     .filter((user: any) => user?.role === 'student')
-    .map((user: any) => {
+    .map((user: any, index: number) => {
       const parent = parentsByPhone.get(digits(user.phone)) || parents[0];
       return {
         _id: `user-${user._id}`,
-        rollNumber: user.rollNumber || '',
+        rollNumber: user.rollNumber || serialRoll(index),
         admissionDate: user.createdAt,
         isActive: user.isActive !== false,
         userId: { _id: user._id, name: user.name, username: user.username, phone: user.phone, avatar: user.avatar },
@@ -132,7 +134,7 @@ const studentApi = {
   getAll: async (params?: any) => {
     try {
       const data: any = await apiClient.get('/students', { params });
-      const students = Array.isArray(data?.students) ? data.students : [];
+      const students = Array.isArray(data?.students) ? normalizeStudentRolls(data.students) : [];
       if (students.length) return { ...data, students };
       const fallback = await getStudentsFromUsers();
       return { ...data, ...fallback };
