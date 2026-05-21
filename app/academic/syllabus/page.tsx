@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { printHtml } from "@/lib/export-utils";
 
 const manageRoles = ["head", "assistant_head", "admin", "super_admin", "subject_teacher", "class_teacher"];
+const SYLLABUS_CACHE_KEY = "easy-school-syllabus-cache-v2";
 const termOptions = [
   { value: "full_year", label: "Full Year" },
   { value: "first_term", label: "First Term" },
@@ -35,6 +36,36 @@ const emptyForm = {
 };
 
 const esc = (value: unknown) => String(value ?? "-").replace(/[&<>'\"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char] || char));
+const toast = (title: string, message: string, type: "success" | "error" | "info" = "success") => {
+  if (typeof window === "undefined") return;
+  window.appToast?.({ title, message, type, duration: type === "success" ? 5500 : 7500 });
+  window.dispatchEvent(new CustomEvent("app-toast", { detail: { title, message, type, duration: type === "success" ? 5500 : 7500 } }));
+};
+const readCache = () => {
+  if (typeof window === "undefined") return [] as any[];
+  try { const items = JSON.parse(localStorage.getItem(SYLLABUS_CACHE_KEY) || "[]"); return Array.isArray(items) ? items : []; } catch { return []; }
+};
+const writeCache = (items: any[]) => {
+  if (typeof window === "undefined") return;
+  try { localStorage.setItem(SYLLABUS_CACHE_KEY, JSON.stringify(items)); } catch { /* ignore */ }
+};
+const normalizeItem = (item: any, classes: any[], subjects: any[]) => {
+  const classId = String(item.classId?._id || item.classId || "");
+  const subjectId = String(item.subjectId?._id || item.subjectId || "");
+  const classObj = classes.find((x) => String(x._id) === classId);
+  const subjectObj = subjects.find((x) => String(x._id) === subjectId);
+  return {
+    ...item,
+    _id: String(item._id || `local-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+    title: item.title || "Untitled Syllabus",
+    classId: typeof item.classId === "object" && item.classId?.name ? item.classId : classObj || item.classId,
+    subjectId: typeof item.subjectId === "object" && item.subjectId?.name ? item.subjectId : subjectObj || item.subjectId,
+    academicYear: item.academicYear || String(new Date().getFullYear()),
+    term: item.term || "full_year",
+    status: item.status || "draft",
+    chapters: Array.isArray(item.chapters) && item.chapters.length ? item.chapters : [{ title: "Chapter 1", topics: "", weeks: "", marks: 0 }],
+  };
+};
 
 export default function AcademicSyllabusPage() {
   const { user } = useAuth();
@@ -48,26 +79,56 @@ export default function AcademicSyllabusPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const showSuccess = (text: string, title = "Syllabus success / কাজ হয়েছে") => { setMessage(text); setError(""); toast(title, text, "success"); };
+  const showError = (text: string, title = "Syllabus error / কাজ হয়নি") => { setError(text); setMessage(""); toast(title, text, "error"); };
+  const showInfo = (text: string, title = "Syllabus info") => { setMessage(text); setError(""); toast(title, text, "info"); };
+
   const filteredSubjects = useMemo(() => {
     if (!form.classId) return subjects;
     return subjects.filter((item: any) => String(item.classId?._id || item.classId) === String(form.classId));
   }, [subjects, form.classId]);
 
+  const mergeAndSetSyllabus = (items: any[], classItems = classes, subjectItems = subjects) => {
+    const normalized = items.map((item) => normalizeItem(item, classItems, subjectItems));
+    setSyllabus(normalized);
+    writeCache(normalized);
+    return normalized;
+  };
+
   const load = async () => {
     setLoading(true);
     setError("");
     try {
-      const [syllabusRes, classRes, subjectRes] = await Promise.all([
-        apiClient.get("/syllabus") as Promise<any>,
+      const [classRes, subjectRes] = await Promise.all([
         canManage ? api.academic.classes.getAll().catch(() => ({ classes: [] })) as Promise<any> : Promise.resolve({ classes: [] }),
         canManage ? api.academic.subjects.getAll().catch(() => ({ subjects: [] })) as Promise<any> : Promise.resolve({ subjects: [] }),
       ]);
-      setSyllabus(syllabusRes.syllabus || []);
-      setClasses(classRes.classes || []);
-      setSubjects(subjectRes.subjects || []);
-      setForm((current: any) => ({ ...current, classId: current.classId || classRes.classes?.[0]?._id || "" }));
+      const nextClasses = classRes.classes || [];
+      const nextSubjects = subjectRes.subjects || [];
+      setClasses(nextClasses);
+      setSubjects(nextSubjects);
+
+      let liveList: any[] = [];
+      try {
+        const syllabusRes: any = await apiClient.get("/syllabus");
+        liveList = Array.isArray(syllabusRes?.syllabus) ? syllabusRes.syllabus : [];
+      } catch {
+        liveList = [];
+      }
+
+      const finalList = liveList.length ? liveList : readCache();
+      const normalized = mergeAndSetSyllabus(finalList, nextClasses, nextSubjects);
+      setForm((current: any) => ({ ...current, classId: current.classId || nextClasses?.[0]?._id || "" }));
+      if (normalized.length) showSuccess(`✅ Syllabus list loaded successfully. মোট ${normalized.length}টি syllabus পাওয়া গেছে।`, "Syllabus loaded / লোড হয়েছে");
+      else showInfo("ℹ️ এখনো কোনো syllabus নেই। Add Syllabus form থেকে নতুন syllabus তৈরি করুন।");
     } catch (err: any) {
-      setError(err?.message || "Failed to load syllabus.");
+      const cached = readCache();
+      if (cached.length) {
+        setSyllabus(cached);
+        showInfo(`ℹ️ Live API থেকে syllabus আসেনি, cached ${cached.length}টি syllabus দেখানো হচ্ছে।`, "Syllabus cache loaded");
+      } else {
+        showError(`❌ Syllabus list load হয়নি। কারণ: ${err?.message || "Failed to load syllabus."}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -82,7 +143,7 @@ export default function AcademicSyllabusPage() {
   const addChapter = () => setForm((current: any) => ({ ...current, chapters: [...current.chapters, { title: "", topics: "", weeks: "", marks: 0 }] }));
   const removeChapter = (index: number) => setForm((current: any) => ({ ...current, chapters: current.chapters.filter((_: any, i: number) => i !== index) }));
 
-  const resetForm = () => { setEditingId(""); setForm(emptyForm); };
+  const resetForm = () => { setEditingId(""); setForm({ ...emptyForm, classId: classes[0]?._id || "" }); };
 
   const editItem = (item: any) => {
     setEditingId(item._id);
@@ -101,36 +162,54 @@ export default function AcademicSyllabusPage() {
     });
   };
 
+  const upsertLocal = (item: any) => {
+    const normalized = normalizeItem(item, classes, subjects);
+    setSyllabus((current) => {
+      const map = new Map(current.map((entry) => [String(entry._id), entry]));
+      map.set(String(normalized._id), normalized);
+      const next = Array.from(map.values()).sort((a: any, b: any) => String(b._id).localeCompare(String(a._id)));
+      writeCache(next);
+      return next;
+    });
+    return normalized;
+  };
+
   const save = async () => {
     setMessage(""); setError("");
     try {
       if (!form.title || !form.classId) throw new Error("Title and class are required.");
       const payload = { ...form, chapters: form.chapters.filter((chapter: any) => chapter.title || chapter.topics) };
-      if (editingId) await apiClient.put(`/syllabus/${editingId}`, payload);
-      else await apiClient.post("/syllabus", payload);
-      setMessage(editingId ? "Syllabus updated." : "Syllabus created.");
+      let response: any;
+      if (editingId) response = await apiClient.put(`/syllabus/${editingId}`, payload);
+      else response = await apiClient.post("/syllabus", payload);
+      const saved = upsertLocal(response?.syllabus || { ...payload, _id: editingId || `local-${Date.now()}` });
+      showSuccess(editingId ? `✅ Syllabus update হয়েছে: ${saved.title}. List update হয়েছে।` : `✅ Syllabus add হয়েছে: ${saved.title}. List update হয়েছে।`, editingId ? "Syllabus updated / আপডেট হয়েছে" : "Syllabus added / যোগ হয়েছে");
       resetForm();
-      await load();
-    } catch (err: any) { setError(err?.message || "Failed to save syllabus."); }
+      load().catch(() => undefined);
+    } catch (err: any) { showError(`❌ Syllabus save হয়নি। কারণ: ${err?.message || "Failed to save syllabus."}`); }
   };
 
   const publish = async (item: any) => {
     setMessage(""); setError("");
     try {
       const status = item.status === "published" ? "draft" : "published";
-      await apiClient.patch(`/syllabus/${item._id}/publish`, { status });
-      setMessage(status === "published" ? "Syllabus published." : "Syllabus unpublished.");
-      await load();
-    } catch (err: any) { setError(err?.message || "Failed to publish syllabus."); }
+      const response: any = await apiClient.patch(`/syllabus/${item._id}/publish`, { status });
+      const saved = upsertLocal(response?.syllabus || { ...item, status });
+      showSuccess(status === "published" ? `✅ Syllabus published হয়েছে: ${saved.title}.` : `✅ Syllabus unpublished/draft হয়েছে: ${saved.title}.`, "Syllabus status updated");
+      load().catch(() => undefined);
+    } catch (err: any) { showError(`❌ Syllabus publish/update হয়নি। কারণ: ${err?.message || "Failed to publish syllabus."}`); }
   };
 
   const remove = async (id: string) => {
     setMessage(""); setError("");
     try {
       await apiClient.delete(`/syllabus/${id}`);
-      setMessage("Syllabus deleted.");
-      await load();
-    } catch (err: any) { setError(err?.message || "Failed to delete syllabus."); }
+      const deletedTitle = syllabus.find((item) => item._id === id)?.title || "Syllabus";
+      const next = syllabus.filter((item) => item._id !== id);
+      setSyllabus(next); writeCache(next);
+      showSuccess(`✅ Syllabus delete হয়েছে: ${deletedTitle}.`, "Syllabus deleted / ডিলিট হয়েছে");
+      load().catch(() => undefined);
+    } catch (err: any) { showError(`❌ Syllabus delete হয়নি। কারণ: ${err?.message || "Failed to delete syllabus."}`); }
   };
 
   const printItem = async (item: any) => {
@@ -149,8 +228,8 @@ export default function AcademicSyllabusPage() {
       actions={[<Button key="refresh" size="sm" variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>]}
     />
 
-    {message && <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{message}</div>}
-    {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+    {message && <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">{message}</div>}
+    {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{error}</div>}
 
     {canManage && <section className="rounded-lg border bg-card p-4 shadow-sm">
       <div className="mb-4 flex items-center justify-between"><h2 className="font-semibold">{editingId ? "Edit Syllabus" : "Add Syllabus"}</h2>{editingId && <Button size="sm" variant="outline" onClick={resetForm}>Cancel Edit</Button>}</div>
@@ -175,11 +254,11 @@ export default function AcademicSyllabusPage() {
       </div>
       <textarea className="mt-3 min-h-20 w-full rounded-md border p-3 text-sm" placeholder="Instructions" value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} />
       <input className="mt-3 h-10 w-full rounded-md border px-3 text-sm" placeholder="Attachment URL / PDF link" value={form.attachmentUrl} onChange={(e) => setForm({ ...form, attachmentUrl: e.target.value })} />
-      <Button className="mt-4" onClick={save}><Save className="mr-2 h-4 w-4" />{editingId ? "Update Syllabus" : "Save Syllabus"}</Button>
+      <Button className="mt-4" onClick={save} disabled={loading}><Save className="mr-2 h-4 w-4" />{editingId ? "Update Syllabus" : "Save Syllabus"}</Button>
     </section>}
 
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {loading ? <div className="rounded-lg border p-6 text-muted-foreground">Loading...</div> : syllabus.length === 0 ? <div className="rounded-lg border p-6 text-muted-foreground">No syllabus found.</div> : syllabus.map((item) => <article key={item._id} className="rounded-lg border bg-card p-4 shadow-sm">
+      {loading ? <div className="rounded-lg border p-6 text-muted-foreground">Loading syllabus...</div> : syllabus.length === 0 ? <div className="rounded-lg border p-6 text-muted-foreground">No syllabus found. Add a syllabus from the form above.</div> : syllabus.map((item) => <article key={item._id} className="rounded-lg border bg-card p-4 shadow-sm">
         <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold">{item.title}</h2><p className="mt-1 text-sm text-muted-foreground">{item.classId?.name || "Class"} • {item.subjectId?.name || "All subjects"} • {item.academicYear}</p></div><Badge variant={item.status === "published" ? "default" : "outline"}>{item.status}</Badge></div>
         {item.objectives && <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{item.objectives}</p>}
         <div className="mt-3 rounded-md border p-3 text-sm"><b>{item.chapters?.length || 0}</b> chapters/topics</div>
