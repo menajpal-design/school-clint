@@ -6,19 +6,27 @@ import { Edit2, Plus } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, apiClient } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-const empty = { classId: "", studentId: "", type: "monthly", amount: 0, scholarship: 0, discount: 0, month: "January", year: new Date().getFullYear(), dueDate: new Date().toISOString().slice(0,10), status: "pending" };
+const empty = { classId: "", studentId: "", type: "monthly", amount: 0, scholarship: 0, discount: 0, month: "All Months", year: new Date().getFullYear(), dueDate: new Date().toISOString().slice(0,10), status: "pending" };
 
 const feeApi = {
   getAll: () => apiClient.get('/finance/fees'),
   create: (data: any) => apiClient.post('/finance/fees', data),
   update: (id: string, data: any) => apiClient.put(`/finance/fees/${id}`, data),
   delete: (id: string) => apiClient.delete(`/finance/fees/${id}`),
+};
+
+const normalizeFeeForm = (form: any) => {
+  const payload = { ...form };
+  payload.month = payload.type === "monthly" ? "All Months" : payload.month || "N/A";
+  if (!payload.studentId) delete payload.studentId;
+  if (!payload.classId) delete payload.classId;
+  return payload;
 };
 
 export default function FeesPage() {
@@ -55,8 +63,9 @@ export default function FeesPage() {
     setError("");
     setMessage("");
     try {
-      if (editing) await feeApi.update(editing._id, form);
-      else await feeApi.create(form);
+      const payload = normalizeFeeForm(form);
+      if (editing) await feeApi.update(editing._id, payload);
+      else await feeApi.create(payload);
       setOpen(false); setEditing(null); setForm(empty); setMessage(editing ? "Fee updated successfully." : "Fee added successfully."); await load();
     } catch (err: any) {
       setError(err?.message || "Failed to save fee.");
@@ -67,7 +76,7 @@ export default function FeesPage() {
 
   const openEdit = (fee: any) => {
     setEditing(fee);
-    setForm({ ...empty, ...fee, classId: fee.classId?._id || "", studentId: fee.studentId?._id || "", dueDate: fee.dueDate?.slice?.(0,10) || empty.dueDate });
+    setForm({ ...empty, ...fee, classId: fee.classId?._id || "", studentId: fee.studentId?._id || "", month: fee.type === "monthly" ? "All Months" : fee.month || "N/A", dueDate: fee.dueDate?.slice?.(0,10) || empty.dueDate });
     setOpen(true);
   };
 
@@ -76,15 +85,16 @@ export default function FeesPage() {
     {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
     {message && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
     <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-      <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Class</TableHead><TableHead>Student</TableHead><TableHead>Type</TableHead><TableHead>Amount</TableHead><TableHead>Scholarship</TableHead><TableHead>Discount</TableHead><TableHead>Due Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>
-        {loading ? <TableRow><TableCell colSpan={9} className="h-28 text-center text-slate-500">Loading fees...</TableCell></TableRow> : fees.length === 0 ? <TableRow><TableCell colSpan={9} className="h-28 text-center text-slate-500">No fees configured yet.</TableCell></TableRow> : fees.map((fee) => <TableRow key={fee._id}><TableCell>{fee.classId?.name || "All / student"}</TableCell><TableCell>{fee.studentId?.userId?.name || fee.studentId?.rollNumber || "-"}</TableCell><TableCell className="capitalize">{fee.type}</TableCell><TableCell>{formatCurrency(fee.amount || 0)}</TableCell><TableCell>{formatCurrency(fee.scholarship || 0)}</TableCell><TableCell>{formatCurrency(fee.discount || 0)}</TableCell><TableCell>{formatDate(fee.dueDate)}</TableCell><TableCell><Badge variant="outline" className="capitalize">{fee.status}</Badge></TableCell><TableCell className="text-right"><Button size="icon" variant="outline" onClick={() => openEdit(fee)}><Edit2 className="h-4 w-4" /></Button></TableCell></TableRow>)}
+      <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Class</TableHead><TableHead>Student</TableHead><TableHead>Type</TableHead><TableHead>Month</TableHead><TableHead>Amount</TableHead><TableHead>Scholarship</TableHead><TableHead>Discount</TableHead><TableHead>Due Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>
+        {loading ? <TableRow><TableCell colSpan={10} className="h-28 text-center text-slate-500">Loading fees...</TableCell></TableRow> : fees.length === 0 ? <TableRow><TableCell colSpan={10} className="h-28 text-center text-slate-500">No fees configured yet.</TableCell></TableRow> : fees.map((fee) => <TableRow key={fee._id}><TableCell>{fee.classId?.name || "All / student"}</TableCell><TableCell>{fee.studentId?.userId?.name || fee.studentId?.rollNumber || "-"}</TableCell><TableCell className="capitalize">{fee.type}</TableCell><TableCell>{fee.type === "monthly" ? "All Months" : fee.month || "-"}</TableCell><TableCell>{formatCurrency(fee.amount || 0)}</TableCell><TableCell>{formatCurrency(fee.scholarship || 0)}</TableCell><TableCell>{formatCurrency(fee.discount || 0)}</TableCell><TableCell>{formatDate(fee.dueDate)}</TableCell><TableCell><Badge variant="outline" className="capitalize">{fee.status}</Badge></TableCell><TableCell className="text-right"><Button size="icon" variant="outline" onClick={() => openEdit(fee)}><Edit2 className="h-4 w-4" /></Button></TableCell></TableRow>)}
       </TableBody></Table>
     </section>
-    <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>{editing ? "Edit fee" : "Add fee"}</DialogTitle></DialogHeader><form className="space-y-4" onSubmit={submit}>
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>{editing ? "Edit fee" : "Add fee"}</DialogTitle><DialogDescription>{form.type === "monthly" ? "Monthly class fee applies equally to every month of the selected year. No month selection is needed." : "Set fee amount, applicable period, scholarship and discount."}</DialogDescription></DialogHeader><form className="space-y-4" onSubmit={submit}>
       <div className="grid gap-3 md:grid-cols-2"><Select label="Class" value={form.classId} onChange={(v) => setForm({ ...form, classId: v })}><option value="">Class-wise / optional</option>{classes.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}</Select>
-      <Select label="Fee type" value={form.type} onChange={(v) => setForm({ ...form, type: v })}><option value="monthly">Monthly</option><option value="annual">Annual</option><option value="exam">Exam</option><option value="tuition">Tuition</option><option value="transport">Transport</option><option value="other">Other</option></Select></div>
+      <Select label="Fee type" value={form.type} onChange={(v) => setForm({ ...form, type: v, month: v === "monthly" ? "All Months" : form.month === "All Months" ? "January" : form.month })}><option value="monthly">Monthly</option><option value="annual">Annual</option><option value="exam">Exam</option><option value="tuition">Tuition</option><option value="transport">Transport</option><option value="other">Other</option></Select></div>
+      {form.type === "monthly" && <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">মাসিক চার্জ ক্লাসের জন্য বছরে সব মাসেই সমান থাকবে। তাই মাস সিলেক্ট করার দরকার নেই।</div>}
       <div className="grid gap-3 md:grid-cols-3"><Field label="Amount"><Input type="number" min={0} value={form.amount} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} /></Field><Field label="Scholarship"><Input type="number" min={0} value={form.scholarship} onChange={(e) => setForm({ ...form, scholarship: Number(e.target.value) })} /></Field><Field label="Discount"><Input type="number" min={0} value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} /></Field></div>
-      <div className="grid gap-3 md:grid-cols-3"><Field label="Month"><Input value={form.month} onChange={(e) => setForm({ ...form, month: e.target.value })} /></Field><Field label="Year"><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: Number(e.target.value) })} /></Field><Field label="Due date"><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></Field></div>
+      <div className="grid gap-3 md:grid-cols-3">{form.type !== "monthly" && <Field label="Month"><Input value={form.month} onChange={(e) => setForm({ ...form, month: e.target.value })} /></Field>}<Field label="Year"><Input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: Number(e.target.value) })} /></Field><Field label="Due date"><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></Field></div>
       <DialogFooter><Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Fee"}</Button></DialogFooter>
     </form></DialogContent></Dialog>
   </div>;
