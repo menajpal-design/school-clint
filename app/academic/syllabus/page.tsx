@@ -13,7 +13,7 @@ import { printHtml } from "@/lib/export-utils";
 const manageRoles = ["head", "assistant_head", "admin", "super_admin", "subject_teacher", "class_teacher"];
 const SYLLABUS_CACHE_KEY = "easy-school-syllabus-cache-v2";
 const CLASS_CACHE_KEY = "easy-school-syllabus-class-cache-v1";
-const SUBJECT_CACHE_KEY = "easy-school-syllabus-subject-cache-v1";
+const SUBJECT_CACHE_KEY = "easy-school-subject-cache-v2";
 const termOptions = [
   { value: "full_year", label: "Full Year" },
   { value: "first_term", label: "First Term" },
@@ -53,6 +53,11 @@ const writeJson = (key: string, items: any[]) => {
 };
 const readCache = () => readJson(SYLLABUS_CACHE_KEY);
 const writeCache = (items: any[]) => writeJson(SYLLABUS_CACHE_KEY, items);
+const readSubjectCache = () => {
+  const main = readJson(SUBJECT_CACHE_KEY);
+  if (main.length) return main;
+  return readJson("easy-school-syllabus-subject-cache-v1");
+};
 const normalizeItem = (item: any, classes: any[], subjects: any[]) => {
   const classId = String(item.classId?._id || item.classId || "");
   const subjectId = String(item.subjectId?._id || item.subjectId || "");
@@ -89,7 +94,8 @@ export default function AcademicSyllabusPage() {
 
   const filteredSubjects = useMemo(() => {
     if (!form.classId) return subjects;
-    return subjects.filter((item: any) => String(item.classId?._id || item.classId) === String(form.classId));
+    const matched = subjects.filter((item: any) => String(item.classId?._id || item.classId || "") === String(form.classId));
+    return matched.length ? matched : subjects;
   }, [subjects, form.classId]);
 
   const mergeAndSetSyllabus = (items: any[], classItems = classes, subjectItems = subjects) => {
@@ -105,10 +111,10 @@ export default function AcademicSyllabusPage() {
     try {
       const [classRes, subjectRes] = await Promise.all([
         api.academic.classes.getAll().catch(() => ({ classes: readJson(CLASS_CACHE_KEY) })) as Promise<any>,
-        api.academic.subjects.getAll().catch(() => ({ subjects: readJson(SUBJECT_CACHE_KEY) })) as Promise<any>,
+        api.academic.subjects.getAll().catch(() => ({ subjects: readSubjectCache() })) as Promise<any>,
       ]);
       const nextClasses = Array.isArray(classRes.classes) && classRes.classes.length ? classRes.classes : readJson(CLASS_CACHE_KEY);
-      const nextSubjects = Array.isArray(subjectRes.subjects) && subjectRes.subjects.length ? subjectRes.subjects : readJson(SUBJECT_CACHE_KEY);
+      const nextSubjects = Array.isArray(subjectRes.subjects) && subjectRes.subjects.length ? subjectRes.subjects : readSubjectCache();
       setClasses(nextClasses);
       setSubjects(nextSubjects);
       writeJson(CLASS_CACHE_KEY, nextClasses);
@@ -128,6 +134,7 @@ export default function AcademicSyllabusPage() {
       if (nextClasses.length || nextSubjects.length) showSuccess(`✅ Class/Subject loaded. Class: ${nextClasses.length}, Subject: ${nextSubjects.length}.`, "Class subject loaded / লোড হয়েছে");
       if (normalized.length) showSuccess(`✅ Syllabus list loaded successfully. মোট ${normalized.length}টি syllabus পাওয়া গেছে।`, "Syllabus loaded / লোড হয়েছে");
       else if (!nextClasses.length) showInfo("ℹ️ Class পাওয়া যায়নি। আগে Academic > Classes থেকে class তৈরি করুন, তারপর syllabus add করুন।");
+      else if (!nextSubjects.length) showInfo("ℹ️ Subject পাওয়া যায়নি। আগে Academic > Subjects থেকে subject তৈরি করুন, অথবা All subjects দিয়ে syllabus save করুন।");
       else showInfo("ℹ️ এখনো কোনো syllabus নেই। Add Syllabus form থেকে নতুন syllabus তৈরি করুন।");
     } catch (err: any) {
       const cached = readCache();
