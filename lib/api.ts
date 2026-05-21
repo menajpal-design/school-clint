@@ -53,12 +53,8 @@ class ApiClient {
     const qs = config?.params ? `?${new URLSearchParams(Object.entries(config.params).filter(([, v]) => v !== undefined && v !== null) as any).toString()}` : '';
     const body = method === 'GET' || method === 'DELETE' ? undefined : (data instanceof FormData ? data : JSON.stringify(data || {}));
     const init: RequestInit = { method, headers: this.headers(body instanceof FormData ? body : data, config.headers), body, credentials: 'include' };
-    try {
-      const res = await withTimeout(`${API_URL}${url}${qs}`, init, 90000);
-      return await this.parse<T>(res);
-    } catch (e: any) {
-      throw this.toError(e);
-    }
+    try { const res = await withTimeout(`${API_URL}${url}${qs}`, init, 90000); return await this.parse<T>(res); }
+    catch (e: any) { throw this.toError(e); }
   }
 
   private async parse<T>(res: Response): Promise<T> {
@@ -102,65 +98,32 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
-const crud = (base: string) => ({ getAll: (params?: any) => apiClient.get(base, { params }), getById: (id: string) => apiClient.get(`${base}/${id}`), create: (data: any) => apiClient.post(base, data), update: (id: string, data: any) => apiClient.put(`${base}/${id}`, data), delete: (id: string) => apiClient.delete(`${base}/${id}`) });
+const crud = (base: string) => ({ getAll: (params?: any) => apiClient.get(base, { params }), getById: (id: string) => apiClient.get(`${base}/${id}`), create: (data: any) => apiClient.post(base, data), update: (id: string, data: any) => apiClient.put(`${base}/${id}`, data), delete: (id: string) => apiClient.delete(base + '/' + id) });
+const buildStudentRowsFromUsers = (users: any[]) => users
+  .filter((user: any) => user?.role === 'student')
+  .map((user: any) => ({ _id: `user-${user._id}`, rollNumber: user.rollNumber || '', admissionDate: user.createdAt, isActive: user.isActive !== false, userId: { _id: user._id, name: user.name, username: user.username, phone: user.phone, avatar: user.avatar }, classId: user.classId || undefined, sectionId: user.sectionId || undefined, parentId: undefined, guardianName: '', guardianPhone: '' }));
+const getStudentsFromUsers = async () => {
+  const usersData: any = await apiClient.get('/users');
+  const users = Array.isArray(usersData?.users) ? usersData.users : [];
+  return { students: buildStudentRowsFromUsers(users), fallbackFromUsers: true };
+};
 const studentApi = {
   ...crud('/students'),
   getAll: async (params?: any) => {
-    const data: any = await apiClient.get('/students', { params });
-    const students = Array.isArray(data?.students) ? data.students : [];
-    if (students.length) return { ...data, students };
     try {
-      const usersData: any = await apiClient.get('/users', { params });
-      const users = Array.isArray(usersData?.users) ? usersData.users : [];
-      const studentUsers = users
-        .filter((user: any) => user?.role === 'student')
-        .map((user: any) => ({
-          _id: `user-${user._id}`,
-          rollNumber: user.rollNumber || '',
-          admissionDate: user.createdAt,
-          isActive: user.isActive !== false,
-          userId: { _id: user._id, name: user.name, username: user.username, phone: user.phone, avatar: user.avatar },
-          classId: user.classId || undefined,
-          sectionId: user.sectionId || undefined,
-          parentId: undefined,
-          guardianName: '',
-          guardianPhone: '',
-        }));
-      return { ...data, students: studentUsers, fallbackFromUsers: true };
+      const data: any = await apiClient.get('/students', { params });
+      const students = Array.isArray(data?.students) ? data.students : [];
+      if (students.length) return { ...data, students };
+      const fallback = await getStudentsFromUsers();
+      return { ...data, ...fallback };
     } catch {
-      return { ...data, students };
+      return await getStudentsFromUsers();
     }
   },
-  create: async (data: any) => {
-    const payload = { ...data };
-    delete payload.email;
-    delete payload.guardianEmail;
-    const result = await apiClient.post('/students', payload);
-    showAppToast('Student admitted', 'Username and password generated successfully.', 'success');
-    return result;
-  },
-  update: async (id: string, data: any) => {
-    const payload = { ...data };
-    delete payload.email;
-    delete payload.guardianEmail;
-    const result = await apiClient.put(`/students/${id}`, payload);
-    showAppToast('Student updated', 'Student information saved successfully.', 'success');
-    return result;
-  },
+  create: async (data: any) => { const payload = { ...data }; delete payload.email; delete payload.guardianEmail; const result = await apiClient.post('/students', payload); showAppToast('Student admitted', 'Username and password generated successfully.', 'success'); return result; },
+  update: async (id: string, data: any) => { const payload = { ...data }; delete payload.email; delete payload.guardianEmail; const result = await apiClient.put(`/students/${id}`, payload); showAppToast('Student updated', 'Student information saved successfully.', 'success'); return result; },
 };
-const idCardApi = {
-  ...crud('/id-cards'),
-  getMine: () => apiClient.get('/id-cards/me/card'),
-  stats: () => apiClient.get('/id-cards/reports/stats'),
-  searchOwners: (params?: any) => apiClient.get('/id-cards/owners/search', { params }),
-  generate: (data: any) => apiClient.post('/id-cards/generate', data),
-  bulkGenerate: (data: any) => apiClient.post('/id-cards/bulk', data),
-  renew: (id: string, data?: any) => apiClient.post(`/id-cards/${id}/renew`, data),
-  verify: (data: any) => apiClient.post('/id-cards/verify', data),
-  download: (id: string, format: 'pdf' | 'png' = 'pdf') => apiClient.getBlob(`/id-cards/${id}/download?format=${format}`),
-  renderPdf: (data: any) => apiClient.postBlob('/id-cards/render-pdf', data),
-  email: (id: string, data: any) => apiClient.post(`/id-cards/${id}/email`, data),
-};
+const idCardApi = { ...crud('/id-cards'), getMine: () => apiClient.get('/id-cards/me/card'), stats: () => apiClient.get('/id-cards/reports/stats'), searchOwners: (params?: any) => apiClient.get('/id-cards/owners/search', { params }), generate: (data: any) => apiClient.post('/id-cards/generate', data), bulkGenerate: (data: any) => apiClient.post('/id-cards/bulk', data), renew: (id: string, data?: any) => apiClient.post(`/id-cards/${id}/renew`, data), verify: (data: any) => apiClient.post('/id-cards/verify', data), download: (id: string, format: 'pdf' | 'png' = 'pdf') => apiClient.getBlob(`/id-cards/${id}/download?format=${format}`), renderPdf: (data: any) => apiClient.postBlob('/id-cards/render-pdf', data), email: (id: string, data: any) => apiClient.post(`/id-cards/${id}/email`, data) };
 
 export const api: any = {
   auth: { login: (d: any) => apiClient.post('/auth/login', d), register: (d: any) => apiClient.post('/auth/register', d), forgotPassword: (d: any) => apiClient.post('/auth/forgot-password', d), profile: () => apiClient.get('/auth/profile'), updateProfile: (d: any) => apiClient.put('/auth/profile', d), changePassword: (d: any) => apiClient.post('/auth/change-password', d) },
