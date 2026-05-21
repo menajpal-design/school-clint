@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { api, apiClient } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { downloadElementPdf } from "@/lib/export-utils";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 type Lang = "bn" | "en";
 type EditRow = { subjectId: string; subjectName: string; subjectCode?: string; date: string; duration: number; totalMarks: number; passingMarks: number };
@@ -41,6 +41,7 @@ const localDate = (date?: string, lang: Lang = "bn") => { if (!date) return "-";
 const toInputDate = (date?: string) => date ? new Date(date).toISOString().slice(0, 10) : "";
 const minutesText = (mins?: number, lang: Lang = "bn") => { if (!mins) return "-"; const h = Math.floor(mins / 60); const m = mins % 60; return lang === "bn" ? `${h} ঘন্টা${m ? ` ${m} মিনিট` : ""}` : `${h} hour${h > 1 ? "s" : ""}${m ? ` ${m} min` : ""}`; };
 const normalizeSubjectId = (item: any) => String(item.subjectId?._id || item.subjectId || "");
+const isRoutineReady = (exam: any) => (exam?.subjectMarks || []).length > 0 && (exam.subjectMarks || []).every((item: any) => item.subjectId && item.date && item.duration);
 
 export default function ExamRoutinePage() {
   const { user } = useAuth();
@@ -74,11 +75,11 @@ export default function ExamRoutinePage() {
     const source = canManage ? editRows : (selectedExam?.subjectMarks || []).map((item: any) => ({ subjectId: normalizeSubjectId(item), subjectName: item.subjectId?.name || item.subjectName || "-", subjectCode: item.subjectId?.code || item.subjectCode || "", date: toInputDate(item.date), duration: Number(item.duration || 120), totalMarks: Number(item.totalMarks || 100), passingMarks: Number(item.passingMarks || 33) }));
     return [...source].sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime());
   }, [selectedExam, editRows, canManage]);
+  const savedRoutineList = useMemo(() => [...exams].sort((a: any, b: any) => new Date(b.updatedAt || b.endDate || b.startDate || 0).getTime() - new Date(a.updatedAt || a.endDate || a.startDate || 0).getTime()), [exams]);
 
   const showSuccess = (text: string, title = "Exam Routine") => { setMessage(text); setError(""); toast(title, text, "success"); };
   const showError = (text: string, title = "Exam Routine Error") => { setError(text); setMessage(""); toast(title, text, "error"); };
   const showInfo = (text: string, title = "Exam Routine") => { setMessage(text); setError(""); toast(title, text, "info"); };
-
   const syncEditor = (exam: any) => setEditRows((exam?.subjectMarks || []).map((item: any) => ({ subjectId: normalizeSubjectId(item), subjectName: item.subjectId?.name || item.subjectName || "-", subjectCode: item.subjectId?.code || item.subjectCode || "", date: toInputDate(item.date), duration: Number(item.duration || 120), totalMarks: Number(item.totalMarks || 100), passingMarks: Number(item.passingMarks || 33) })));
 
   const load = async () => {
@@ -104,13 +105,20 @@ export default function ExamRoutinePage() {
       if (!nextExams.length) showInfo("ℹ️ Exam পাওয়া যায়নি। আগে Academic > Exams থেকে exam তৈরি করুন।");
       else if (!nextSubjects.length) showInfo("ℹ️ Subject list পাওয়া যায়নি। Academic > Subjects এ subject add করুন অথবা Exam edit করে routine subjectMarks save করুন।");
       else showSuccess(`✅ Exam routine data loaded. Exam: ${nextExams.length}, Subject: ${nextSubjects.length}.`, "Exam routine loaded");
-    } catch (err: any) {
-      showError(`❌ Exam routine load হয়নি। কারণ: ${err?.message || "Failed to load exam routine."}`);
-    } finally { setLoading(false); }
+    } catch (err: any) { showError(`❌ Exam routine load হয়নি। কারণ: ${err?.message || "Failed to load exam routine."}`); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { load().catch(() => undefined); }, [role]);
   useEffect(() => { if (selectedExam) syncEditor(selectedExam); }, [examId]);
+
+  const openSavedRoutine = (exam: ExamRoutine) => {
+    const nextClassId = exam.classId?._id || exam.classId || "";
+    setClassId(nextClassId);
+    setExamId(String(exam._id || exam.id || ""));
+    syncEditor(exam);
+    showInfo(`Selected routine: ${exam.name}`, "Routine selected");
+  };
 
   const updateRow = (index: number, key: keyof EditRow, value: any) => setEditRows((rows) => rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row));
   const addSubjectRow = (subject?: any) => {
@@ -134,9 +142,10 @@ export default function ExamRoutinePage() {
       const sorted = [...subjectMarks].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       const payload = { name: selectedExam.name, type: selectedExam.type || "term", classId: selectedExam.classId?._id || selectedExam.classId || classId, sectionId: selectedExam.sectionId?._id || selectedExam.sectionId || undefined, startDate: sorted[0].date, endDate: sorted[sorted.length - 1].date, approvalRequired: selectedExam.approvalRequired === true, status: selectedExam.status || "scheduled", isPublished: selectedExam.isPublished === true, instructions: selectedExam.instructions || "", syllabus: selectedExam.syllabus || "", subjectMarks: sorted };
       const result: any = await api.academic.exams.update(String(selectedExam._id || selectedExam.id), payload);
-      const updatedExam = result?.exam || { ...selectedExam, ...payload, subjectMarks: editRows.map((row) => ({ ...row, subjectId: subjects.find((subject) => subject._id === row.subjectId) || { _id: row.subjectId, name: row.subjectName, code: row.subjectCode } })) };
+      const updatedExam = result?.exam || { ...selectedExam, ...payload, updatedAt: new Date().toISOString(), subjectMarks: editRows.map((row) => ({ ...row, subjectId: subjects.find((subject) => subject._id === row.subjectId) || { _id: row.subjectId, name: row.subjectName, code: row.subjectCode } })) };
       setExams((current) => { const next = uniqueById([updatedExam, ...current.filter((exam: any) => String(exam._id || exam.id) !== String(selectedExam._id || selectedExam.id))]); writeJson(EXAM_CACHE_KEY, next); return next; });
-      showSuccess("✅ Exam routine save হয়েছে। Subject/date/marks update হয়েছে।", "Exam routine saved");
+      setExamId(String(updatedExam._id || updatedExam.id));
+      showSuccess("✅ Exam routine save হয়েছে। Saved Routine List-এ add/update হয়েছে।", "Exam routine saved");
       await load();
     } catch (err: any) { showError(`❌ Exam routine save হয়নি। কারণ: ${err?.message || "Failed to save exam routine."}`); }
     finally { setSaving(false); }
@@ -156,7 +165,7 @@ export default function ExamRoutinePage() {
 
   return <div className="space-y-5">
     <style jsx global>{`@media print { body * { visibility: hidden !important; } #exam-routine-print, #exam-routine-print * { visibility: visible !important; } #exam-routine-print { position: absolute; left: 0; top: 0; width: 100% !important; min-width: 1050px !important; padding: 18px; background: #fff; color: #000; box-shadow: none !important; border: 0 !important; } .no-print { display: none !important; } @page { size: A4 landscape; margin: 8mm; } }`}</style>
-    <PageHeader title="Exam Routine" description="Exam routine create/edit/print/PDF. Save করলে Academic → Exams data update হবে।" icon={CalendarDays} status={<Badge variant="outline">{routineRows.length} subjects</Badge>} actions={[
+    <PageHeader title="Exam Routine" description="Exam routine create/edit/print/PDF. Save করলে নিচের Saved Routine List-এ দেখা যাবে।" icon={CalendarDays} status={<Badge variant="outline">{savedRoutineList.length} saved routines</Badge>} actions={[
       <Button key="lang" size="sm" variant="outline" onClick={() => setLanguage(language === "bn" ? "en" : "bn")}><Languages className="mr-2 h-4 w-4" />{language === "bn" ? "English" : "বাংলা"}</Button>,
       <Button key="refresh" size="sm" variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
       canManage && <Button key="save" size="sm" disabled={saving || !selectedExam} onClick={saveRoutine}><Save className="mr-2 h-4 w-4" />{saving ? "Saving..." : "Save Routine"}</Button>,
@@ -169,6 +178,8 @@ export default function ExamRoutinePage() {
     {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{error}</div>}
 
     <section className="no-print rounded-lg border bg-card p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-3"><label className="space-y-2"><span className="text-sm font-medium">Class</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={classId} onChange={(e) => { setClassId(e.target.value); setExamId(""); }}><option value="">All classes</option>{classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label><label className="space-y-2 md:col-span-2"><span className="text-sm font-medium">Exam</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={examId} onChange={(e) => setExamId(e.target.value)}><option value="">Select exam</option>{visibleExams.map((exam: any) => <option key={exam._id || exam.id} value={exam._id || exam.id}>{exam.name} {exam.classId?.name ? `- ${exam.classId.name}` : exam.className ? `- ${exam.className}` : ""}</option>)}</select></label></div></section>
+
+    <section className="no-print rounded-lg border bg-card p-4 shadow-sm"><div className="mb-3 flex flex-col gap-1"><h2 className="font-semibold">Saved Routine List</h2><p className="text-xs text-muted-foreground">Save করা exam routine এখানে থাকবে। Open চাপলে routine edit/preview হবে।</p></div><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-sm"><thead><tr className="border-b bg-slate-50 text-left"><th className="p-2">Exam</th><th className="p-2">Class</th><th className="p-2">Date</th><th className="p-2">Subjects</th><th className="p-2">Routine</th><th className="p-2">Publish</th><th className="p-2 text-right">Action</th></tr></thead><tbody>{savedRoutineList.length === 0 ? <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No saved routine found. আগে Exam তৈরি করুন, তারপর routine save করুন।</td></tr> : savedRoutineList.map((exam: any) => <tr key={exam._id || exam.id} className={cn("border-b", String(exam._id || exam.id) === String(selectedExam?._id || selectedExam?.id) && "bg-blue-50")}><td className="p-2"><div className="font-medium">{exam.name}</div><div className="text-xs text-muted-foreground">{exam.type || "term"}</div></td><td className="p-2">{exam.classId?.name || exam.className || "-"}</td><td className="p-2">{exam.startDate ? localDate(exam.startDate, language) : "-"} {exam.endDate ? `- ${localDate(exam.endDate, language)}` : ""}</td><td className="p-2">{exam.subjectMarks?.length || 0}</td><td className="p-2"><Badge variant="outline" className={isRoutineReady(exam) ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{isRoutineReady(exam) ? "Ready" : "Incomplete"}</Badge></td><td className="p-2"><Badge variant="outline" className={exam.isPublished ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-slate-50 text-slate-600"}>{exam.isPublished ? "Public" : "Private"}</Badge></td><td className="p-2 text-right"><Button size="sm" variant="outline" onClick={() => openSavedRoutine(exam)}>Open</Button></td></tr>)}</tbody></table></div></section>
 
     {canManage && <section className="no-print rounded-lg border bg-card p-4 shadow-sm"><div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-semibold">Edit Exam Routine</h2><p className="text-xs text-muted-foreground">Subject row add করে date/marks set করুন, তারপর Save Routine চাপুন।</p></div><Button size="sm" variant="outline" onClick={() => addSubjectRow()}><Plus className="mr-2 h-4 w-4" />Add Subject Row</Button></div><div className="overflow-x-auto"><table className="w-full min-w-[860px] text-sm"><thead><tr className="border-b text-left"><th className="p-2">Subject</th><th className="p-2">Date</th><th className="p-2">Duration</th><th className="p-2">Full Marks</th><th className="p-2">Pass Marks</th><th className="p-2">Action</th></tr></thead><tbody>{editRows.length === 0 ? <tr><td colSpan={6} className="p-4 text-center text-muted-foreground">No subject routine found. Add Subject Row দিয়ে শুরু করুন।</td></tr> : editRows.map((row, index) => <tr key={`${row.subjectId}-${index}`} className="border-b"><td className="p-2"><select className="h-9 min-w-[220px] rounded-md border px-2" value={row.subjectId} onChange={(e) => updateRowSubject(index, e.target.value)}><option value="">Select subject</option>{classSubjects.map((subject) => <option key={subject._id} value={subject._id}>{subject.name}</option>)}</select><div className="text-xs text-muted-foreground">{row.subjectCode}</div></td><td className="p-2"><input type="date" className="h-9 rounded-md border px-2" value={row.date} onChange={(e) => updateRow(index, "date", e.target.value)} /></td><td className="p-2"><input type="number" className="h-9 w-24 rounded-md border px-2" value={row.duration} onChange={(e) => updateRow(index, "duration", Number(e.target.value))} /></td><td className="p-2"><input type="number" className="h-9 w-24 rounded-md border px-2" value={row.totalMarks} onChange={(e) => updateRow(index, "totalMarks", Number(e.target.value))} /></td><td className="p-2"><input type="number" className="h-9 w-24 rounded-md border px-2" value={row.passingMarks} onChange={(e) => updateRow(index, "passingMarks", Number(e.target.value))} /></td><td className="p-2"><Button size="sm" variant="destructive" onClick={() => removeRow(index)}><Trash2 className="h-4 w-4" /></Button></td></tr>)}</tbody></table></div>{!classSubjects.length && <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">Subject পাওয়া যায়নি। আগে Academic &gt; Subjects থেকে subject add করুন, তারপর Refresh চাপুন।</div>}</section>}
 
