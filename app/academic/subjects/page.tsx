@@ -32,11 +32,31 @@ type ClassOption = { _id: string; name: string; grade?: string; academicYear?: s
 type TeacherOption = { _id: string; userId?: { _id: string; name: string; email?: string } };
 type SubjectItem = { _id: string; name: string; code: string; type: "core" | "elective" | "optional"; classId?: ClassOption | string; teacherId?: { _id: string; name: string; email?: string } | string; description?: string; creditHours: number; isActive: boolean };
 type SubjectForm = { name: string; code: string; type: "core" | "elective" | "optional"; classId: string; teacherId: string; description: string; creditHours: number; isActive: boolean };
+type Notice = { type: "success" | "error" | "info"; message: string };
 
+const SUBJECT_CACHE_KEY = "easy-school-subject-cache-v2";
 const emptyForm = (): SubjectForm => ({ name: "", code: "", type: "core", classId: "", teacherId: "", description: "", creditHours: 1, isActive: true });
-const toast = (title: string, message: string, type: "success" | "error" = "success") => window.dispatchEvent(new CustomEvent("app-toast", { detail: { title, message, type, duration: type === "success" ? 4500 : 6500 } }));
+const toast = (title: string, message: string, type: "success" | "error" | "info" = "success") => {
+  if (typeof window === "undefined") return;
+  window.appToast?.({ title, message, type, duration: type === "success" ? 4500 : 6500 });
+  window.dispatchEvent(new CustomEvent("app-toast", { detail: { title, message, type, duration: type === "success" ? 4500 : 6500 } }));
+};
 const getId = (value: any) => String(value?._id || value || "");
 const getName = (value: any, fallback = "") => typeof value === "object" && value?.name ? value.name : fallback;
+const readCachedSubjects = (): SubjectItem[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(SUBJECT_CACHE_KEY);
+    const items = raw ? JSON.parse(raw) : [];
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+};
+const writeCachedSubjects = (items: SubjectItem[]) => {
+  if (typeof window === "undefined") return;
+  try { localStorage.setItem(SUBJECT_CACHE_KEY, JSON.stringify(items)); } catch { /* ignore cache failure */ }
+};
 const normalizeSubject = (subject: any, classes: ClassOption[], teachers: TeacherOption[]): SubjectItem => {
   const classId = getId(subject.classId);
   const teacherId = getId(subject.teacherId);
@@ -62,6 +82,7 @@ export default function SubjectsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [classFilter, setClassFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [formOpen, setFormOpen] = useState(false);
@@ -69,6 +90,13 @@ export default function SubjectsPage() {
   const [deleteTarget, setDeleteTarget] = useState<SubjectItem | null>(null);
   const [form, setForm] = useState<SubjectForm>(emptyForm);
   const [bulkLines, setBulkLines] = useState("");
+
+  const showNotice = (type: Notice["type"], message: string, title = type === "success" ? "Success" : type === "error" ? "Error" : "Info") => {
+    setNotice({ type, message });
+    toast(title, message, type);
+    if (type === "error") setError(message);
+    else setError("");
+  };
 
   const filteredSubjects = useMemo(() => subjects.filter((subject) => {
     const subjectClassId = getId(subject.classId);
@@ -95,12 +123,21 @@ export default function SubjectsPage() {
         const academicResponse: any = await apiClient.get("/academic").catch(() => ({}));
         loadedSubjects = Array.isArray(academicResponse?.subjects) ? academicResponse.subjects : [];
       }
-      const normalized = loadedSubjects.map((item) => normalizeSubject(item, nextClasses, nextTeachers));
+      let normalized = loadedSubjects.map((item) => normalizeSubject(item, nextClasses, nextTeachers));
+      if (!normalized.length) normalized = readCachedSubjects();
       setSubjects(normalized);
-      if (normalized.length) toast("Subjects loaded", `${normalized.length} subject record loaded.`, "success");
+      writeCachedSubjects(normalized);
+      if (normalized.length) showNotice("success", `${normalized.length} subject record loaded.`, "Subjects loaded");
+      else setNotice({ type: "info", message: "No subject found yet. Add a subject to create the first record." });
     } catch (err: any) {
-      const message = err?.message || "Failed to load subject data";
-      setError(message); toast("Subject API Error", message, "error");
+      const cached = readCachedSubjects();
+      if (cached.length) {
+        setSubjects(cached);
+        showNotice("info", `Live subject API failed, showing ${cached.length} cached subject record.`, "Subjects cache loaded");
+      } else {
+        const message = err?.message || "Failed to load subject data";
+        showNotice("error", message, "Subject API Error");
+      }
     } finally { setLoading(false); }
   };
 
@@ -120,56 +157,61 @@ export default function SubjectsPage() {
 
   const upsertLocalSubjects = (items: any[]) => {
     const normalized = items.map((item) => normalizeSubject(item, classes, teachers));
+    let nextList: SubjectItem[] = [];
     setSubjects((current) => {
       const map = new Map(current.map((item) => [item._id, item]));
       normalized.forEach((item) => map.set(item._id, item));
-      return Array.from(map.values()).sort((a, b) => String(b._id).localeCompare(String(a._id)));
+      nextList = Array.from(map.values()).sort((a, b) => String(b._id).localeCompare(String(a._id)));
+      writeCachedSubjects(nextList);
+      return nextList;
     });
     return normalized.length;
   };
 
   const submitForm = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); setSaving(true); setError("");
+    event.preventDefault(); setSaving(true); setError(""); setNotice(null);
     try {
       if (editingSubject) {
         const response: any = await api.academic.subjects.update(editingSubject._id, form);
         upsertLocalSubjects([response.subject || { ...form, _id: editingSubject._id }]);
-        toast("Subject updated", `${form.name} updated successfully.`, "success");
+        showNotice("success", `${form.name} updated successfully.`, "Subject updated");
       } else {
         const bulkItems = parseBulkSubjects();
         const response: any = await api.academic.subjects.create(bulkItems.length > 0 ? { items: bulkItems } : form);
         const created = Array.isArray(response?.subjects) ? response.subjects : response?.subject ? [response.subject] : bulkItems.length ? bulkItems.map((item, index) => ({ ...item, _id: `local-${Date.now()}-${index}` })) : [{ ...form, _id: `local-${Date.now()}` }];
         const count = upsertLocalSubjects(created);
-        toast("Subject added", `${count || 1} subject saved successfully.`, "success");
+        showNotice("success", `${count || 1} subject saved successfully. List updated.`, "Subject added");
       }
       setFormOpen(false);
       loadData().catch(() => undefined);
     } catch (err: any) {
       const message = err?.message || "Failed to save subject";
-      setError(message); toast("Subject Save Failed", message, "error");
+      showNotice("error", message, "Subject Save Failed");
     } finally { setSaving(false); }
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget) return; setSaving(true); setError("");
+    if (!deleteTarget) return; setSaving(true); setError(""); setNotice(null);
     try {
       await api.academic.subjects.delete(deleteTarget._id);
-      setSubjects((current) => current.filter((subject) => subject._id !== deleteTarget._id));
-      toast("Subject deleted", `${deleteTarget.name} deleted successfully.`, "success");
+      const next = subjects.filter((subject) => subject._id !== deleteTarget._id);
+      setSubjects(next); writeCachedSubjects(next);
+      showNotice("success", `${deleteTarget.name} deleted successfully.`, "Subject deleted");
       setDeleteTarget(null);
       loadData().catch(() => undefined);
     } catch (err: any) {
       const message = err?.message || "Failed to delete subject";
-      setError(message); toast("Subject Delete Failed", message, "error");
+      showNotice("error", message, "Subject Delete Failed");
     } finally { setSaving(false); }
   };
 
   return (
     <div className="space-y-5">
       <PageHeader title="Subject Management" description="Manage subject catalog, class assignment, teacher ownership and subject type." icon={BookOpen} status={<Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">{activeSubjects} active</Badge>} actions={[<Button key="refresh" variant="outline" size="sm" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>, <Button key="add-subject" size="sm" onClick={openAddModal}><Plus className="mr-2 h-4 w-4" />Add Subject</Button>]} />
+      {notice && <div className={cn("rounded-lg border px-4 py-3 text-sm font-medium", notice.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : notice.type === "error" ? "border-red-200 bg-red-50 text-red-700" : "border-blue-200 bg-blue-50 text-blue-700")}>{notice.message}</div>}
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-[1fr_220px_180px]"><div><div className="text-xs font-medium uppercase text-slate-500">Visible subjects</div><div className="mt-1 text-2xl font-semibold text-slate-950">{filteredSubjects.length}</div></div><label className="space-y-2"><span className="text-sm font-medium text-slate-700">Class</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={classFilter} onChange={(event) => setClassFilter(event.target.value)}><option value="all">All classes</option>{classes.map((classItem) => <option key={classItem._id} value={classItem._id}>{classItem.name}</option>)}</select></label><label className="space-y-2"><span className="text-sm font-medium text-slate-700">Type</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="all">All types</option><option value="core">Core</option><option value="elective">Elective</option><option value="optional">Optional</option></select></label></div></section>
       {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>Subject name</TableHead><TableHead>Code</TableHead><TableHead>Class</TableHead><TableHead>Teacher</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">Loading subjects...</TableCell></TableRow> : filteredSubjects.length === 0 ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">No subjects found.</TableCell></TableRow> : filteredSubjects.map((subject) => <TableRow key={subject._id}><TableCell><div className="font-medium text-slate-950">{subject.name}</div>{subject.description && <div className="text-xs text-slate-500">{subject.description}</div>}</TableCell><TableCell><Badge variant="outline" className="border-border bg-muted">{subject.code}</Badge></TableCell><TableCell>{getName(subject.classId, "Unassigned")}{typeof subject.classId === "object" && subject.classId?.grade && <span className="ml-1 text-xs text-slate-500">Grade {subject.classId.grade}</span>}</TableCell><TableCell>{getName(subject.teacherId, "Not assigned")}</TableCell><TableCell><Badge variant="outline" className="capitalize">{subject.type}</Badge></TableCell><TableCell><Badge variant="outline" className={cn(subject.isActive !== false ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-500")}>{subject.isActive !== false ? "Active" : "Inactive"}</Badge></TableCell><TableCell><div className="flex justify-end gap-2"><Button type="button" variant="outline" size="icon" title="Edit subject" onClick={() => openEditModal(subject)}><Edit2 className="h-4 w-4" /></Button><Button type="button" variant="destructive" size="icon" title="Delete subject" onClick={() => setDeleteTarget(subject)}><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>)}</TableBody></Table></section>
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>Subject name</TableHead><TableHead>Code</TableHead><TableHead>Class</TableHead><TableHead>Teacher</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">Loading subjects...</TableCell></TableRow> : filteredSubjects.length === 0 ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">No subjects found. Click Add Subject to create one.</TableCell></TableRow> : filteredSubjects.map((subject) => <TableRow key={subject._id}><TableCell><div className="font-medium text-slate-950">{subject.name}</div>{subject.description && <div className="text-xs text-slate-500">{subject.description}</div>}</TableCell><TableCell><Badge variant="outline" className="border-border bg-muted">{subject.code}</Badge></TableCell><TableCell>{getName(subject.classId, "Unassigned")}{typeof subject.classId === "object" && subject.classId?.grade && <span className="ml-1 text-xs text-slate-500">Grade {subject.classId.grade}</span>}</TableCell><TableCell>{getName(subject.teacherId, "Not assigned")}</TableCell><TableCell><Badge variant="outline" className="capitalize">{subject.type}</Badge></TableCell><TableCell><Badge variant="outline" className={cn(subject.isActive !== false ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-500")}>{subject.isActive !== false ? "Active" : "Inactive"}</Badge></TableCell><TableCell><div className="flex justify-end gap-2"><Button type="button" variant="outline" size="icon" title="Edit subject" onClick={() => openEditModal(subject)}><Edit2 className="h-4 w-4" /></Button><Button type="button" variant="destructive" size="icon" title="Delete subject" onClick={() => setDeleteTarget(subject)}><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>)}</TableBody></Table></section>
       <SubjectFormDialog open={formOpen} editing={Boolean(editingSubject)} form={form} classes={classes} teachers={teachers} saving={saving} bulkLines={bulkLines} setBulkLines={setBulkLines} onOpenChange={setFormOpen} onSubmit={submitForm} onFormChange={setForm} />
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}><DialogContent><DialogHeader><DialogTitle>Delete subject?</DialogTitle><DialogDescription>This will remove {deleteTarget?.name} from its class and teacher assignment.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button><Button type="button" variant="destructive" disabled={saving} onClick={confirmDelete}>{saving ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>
     </div>
