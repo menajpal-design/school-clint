@@ -30,6 +30,11 @@ const showAppToast = (title: string, message: string, type: 'success' | 'error' 
   window.dispatchEvent(new CustomEvent('app-toast', { detail: { title, message, type, duration: 4500 } }));
 };
 
+const autoEmailFor = (name: any, type: 'student' | 'parent') => {
+  const slug = String(name || type).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || type;
+  return `${type}-${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@${type}.local`;
+};
+
 class ApiClient {
   private currentToken: string | null = null;
   private lastToast = 0;
@@ -110,7 +115,10 @@ const crud = (base: string) => ({ getAll: (params?: any) => apiClient.get(base, 
 const studentApi = {
   ...crud('/students'),
   create: async (data: any) => {
-    const result = await apiClient.post('/students', data);
+    const payload = { ...data };
+    if (!String(payload.email || '').trim()) payload.email = autoEmailFor(payload.name, 'student');
+    if (payload.autoParentAccount !== false && !String(payload.guardianEmail || '').trim()) payload.guardianEmail = autoEmailFor(payload.guardianName || 'guardian', 'parent');
+    const result = await apiClient.post('/students', payload);
     showAppToast('Student admitted', 'Student profile saved and login account created.', 'success');
     return result;
   },
