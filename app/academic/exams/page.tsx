@@ -13,7 +13,7 @@ import { api, apiClient } from "@/lib/api";
 import { cn, formatDate } from "@/lib/utils";
 
 type ClassOption = { _id: string; name: string; grade?: string };
-type SubjectOption = { _id: string; name: string; code: string; classId?: ClassOption };
+type SubjectOption = { _id: string; name: string; code: string; classId?: ClassOption | string };
 type SubjectMark = { subjectId: string; date: string; duration: number; totalMarks: number; passingMarks: number };
 type ExamType = "term" | "half-yearly" | "annual" | "midterm" | "final" | "quiz" | "assignment" | "project";
 type ExamStatus = "draft" | "scheduled" | "approved" | "published" | "completed";
@@ -49,6 +49,12 @@ type ExamForm = {
 
 const approvalTypes: ExamType[] = ["term", "half-yearly", "annual"];
 const today = () => new Date().toISOString().slice(0, 10);
+const SUBJECT_CACHE_KEY = "easy-school-subject-cache-v2";
+const CLASS_CACHE_KEY = "easy-school-syllabus-class-cache-v1";
+const EXAM_CACHE_KEY = "easy-school-exam-routine-exams-v2";
+const readJson = (key: string) => { if (typeof window === "undefined") return [] as any[]; try { const data = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(data) ? data : []; } catch { return []; } };
+const writeJson = (key: string, value: any[]) => { if (typeof window === "undefined") return; try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ } };
+const idOf = (value: any) => String(value?._id || value?.id || value || "");
 
 const emptyForm = (): ExamForm => ({
   name: "",
@@ -78,7 +84,10 @@ export default function ExamsPage() {
   const [deleteTarget, setDeleteTarget] = useState<ExamItem | null>(null);
   const [form, setForm] = useState<ExamForm>(emptyForm);
 
-  const selectedClassSubjects = useMemo(() => subjects.filter((subject) => subject.classId?._id === form.classId), [subjects, form.classId]);
+  const selectedClassSubjects = useMemo(() => {
+    const matched = subjects.filter((subject) => idOf(subject.classId) === form.classId);
+    return matched.length ? matched : subjects;
+  }, [subjects, form.classId]);
   const scheduledExams = useMemo(() => exams.filter((exam) => exam.status === "scheduled" || exam.status === "approved").length, [exams]);
   const publicRoutineCount = useMemo(() => exams.filter((exam) => exam.isPublished).length, [exams]);
 
@@ -86,6 +95,8 @@ export default function ExamsPage() {
     const marks = exam.subjectMarks || [];
     return marks.length > 0 && marks.every((mark) => Boolean(mark.subjectId?._id && mark.date && mark.duration));
   };
+
+  const formRoutineReady = form.subjectMarks.length > 0 && form.subjectMarks.every((mark) => mark.subjectId && mark.date && mark.duration);
 
   const buildRoutineNotice = (exam: ExamItem) => {
     const routineLines = (exam.subjectMarks || []).map((mark, index) => {
@@ -95,18 +106,7 @@ export default function ExamsPage() {
       const durationText = mark.duration ? `${mark.duration} min` : "Not set";
       return `${index + 1}. ${subjectName}${subjectCode} - ${dateText} - ${durationText}`;
     });
-
-    return [
-      `Exam: ${exam.name}`,
-      `Class: ${exam.classId?.name || "Unassigned"}`,
-      `Exam date: ${exam.startDate ? formatDate(exam.startDate) : "Not set"} to ${exam.endDate ? formatDate(exam.endDate) : "Not set"}`,
-      "",
-      "Routine:",
-      ...routineLines,
-      "",
-      exam.instructions ? `Instructions: ${exam.instructions}` : "",
-      exam.syllabus ? `Syllabus: ${exam.syllabus}` : "",
-    ].filter(Boolean).join("\n");
+    return [`Exam: ${exam.name}`, `Class: ${exam.classId?.name || "Unassigned"}`, `Exam date: ${exam.startDate ? formatDate(exam.startDate) : "Not set"} to ${exam.endDate ? formatDate(exam.endDate) : "Not set"}`, "", "Routine:", ...routineLines, "", exam.instructions ? `Instructions: ${exam.instructions}` : "", exam.syllabus ? `Syllabus: ${exam.syllabus}` : ""].filter(Boolean).join("\n");
   };
 
   const createRoutineNotice = async (exam: ExamItem) => {
@@ -129,13 +129,19 @@ export default function ExamsPage() {
     setError("");
     try {
       const [examResponse, classResponse, subjectResponse] = await Promise.all([
-        api.academic.exams.getAll() as Promise<{ exams: ExamItem[] }>,
-        api.academic.classes.getAll() as Promise<{ classes: ClassOption[] }>,
-        api.academic.subjects.getAll() as Promise<{ subjects: SubjectOption[] }>,
+        api.academic.exams.getAll().catch(() => ({ exams: readJson(EXAM_CACHE_KEY) })) as Promise<{ exams: ExamItem[] }>,
+        api.academic.classes.getAll().catch(() => ({ classes: readJson(CLASS_CACHE_KEY) })) as Promise<{ classes: ClassOption[] }>,
+        api.academic.subjects.getAll().catch(() => ({ subjects: readJson(SUBJECT_CACHE_KEY) })) as Promise<{ subjects: SubjectOption[] }>,
       ]);
-      setExams(examResponse.exams || []);
-      setClasses(classResponse.classes || []);
-      setSubjects(subjectResponse.subjects || []);
+      const nextExams = examResponse.exams || [];
+      const nextClasses = classResponse.classes || [];
+      const nextSubjects = subjectResponse.subjects || [];
+      setExams(nextExams);
+      setClasses(nextClasses);
+      setSubjects(nextSubjects);
+      writeJson(EXAM_CACHE_KEY, nextExams);
+      writeJson(CLASS_CACHE_KEY, nextClasses);
+      writeJson(SUBJECT_CACHE_KEY, nextSubjects);
     } catch (err: any) {
       setError(err?.message || "Failed to load exam data");
     } finally {
@@ -147,7 +153,9 @@ export default function ExamsPage() {
 
   const buildMarksForClass = (classId: string, existing: SubjectMark[] = []) => {
     const existingBySubject = new Map(existing.map((item) => [item.subjectId, item]));
-    return subjects.filter((subject) => subject.classId?._id === classId).map((subject) => ({
+    const matched = subjects.filter((subject) => idOf(subject.classId) === classId);
+    const source = matched.length ? matched : subjects;
+    return source.map((subject) => ({
       subjectId: subject._id,
       date: existingBySubject.get(subject._id)?.date || form.startDate || today(),
       duration: existingBySubject.get(subject._id)?.duration || 120,
@@ -161,6 +169,7 @@ export default function ExamsPage() {
     const firstClassId = classes[0]?._id || "";
     nextForm.classId = firstClassId;
     nextForm.subjectMarks = firstClassId ? buildMarksForClass(firstClassId) : [];
+    nextForm.isPublished = false;
     setEditingExam(null);
     setForm(nextForm);
     setFormOpen(true);
@@ -175,7 +184,6 @@ export default function ExamsPage() {
       totalMarks: item.totalMarks || 100,
       passingMarks: item.passingMarks || 33,
     }));
-
     setEditingExam(exam);
     setForm({
       name: exam.name || "",
@@ -187,24 +195,23 @@ export default function ExamsPage() {
       status: exam.status || "scheduled",
       syllabus: exam.syllabus || "",
       instructions: exam.instructions || "",
-      isPublished: exam.isPublished === true,
+      isPublished: exam.isPublished === true && Boolean(mappedMarks.length),
       subjectMarks: mappedMarks.length ? mappedMarks : buildMarksForClass(classId),
     });
     setFormOpen(true);
   };
 
   const updateClass = (classId: string) => {
-    setForm((current) => ({
-      ...current,
-      classId,
-      subjectMarks: subjects.filter((subject) => subject.classId?._id === classId).map((subject) => ({
-        subjectId: subject._id,
-        date: current.startDate || today(),
-        duration: 120,
-        totalMarks: 100,
-        passingMarks: 33,
-      })),
-    }));
+    setForm((current) => {
+      const matched = subjects.filter((subject) => idOf(subject.classId) === classId);
+      const source = matched.length ? matched : subjects;
+      return {
+        ...current,
+        classId,
+        isPublished: false,
+        subjectMarks: source.map((subject) => ({ subjectId: subject._id, date: current.startDate || today(), duration: 120, totalMarks: 100, passingMarks: 33 })),
+      };
+    });
   };
 
   const updateType = (type: ExamType) => setForm((current) => ({ ...current, type, approvalRequired: approvalTypes.includes(type) ? current.approvalRequired : false }));
@@ -217,16 +224,17 @@ export default function ExamsPage() {
     setSuccess("");
     try {
       let savedExam: ExamItem | null = null;
+      const payload = { ...form, isPublished: form.isPublished && formRoutineReady, subjectMarks: form.subjectMarks.filter((item) => item.subjectId && item.date) };
       if (editingExam) {
-        const data = await api.academic.exams.update(editingExam._id, form) as { exam: ExamItem };
+        const data = await api.academic.exams.update(editingExam._id, payload) as { exam: ExamItem };
         savedExam = data.exam;
       } else {
-        const data = await api.academic.exams.create(form) as { exam: ExamItem };
+        const data = await api.academic.exams.create(payload) as { exam: ExamItem };
         savedExam = data.exam;
       }
-      if (form.isPublished && savedExam) await createRoutineNotice(savedExam);
+      if (payload.isPublished && savedExam) await createRoutineNotice(savedExam);
       setFormOpen(false);
-      setSuccess(form.isPublished ? "Exam saved and routine notice published." : "Exam saved successfully.");
+      setSuccess(payload.isPublished ? "Exam saved and routine notice published." : "Exam saved successfully. Routine can be completed later from Exam Routine page.");
       await loadData();
     } catch (err: any) {
       setError(err?.message || "Failed to save exam");
@@ -277,97 +285,29 @@ export default function ExamsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Exam Management"
-        description="Create exam schedules, configure marks and publish public exam routines to Notice Board."
+        description="Create exam schedules first. Routine subject/date can be completed now or later from Exam Routine page."
         icon={CalendarClock}
         status={<Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">{scheduledExams} scheduled • {publicRoutineCount} public routines</Badge>}
-        actions={[
-          <Button key="refresh" variant="outline" size="sm" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
-          <Button key="create-exam" size="sm" onClick={openCreateModal}><Plus className="mr-2 h-4 w-4" />Create Exam</Button>,
-        ]}
+        actions={[<Button key="refresh" variant="outline" size="sm" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>, <Button key="create-exam" size="sm" onClick={openCreateModal}><Plus className="mr-2 h-4 w-4" />Create Exam</Button>]}
       />
 
       {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
       {success && <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700">{success}</div>}
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
-              <TableHead>Exam name</TableHead>
-              <TableHead>Routine</TableHead>
-              <TableHead>Public routine</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Start date</TableHead>
-              <TableHead>End date</TableHead>
-              <TableHead>Approval</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">Loading exams...</TableCell></TableRow> : exams.length === 0 ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">No exams found.</TableCell></TableRow> : exams.map((exam) => (
-              <TableRow key={exam._id}>
-                <TableCell><div className="font-medium text-slate-950">{exam.name}</div><div className="text-xs text-slate-500">{exam.subjectMarks?.length || 0} subject schedule</div></TableCell>
-                <TableCell><Badge variant="outline" className={cn("w-fit capitalize", isRoutineReady(exam) ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700")}>{isRoutineReady(exam) ? "Routine ready" : "Routine incomplete"}</Badge></TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-2">
-                    <Badge variant="outline" className={exam.isPublished ? "w-fit border-blue-200 bg-blue-50 text-blue-700" : "w-fit border-slate-200 bg-slate-50 text-slate-600"}>{exam.isPublished ? "Public" : "Private"}</Badge>
-                    <Button type="button" size="sm" variant={exam.isPublished ? "outline" : "default"} className="w-fit" disabled={publishingExamId === exam._id} onClick={() => togglePublicRoutine(exam)}>
-                      {exam.isPublished ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                      {publishingExamId === exam._id ? "Updating..." : exam.isPublished ? "Make private" : "Publish routine"}
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell><Badge variant="outline" className="capitalize">{exam.type}</Badge></TableCell>
-                <TableCell>{exam.classId?.name || "Unassigned"}</TableCell>
-                <TableCell>{exam.startDate ? formatDate(exam.startDate) : "Not set"}</TableCell>
-                <TableCell>{exam.endDate ? formatDate(exam.endDate) : "Not set"}</TableCell>
-                <TableCell>{exam.approvalRequired ? "Yes" : "No"}</TableCell>
-                <TableCell><Badge variant="outline" className={statusClass(exam.status || "scheduled")}>{exam.status || "scheduled"}</Badge></TableCell>
-                <TableCell><div className="flex justify-end gap-2"><Button type="button" variant="outline" size="icon" title="Edit exam" onClick={() => openEditModal(exam)}><Edit2 className="h-4 w-4" /></Button><Button type="button" variant="destructive" size="icon" title="Delete exam" onClick={() => setDeleteTarget(exam)}><Trash2 className="h-4 w-4" /></Button></div></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Exam name</TableHead><TableHead>Routine</TableHead><TableHead>Public routine</TableHead><TableHead>Type</TableHead><TableHead>Class</TableHead><TableHead>Start date</TableHead><TableHead>End date</TableHead><TableHead>Approval</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">Loading exams...</TableCell></TableRow> : exams.length === 0 ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">No exams found.</TableCell></TableRow> : exams.map((exam) => <TableRow key={exam._id}><TableCell><div className="font-medium text-slate-950">{exam.name}</div><div className="text-xs text-slate-500">{exam.subjectMarks?.length || 0} subject schedule</div></TableCell><TableCell><Badge variant="outline" className={cn("w-fit capitalize", isRoutineReady(exam) ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700")}>{isRoutineReady(exam) ? "Routine ready" : "Routine incomplete"}</Badge></TableCell><TableCell><div className="flex flex-col gap-2"><Badge variant="outline" className={exam.isPublished ? "w-fit border-blue-200 bg-blue-50 text-blue-700" : "w-fit border-slate-200 bg-slate-50 text-slate-600"}>{exam.isPublished ? "Public" : "Private"}</Badge><Button type="button" size="sm" variant={exam.isPublished ? "outline" : "default"} className="w-fit" disabled={publishingExamId === exam._id} onClick={() => togglePublicRoutine(exam)}>{exam.isPublished ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}{publishingExamId === exam._id ? "Updating..." : exam.isPublished ? "Make private" : "Publish routine"}</Button></div></TableCell><TableCell><Badge variant="outline" className="capitalize">{exam.type}</Badge></TableCell><TableCell>{exam.classId?.name || "Unassigned"}</TableCell><TableCell>{exam.startDate ? formatDate(exam.startDate) : "Not set"}</TableCell><TableCell>{exam.endDate ? formatDate(exam.endDate) : "Not set"}</TableCell><TableCell>{exam.approvalRequired ? "Yes" : "No"}</TableCell><TableCell><Badge variant="outline" className={statusClass(exam.status || "scheduled")}>{exam.status || "scheduled"}</Badge></TableCell><TableCell><div className="flex justify-end gap-2"><Button type="button" variant="outline" size="icon" title="Edit exam" onClick={() => openEditModal(exam)}><Edit2 className="h-4 w-4" /></Button><Button type="button" variant="destructive" size="icon" title="Delete exam" onClick={() => setDeleteTarget(exam)}><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>)}</TableBody></Table>
       </section>
 
-      <ExamFormDialog open={formOpen} editing={Boolean(editingExam)} form={form} classes={classes} selectedClassSubjects={selectedClassSubjects} saving={saving} onOpenChange={setFormOpen} onSubmit={submitForm} onFormChange={setForm} onClassChange={updateClass} onTypeChange={updateType} onUpdateSubjectMark={updateSubjectMark} />
+      <ExamFormDialog open={formOpen} editing={Boolean(editingExam)} form={form} classes={classes} selectedClassSubjects={selectedClassSubjects} saving={saving} routineReady={formRoutineReady} onOpenChange={setFormOpen} onSubmit={submitForm} onFormChange={setForm} onClassChange={updateClass} onTypeChange={updateType} onUpdateSubjectMark={updateSubjectMark} />
 
-      <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent><DialogHeader><DialogTitle>Delete exam?</DialogTitle><DialogDescription>This will remove {deleteTarget?.name}. Exams with submitted results cannot be deleted.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button><Button type="button" variant="destructive" disabled={saving} onClick={confirmDelete}>{saving ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent>
-      </Dialog>
+      <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}><DialogContent><DialogHeader><DialogTitle>Delete exam?</DialogTitle><DialogDescription>This will remove {deleteTarget?.name}. Exams with submitted results cannot be deleted.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button><Button type="button" variant="destructive" disabled={saving} onClick={confirmDelete}>{saving ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 }
 
-function ExamFormDialog({ open, editing, form, classes, selectedClassSubjects, saving, onOpenChange, onSubmit, onFormChange, onClassChange, onTypeChange, onUpdateSubjectMark }: { open: boolean; editing: boolean; form: ExamForm; classes: ClassOption[]; selectedClassSubjects: SubjectOption[]; saving: boolean; onOpenChange: (open: boolean) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onFormChange: (form: ExamForm) => void; onClassChange: (classId: string) => void; onTypeChange: (type: ExamType) => void; onUpdateSubjectMark: (index: number, value: Partial<SubjectMark>) => void }) {
+function ExamFormDialog({ open, editing, form, classes, selectedClassSubjects, saving, routineReady, onOpenChange, onSubmit, onFormChange, onClassChange, onTypeChange, onUpdateSubjectMark }: { open: boolean; editing: boolean; form: ExamForm; classes: ClassOption[]; selectedClassSubjects: SubjectOption[]; saving: boolean; routineReady: boolean; onOpenChange: (open: boolean) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onFormChange: (form: ExamForm) => void; onClassChange: (classId: string) => void; onTypeChange: (type: ExamType) => void; onUpdateSubjectMark: (index: number, value: Partial<SubjectMark>) => void }) {
   const approvalToggleEnabled = approvalTypes.includes(form.type);
-  const routineReady = form.subjectMarks.length > 0 && form.subjectMarks.every((mark) => mark.subjectId && mark.date && mark.duration);
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle>{editing ? "Edit exam" : "Create exam"}</DialogTitle><DialogDescription>Set the exam window, public routine option and subject-wise marks schedule.</DialogDescription></DialogHeader>
-        <form className="space-y-5" onSubmit={onSubmit}>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Field label="Exam name"><Input value={form.name} onChange={(event) => onFormChange({ ...form, name: event.target.value })} required /></Field>
-            <Field label="Type"><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={(event) => onTypeChange(event.target.value as ExamType)}><option value="term">Term</option><option value="half-yearly">Half-yearly</option><option value="annual">Annual</option><option value="midterm">Midterm</option><option value="final">Final</option><option value="quiz">Quiz</option><option value="assignment">Assignment</option><option value="project">Project</option></select></Field>
-            <Field label="Class"><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.classId} onChange={(event) => onClassChange(event.target.value)} required><option value="">Select class</option>{classes.map((classItem) => <option key={classItem._id} value={classItem._id}>{classItem.name}</option>)}</select></Field>
-            <Field label="Start date"><Input type="date" value={form.startDate} onChange={(event) => onFormChange({ ...form, startDate: event.target.value })} required /></Field>
-            <Field label="End date"><Input type="date" value={form.endDate} onChange={(event) => onFormChange({ ...form, endDate: event.target.value })} required /></Field>
-            <Field label="Status"><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.status} onChange={(event) => onFormChange({ ...form, status: event.target.value as ExamStatus })}><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="approved">Approved</option><option value="published">Published</option><option value="completed">Completed</option></select></Field>
-          </div>
-
-          <label className={cn("flex items-center gap-3 rounded-lg border border-slate-200 p-3", !approvalToggleEnabled && "opacity-60")}><input type="checkbox" className="h-4 w-4" checked={form.approvalRequired} disabled={!approvalToggleEnabled} onChange={(event) => onFormChange({ ...form, approvalRequired: event.target.checked })} /><span className="text-sm font-medium text-slate-800">Approval required for term, half-yearly and annual exams</span></label>
-          <label className={cn("flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50/60 p-3", !routineReady && "opacity-70")}><input type="checkbox" className="h-4 w-4" checked={form.isPublished} disabled={!routineReady} onChange={(event) => onFormChange({ ...form, isPublished: event.target.checked })} /><span className="text-sm font-medium text-blue-900">Public Exam Routine — save করলে routine Notice Board-এ publish হবে</span></label>
-          {!routineReady && <p className="text-xs text-amber-700">Subject, date এবং duration complete করলে public routine option enable হবে।</p>}
-
-          <div className="space-y-3"><div><h3 className="text-sm font-semibold text-slate-950">Exam schedule and marks setup</h3><p className="mt-1 text-sm text-slate-500">Subjects are loaded from the selected class.</p></div><div className="overflow-hidden rounded-lg border border-slate-200"><Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Subject</TableHead><TableHead>Date</TableHead><TableHead>Duration</TableHead><TableHead>Total marks</TableHead><TableHead>Passing marks</TableHead></TableRow></TableHeader><TableBody>{form.subjectMarks.length === 0 ? <TableRow><TableCell colSpan={5} className="h-24 text-center text-slate-500">Select a class with assigned subjects.</TableCell></TableRow> : form.subjectMarks.map((mark, index) => { const subject = selectedClassSubjects.find((item) => item._id === mark.subjectId); return <TableRow key={mark.subjectId}><TableCell><div className="font-medium text-slate-950">{subject?.name || "Subject"}</div><div className="text-xs text-slate-500">{subject?.code}</div></TableCell><TableCell><Input type="date" value={mark.date} onChange={(event) => onUpdateSubjectMark(index, { date: event.target.value })} required /></TableCell><TableCell><Input type="number" min={0} value={mark.duration} onChange={(event) => onUpdateSubjectMark(index, { duration: Number(event.target.value) })} required /></TableCell><TableCell><Input type="number" min={0} value={mark.totalMarks} onChange={(event) => onUpdateSubjectMark(index, { totalMarks: Number(event.target.value) })} required /></TableCell><TableCell><Input type="number" min={0} value={mark.passingMarks} onChange={(event) => onUpdateSubjectMark(index, { passingMarks: Number(event.target.value) })} required /></TableCell></TableRow>; })}</TableBody></Table></div></div>
-          <div className="grid gap-4 md:grid-cols-2"><Field label="Syllabus"><Input value={form.syllabus} onChange={(event) => onFormChange({ ...form, syllabus: event.target.value })} /></Field><Field label="Instructions"><Input value={form.instructions} onChange={(event) => onFormChange({ ...form, instructions: event.target.value })} /></Field></div>
-          <DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit" disabled={saving || form.subjectMarks.length === 0}>{saving ? "Saving..." : editing ? "Save Changes" : "Create Exam"}</Button></DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle>{editing ? "Edit exam" : "Create exam"}</DialogTitle><DialogDescription>Set the exam window first. Subject routine can be added now or later from Exam Routine page.</DialogDescription></DialogHeader><form className="space-y-5" onSubmit={onSubmit}><div className="grid gap-4 md:grid-cols-3"><Field label="Exam name"><Input value={form.name} onChange={(event) => onFormChange({ ...form, name: event.target.value })} required /></Field><Field label="Type"><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={(event) => onTypeChange(event.target.value as ExamType)}><option value="term">Term</option><option value="half-yearly">Half-yearly</option><option value="annual">Annual</option><option value="midterm">Midterm</option><option value="final">Final</option><option value="quiz">Quiz</option><option value="assignment">Assignment</option><option value="project">Project</option></select></Field><Field label="Class"><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.classId} onChange={(event) => onClassChange(event.target.value)} required><option value="">Select class</option>{classes.map((classItem) => <option key={classItem._id} value={classItem._id}>{classItem.name}</option>)}</select></Field><Field label="Start date"><Input type="date" value={form.startDate} onChange={(event) => onFormChange({ ...form, startDate: event.target.value })} required /></Field><Field label="End date"><Input type="date" value={form.endDate} onChange={(event) => onFormChange({ ...form, endDate: event.target.value })} required /></Field><Field label="Status"><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.status} onChange={(event) => onFormChange({ ...form, status: event.target.value as ExamStatus })}><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="approved">Approved</option><option value="published">Published</option><option value="completed">Completed</option></select></Field></div><label className={cn("flex items-center gap-3 rounded-lg border border-slate-200 p-3", !approvalToggleEnabled && "opacity-60")}><input type="checkbox" className="h-4 w-4" checked={form.approvalRequired} disabled={!approvalToggleEnabled} onChange={(event) => onFormChange({ ...form, approvalRequired: event.target.checked })} /><span className="text-sm font-medium text-slate-800">Approval required for term, half-yearly and annual exams</span></label><label className={cn("flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50/60 p-3", !routineReady && "opacity-70")}><input type="checkbox" className="h-4 w-4" checked={form.isPublished && routineReady} disabled={!routineReady} onChange={(event) => onFormChange({ ...form, isPublished: event.target.checked })} /><span className="text-sm font-medium text-blue-900">Public Exam Routine — save করলে routine Notice Board-এ publish হবে</span></label>{!routineReady && <p className="text-xs text-amber-700">Subject/date complete না থাকলেও Exam Create হবে। Routine পরে Academic &gt; Exam Routine থেকে add/update করুন।</p>}<div className="space-y-3"><div><h3 className="text-sm font-semibold text-slate-950">Exam schedule and marks setup</h3><p className="mt-1 text-sm text-slate-500">Subjects are optional during exam creation. You can complete routine later.</p></div><div className="overflow-hidden rounded-lg border border-slate-200"><Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Subject</TableHead><TableHead>Date</TableHead><TableHead>Duration</TableHead><TableHead>Total marks</TableHead><TableHead>Passing marks</TableHead></TableRow></TableHeader><TableBody>{form.subjectMarks.length === 0 ? <TableRow><TableCell colSpan={5} className="h-24 text-center text-slate-500">No subject schedule loaded. You can still create the exam and add routine later.</TableCell></TableRow> : form.subjectMarks.map((mark, index) => { const subject = selectedClassSubjects.find((item) => item._id === mark.subjectId); return <TableRow key={`${mark.subjectId}-${index}`}><TableCell><div className="font-medium text-slate-950">{subject?.name || "Subject"}</div><div className="text-xs text-slate-500">{subject?.code}</div></TableCell><TableCell><Input type="date" value={mark.date} onChange={(event) => onUpdateSubjectMark(index, { date: event.target.value })} /></TableCell><TableCell><Input type="number" min={0} value={mark.duration} onChange={(event) => onUpdateSubjectMark(index, { duration: Number(event.target.value) })} /></TableCell><TableCell><Input type="number" min={0} value={mark.totalMarks} onChange={(event) => onUpdateSubjectMark(index, { totalMarks: Number(event.target.value) })} /></TableCell><TableCell><Input type="number" min={0} value={mark.passingMarks} onChange={(event) => onUpdateSubjectMark(index, { passingMarks: Number(event.target.value) })} /></TableCell></TableRow>; })}</TableBody></Table></div></div><div className="grid gap-4 md:grid-cols-2"><Field label="Syllabus"><Input value={form.syllabus} onChange={(event) => onFormChange({ ...form, syllabus: event.target.value })} /></Field><Field label="Instructions"><Input value={form.instructions} onChange={(event) => onFormChange({ ...form, instructions: event.target.value })} /></Field></div><DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit" disabled={saving || !form.name.trim() || !form.classId}>{saving ? "Saving..." : editing ? "Save Changes" : "Create Exam"}</Button></DialogFooter></form></DialogContent></Dialog>;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="space-y-2"><span className="text-sm font-medium text-slate-700">{label}</span>{children}</label>; }
