@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarX2, Database, Palette, Save, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
+import { CalendarX2, Database, Palette, RefreshCw, Save, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,13 @@ const emptySiteConfig = {
   imgbbUploadUrl: "https://api.imgbb.com/1/upload",
 };
 
+const emptyStorageStatus = {
+  primaryMongo: { connected: false, status: "unknown", message: "Not checked yet." },
+  configuredMongo: { connected: false, status: "unknown", message: "Not checked yet." },
+  imgbb: { connected: false, status: "unknown", message: "Not checked yet." },
+  checkedAt: "",
+};
+
 export default function SettingsPage() {
   return (
     <RoleGuard
@@ -49,6 +56,8 @@ function HeadSettings() {
   const [holiday, setHoliday] = useState<HolidaySettings>(() => getHolidaySettings());
   const [appControl, setAppControl] = useState<AppControlSettings>(() => getAppControlSettings());
   const [siteConfig, setSiteConfig] = useState<any>(emptySiteConfig);
+  const [storageStatus, setStorageStatus] = useState<any>(emptyStorageStatus);
+  const [checkingStorage, setCheckingStorage] = useState(false);
   const [hasMongoUrl, setHasMongoUrl] = useState(false);
   const [hasImgbbKey, setHasImgbbKey] = useState(false);
   const [message, setMessage] = useState("");
@@ -56,6 +65,20 @@ function HeadSettings() {
   const [saving, setSaving] = useState("");
 
   const closureDays = useMemo(() => getClosureDaysCount(holiday.closureStartDate, holiday.closureEndDate), [holiday.closureStartDate, holiday.closureEndDate]);
+
+  const loadStorageStatus = async () => {
+    setCheckingStorage(true);
+    try {
+      const status: any = await apiClient.get("/site-settings/storage-status");
+      setStorageStatus({ ...emptyStorageStatus, ...status });
+      setHasMongoUrl(Boolean(status.hasMongoUrl));
+      setHasImgbbKey(Boolean(status.hasImgbbKey));
+    } catch (err: any) {
+      setStorageStatus({ ...emptyStorageStatus, configuredMongo: { connected: false, status: "error", message: err?.message || "Storage status check failed." } });
+    } finally {
+      setCheckingStorage(false);
+    }
+  };
 
   const loadServerSettings = async () => {
     setError("");
@@ -72,6 +95,7 @@ function HeadSettings() {
         setAppControl(merged);
         setAppControlSettings(merged);
       }
+      await loadStorageStatus();
     } catch (err: any) {
       setError(err?.message || "Server settings could not be loaded. Local fallback is showing.");
     }
@@ -104,6 +128,7 @@ function HeadSettings() {
     setSiteConfig({ ...emptySiteConfig, ...(data.config || {}) });
     setHasMongoUrl(Boolean(data.hasMongoUrl));
     setHasImgbbKey(Boolean(data.hasImgbbKey));
+    await loadStorageStatus();
   }, "Site config saved to MongoDB.");
 
   const saveCurrency = () => runSave("currency", () => setPreferredCurrency(currency), "Currency preference saved.");
@@ -138,6 +163,26 @@ function HeadSettings() {
       </div>
 
       <div className="grid max-w-5xl gap-6">
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Storage Connection Status</CardTitle>
+                <CardDescription>MongoDB connected হলে green dot, disconnected/error হলে red dot দেখাবে।</CardDescription>
+              </div>
+              <Button variant="outline" onClick={loadStorageStatus} disabled={checkingStorage}><RefreshCw className={`mr-2 h-4 w-4 ${checkingStorage ? 'animate-spin' : ''}`} />Refresh</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-3">
+              <StatusBox title="Primary Server MongoDB" item={storageStatus.primaryMongo} />
+              <StatusBox title="Configured MongoDB URL" item={storageStatus.configuredMongo} />
+              <StatusBox title="ImgBB API Key" item={storageStatus.imgbb} />
+            </div>
+            <div className="mt-3 text-xs text-muted-foreground">Last checked: {storageStatus.checkedAt ? new Date(storageStatus.checkedAt).toLocaleString() : 'Not checked yet'}</div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Site Run Config</CardTitle>
@@ -202,6 +247,20 @@ function HeadSettings() {
           <CardContent className="space-y-4"><label className="block text-sm font-medium">Default Type<select className="mt-1 w-full rounded border p-2 md:w-auto" value={attendance.defaultType} onChange={(e) => setAttendance({ ...attendance, defaultType: e.target.value as any })}><option value="student">Student</option><option value="teacher">Teacher</option><option value="staff">Staff</option><option value="all">All</option></select></label><CheckField label="Treat Head/Assistant as Teacher in reports" checked={attendance.includeHeadAsTeacher} onChange={(checked) => setAttendance({ ...attendance, includeHeadAsTeacher: checked })} /><Button onClick={saveAttendance} disabled={saving === "attendance"}>Save attendance settings</Button></CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function StatusBox({ title, item }: { title: string; item: any }) {
+  const ok = Boolean(item?.connected);
+  return (
+    <div className={`rounded-xl border p-4 ${ok ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'}`}>
+      <div className="flex items-center gap-2">
+        <span className={`h-3 w-3 rounded-full ${ok ? 'bg-emerald-500' : 'bg-red-500'}`} />
+        <div className={`font-semibold ${ok ? 'text-emerald-800' : 'text-red-800'}`}>{title}</div>
+      </div>
+      <div className={`mt-2 text-xs ${ok ? 'text-emerald-700' : 'text-red-700'}`}>{item?.message || (ok ? 'Connected' : 'Not connected')}</div>
+      <div className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">{item?.status || 'unknown'}</div>
     </div>
   );
 }
