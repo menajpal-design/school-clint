@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Barcode, Camera, CheckCircle2, Keyboard, QrCode, ScanLine, Users } from 'lucide-react';
+import { Barcode, Camera, CheckCircle2, Fingerprint, Keyboard, QrCode, ScanLine, Users } from 'lucide-react';
 import { WebcamScanner } from '@/components/id-cards/WebcamScanner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,13 +12,14 @@ import { useToast } from '@/hooks/useToast';
 import { apiClient } from '@/lib/api';
 
 type PersonKind = 'student' | 'teacher' | 'head' | 'assistant_head' | 'staff' | 'all_staff';
-type ScanMode = 'camera' | 'barcode' | 'qr' | 'manual';
+type ScanMode = 'camera' | 'barcode' | 'qr' | 'fingerprint' | 'manual';
 
 type PersonRow = {
   _id: string;
   name: string;
   role: string;
   code: string;
+  fingerprintCode?: string;
   className: string;
   sectionName: string;
   userType: 'student' | 'teacher' | 'staff';
@@ -41,6 +42,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const staffRoles = ['head', 'assistant_head', 'teacher', 'class_teacher', 'subject_teacher', 'staff', 'finance_officer'];
 const teacherRoles = ['teacher', 'class_teacher', 'subject_teacher'];
 const toUserType = (role: string): 'teacher' | 'staff' => teacherRoles.includes(role) || ['head', 'assistant_head'].includes(role) ? 'teacher' : 'staff';
+const fingerprintFor = (prefix: string, value: string) => `FP-${prefix}-${value}`;
 
 export default function AllPresentScannerPage() {
   const { addToast } = useToast();
@@ -60,7 +62,7 @@ export default function AllPresentScannerPage() {
   const visiblePeople = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return people;
-    return people.filter((person) => [person.name, person.role, person.code, person.className, person.sectionName].join(' ').toLowerCase().includes(q));
+    return people.filter((person) => [person.name, person.role, person.code, person.fingerprintCode, person.className, person.sectionName].join(' ').toLowerCase().includes(q));
   }, [people, search]);
 
   const addLog = (log: ScanLog) => setLogs((current) => [log, ...current].slice(0, 50));
@@ -70,16 +72,20 @@ export default function AllPresentScannerPage() {
     try {
       if (personKind === 'student') {
         const data: any = await apiClient.get('/attendance/people', { params: { personType: 'student' } });
-        setPeople((data.people || []).map((student: any) => ({
-          _id: student._id,
-          studentId: student._id,
-          name: student.userId?.name || 'Student',
-          role: 'student',
-          code: student.idCardNumber || student.rollNumber || student._id,
-          className: student.classId?.name || '-',
-          sectionName: student.sectionId?.name || '-',
-          userType: 'student',
-        })));
+        setPeople((data.people || []).map((student: any) => {
+          const baseCode = student.idCardNumber || student.rollNumber || student._id;
+          return {
+            _id: student._id,
+            studentId: student._id,
+            name: student.userId?.name || 'Student',
+            role: 'student',
+            code: baseCode,
+            fingerprintCode: student.fingerprintId || student.biometricId || fingerprintFor('STUDENT', baseCode),
+            className: student.classId?.name || '-',
+            sectionName: student.sectionId?.name || '-',
+            userType: 'student',
+          };
+        }));
         return;
       }
 
@@ -91,16 +97,20 @@ export default function AllPresentScannerPage() {
           : [personKind];
       setPeople((data.users || [])
         .filter((user: any) => roles.includes(user.role) && user.isActive !== false)
-        .map((user: any) => ({
-          _id: user._id,
-          userId: user._id,
-          name: user.name || user.email || user.username || 'User',
-          role: user.role,
-          code: user.username || user.email || user.phone || user._id,
-          className: user.role,
-          sectionName: '-',
-          userType: toUserType(user.role),
-        })));
+        .map((user: any) => {
+          const baseCode = user.username || user.email || user.phone || user._id;
+          return {
+            _id: user._id,
+            userId: user._id,
+            name: user.name || user.email || user.username || 'User',
+            role: user.role,
+            code: baseCode,
+            fingerprintCode: user.fingerprintId || user.biometricId || fingerprintFor('USER', baseCode),
+            className: user.role,
+            sectionName: '-',
+            userType: toUserType(user.role),
+          };
+        }));
     } catch (error: any) {
       addToast({ title: 'Load failed', message: error?.message || 'Failed to load people list.', type: 'error', duration: 3500 });
     } finally {
@@ -122,33 +132,34 @@ export default function AllPresentScannerPage() {
 
     setSaving(true);
     try {
-      const data: any = await apiClient.post('/attendance/scan-present', { code: cleanCode, date, scanMode: mode });
+      const data: any = await apiClient.post('/attendance/scan-present', { code: cleanCode, fingerprintId: mode === 'fingerprint' ? cleanCode : undefined, date, scanMode: mode });
       const student = data.student || {};
       const name = student.userId?.name || 'Student';
       const className = student.classId?.name || '-';
       const sectionName = student.sectionId?.name || '-';
       const message = data.message || `${name} marked present.`;
-      addToast({ title: 'Present marked', message, type: 'success', duration: 2500 });
+      addToast({ title: mode === 'fingerprint' ? 'Fingerprint present marked' : 'Present marked', message, type: 'success', duration: 2500 });
       addLog({ code: cleanCode, name, className, sectionName, time: new Date().toLocaleTimeString(), status: 'success', message });
       setCode('');
-      setPeople((current) => current.map((person) => person.code === cleanCode ? { ...person, status: 'present' } : person));
+      setPeople((current) => current.map((person) => person.code === cleanCode || person.fingerprintCode === cleanCode ? { ...person, status: 'present' } : person));
     } catch (error: any) {
       const message = error?.message || 'Scan failed.';
-      addToast({ title: 'Scan failed', message, type: 'error', duration: 3500 });
+      addToast({ title: mode === 'fingerprint' ? 'Fingerprint failed' : 'Scan failed', message, type: 'error', duration: 3500 });
       addLog({ code: cleanCode, name: '-', className: '-', sectionName: '-', time: new Date().toLocaleTimeString(), status: 'error', message });
     } finally {
       setSaving(false);
     }
   };
 
-  const markRowPresent = async (person: PersonRow) => {
+  const markRowPresent = async (person: PersonRow, method: 'button' | 'fingerprint' = 'button') => {
     setSaving(true);
     try {
       const payload: any = {
         date,
         status: 'present',
-        notes: 'Present from All Present route',
+        notes: method === 'fingerprint' ? 'Present by fingerprint from All Present route' : 'Present from All Present route',
         userType: person.userType,
+        fingerprintId: method === 'fingerprint' ? person.fingerprintCode || person.code : undefined,
       };
       if (person.userType === 'student') {
         payload.studentId = person.studentId || person._id;
@@ -157,9 +168,9 @@ export default function AllPresentScannerPage() {
       }
       await apiClient.post('/attendance/mark', payload);
       setPeople((current) => current.map((item) => item._id === person._id ? { ...item, status: 'present' } : item));
-      const message = `${person.name} present marked.`;
-      addToast({ title: 'Present marked', message, type: 'success', duration: 2500 });
-      addLog({ code: person.code, name: person.name, className: person.className, sectionName: person.sectionName, time: new Date().toLocaleTimeString(), status: 'success', message });
+      const message = method === 'fingerprint' ? `${person.name} fingerprint present marked.` : `${person.name} present marked.`;
+      addToast({ title: method === 'fingerprint' ? 'Fingerprint present' : 'Present marked', message, type: 'success', duration: 2500 });
+      addLog({ code: method === 'fingerprint' ? person.fingerprintCode || person.code : person.code, name: person.name, className: person.className, sectionName: person.sectionName, time: new Date().toLocaleTimeString(), status: 'success', message });
     } catch (error: any) {
       const message = error?.message || 'Failed to mark present.';
       setPeople((current) => current.map((item) => item._id === person._id ? { ...item, status: 'error' } : item));
@@ -184,7 +195,7 @@ export default function AllPresentScannerPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">All Present Scanner</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Student, teacher, Head, Assistant Head এবং staff—সবাইকে scanner বা table button দিয়ে present দেওয়া যাবে।</p>
+          <p className="mt-1 text-sm text-muted-foreground">Student, teacher, Head, Assistant Head এবং staff—সবাইকে QR, barcode, fingerprint বা table button দিয়ে present দেওয়া যাবে।</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="default">Present: {successCount}</Badge>
@@ -196,14 +207,15 @@ export default function AllPresentScannerPage() {
       <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><ScanLine className="h-5 w-5" />QR / Barcode / Camera Scanner</CardTitle>
-            <CardDescription>USB/Bluetooth barcode scanner input box-এ focus রাখলেই Enter দিয়ে auto present হবে।</CardDescription>
+            <CardTitle className="flex items-center gap-2"><ScanLine className="h-5 w-5" />QR / Barcode / Fingerprint / Camera Scanner</CardTitle>
+            <CardDescription>USB/Bluetooth barcode অথবা fingerprint device input box-এ focus রাখলেই Enter দিয়ে auto present হবে।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-2 sm:grid-cols-4">
+            <div className="grid gap-2 sm:grid-cols-5">
               <Button variant={scanMode === 'camera' ? 'default' : 'outline'} onClick={() => setScanMode('camera')}><Camera className="mr-2 h-4 w-4" />Camera</Button>
               <Button variant={scanMode === 'qr' ? 'default' : 'outline'} onClick={() => setScanMode('qr')}><QrCode className="mr-2 h-4 w-4" />QR</Button>
               <Button variant={scanMode === 'barcode' ? 'default' : 'outline'} onClick={() => setScanMode('barcode')}><Barcode className="mr-2 h-4 w-4" />Barcode</Button>
+              <Button variant={scanMode === 'fingerprint' ? 'default' : 'outline'} onClick={() => setScanMode('fingerprint')}><Fingerprint className="mr-2 h-4 w-4" />Fingerprint</Button>
               <Button variant={scanMode === 'manual' ? 'default' : 'outline'} onClick={() => setScanMode('manual')}><Keyboard className="mr-2 h-4 w-4" />Manual</Button>
             </div>
 
@@ -211,12 +223,12 @@ export default function AllPresentScannerPage() {
               <WebcamScanner onScan={(scannedCode) => markPresent(scannedCode, 'camera')} enabled />
             ) : (
               <div className="rounded-xl border bg-card p-4">
-                <label className="text-sm font-semibold">QR / Barcode / ID card code</label>
+                <label className="text-sm font-semibold">{scanMode === 'fingerprint' ? 'Fingerprint ID / Biometric device code' : 'QR / Barcode / ID card code'}</label>
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                  <Input value={code} onChange={(event) => setCode(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submitManual(); }} autoFocus placeholder="Scan barcode/QR or type card code then press Enter" />
-                  <Button onClick={submitManual} disabled={saving || !code.trim()}><CheckCircle2 className="mr-2 h-4 w-4" />Present</Button>
+                  <Input value={code} onChange={(event) => setCode(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submitManual(); }} autoFocus placeholder={scanMode === 'fingerprint' ? 'Scan fingerprint device output or type fingerprint ID then press Enter' : 'Scan barcode/QR or type card code then press Enter'} />
+                  <Button onClick={submitManual} disabled={saving || !code.trim()}>{scanMode === 'fingerprint' ? <Fingerprint className="mr-2 h-4 w-4" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}{scanMode === 'fingerprint' ? 'Fingerprint Present' : 'Present'}</Button>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">Barcode scanner usually works like keyboard. Scan করলে code লিখে Enter পাঠাবে, তখন automatic present হবে।</p>
+                <p className="mt-2 text-xs text-muted-foreground">Fingerprint/Barcode scanner সাধারণত keyboard-এর মতো code পাঠায়। Scan করলে code লিখে Enter পাঠাবে, তখন automatic present হবে।</p>
               </div>
             )}
           </CardContent>
@@ -244,7 +256,7 @@ export default function AllPresentScannerPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />All Present Table</CardTitle>
-          <CardDescription>প্রত্যেক row-তে Present button আছে। চাইলে visible list একসাথে present দিতে পারবেন।</CardDescription>
+          <CardDescription>প্রত্যেক row-তে Present এবং Fingerprint Present button আছে। চাইলে visible list একসাথে present দিতে পারবেন।</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2 md:grid-cols-[220px_1fr_auto_auto]">
@@ -259,18 +271,19 @@ export default function AllPresentScannerPage() {
                 <SelectItem value="all_staff">All Teacher/Head/Staff</SelectItem>
               </SelectContent>
             </Select>
-            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, role, code, class..." />
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, role, code, fingerprint, class..." />
             <Button variant="outline" onClick={loadPeople} disabled={loadingPeople}>{loadingPeople ? 'Loading...' : 'Reload'}</Button>
             <Button onClick={markAllVisible} disabled={saving || !visiblePeople.length}>Mark all visible present</Button>
           </div>
 
           <div className="overflow-x-auto rounded-xl border">
-            <table className="w-full min-w-[900px] text-sm">
+            <table className="w-full min-w-[1050px] text-sm">
               <thead className="bg-muted/50 text-left">
                 <tr>
                   <th className="p-3">Name</th>
                   <th className="p-3">Role</th>
                   <th className="p-3">Code</th>
+                  <th className="p-3">Fingerprint ID</th>
                   <th className="p-3">Class / Group</th>
                   <th className="p-3">Section</th>
                   <th className="p-3">Status</th>
@@ -283,13 +296,19 @@ export default function AllPresentScannerPage() {
                     <td className="p-3 font-medium">{person.name}</td>
                     <td className="p-3"><Badge variant="outline">{person.role}</Badge></td>
                     <td className="p-3 text-muted-foreground">{person.code}</td>
+                    <td className="p-3 text-muted-foreground">{person.fingerprintCode || '-'}</td>
                     <td className="p-3">{person.className}</td>
                     <td className="p-3">{person.sectionName}</td>
                     <td className="p-3">{person.status === 'present' ? <Badge>Present</Badge> : person.status === 'error' ? <Badge variant="destructive">Error</Badge> : <Badge variant="secondary">Pending</Badge>}</td>
-                    <td className="p-3 text-right"><Button size="sm" onClick={() => markRowPresent(person)} disabled={saving}><CheckCircle2 className="mr-2 h-4 w-4" />Present</Button></td>
+                    <td className="p-3 text-right">
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button size="sm" onClick={() => markRowPresent(person)} disabled={saving}><CheckCircle2 className="mr-2 h-4 w-4" />Present</Button>
+                        <Button size="sm" variant="outline" onClick={() => markRowPresent(person, 'fingerprint')} disabled={saving}><Fingerprint className="mr-2 h-4 w-4" />Fingerprint</Button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
-                {!visiblePeople.length && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No people found.</td></tr>}
+                {!visiblePeople.length && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No people found.</td></tr>}
               </tbody>
             </table>
           </div>
