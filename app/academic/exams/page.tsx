@@ -55,6 +55,7 @@ const EXAM_CACHE_KEY = "easy-school-exam-routine-exams-v2";
 const readJson = (key: string) => { if (typeof window === "undefined") return [] as any[]; try { const data = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(data) ? data : []; } catch { return []; } };
 const writeJson = (key: string, value: any[]) => { if (typeof window === "undefined") return; try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ } };
 const idOf = (value: any) => String(value?._id || value?.id || value || "");
+const uniqueById = <T extends any>(items: T[]) => { const map = new Map<string, T>(); items.forEach((item: any) => { const id = idOf(item); if (id) map.set(id, item); }); return Array.from(map.values()); };
 
 const emptyForm = (): ExamForm => ({
   name: "",
@@ -98,6 +99,36 @@ export default function ExamsPage() {
 
   const formRoutineReady = form.subjectMarks.length > 0 && form.subjectMarks.every((mark) => mark.subjectId && mark.date && mark.duration);
 
+  const normalizeExamForList = (exam: any, fallbackForm?: ExamForm): ExamItem => {
+    const classObj = typeof exam?.classId === "object" ? exam.classId : classes.find((item) => item._id === (exam?.classId || fallbackForm?.classId));
+    const subjectMarks = Array.isArray(exam?.subjectMarks) ? exam.subjectMarks : (fallbackForm?.subjectMarks || []).map((mark) => ({
+      ...mark,
+      subjectId: subjects.find((subject) => subject._id === mark.subjectId) || { _id: mark.subjectId, name: "Subject", code: "" },
+    }));
+    return {
+      _id: String(exam?._id || exam?.id || `local-${Date.now()}`),
+      name: exam?.name || fallbackForm?.name || "Exam",
+      type: exam?.type || fallbackForm?.type || "term",
+      classId: classObj || exam?.classId || fallbackForm?.classId,
+      startDate: exam?.startDate || fallbackForm?.startDate,
+      endDate: exam?.endDate || fallbackForm?.endDate,
+      subjectMarks,
+      approvalRequired: exam?.approvalRequired ?? fallbackForm?.approvalRequired,
+      status: exam?.status || fallbackForm?.status || "scheduled",
+      syllabus: exam?.syllabus || fallbackForm?.syllabus || "",
+      instructions: exam?.instructions || fallbackForm?.instructions || "",
+      isPublished: exam?.isPublished === true,
+    };
+  };
+
+  const upsertExam = (exam: ExamItem) => {
+    setExams((current) => {
+      const next = uniqueById([exam, ...current]);
+      writeJson(EXAM_CACHE_KEY, next);
+      return next;
+    });
+  };
+
   const buildRoutineNotice = (exam: ExamItem) => {
     const routineLines = (exam.subjectMarks || []).map((mark, index) => {
       const subjectName = mark.subjectId?.name || "Subject";
@@ -128,12 +159,14 @@ export default function ExamsPage() {
     setLoading(true);
     setError("");
     try {
+      const cachedExams = readJson(EXAM_CACHE_KEY) as ExamItem[];
       const [examResponse, classResponse, subjectResponse] = await Promise.all([
-        api.academic.exams.getAll().catch(() => ({ exams: readJson(EXAM_CACHE_KEY) })) as Promise<{ exams: ExamItem[] }>,
+        api.academic.exams.getAll().catch(() => ({ exams: cachedExams })) as Promise<{ exams: ExamItem[] }>,
         api.academic.classes.getAll().catch(() => ({ classes: readJson(CLASS_CACHE_KEY) })) as Promise<{ classes: ClassOption[] }>,
         api.academic.subjects.getAll().catch(() => ({ subjects: readJson(SUBJECT_CACHE_KEY) })) as Promise<{ subjects: SubjectOption[] }>,
       ]);
-      const nextExams = examResponse.exams || [];
+      const apiExams = Array.isArray(examResponse.exams) ? examResponse.exams : [];
+      const nextExams = apiExams.length ? uniqueById([...apiExams, ...cachedExams]) : cachedExams;
       const nextClasses = classResponse.classes || [];
       const nextSubjects = subjectResponse.subjects || [];
       setExams(nextExams);
@@ -142,8 +175,13 @@ export default function ExamsPage() {
       writeJson(EXAM_CACHE_KEY, nextExams);
       writeJson(CLASS_CACHE_KEY, nextClasses);
       writeJson(SUBJECT_CACHE_KEY, nextSubjects);
+      if (!apiExams.length && cachedExams.length) setSuccess("Live API list empty, saved cached exams are showing.");
     } catch (err: any) {
-      setError(err?.message || "Failed to load exam data");
+      const cached = readJson(EXAM_CACHE_KEY) as ExamItem[];
+      if (cached.length) {
+        setExams(cached);
+        setSuccess("Live API failed, cached exam list is showing.");
+      } else setError(err?.message || "Failed to load exam data");
     } finally {
       setLoading(false);
     }
@@ -205,12 +243,7 @@ export default function ExamsPage() {
     setForm((current) => {
       const matched = subjects.filter((subject) => idOf(subject.classId) === classId);
       const source = matched.length ? matched : subjects;
-      return {
-        ...current,
-        classId,
-        isPublished: false,
-        subjectMarks: source.map((subject) => ({ subjectId: subject._id, date: current.startDate || today(), duration: 120, totalMarks: 100, passingMarks: 33 })),
-      };
+      return { ...current, classId, isPublished: false, subjectMarks: source.map((subject) => ({ subjectId: subject._id, date: current.startDate || today(), duration: 120, totalMarks: 100, passingMarks: 33 })) };
     });
   };
 
@@ -232,10 +265,12 @@ export default function ExamsPage() {
         const data = await api.academic.exams.create(payload) as { exam: ExamItem };
         savedExam = data.exam;
       }
-      if (payload.isPublished && savedExam) await createRoutineNotice(savedExam);
+      const visibleExam = normalizeExamForList(savedExam || {}, payload);
+      upsertExam(visibleExam);
+      if (payload.isPublished && visibleExam) await createRoutineNotice(visibleExam);
       setFormOpen(false);
-      setSuccess(payload.isPublished ? "Exam saved and routine notice published." : "Exam saved successfully. Routine can be completed later from Exam Routine page.");
-      await loadData();
+      setSuccess(payload.isPublished ? "Exam saved and routine notice published." : "Exam saved successfully and added to the list. Routine can be completed later from Exam Routine page.");
+      loadData().catch(() => undefined);
     } catch (err: any) {
       setError(err?.message || "Failed to save exam");
     } finally {
@@ -250,6 +285,8 @@ export default function ExamsPage() {
     setSuccess("");
     try {
       await api.academic.exams.delete(deleteTarget._id);
+      const next = exams.filter((exam) => exam._id !== deleteTarget._id);
+      setExams(next); writeJson(EXAM_CACHE_KEY, next);
       setDeleteTarget(null);
       setSuccess("Exam deleted successfully.");
       await loadData();
@@ -271,7 +308,9 @@ export default function ExamsPage() {
     try {
       const nextPublished = !exam.isPublished;
       const data = await apiClient.patch(`/academic/exams/${exam._id}/public-routine`, { isPublished: nextPublished }) as { exam: ExamItem; message?: string };
-      if (nextPublished) await createRoutineNotice(data.exam || exam);
+      const updated = normalizeExamForList(data.exam || { ...exam, isPublished: nextPublished });
+      upsertExam(updated);
+      if (nextPublished) await createRoutineNotice(updated);
       setSuccess(nextPublished ? "Routine is public and published in Notice Board." : "Routine is now private.");
       await loadData();
     } catch (err: any) {
@@ -283,23 +322,11 @@ export default function ExamsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Exam Management"
-        description="Create exam schedules first. Routine subject/date can be completed now or later from Exam Routine page."
-        icon={CalendarClock}
-        status={<Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">{scheduledExams} scheduled • {publicRoutineCount} public routines</Badge>}
-        actions={[<Button key="refresh" variant="outline" size="sm" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>, <Button key="create-exam" size="sm" onClick={openCreateModal}><Plus className="mr-2 h-4 w-4" />Create Exam</Button>]}
-      />
-
+      <PageHeader title="Exam Management" description="Create exam schedules first. Routine subject/date can be completed now or later from Exam Routine page." icon={CalendarClock} status={<Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">{scheduledExams} scheduled • {publicRoutineCount} public routines</Badge>} actions={[<Button key="refresh" variant="outline" size="sm" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>, <Button key="create-exam" size="sm" onClick={openCreateModal}><Plus className="mr-2 h-4 w-4" />Create Exam</Button>]} />
       {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
       {success && <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700">{success}</div>}
-
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Exam name</TableHead><TableHead>Routine</TableHead><TableHead>Public routine</TableHead><TableHead>Type</TableHead><TableHead>Class</TableHead><TableHead>Start date</TableHead><TableHead>End date</TableHead><TableHead>Approval</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">Loading exams...</TableCell></TableRow> : exams.length === 0 ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">No exams found.</TableCell></TableRow> : exams.map((exam) => <TableRow key={exam._id}><TableCell><div className="font-medium text-slate-950">{exam.name}</div><div className="text-xs text-slate-500">{exam.subjectMarks?.length || 0} subject schedule</div></TableCell><TableCell><Badge variant="outline" className={cn("w-fit capitalize", isRoutineReady(exam) ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700")}>{isRoutineReady(exam) ? "Routine ready" : "Routine incomplete"}</Badge></TableCell><TableCell><div className="flex flex-col gap-2"><Badge variant="outline" className={exam.isPublished ? "w-fit border-blue-200 bg-blue-50 text-blue-700" : "w-fit border-slate-200 bg-slate-50 text-slate-600"}>{exam.isPublished ? "Public" : "Private"}</Badge><Button type="button" size="sm" variant={exam.isPublished ? "outline" : "default"} className="w-fit" disabled={publishingExamId === exam._id} onClick={() => togglePublicRoutine(exam)}>{exam.isPublished ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}{publishingExamId === exam._id ? "Updating..." : exam.isPublished ? "Make private" : "Publish routine"}</Button></div></TableCell><TableCell><Badge variant="outline" className="capitalize">{exam.type}</Badge></TableCell><TableCell>{exam.classId?.name || "Unassigned"}</TableCell><TableCell>{exam.startDate ? formatDate(exam.startDate) : "Not set"}</TableCell><TableCell>{exam.endDate ? formatDate(exam.endDate) : "Not set"}</TableCell><TableCell>{exam.approvalRequired ? "Yes" : "No"}</TableCell><TableCell><Badge variant="outline" className={statusClass(exam.status || "scheduled")}>{exam.status || "scheduled"}</Badge></TableCell><TableCell><div className="flex justify-end gap-2"><Button type="button" variant="outline" size="icon" title="Edit exam" onClick={() => openEditModal(exam)}><Edit2 className="h-4 w-4" /></Button><Button type="button" variant="destructive" size="icon" title="Delete exam" onClick={() => setDeleteTarget(exam)}><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>)}</TableBody></Table>
-      </section>
-
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"><Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Exam name</TableHead><TableHead>Routine</TableHead><TableHead>Public routine</TableHead><TableHead>Type</TableHead><TableHead>Class</TableHead><TableHead>Start date</TableHead><TableHead>End date</TableHead><TableHead>Approval</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">Loading exams...</TableCell></TableRow> : exams.length === 0 ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">No exams found.</TableCell></TableRow> : exams.map((exam) => <TableRow key={exam._id}><TableCell><div className="font-medium text-slate-950">{exam.name}</div><div className="text-xs text-slate-500">{exam.subjectMarks?.length || 0} subject schedule</div></TableCell><TableCell><Badge variant="outline" className={cn("w-fit capitalize", isRoutineReady(exam) ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700")}>{isRoutineReady(exam) ? "Routine ready" : "Routine incomplete"}</Badge></TableCell><TableCell><div className="flex flex-col gap-2"><Badge variant="outline" className={exam.isPublished ? "w-fit border-blue-200 bg-blue-50 text-blue-700" : "w-fit border-slate-200 bg-slate-50 text-slate-600"}>{exam.isPublished ? "Public" : "Private"}</Badge><Button type="button" size="sm" variant={exam.isPublished ? "outline" : "default"} className="w-fit" disabled={publishingExamId === exam._id} onClick={() => togglePublicRoutine(exam)}>{exam.isPublished ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}{publishingExamId === exam._id ? "Updating..." : exam.isPublished ? "Make private" : "Publish routine"}</Button></div></TableCell><TableCell><Badge variant="outline" className="capitalize">{exam.type}</Badge></TableCell><TableCell>{exam.classId?.name || "Unassigned"}</TableCell><TableCell>{exam.startDate ? formatDate(exam.startDate) : "Not set"}</TableCell><TableCell>{exam.endDate ? formatDate(exam.endDate) : "Not set"}</TableCell><TableCell>{exam.approvalRequired ? "Yes" : "No"}</TableCell><TableCell><Badge variant="outline" className={statusClass(exam.status || "scheduled")}>{exam.status || "scheduled"}</Badge></TableCell><TableCell><div className="flex justify-end gap-2"><Button type="button" variant="outline" size="icon" title="Edit exam" onClick={() => openEditModal(exam)}><Edit2 className="h-4 w-4" /></Button><Button type="button" variant="destructive" size="icon" title="Delete exam" onClick={() => setDeleteTarget(exam)}><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>)}</TableBody></Table></section>
       <ExamFormDialog open={formOpen} editing={Boolean(editingExam)} form={form} classes={classes} selectedClassSubjects={selectedClassSubjects} saving={saving} routineReady={formRoutineReady} onOpenChange={setFormOpen} onSubmit={submitForm} onFormChange={setForm} onClassChange={updateClass} onTypeChange={updateType} onUpdateSubjectMark={updateSubjectMark} />
-
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}><DialogContent><DialogHeader><DialogTitle>Delete exam?</DialogTitle><DialogDescription>This will remove {deleteTarget?.name}. Exams with submitted results cannot be deleted.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button><Button type="button" variant="destructive" disabled={saving} onClick={confirmDelete}>{saving ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
