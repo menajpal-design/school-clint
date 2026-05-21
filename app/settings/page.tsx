@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarX2, Database, Palette, RefreshCw, Save, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CalendarX2, Database, Palette, RefreshCw, Save, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,12 +30,17 @@ const emptySiteConfig = {
   mongodbUrl: "",
   imgbbApiKey: "",
   imgbbUploadUrl: "https://api.imgbb.com/1/upload",
+  mongodbUsedMb: "",
+  imgbbUsedMb: "",
 };
 
 const emptyStorageStatus = {
   primaryMongo: { connected: false, status: "unknown", message: "Not checked yet." },
-  configuredMongo: { connected: false, status: "unknown", message: "Not checked yet." },
-  imgbb: { connected: false, status: "unknown", message: "Not checked yet." },
+  configuredMongo: { connected: false, status: "unknown", message: "Not checked yet.", usedMb: 0, warning: false, warningAtMb: 475 },
+  imgbb: { connected: false, status: "unknown", message: "Not checked yet.", usedMb: 0, warning: false, warningAtMb: 1950 },
+  mongodbUris: [],
+  imgbbKeys: [],
+  warningLimits: { mongoMb: 475, imgbbMb: 1950 },
   checkedAt: "",
 };
 
@@ -87,7 +92,7 @@ function HeadSettings() {
         apiClient.get("/site-settings/site-config") as Promise<any>,
         apiClient.get("/site-settings/app-controls") as Promise<any>,
       ]);
-      setSiteConfig({ ...emptySiteConfig, ...(site.config || {}) });
+      setSiteConfig({ ...emptySiteConfig, ...(site.config || {}), mongodbUrl: "", imgbbApiKey: "" });
       setHasMongoUrl(Boolean(site.hasMongoUrl));
       setHasImgbbKey(Boolean(site.hasImgbbKey));
       if (controls.settings && Object.keys(controls.settings).length) {
@@ -125,11 +130,11 @@ function HeadSettings() {
 
   const saveSiteConfig = () => runSave("site", async () => {
     const data: any = await apiClient.put("/site-settings/site-config", siteConfig);
-    setSiteConfig({ ...emptySiteConfig, ...(data.config || {}) });
+    setSiteConfig({ ...emptySiteConfig, ...(data.config || {}), mongodbUrl: "", imgbbApiKey: "" });
     setHasMongoUrl(Boolean(data.hasMongoUrl));
     setHasImgbbKey(Boolean(data.hasImgbbKey));
     await loadStorageStatus();
-  }, "Site config saved to MongoDB.");
+  }, "Site config saved. Old MongoDB URI and old ImgBB key are kept in history.");
 
   const saveCurrency = () => runSave("currency", () => setPreferredCurrency(currency), "Currency preference saved.");
   const saveAttendance = () => runSave("attendance", () => setAttendanceSettings(attendance), "Attendance settings saved.");
@@ -148,6 +153,9 @@ function HeadSettings() {
     }));
   };
 
+  const mongoWarning = storageStatus?.configuredMongo?.warning;
+  const imgbbWarning = storageStatus?.imgbb?.warning;
+
   return (
     <div className="space-y-5 p-3 md:p-6">
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -155,7 +163,7 @@ function HeadSettings() {
           <div className="rounded-xl bg-primary/10 p-3 text-primary"><SettingsIcon className="h-6 w-6" /></div>
           <div>
             <h1 className="text-2xl font-bold md:text-3xl">Head Settings</h1>
-            <p className="text-sm text-muted-foreground">Site config saves in MongoDB, not only browser storage.</p>
+            <p className="text-sm text-muted-foreground">New MongoDB/ImgBB add করলে old URI/key delete হবে না; history list-এ থাকবে।</p>
           </div>
         </div>
         {message && <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
@@ -168,25 +176,36 @@ function HeadSettings() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Storage Connection Status</CardTitle>
-                <CardDescription>MongoDB connected হলে green dot, disconnected/error হলে red dot দেখাবে।</CardDescription>
+                <CardDescription>MongoDB connected হলে green dot, disconnected/error হলে red dot। MongoDB 475MB বা ImgBB 1950MB হলে warning দেখাবে।</CardDescription>
               </div>
               <Button variant="outline" onClick={loadStorageStatus} disabled={checkingStorage}><RefreshCw className={`mr-2 h-4 w-4 ${checkingStorage ? 'animate-spin' : ''}`} />Refresh</Button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid gap-3 md:grid-cols-3">
               <StatusBox title="Primary Server MongoDB" item={storageStatus.primaryMongo} />
-              <StatusBox title="Configured MongoDB URL" item={storageStatus.configuredMongo} />
-              <StatusBox title="ImgBB API Key" item={storageStatus.imgbb} />
+              <StatusBox title="Active MongoDB URI" item={storageStatus.configuredMongo} />
+              <StatusBox title="Active ImgBB Key" item={storageStatus.imgbb} />
             </div>
-            <div className="mt-3 text-xs text-muted-foreground">Last checked: {storageStatus.checkedAt ? new Date(storageStatus.checkedAt).toLocaleString() : 'Not checked yet'}</div>
+            {(mongoWarning || imgbbWarning) && (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                <div className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4" /> Storage warning</div>
+                {mongoWarning && <div className="mt-1">MongoDB data is {storageStatus.configuredMongo.usedMb}MB. Data is low/free limit near full — add a new MongoDB URI. Old URI will remain listed for old data.</div>}
+                {imgbbWarning && <div className="mt-1">ImgBB usage is {storageStatus.imgbb.usedMb}MB. Add a new ImgBB key. Old key will remain listed for old files.</div>}
+              </div>
+            )}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <HistoryList title="MongoDB URI History" items={storageStatus.mongodbUris || siteConfig.mongodbUris || []} type="mongo" warningAt={storageStatus.warningLimits?.mongoMb || 475} />
+              <HistoryList title="ImgBB Key History" items={storageStatus.imgbbKeys || siteConfig.imgbbKeys || []} type="imgbb" warningAt={storageStatus.warningLimits?.imgbbMb || 1950} />
+            </div>
+            <div className="text-xs text-muted-foreground">Last checked: {storageStatus.checkedAt ? new Date(storageStatus.checkedAt).toLocaleString() : 'Not checked yet'}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Site Run Config</CardTitle>
-            <CardDescription>MongoDB URL and ImgBB key are saved in server MongoDB site settings. These are not school/institution profile data.</CardDescription>
+            <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Add New Storage Config</CardTitle>
+            <CardDescription>New URI/key দিলে সেটা active হবে, কিন্তু old URI/key delete হবে না। Old data access history হিসেবে থাকবে।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
@@ -194,11 +213,13 @@ function HeadSettings() {
               <TextField label="App Base URL" value={siteConfig.appBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, appBaseUrl: value })} />
               <TextField label="API Base URL" value={siteConfig.apiBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, apiBaseUrl: value })} />
               <TextField label="ImgBB Upload URL" value={siteConfig.imgbbUploadUrl} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbUploadUrl: value })} />
-              <TextField label={hasMongoUrl ? "MongoDB URL saved — enter new value to replace" : "MongoDB URL"} type="password" value={siteConfig.mongodbUrl} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUrl: value })} placeholder={hasMongoUrl ? "********" : "mongodb+srv://..."} />
-              <TextField label={hasImgbbKey ? "ImgBB API Key saved — enter new value to replace" : "ImgBB API Key"} type="password" value={siteConfig.imgbbApiKey} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbApiKey: value })} placeholder={hasImgbbKey ? "********" : "ImgBB key"} />
+              <TextField label={hasMongoUrl ? "Add new MongoDB URI (old URI will stay listed)" : "MongoDB URI"} type="password" value={siteConfig.mongodbUrl} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUrl: value })} placeholder="mongodb+srv://..." />
+              <TextField label={hasImgbbKey ? "Add new ImgBB API Key (old key will stay listed)" : "ImgBB API Key"} type="password" value={siteConfig.imgbbApiKey} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbApiKey: value })} placeholder="ImgBB key" />
+              <TextField label="MongoDB used MB (optional manual update)" type="number" value={String(siteConfig.mongodbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUsedMb: value })} placeholder="475" />
+              <TextField label="ImgBB used MB (optional manual update)" type="number" value={String(siteConfig.imgbbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbUsedMb: value })} placeholder="1950" />
             </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">For security, saved MongoDB URL and ImgBB key are masked after reload.</div>
-            <Button onClick={saveSiteConfig} disabled={saving === "site"}><Save className="mr-2 h-4 w-4" />{saving === "site" ? "Saving..." : "Save site config to MongoDB"}</Button>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">For security, saved MongoDB URI and ImgBB key are masked. New value দিলে old value replace না হয়ে history list-এ থাকবে।</div>
+            <Button onClick={saveSiteConfig} disabled={saving === "site"}><Save className="mr-2 h-4 w-4" />{saving === "site" ? "Saving..." : "Save / Add storage config"}</Button>
           </CardContent>
         </Card>
 
@@ -253,14 +274,42 @@ function HeadSettings() {
 
 function StatusBox({ title, item }: { title: string; item: any }) {
   const ok = Boolean(item?.connected);
+  const warning = Boolean(item?.warning);
   return (
-    <div className={`rounded-xl border p-4 ${ok ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'}`}>
+    <div className={`rounded-xl border p-4 ${warning ? 'border-amber-300 bg-amber-50' : ok ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'}`}>
       <div className="flex items-center gap-2">
-        <span className={`h-3 w-3 rounded-full ${ok ? 'bg-emerald-500' : 'bg-red-500'}`} />
-        <div className={`font-semibold ${ok ? 'text-emerald-800' : 'text-red-800'}`}>{title}</div>
+        <span className={`h-3 w-3 rounded-full ${warning ? 'bg-amber-500' : ok ? 'bg-emerald-500' : 'bg-red-500'}`} />
+        <div className={`font-semibold ${warning ? 'text-amber-800' : ok ? 'text-emerald-800' : 'text-red-800'}`}>{title}</div>
       </div>
-      <div className={`mt-2 text-xs ${ok ? 'text-emerald-700' : 'text-red-700'}`}>{item?.message || (ok ? 'Connected' : 'Not connected')}</div>
+      <div className={`mt-2 text-xs ${warning ? 'text-amber-700' : ok ? 'text-emerald-700' : 'text-red-700'}`}>{item?.message || (ok ? 'Connected' : 'Not connected')}</div>
+      {item?.usedMb !== undefined && <div className="mt-1 text-xs text-muted-foreground">Used: {item.usedMb}MB / warning at {item.warningAtMb || '-'}MB</div>}
       <div className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">{item?.status || 'unknown'}</div>
+    </div>
+  );
+}
+
+function HistoryList({ title, items, type, warningAt }: { title: string; items: any[]; type: 'mongo' | 'imgbb'; warningAt: number }) {
+  return (
+    <div className="rounded-xl border p-4">
+      <div className="mb-3 font-semibold">{title}</div>
+      <div className="space-y-2">
+        {items?.map((item) => (
+          <div key={item.id} className={`rounded-lg border p-3 text-sm ${item.warning ? 'border-amber-300 bg-amber-50' : item.isActive ? 'border-emerald-200 bg-emerald-50' : 'bg-muted/30'}`}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="font-medium">{item.label || item.id}</div>
+              <div className="flex gap-2">
+                {item.isActive && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Active</span>}
+                {item.warning && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Warning</span>}
+              </div>
+            </div>
+            <div className="mt-1 break-all text-xs text-muted-foreground">{type === 'mongo' ? item.uri : item.apiKey}</div>
+            <div className="mt-1 text-xs text-muted-foreground">Used: {Number(item.usedMb || 0)}MB / warning at {warningAt}MB</div>
+            <div className="mt-1 text-xs text-muted-foreground">Added: {item.addedAt ? new Date(item.addedAt).toLocaleString() : 'N/A'}</div>
+            {item.note && <div className="mt-1 text-xs text-muted-foreground">{item.note}</div>}
+          </div>
+        ))}
+        {!items?.length && <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">No history yet.</div>}
+      </div>
     </div>
   );
 }
