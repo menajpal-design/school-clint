@@ -5,6 +5,7 @@ import { LanguageProvider } from '@/lib/i18n'
 import { MobileTableEnhancer } from '@/components/layout/MobileTableEnhancer'
 import { ImageUploadGuard } from '@/components/layout/ImageUploadGuard'
 import { RootAppShell } from '@/components/layout/RootAppShell'
+import { AttendanceApiCompatLoader } from '@/components/layout/AttendanceApiCompatLoader'
 
 export const metadata: Metadata = {
   title: 'EASY SCHOOL - School Management System',
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background">
         <LanguageProvider>
           <ToastProvider>
+            <AttendanceApiCompatLoader />
             <MobileTableEnhancer />
             <ImageUploadGuard />
             <RootAppShell>{children}</RootAppShell>
