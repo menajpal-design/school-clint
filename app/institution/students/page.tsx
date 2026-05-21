@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
 import { downloadFile } from '@/lib/utils';
 
@@ -109,6 +110,7 @@ const nameOf = (value?: StudentRecord['classId'] | StudentRecord['sectionId']) =
 
 export default function InstitutionStudentsPage() {
   const { user, isLoading } = useAuth();
+  const { addToast } = useToast();
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [classes, setClasses] = useState<Option[]>([]);
   const [open, setOpen] = useState(false);
@@ -320,7 +322,9 @@ export default function InstitutionStudentsPage() {
 
   const submit = async () => {
     if (!form.name.trim() || !form.rollNumber.trim() || !form.className.trim() || !form.sectionName.trim() || !form.guardianPhone.trim()) {
-      setStatus('Name, roll, class, section, and guardian phone are required.');
+      const message = 'Name, roll, class, section, and guardian phone are required.';
+      setStatus(message);
+      addToast({ title: 'Admission blocked', message, type: 'error' });
       return;
     }
 
@@ -340,7 +344,9 @@ export default function InstitutionStudentsPage() {
       loadStudents();
       loadClasses();
     } catch (error: any) {
-      setStatus(error?.message || 'Student API failed.');
+      const message = error?.message || 'Student API failed.';
+      setStatus(message);
+      addToast({ title: 'Admission failed', message, type: 'error' });
     }
   };
 
