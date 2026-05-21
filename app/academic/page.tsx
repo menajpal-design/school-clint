@@ -10,6 +10,7 @@ import {
   FileText,
   GraduationCap,
   LayoutList,
+  Users,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -24,6 +25,7 @@ type AcademicSummary = {
   subjects: any[];
   exams: any[];
   results: any[];
+  students: any[];
 };
 
 const emptyAcademic: AcademicSummary = {
@@ -31,9 +33,17 @@ const emptyAcademic: AcademicSummary = {
   subjects: [],
   exams: [],
   results: [],
+  students: [],
 };
 
 const quickLinks = [
+  {
+    title: "Students",
+    description: "Open student admission, guardian, roll and class/section records.",
+    href: "/institution/students",
+    icon: Users,
+    tone: "bg-indigo-50 text-indigo-700",
+  },
   {
     title: "Classes",
     description: "Manage classes, sections, shifts and class teachers.",
@@ -85,13 +95,40 @@ const quickLinks = [
   },
 ];
 
-function normalizeAcademic(data: any): AcademicSummary {
+function normalizeAcademic(data: any, students: any[] = []): AcademicSummary {
   return {
     classes: Array.isArray(data?.classes) ? data.classes : [],
     subjects: Array.isArray(data?.subjects) ? data.subjects : [],
     exams: Array.isArray(data?.exams) ? data.exams : [],
     results: Array.isArray(data?.results) ? data.results : [],
+    students,
   };
+}
+
+async function loadStudentsForAcademic() {
+  try {
+    const data: any = await apiClient.get("/students");
+    const students = Array.isArray(data?.students) ? data.students : [];
+    if (students.length) return students;
+  } catch {
+    // fallback below
+  }
+
+  try {
+    const usersData: any = await apiClient.get("/users");
+    const users = Array.isArray(usersData?.users) ? usersData.users : [];
+    return users
+      .filter((user: any) => user?.role === "student")
+      .map((user: any, index: number) => ({
+        _id: `user-${user._id}`,
+        rollNumber: user.rollNumber || String(index + 1).padStart(2, "0"),
+        userId: { _id: user._id, name: user.name, username: user.username, phone: user.phone, avatar: user.avatar },
+        isActive: user.isActive !== false,
+        admissionDate: user.createdAt,
+      }));
+  } catch {
+    return [];
+  }
 }
 
 function getStatusCount(items: any[], status: string) {
@@ -111,9 +148,12 @@ export default function AcademicPage() {
       setDataSource('loading');
 
       try {
-        const data = await apiClient.get("/academic");
+        const [academicData, students] = await Promise.all([
+          apiClient.get("/academic").catch(() => ({})),
+          loadStudentsForAcademic(),
+        ]);
         if (!mounted) return;
-        setSummary(normalizeAcademic(data));
+        setSummary(normalizeAcademic(academicData, students));
         setDataSource('live');
       } catch {
         if (!mounted) return;
@@ -132,6 +172,13 @@ export default function AcademicPage() {
   }, []);
 
   const stats = useMemo(() => [
+    {
+      label: "Students",
+      value: summary.students.length.toLocaleString(),
+      helper: "Admitted student records",
+      icon: Users,
+      tone: "indigo" as any,
+    },
     {
       label: "Classes",
       value: summary.classes.length.toLocaleString(),
@@ -163,6 +210,11 @@ export default function AcademicPage() {
   ], [summary]);
 
   const recentActivity = [
+    ...summary.students.slice(0, 2).map((student) => ({
+      title: student.userId?.name || student.name || "Student record",
+      meta: `Student${student.rollNumber ? ` · Roll ${student.rollNumber}` : ""}`,
+      status: student.isActive === false ? "inactive" : "active",
+    })),
     ...summary.exams.slice(0, 2).map((exam) => ({
       title: exam.name || "Exam schedule",
       meta: exam.type || "Exam",
@@ -179,10 +231,16 @@ export default function AcademicPage() {
     <div className="space-y-6 p-4 md:p-6">
       <PageHeader
         title="Academic Overview"
-        description="Manage classes, subjects, exams, exam routine, results, promotion and report card workflows from one academic control center."
+        description="Manage students, classes, subjects, exams, exam routine, results, promotion and report card workflows from one academic control center."
         icon={LayoutList}
         status={<Badge variant="outline" className={dataSource === 'live' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : dataSource === 'empty' ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-blue-200 bg-blue-50 text-blue-700'}>{dataSource === 'live' ? 'Live academic data' : dataSource === 'empty' ? 'No live academic data yet' : 'Loading live academic data'}</Badge>}
         actions={[
+          <Button key="students" variant="outline" size="sm" asChild>
+            <Link href="/institution/students">
+              <Users className="mr-2 h-4 w-4" />
+              Students
+            </Link>
+          </Button>,
           <Button key="classes" variant="outline" size="sm" asChild>
             <Link href="/academic/classes">
               <GraduationCap className="mr-2 h-4 w-4" />
@@ -210,7 +268,7 @@ export default function AcademicPage() {
         ]}
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {stats.map((stat) => (
           <StatCard
             key={stat.label}
@@ -224,7 +282,7 @@ export default function AcademicPage() {
         ))}
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-7">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {quickLinks.map((link) => {
           const Icon = link.icon;
           return (
@@ -253,15 +311,26 @@ export default function AcademicPage() {
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Academic Summary</CardTitle>
-            <CardDescription>Current class and subject setup snapshot.</CardDescription>
+            <CardDescription>Current student, class and subject setup snapshot.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
+            {summary.students.slice(0, 2).map((student, index) => (
+              <div key={student._id || index} className="rounded-lg border border-slate-200 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{student.userId?.name || student.name || `Student ${index + 1}`}</p>
+                    <p className="mt-1 text-xs text-slate-500">Roll {student.rollNumber || String(index + 1).padStart(2, "0")}</p>
+                  </div>
+                  <Badge variant="outline">Student</Badge>
+                </div>
+              </div>
+            ))}
             {summary.classes.slice(0, 4).map((classItem, index) => (
               <div key={classItem._id || classItem.id || index} className="rounded-lg border border-slate-200 p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{classItem.name || `Class ${index + 1}`}</p>
-                    <p className="mt-1 text-xs text-slate-500">Section {classItem.section || classItem.sections?.[0] || "N/A"}</p>
+                    <p className="mt-1 text-xs text-slate-500">Section {classItem.section || classItem.sections?.[0]?.name || classItem.sections?.[0] || "N/A"}</p>
                   </div>
                   <Badge variant="outline">{classItem.status || "active"}</Badge>
                 </div>
@@ -273,7 +342,7 @@ export default function AcademicPage() {
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Recent Academic Activity</CardTitle>
-            <CardDescription>Exam and result workflow updates.</CardDescription>
+            <CardDescription>Student, exam and result workflow updates.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {recentActivity.length === 0 ? (
