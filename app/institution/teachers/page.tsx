@@ -8,7 +8,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { api } from '@/lib/api';
 
@@ -20,7 +19,7 @@ type TeacherRecord = {
   salary?: number;
   joiningDate?: string;
   qualification?: string;
-  userId?: { name?: string; email?: string; phone?: string; avatar?: string };
+  userId?: { _id?: string; name?: string; email?: string; username?: string; phone?: string; avatar?: string };
   assignedClasses?: { name?: string }[];
   subjects?: { name?: string }[];
 };
@@ -65,6 +64,23 @@ const emptyForm: TeacherForm = {
   sendAppointmentLetter: false,
 };
 
+const teacherRoles = ['teacher', 'subject_teacher', 'class_teacher'];
+const roleTitle = (role?: string) => role === 'class_teacher' ? 'Class Teacher' : role === 'subject_teacher' ? 'Subject Teacher' : 'Teacher';
+const teacherRowsFromUsers = (users: any[]): TeacherRecord[] => users
+  .filter((user) => teacherRoles.includes(user?.role))
+  .map((user, index) => ({
+    _id: `user-${user._id}`,
+    employeeId: user.employeeId || `T-${String(index + 1).padStart(3, '0')}`,
+    designation: roleTitle(user.role),
+    department: user.department || '',
+    salary: Number(user.salary || 0),
+    joiningDate: user.createdAt,
+    qualification: user.qualification || '',
+    userId: { _id: user._id, name: user.name, email: user.email, username: user.username, phone: user.phone, avatar: user.avatar },
+    assignedClasses: [],
+    subjects: [],
+  }));
+
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -85,8 +101,32 @@ export default function InstitutionTeachersPage() {
   const nameList = (value: string) => value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean);
   const unique = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
 
-  const loadTeachers = () => {
-    api.teachers.getAll().then((data: any) => setTeachers(data.teachers || [])).catch(() => setTeachers([]));
+  const loadTeachersFromUsers = async () => {
+    const usersData: any = await api.users.getAll();
+    const users = Array.isArray(usersData?.users) ? usersData.users : [];
+    const teacherRows = teacherRowsFromUsers(users);
+    setTeachers(teacherRows);
+    setStatus(teacherRows.length ? `Loaded ${teacherRows.length} teacher accounts from /api/users.` : 'No teacher accounts found in /api/users.');
+  };
+
+  const loadTeachers = async () => {
+    try {
+      const data: any = await api.teachers.getAll();
+      const apiTeachers = Array.isArray(data?.teachers) ? data.teachers : [];
+      if (apiTeachers.length) {
+        setTeachers(apiTeachers);
+        setStatus(`Loaded ${apiTeachers.length} teacher records from /api/teachers.`);
+        return;
+      }
+      await loadTeachersFromUsers();
+    } catch (error: any) {
+      try {
+        await loadTeachersFromUsers();
+      } catch (fallbackError: any) {
+        setTeachers([]);
+        setStatus(fallbackError?.message || error?.message || 'Teacher list failed to load.');
+      }
+    }
   };
 
   const loadAcademicOptions = () => {
@@ -136,7 +176,9 @@ export default function InstitutionTeachersPage() {
       salary: String(teacher.salary || ''),
       joiningDate: teacher.joiningDate ? teacher.joiningDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
       qualification: teacher.qualification || '',
+      experience: '0',
       autoIdCard: false,
+      sendAppointmentLetter: false,
     });
     setOpen(true);
   };
@@ -152,22 +194,20 @@ export default function InstitutionTeachersPage() {
         ...form.subjects.map((id) => subjectNameById.get(id) || id),
         ...nameList(form.newSubjects),
       ]);
-      const payload = {
-        ...form,
-        assignedClasses: assignedClasses.join(', '),
-        subjects: resolvedSubjects.join(', '),
-      };
-
-      if (editingId) await api.teachers.update(editingId, payload);
+      const payload = { ...form, assignedClasses: assignedClasses.join(', '), subjects: resolvedSubjects.join(', ') };
+      if (editingId && !editingId.startsWith('user-')) await api.teachers.update(editingId, payload);
+      else if (editingId?.startsWith('user-')) await api.users.updateRole(editingId.replace(/^user-/, ''), 'subject_teacher');
       else await api.teachers.create(payload);
       setStatus('Teacher saved.');
+      window.dispatchEvent(new CustomEvent('app-toast', { detail: { title: 'Teacher saved', message: 'Teacher account/profile saved successfully.', type: 'success', duration: 4500 } }));
       setOpen(false);
       setForm(emptyForm);
       setEditingId(null);
-      loadTeachers();
+      await loadTeachers();
       loadAcademicOptions();
     } catch (error: any) {
       setStatus(error?.message || 'Teacher API failed.');
+      window.dispatchEvent(new CustomEvent('app-toast', { detail: { title: 'Teacher API Error', message: error?.message || 'Teacher API failed.', type: 'error', duration: 6000 } }));
     }
   };
 
@@ -192,7 +232,7 @@ export default function InstitutionTeachersPage() {
       <Card>
         <CardHeader>
           <CardTitle>Teachers</CardTitle>
-          <CardDescription>{teachers.length} teacher records from /api/teachers.</CardDescription>
+          <CardDescription>{teachers.length} teacher records loaded for this institution.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -216,7 +256,7 @@ export default function InstitutionTeachersPage() {
                       </div>
                       <div>
                         <div className="font-medium text-slate-900">{teacher.userId?.name || 'Teacher'}</div>
-                        <div className="text-xs text-muted-foreground">{teacher.userId?.email || 'No email'}</div>
+                        <div className="text-xs text-muted-foreground">{teacher.userId?.username || teacher.userId?.email || 'No username'}</div>
                       </div>
                     </div>
                   </TableCell>
@@ -224,14 +264,12 @@ export default function InstitutionTeachersPage() {
                   <TableCell>{(teacher.assignedClasses || []).map((item) => item.name).join(', ') || 'Unassigned'} · {(teacher.subjects || []).map((item) => item.name).join(', ') || 'No subject'}</TableCell>
                   <TableCell>{Number(teacher.salary || 0).toLocaleString()}</TableCell>
                   <TableCell>{teacher.joiningDate ? new Date(teacher.joiningDate).toLocaleDateString() : 'N/A'}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(teacher)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </Button>
-                  </TableCell>
+                  <TableCell className="text-right"><Button variant="ghost" size="sm" onClick={() => openEdit(teacher)}><Edit className="mr-2 h-4 w-4" />Edit</Button></TableCell>
                 </TableRow>
               ))}
+              {teachers.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">No teacher records found.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
           <p className="mt-4 text-sm text-muted-foreground">{status}</p>
@@ -242,16 +280,10 @@ export default function InstitutionTeachersPage() {
 }
 
 function TeacherDialog({ form, update, submit, editing, classes, subjects }: { form: TeacherForm; update: (key: keyof TeacherForm, value: string | boolean) => void; submit: () => void; editing: boolean; classes: { _id: string; name?: string }[]; subjects: { _id: string; name?: string }[]; }) {
-  const upload = async (file?: File) => {
-    if (file) update('photo', await fileToDataUrl(file));
-  };
-
+  const upload = async (file?: File) => { if (file) update('photo', await fileToDataUrl(file)); };
   return (
     <DialogContent className="max-w-3xl">
-      <DialogHeader>
-        <DialogTitle>{editing ? 'Edit Teacher' : 'Add Teacher'}</DialogTitle>
-        <DialogDescription>Assign class, subject, salary, joining date, account, and ID card settings.</DialogDescription>
-      </DialogHeader>
+      <DialogHeader><DialogTitle>{editing ? 'Edit Teacher' : 'Add Teacher'}</DialogTitle><DialogDescription>Assign class, subject, salary, joining date, account, and ID card settings.</DialogDescription></DialogHeader>
       <div className="grid max-h-[70vh] gap-4 overflow-y-auto pr-1 md:grid-cols-2">
         <TextInput form={form} update={update} name="name" label="Name" />
         <TextInput form={form} update={update} name="email" label="Email (Optional)" type="email" placeholder="Leave blank to auto-generate" />
@@ -259,93 +291,29 @@ function TeacherDialog({ form, update, submit, editing, classes, subjects }: { f
         <TextInput form={form} update={update} name="employeeId" label="Employee ID" />
         <TextInput form={form} update={update} name="designation" label="Designation" />
         <TextInput form={form} update={update} name="department" label="Department" />
-        <MultiSelectField
-          label="Assigned Classes"
-          options={classes}
-          value={form.assignedClasses}
-          onChange={(value) => update('assignedClasses', value as any)}
-          placeholder="Select existing classes"
-        />
+        <MultiSelectField label="Assigned Classes" options={classes} value={form.assignedClasses} onChange={(value) => update('assignedClasses', value as any)} placeholder="Select existing classes" />
         <FieldNote>Choose existing classes above, then type any new class names below to create them automatically.</FieldNote>
         <TextInput form={form} update={update} name="newAssignedClasses" label="New Classes" placeholder="Class 6, Class 7" />
-        <MultiSelectField
-          label="Subjects"
-          options={subjects}
-          value={form.subjects}
-          onChange={(value) => update('subjects', value as any)}
-          placeholder="Select existing subjects"
-        />
+        <MultiSelectField label="Subjects" options={subjects} value={form.subjects} onChange={(value) => update('subjects', value as any)} placeholder="Select existing subjects" />
         <FieldNote>Choose existing subjects above, then type any new subject names below to create them automatically.</FieldNote>
         <TextInput form={form} update={update} name="newSubjects" label="New Subjects" placeholder="Bangla, Math" />
         <TextInput form={form} update={update} name="salary" label="Salary" type="number" />
         <TextInput form={form} update={update} name="joiningDate" label="Joining Date" type="date" />
         <TextInput form={form} update={update} name="qualification" label="Qualification" />
         <TextInput form={form} update={update} name="experience" label="Experience" type="number" />
-        <div className="space-y-2">
-          <Label>Photo</Label>
-          <Input type="file" accept="image/*" onChange={(event) => upload(event.target.files?.[0])} />
-        </div>
-        <label className="flex items-center gap-3 rounded-md border p-3 text-sm">
-          <Checkbox checked={form.autoIdCard} onCheckedChange={(value) => update('autoIdCard', Boolean(value))} />
-          <CreditCard className="h-4 w-4" />
-          Auto generate account and ID card
-        </label>
-        {form.email && (
-          <label className="flex items-center gap-3 rounded-md border p-3 text-sm">
-            <Checkbox checked={form.sendAppointmentLetter} onCheckedChange={(value) => update('sendAppointmentLetter', Boolean(value))} />
-            <span>Send appointment letter via email</span>
-          </label>
-        )}
+        <div className="space-y-2"><Label>Photo</Label><Input type="file" accept="image/*" onChange={(event) => upload(event.target.files?.[0])} /></div>
+        <label className="flex items-center gap-3 rounded-md border p-3 text-sm"><Checkbox checked={form.autoIdCard} onCheckedChange={(value) => update('autoIdCard', Boolean(value))} /><CreditCard className="h-4 w-4" />Auto generate account and ID card</label>
+        {form.email && <label className="flex items-center gap-3 rounded-md border p-3 text-sm"><Checkbox checked={form.sendAppointmentLetter} onCheckedChange={(value) => update('sendAppointmentLetter', Boolean(value))} /><span>Send appointment letter via email</span></label>}
       </div>
-      <DialogFooter>
-        <Button onClick={submit}>{editing ? 'Save Changes' : 'Create Teacher'}</Button>
-      </DialogFooter>
+      <DialogFooter><Button onClick={submit}>{editing ? 'Save Changes' : 'Create Teacher'}</Button></DialogFooter>
     </DialogContent>
   );
 }
 
 function TextInput({ form, update, name, label, type = 'text', placeholder }: { form: TeacherForm; update: (key: keyof TeacherForm, value: string) => void; name: keyof TeacherForm; label: string; type?: string; placeholder?: string }) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <Input type={type} placeholder={placeholder} value={String(form[name] || '')} onChange={(event) => update(name, event.target.value)} />
-    </div>
-  );
+  return <div className="space-y-2"><Label>{label}</Label><Input type={type} placeholder={placeholder} value={String(form[name] || '')} onChange={(event) => update(name, event.target.value)} /></div>;
 }
-
-function MultiSelectField({
-  label,
-  options,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  options: { _id: string; name?: string }[];
-  value: string[];
-  onChange: (value: string[]) => void;
-  placeholder: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <select
-        multiple
-        className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-        value={value}
-        onChange={(event) => onChange(Array.from(event.target.selectedOptions).map((option) => option.value))}
-      >
-        {options.length === 0 ? <option value="">{placeholder}</option> : null}
-        {options.map((item) => (
-          <option key={item._id} value={item._id}>
-            {item.name || item._id}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
+function MultiSelectField({ label, options, value, onChange, placeholder }: { label: string; options: { _id: string; name?: string }[]; value: string[]; onChange: (value: string[]) => void; placeholder: string; }) {
+  return <div className="space-y-2"><Label>{label}</Label><select multiple className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={value} onChange={(event) => onChange(Array.from(event.target.selectedOptions).map((option) => option.value))}>{options.length === 0 ? <option value="">{placeholder}</option> : null}{options.map((item) => <option key={item._id} value={item._id}>{item.name || item._id}</option>)}</select></div>;
 }
-
-function FieldNote({ children }: { children: ReactNode }) {
-  return <p className="-mt-2 text-xs text-slate-500 md:col-span-2">{children}</p>;
-}
+function FieldNote({ children }: { children: ReactNode }) { return <p className="-mt-2 text-xs text-slate-500 md:col-span-2">{children}</p>; }
