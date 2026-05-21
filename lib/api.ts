@@ -99,9 +99,29 @@ class ApiClient {
 
 export const apiClient = new ApiClient();
 const crud = (base: string) => ({ getAll: (params?: any) => apiClient.get(base, { params }), getById: (id: string) => apiClient.get(`${base}/${id}`), create: (data: any) => apiClient.post(base, data), update: (id: string, data: any) => apiClient.put(`${base}/${id}`, data), delete: (id: string) => apiClient.delete(base + '/' + id) });
-const buildStudentRowsFromUsers = (users: any[]) => users
-  .filter((user: any) => user?.role === 'student')
-  .map((user: any) => ({ _id: `user-${user._id}`, rollNumber: user.rollNumber || '', admissionDate: user.createdAt, isActive: user.isActive !== false, userId: { _id: user._id, name: user.name, username: user.username, phone: user.phone, avatar: user.avatar }, classId: user.classId || undefined, sectionId: user.sectionId || undefined, parentId: undefined, guardianName: '', guardianPhone: '' }));
+const digits = (value: any) => String(value || '').replace(/\D/g, '');
+const buildStudentRowsFromUsers = (users: any[]) => {
+  const parents = users.filter((user: any) => user?.role === 'parent');
+  const parentsByPhone = new Map<string, any>();
+  parents.forEach((parent: any) => { const phone = digits(parent.phone); if (phone && !parentsByPhone.has(phone)) parentsByPhone.set(phone, parent); });
+  return users
+    .filter((user: any) => user?.role === 'student')
+    .map((user: any) => {
+      const parent = parentsByPhone.get(digits(user.phone)) || parents[0];
+      return {
+        _id: `user-${user._id}`,
+        rollNumber: user.rollNumber || '',
+        admissionDate: user.createdAt,
+        isActive: user.isActive !== false,
+        userId: { _id: user._id, name: user.name, username: user.username, phone: user.phone, avatar: user.avatar },
+        classId: user.classId || undefined,
+        sectionId: user.sectionId || undefined,
+        parentId: parent ? { _id: parent._id, name: parent.name, username: parent.username, phone: parent.phone, avatar: parent.avatar } : undefined,
+        guardianName: parent?.name || '',
+        guardianPhone: parent?.phone || user.phone || '',
+      };
+    });
+};
 const getStudentsFromUsers = async () => {
   const usersData: any = await apiClient.get('/users');
   const users = Array.isArray(usersData?.users) ? usersData.users : [];
