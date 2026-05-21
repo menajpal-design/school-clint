@@ -116,53 +116,14 @@ const getStudentsFromUsers = async () => {
   const users = Array.isArray(usersData?.users) ? usersData.users : [];
   return { students: buildStudentRowsFromUsers(users), fallbackFromUsers: true };
 };
-const buildTeacherRowsFromUsers = (users: any[]) => users
-  .filter((user: any) => ['teacher', 'subject_teacher', 'class_teacher'].includes(user?.role))
-  .map((user: any, index: number) => ({
-    _id: `user-${user._id}`,
-    employeeId: user.employeeId || `T-${String(index + 1).padStart(3, '0')}`,
-    designation: user.role === 'class_teacher' ? 'Class Teacher' : user.role === 'subject_teacher' ? 'Subject Teacher' : 'Teacher',
-    department: user.department || '',
-    salary: Number(user.salary || 0),
-    joiningDate: user.createdAt,
-    qualification: user.qualification || '',
-    userId: { _id: user._id, name: user.name, username: user.username, email: user.email, phone: user.phone, avatar: user.avatar },
-    assignedClasses: [],
-    subjects: [],
-  }));
+const buildTeacherRowsFromUsers = (users: any[]) => users.filter((user: any) => ['teacher', 'subject_teacher', 'class_teacher'].includes(user?.role)).map((user: any, index: number) => ({ _id: `user-${user._id}`, employeeId: user.employeeId || `T-${String(index + 1).padStart(3, '0')}`, designation: user.role === 'class_teacher' ? 'Class Teacher' : user.role === 'subject_teacher' ? 'Subject Teacher' : 'Teacher', department: user.department || '', salary: Number(user.salary || 0), joiningDate: user.createdAt, qualification: user.qualification || '', userId: { _id: user._id, name: user.name, username: user.username, email: user.email, phone: user.phone, avatar: user.avatar }, assignedClasses: [], subjects: [] }));
 const getTeachersFromUsers = async () => {
   const usersData: any = await apiClient.get('/users');
   const users = Array.isArray(usersData?.users) ? usersData.users : [];
   return { teachers: buildTeacherRowsFromUsers(users), fallbackFromUsers: true };
 };
-const studentApi = {
-  ...crud('/students'),
-  getAll: async (params?: any) => {
-    try {
-      const data: any = await apiClient.get('/students', { params });
-      const students = Array.isArray(data?.students) ? normalizeStudentRolls(data.students) : [];
-      if (students.length) return { ...data, students };
-      const fallback = await getStudentsFromUsers();
-      return { ...data, ...fallback };
-    } catch { return await getStudentsFromUsers(); }
-  },
-  create: async (data: any) => { const payload = { ...data }; delete payload.email; delete payload.guardianEmail; const result = await apiClient.post('/students', payload); showAppToast('Student admitted', 'Username and password generated successfully.', 'success'); return result; },
-  update: async (id: string, data: any) => { const payload = { ...data }; delete payload.email; delete payload.guardianEmail; const result = await apiClient.put(`/students/${id}`, payload); showAppToast('Student updated', 'Student information saved successfully.', 'success'); return result; },
-};
-const teacherApi = {
-  ...crud('/teachers'),
-  getAll: async (params?: any) => {
-    try {
-      const data: any = await apiClient.get('/teachers', { params });
-      const teachers = Array.isArray(data?.teachers) ? data.teachers : [];
-      if (teachers.length) return { ...data, teachers };
-      const fallback = await getTeachersFromUsers();
-      return { ...data, ...fallback };
-    } catch { return await getTeachersFromUsers(); }
-  },
-  create: async (data: any) => { const result = await apiClient.post('/teachers', data); showAppToast('Teacher saved', 'Teacher account/profile saved successfully.', 'success'); return result; },
-  update: async (id: string, data: any) => { const result = await apiClient.put(`/teachers/${id}`, data); showAppToast('Teacher updated', 'Teacher information saved successfully.', 'success'); return result; },
-};
+const studentApi = { ...crud('/students'), getAll: async (params?: any) => { try { const data: any = await apiClient.get('/students', { params }); const students = Array.isArray(data?.students) ? normalizeStudentRolls(data.students) : []; if (students.length) return { ...data, students }; const fallback = await getStudentsFromUsers(); return { ...data, ...fallback }; } catch { return await getStudentsFromUsers(); } }, create: async (data: any) => { const payload = { ...data }; delete payload.email; delete payload.guardianEmail; const result = await apiClient.post('/students', payload); showAppToast('Student admitted', 'Username and password generated successfully.', 'success'); return result; }, update: async (id: string, data: any) => { const payload = { ...data }; delete payload.email; delete payload.guardianEmail; const result = await apiClient.put(`/students/${id}`, payload); showAppToast('Student updated', 'Student information saved successfully.', 'success'); return result; } };
+const teacherApi = { ...crud('/teachers'), getAll: async (params?: any) => { try { const data: any = await apiClient.get('/teachers', { params }); const teachers = Array.isArray(data?.teachers) ? data.teachers : []; if (teachers.length) return { ...data, teachers }; const fallback = await getTeachersFromUsers(); return { ...data, ...fallback }; } catch { return await getTeachersFromUsers(); } }, create: async (data: any) => { const result = await apiClient.post('/teachers', data); showAppToast('Teacher saved', 'Teacher account/profile saved successfully.', 'success'); return result; }, update: async (id: string, data: any) => { const result = await apiClient.put(`/teachers/${id}`, data); showAppToast('Teacher updated', 'Teacher information saved successfully.', 'success'); return result; } };
 const idCardApi = { ...crud('/id-cards'), getMine: () => apiClient.get('/id-cards/me/card'), stats: () => apiClient.get('/id-cards/reports/stats'), searchOwners: (params?: any) => apiClient.get('/id-cards/owners/search', { params }), generate: (data: any) => apiClient.post('/id-cards/generate', data), bulkGenerate: (data: any) => apiClient.post('/id-cards/bulk', data), renew: (id: string, data?: any) => apiClient.post(`/id-cards/${id}/renew`, data), verify: (data: any) => apiClient.post('/id-cards/verify', data), download: (id: string, format: 'pdf' | 'png' = 'pdf') => apiClient.getBlob(`/id-cards/${id}/download?format=${format}`), renderPdf: (data: any) => apiClient.postBlob('/id-cards/render-pdf', data), email: (id: string, data: any) => apiClient.post(`/id-cards/${id}/email`, data) };
 
 export const api: any = {
@@ -177,7 +138,7 @@ export const api: any = {
   admin: { schools: (p?: any) => apiClient.get('/admin/schools', { params: p }), accounting: (p?: any) => apiClient.get('/admin/accounting', { params: p }), updateSchool: (id: string, d: any) => apiClient.patch(`/admin/schools/${id}`, d), verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`), selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`), users: (p?: any) => apiClient.get('/admin/users', { params: p }) },
   academic: { classes: crud('/academic/classes'), sections: crud('/academic/sections'), subjects: crud('/academic/subjects'), exams: crud('/academic/exams'), results: crud('/academic/results'), reportCard: { students: (p: any) => apiClient.get('/academic/report-card/students', { params: p }), get: (p: any) => apiClient.get('/academic/report-card', { params: p }) } },
   attendance: { ...crud('/attendance'), mark: (d: any) => apiClient.post('/attendance/mark', d), reports: (p?: any) => apiClient.get('/attendance/reports', { params: p }), me: (p?: any) => apiClient.get('/attendance/me', { params: p }) },
-  finance: { myFees: () => apiClient.get('/finance/my-fees'), fees: () => apiClient.get('/finance/fees'), payments: () => apiClient.get('/finance/payments'), collections: () => apiClient.get('/finance/collections'), reports: (p?: any) => apiClient.get('/finance/reports', { params: p }) },
+  finance: { myFees: () => apiClient.get('/finance/my-fees'), fees: () => apiClient.get('/finance/fees'), payments: () => apiClient.get('/finance/payments'), collections: () => apiClient.get('/finance/collections'), salary: () => apiClient.get('/finance/salary'), reports: (p?: any) => apiClient.get('/finance/reports', { params: p }) },
   notifications: { getAll: () => apiClient.get('/notifications'), markRead: (id: string) => apiClient.patch(`/notifications/${id}/read`), markAll: () => apiClient.patch('/notifications/read-all') },
   messages: { getAll: () => apiClient.get('/messages'), unread: () => apiClient.get('/messages/stats/unread'), send: (d: any) => apiClient.post('/messages', d) },
 };
