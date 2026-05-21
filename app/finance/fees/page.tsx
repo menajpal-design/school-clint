@@ -9,10 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { api } from "@/lib/api";
+import { api, apiClient } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const empty = { classId: "", studentId: "", type: "monthly", amount: 0, scholarship: 0, discount: 0, month: "January", year: new Date().getFullYear(), dueDate: new Date().toISOString().slice(0,10), status: "pending" };
+
+const feeApi = {
+  getAll: () => apiClient.get('/finance/fees'),
+  create: (data: any) => apiClient.post('/finance/fees', data),
+  update: (id: string, data: any) => apiClient.put(`/finance/fees/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/finance/fees/${id}`),
+};
 
 export default function FeesPage() {
   const [fees, setFees] = useState<any[]>([]);
@@ -29,7 +36,7 @@ export default function FeesPage() {
     setLoading(true);
     setError("");
     try {
-      const [feeRes, classRes] = await Promise.all([api.finance.fees.getAll() as Promise<any>, api.academic.classes.getAll() as Promise<any>]);
+      const [feeRes, classRes] = await Promise.all([feeApi.getAll() as Promise<any>, api.academic.classes.getAll() as Promise<any>]);
       setFees(feeRes.fees || []);
       setClasses(classRes.classes || []);
     } catch (err: any) {
@@ -48,8 +55,8 @@ export default function FeesPage() {
     setError("");
     setMessage("");
     try {
-      if (editing) await api.finance.fees.update(editing._id, form);
-      else await api.finance.fees.create(form);
+      if (editing) await feeApi.update(editing._id, form);
+      else await feeApi.create(form);
       setOpen(false); setEditing(null); setForm(empty); setMessage(editing ? "Fee updated successfully." : "Fee added successfully."); await load();
     } catch (err: any) {
       setError(err?.message || "Failed to save fee.");
