@@ -22,19 +22,9 @@ type StudentOption = {
   fatherName?: string;
   motherName?: string;
   guardianName?: string;
-  userId?: {
-    name?: string;
-    avatar?: string;
-    dateOfBirth?: string;
-  };
-  classId?: {
-    _id?: string;
-    name?: string;
-    grade?: string;
-  };
-  sectionId?: {
-    name?: string;
-  };
+  userId?: { name?: string; avatar?: string; dateOfBirth?: string };
+  classId?: { _id?: string; name?: string; grade?: string };
+  sectionId?: { name?: string };
 };
 
 type ExamItem = {
@@ -43,42 +33,15 @@ type ExamItem = {
   date?: string;
   startDate?: string;
   duration?: number;
-  classId?: {
-    _id?: string;
-    name?: string;
-  } | string;
-  subjectMarks?: Array<{
-    date?: string;
-    duration?: number;
-    subjectId?: {
-      name?: string;
-      code?: string;
-    };
-  }>;
+  classId?: { _id?: string; name?: string } | string;
+  subjectMarks?: Array<{ date?: string; duration?: number; subjectId?: { name?: string; code?: string } }>;
 };
 
 const getStudentName = (student?: StudentOption) => student?.userId?.name || "Unnamed student";
 const getStudentDob = (student?: StudentOption) => student?.dateOfBirth || student?.userId?.dateOfBirth || "";
-
-const getClassId = (value: ExamItem["classId"]) => {
-  if (!value) return "";
-  return typeof value === "string" ? value : value._id || "";
-};
-
-const formatDate = (value?: string) => {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-};
-
-const formatDuration = (minutes?: number) => {
-  const value = Number(minutes || 0);
-  if (!value) return "";
-  const hours = Math.floor(value / 60);
-  const remaining = value % 60;
-  return remaining ? `${hours}h ${remaining}m` : `${hours}h`;
-};
+const getClassId = (value: ExamItem["classId"]) => !value ? "" : typeof value === "string" ? value : value._id || "";
+const formatDate = (value?: string) => { if (!value) return ""; const date = new Date(value); if (Number.isNaN(date.getTime())) return value; return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); };
+const formatDuration = (minutes?: number) => { const value = Number(minutes || 0); if (!value) return ""; const hours = Math.floor(value / 60); const remaining = value % 60; return remaining ? `${hours}h ${remaining}m` : `${hours}h`; };
 
 export function AdmitCardDownload() {
   const previewRef = useRef<HTMLDivElement | null>(null);
@@ -92,12 +55,7 @@ export function AdmitCardDownload() {
 
   useEffect(() => {
     let mounted = true;
-
-    Promise.all([
-      api.students.getAll(),
-      api.academic.exams.getAll().catch(() => ({ exams: [] })),
-      api.institution.profile().catch(() => null),
-    ])
+    Promise.all([api.students.getAll(), api.academic.exams.getAll().catch(() => ({ exams: [] })), api.institution.profile().catch(() => null)])
       .then(([studentResponse, examResponse, institutionResponse]: any[]) => {
         if (!mounted) return;
         const nextStudents = Array.isArray(studentResponse) ? studentResponse : studentResponse?.students || [];
@@ -106,28 +64,13 @@ export function AdmitCardDownload() {
         setInstitution(institutionResponse?.institution || null);
         setSelectedStudentId((current) => current || nextStudents[0]?._id || "");
       })
-      .catch(() => {
-        if (mounted) setStudents([]);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
+      .catch(() => { if (mounted) setStudents([]); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
   }, []);
 
-  const selectedStudent = useMemo(
-    () => students.find((student) => student._id === selectedStudentId),
-    [selectedStudentId, students]
-  );
-
-  const selectedExam = useMemo(() => {
-    const studentClassId = selectedStudent?.classId?._id || "";
-    return exams.find((exam) => getClassId(exam.classId) === studentClassId) || exams[0];
-  }, [exams, selectedStudent?.classId?._id]);
-
+  const selectedStudent = useMemo(() => students.find((student) => student._id === selectedStudentId), [selectedStudentId, students]);
+  const selectedExam = useMemo(() => { const studentClassId = selectedStudent?.classId?._id || ""; return exams.find((exam) => getClassId(exam.classId) === studentClassId) || exams[0]; }, [exams, selectedStudent?.classId?._id]);
   const filteredStudents = useMemo(() => {
     if (!filter) return students;
     const q = filter.toLowerCase();
@@ -145,109 +88,20 @@ export function AdmitCardDownload() {
   const previewRollNumber = selectedStudent?.rollNumber || selectedStudent?.admissionNumber || selectedStudent?.registrationNumber || selectedStudent?._id || "";
   const previewDateOfBirth = getStudentDob(selectedStudent);
   const previewExamRows = useMemo(() => {
-    if (!selectedExam) {
-      return [{ courseCode: previewClassName || "Exam", examDate: "", examTime: "", examCentre: institution?.address || institution?.name || "" }];
-    }
-
-    if (selectedExam.subjectMarks?.length) {
-      return selectedExam.subjectMarks.map((item) => ({
-        courseCode: item.subjectId?.code || item.subjectId?.name || previewClassName,
-        examDate: formatDate(item.date),
-        examTime: formatDuration(item.duration),
-        examCentre: institution?.address || institution?.name || "",
-      }));
-    }
-
-    return [{
-      courseCode: previewClassName || "Exam",
-      examDate: formatDate(selectedExam.date || selectedExam.startDate),
-      examTime: formatDuration(selectedExam.duration),
-      examCentre: institution?.address || institution?.name || "",
-    }];
+    if (!selectedExam) return [{ courseCode: previewClassName || "Exam", examDate: "", examTime: "", examCentre: institution?.address || institution?.name || "" }];
+    if (selectedExam.subjectMarks?.length) return selectedExam.subjectMarks.map((item) => ({ courseCode: item.subjectId?.code || item.subjectId?.name || previewClassName, examDate: formatDate(item.date), examTime: formatDuration(item.duration), examCentre: institution?.address || institution?.name || "" }));
+    return [{ courseCode: previewClassName || "Exam", examDate: formatDate(selectedExam.date || selectedExam.startDate), examTime: formatDuration(selectedExam.duration), examCentre: institution?.address || institution?.name || "" }];
   }, [selectedExam, previewClassName, institution?.address, institution?.name]);
 
-  const handleDownload = async () => {
-    if (!selectedStudent) return;
-    setDownloading(true);
-    try {
-      const rollNumber = selectedStudent.rollNumber || selectedStudent.admissionNumber || selectedStudent.registrationNumber || selectedStudent._id;
-      await downloadElementPdf(previewRef.current, `admit-card-${rollNumber}.pdf`);
-    } finally {
-      setDownloading(false);
-    }
-  };
+  const handleDownload = async () => { if (!selectedStudent) return; setDownloading(true); try { const rollNumber = selectedStudent.rollNumber || selectedStudent.admissionNumber || selectedStudent.registrationNumber || selectedStudent._id; await downloadElementPdf(previewRef.current, `admit-card-${rollNumber}.pdf`); } finally { setDownloading(false); } };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Ticket className="h-5 w-5" />
-          Admit Card Download
-        </CardTitle>
-        <CardDescription>Select a student from the database and download the admit card.</CardDescription>
-      </CardHeader>
+      <CardHeader><CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5" />Admit Card Download</CardTitle><CardDescription>Select a student from the database and download the admit card.</CardDescription></CardHeader>
       <CardContent className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="student">Student</Label>
-          <div className="flex gap-2">
-            <Input placeholder={loading ? "Loading students..." : "Search name/class/roll/DOB"} value={filter} onChange={(e) => setFilter((e.target as HTMLInputElement).value)} />
-            <Select value={selectedStudentId} onValueChange={setSelectedStudentId} disabled={loading || !students.length}>
-              <SelectTrigger id="student">
-                <SelectValue placeholder={loading ? "Loading students..." : "Select student"} />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredStudents.map((student) => (
-                  <SelectItem key={student._id} value={student._id}>
-                    {getStudentName(student)}{student.rollNumber ? ` - ${student.rollNumber}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <Button onClick={handleDownload} disabled={!selectedStudent || downloading} className="w-full sm:w-auto">
-          {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-          Download Admit Card
-        </Button>
-
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
-          <div className="mb-3 font-semibold">Preview admit card</div>
-          <div className="overflow-x-auto">
-            <div className="min-w-max">
-              <AdmitCard
-                ref={previewRef}
-                name={getStudentName(selectedStudent)}
-                rollNumber={previewRollNumber}
-                photoUrl={selectedStudent?.userId?.avatar || ""}
-                institutionName={institution?.name || "Institution"}
-                institutionLogo={institution?.logo || institution?.logoUrl || ""}
-                institutionAddress={institution?.address || ""}
-                institutionPhone={institution?.phone || ""}
-                institutionEmail={institution?.email || ""}
-                institutionSeal={institution?.seal || ""}
-                headSignature={institution?.headSignature || ""}
-                examName={selectedExam?.name || "Admit Card"}
-                examDate={selectedExam?.date || selectedExam?.startDate || ""}
-                examCenter={institution?.address || ""}
-                centerCode={institution?.eiin || institution?.code || ""}
-                headName={institution?.headId?.name || institution?.headName || ""}
-                dateOfBirth={previewDateOfBirth}
-                fatherName={selectedStudent?.fatherName || ""}
-                stream={[previewClassName, previewSectionName].filter(Boolean).join(" ")}
-                examData={previewExamRows}
-              />
-            </div>
-          </div>
-          <div className="mt-4">
-            <DownloadButtons
-              targetRef={previewRef}
-              filename={`admit-card-${previewRollNumber || "student"}`}
-              printTitle="Print Admit Card"
-              emailSubject={`Admit Card - ${getStudentName(selectedStudent)}`}
-            />
-          </div>
-        </div>
+        <div className="space-y-2"><Label htmlFor="student">Student</Label><div className="flex gap-2"><Input placeholder={loading ? "Loading students..." : "Search name/class/roll/DOB"} value={filter} onChange={(e) => setFilter((e.target as HTMLInputElement).value)} /><Select value={selectedStudentId} onValueChange={setSelectedStudentId} disabled={loading || !students.length}><SelectTrigger id="student"><SelectValue placeholder={loading ? "Loading students..." : "Select student"} /></SelectTrigger><SelectContent>{filteredStudents.map((student) => <SelectItem key={student._id} value={student._id}>{getStudentName(student)}{student.rollNumber ? ` - ${student.rollNumber}` : ""}</SelectItem>)}</SelectContent></Select></div></div>
+        <Button onClick={handleDownload} disabled={!selectedStudent || downloading} className="w-full sm:w-auto">{downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Download Admit Card</Button>
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm"><div className="mb-3 font-semibold">Preview admit card</div><div className="overflow-x-auto"><div className="min-w-max"><AdmitCard ref={previewRef} name={getStudentName(selectedStudent)} rollNumber={previewRollNumber} photoUrl={selectedStudent?.userId?.avatar || ""} institutionName={institution?.name || "Institution"} institutionLogo={institution?.logo || institution?.logoUrl || ""} institutionAddress={institution?.address || ""} institutionPhone={institution?.phone || ""} institutionEmail={institution?.email || ""} institutionSeal={institution?.seal || ""} headSignature={institution?.headSignature || ""} examName={selectedExam?.name || "Admit Card"} examDate={selectedExam?.date || selectedExam?.startDate || ""} examCenter={institution?.address || ""} centerCode={institution?.eiin || institution?.code || ""} headName={institution?.headId?.name || institution?.headName || ""} dateOfBirth={previewDateOfBirth} fatherName={selectedStudent?.fatherName || ""} motherName={selectedStudent?.motherName || ""} stream={[previewClassName, previewSectionName].filter(Boolean).join(" ")} examData={previewExamRows} /></div></div><div className="mt-4"><DownloadButtons targetRef={previewRef} filename={`admit-card-${previewRollNumber || "student"}`} printTitle="Print Admit Card" emailSubject={`Admit Card - ${getStudentName(selectedStudent)}`} /></div></div>
       </CardContent>
     </Card>
   );
