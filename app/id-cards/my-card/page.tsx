@@ -29,15 +29,32 @@ function getNested(...values: any[]) {
   return values.find((value) => value !== undefined && value !== null && value !== "") || "";
 }
 
+function isGenericServerError(message?: string) {
+  const value = String(message || "").toLowerCase();
+  return !value || value === "server error" || value.includes("server connection failed") || value.includes("failed to fetch");
+}
+
 export default function MyCardPage() {
   const previewRef = useRef<HTMLDivElement | null>(null);
   const [card, setCard] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [institution, setInstitution] = useState<any>(null);
   const [error, setError] = useState("");
+  const [cardLookupFailed, setCardLookupFailed] = useState(false);
 
   useEffect(() => {
-    api.idCards.getMine().then(setCard).catch((err: any) => setError(err?.message || "No personal ID card record found. Showing role-based preview."));
+    api.idCards.getMine()
+      .then((data: any) => {
+        setCard(data);
+        setCardLookupFailed(false);
+        setError("");
+      })
+      .catch((err: any) => {
+        setCard(null);
+        setCardLookupFailed(true);
+        const message = err?.message || "";
+        setError(isGenericServerError(message) ? "" : message);
+      });
     api.auth.profile().then((data: any) => setProfile(data.user || data)).catch(() => undefined);
     api.institution.profile().then((data: any) => setInstitution(data?.institution || null)).catch(() => undefined);
   }, []);
@@ -90,6 +107,7 @@ export default function MyCardPage() {
     <div className="space-y-5">
       <PageHeader title="My ID Card" description="Preview, download, print or email your current ID card." icon={BadgeCheck} status={<Badge variant="outline" className="capitalize">{status}</Badge>} />
       {error && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">{error}</div>}
+      {cardLookupFailed && !error && profile && <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">No saved personal ID card was found. A downloadable role-based preview is shown instead.</div>}
       {cardRecord?._id && !isOwnCard && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">Your personal ID card was not found for this account. Showing role-based preview.</div>}
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-6">
         <div ref={previewRef} className="flex justify-start overflow-x-auto md:justify-center">
