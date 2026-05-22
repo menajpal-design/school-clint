@@ -45,7 +45,7 @@ const formatDisplayDate = (value?: string) => {
   if (!value) return ''
   const parsedDate = new Date(value)
   return Number.isNaN(parsedDate.getTime())
-    ? value
+    ? String(value).split('T')[0]
     : parsedDate.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
@@ -106,6 +106,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
     ref
   ) => {
     const displayExamDate = formatDisplayDate(examDate)
+    const displayDateOfBirth = formatDisplayDate(dateOfBirth)
     const resolvedRoll = rollNumber || roll || ''
     const resolvedQrData = qrData || JSON.stringify({ name, rollNumber, examName, examDate: displayExamDate || examDate, examCenter, centerCode, institutionName })
     const instructions = [
@@ -171,7 +172,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
                   <InfoRow label="Candidate Name" value={name} />
                   <InfoRow label="Roll Number" value={resolvedRoll} />
                   <InfoRow label="Class / Group" value={stream} />
-                  <InfoRow label="Date of Birth" value={dateOfBirth} />
+                  <InfoRow label="Date of Birth" value={displayDateOfBirth} />
                   <InfoRow label="Father Name" value={fatherName} />
                 </div>
               </div>
