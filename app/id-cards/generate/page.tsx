@@ -14,6 +14,9 @@ import { authManager } from "@/lib/auth";
 
 type OwnerType = "student" | "teacher" | "staff";
 
+const ownerDisplayName = (person: any) => person?.userId?.name || person?.name || person?.fullName || person?.studentName || person?.teacherName || person?.staffName || "";
+const ownerDisplayId = (person: any) => person?.rollNumber || person?.studentId || person?.employeeId || person?.staffId || person?.userId?.username || person?.username || "ID";
+
 export default function GeneratePage() {
   const { user } = useAuth();
   const previewRef = useRef<HTMLDivElement | null>(null);
@@ -84,8 +87,8 @@ export default function GeneratePage() {
     setCard(data.card);
   };
 
-  const previewName = card?.ownerId?.name || selected?.userId?.name || "Select person";
-  const previewId = card?.cardNumber || selected?.rollNumber || selected?.employeeId || "ID";
+  const previewName = card?.ownerId?.name || ownerDisplayName(selected) || "Select person";
+  const previewId = card?.cardNumber || ownerDisplayId(selected);
   const headName = institution?.headId?.name || (sessionUser?.role === "head" ? sessionUser?.name : undefined) || "";
   const role = ownerType === "teacher" ? "teacher" : ownerType === "staff" ? "staff" : "student";
   const className = selected?.classId?.name || selected?.className || selected?.designation || selected?.department || "";
@@ -107,7 +110,7 @@ export default function GeneratePage() {
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
         <section className="space-y-4 rounded-lg border border-border bg-card p-4 shadow-sm">
           <Step title="1. Card type"><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={ownerType} onChange={(e) => { setOwnerType(e.target.value as OwnerType); setSelected(null); setCard(null); }}>{allowedOwnerTypes.map((type) => <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>)}</select></Step>
-          <Step title="2. Search person"><div className="flex gap-2"><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, roll or ID" /><Button onClick={() => load()}><Search className="h-4 w-4" /></Button></div><div className="mt-2 max-h-56 space-y-2 overflow-auto">{people.map((p) => <button key={p._id} onClick={() => { setSelected(p); setCard(null); }} className="w-full rounded-md border border-slate-200 p-2 text-left text-sm hover:bg-slate-50">{p.userId?.name}<div className="text-xs text-slate-500">{p.rollNumber || p.employeeId}</div></button>)}</div></Step>
+          <Step title="2. Search person"><div className="flex gap-2"><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, roll or ID" /><Button onClick={() => load()}><Search className="h-4 w-4" /></Button></div><div className="mt-2 max-h-56 space-y-2 overflow-auto">{people.map((p) => <button key={p._id} onClick={() => { setSelected(p); setCard(null); }} className="w-full rounded-md border border-slate-200 p-2 text-left text-sm hover:bg-slate-50">{ownerDisplayName(p) || "Unnamed person"}<div className="text-xs text-slate-500">{ownerDisplayId(p)}</div></button>)}</div></Step>
           <Step title="3. Template options"><div className="grid grid-cols-2 gap-2">{Object.entries(options).map(([key, value]) => <label key={key} className="flex items-center gap-2 text-sm capitalize"><input type="checkbox" checked={value} onChange={(e) => setOptions({ ...options, [key]: e.target.checked })} />{key}</label>)}</div></Step>
           <Button className="w-full" disabled={!selected} onClick={generate}>Generate Card</Button>
         </section>
