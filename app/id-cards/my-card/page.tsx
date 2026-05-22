@@ -5,6 +5,7 @@ import { BadgeCheck } from "lucide-react";
 
 import DownloadButtons from "@/components/id-cards/DownloadButtons";
 import { ProfessionalIDCard } from "@/components/id-cards/ProfessionalIDCard";
+import ReturnInstructionNotice from "@/components/id-cards/ReturnInstructionNotice";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
@@ -110,7 +111,7 @@ export default function MyCardPage() {
       {cardLookupFailed && !error && profile && <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">No saved personal ID card was found. A downloadable role-based preview is shown instead.</div>}
       {cardRecord?._id && !isOwnCard && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">Your personal ID card was not found for this account. Showing role-based preview.</div>}
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-6">
-        <div ref={previewRef} className="flex justify-start overflow-x-auto md:justify-center">
+        <div ref={previewRef} className="relative flex justify-start overflow-x-auto md:justify-center">
           <ProfessionalIDCard
             role={cardData.role}
             name={owner.name || "Your Name"}
@@ -136,6 +137,7 @@ export default function MyCardPage() {
             admissionNumber={cardData.admissionNumber}
             registrationNumber={cardData.registrationNumber}
           />
+          <ReturnInstructionNotice address={institutionData?.address} phone={institutionData?.phone} email={institutionData?.email} website={institutionData?.website} />
         </div>
         <div className="mt-4 flex flex-col gap-3">
           <div className="text-sm text-slate-600">Role: {roleLabel(cardData.role)} · {cardData.role === "student" ? `Roll: ${cardData.rollNumber || "-"}` : `ID: ${cardData.idNumber || "-"}`}</div>
