@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { QRCodeSVG } from 'qrcode.react'
+import TeacherStaffLandscapeIDCard from './TeacherStaffLandscapeIDCard'
 
 export type ProfessionalIDRole =
   | 'student'
@@ -119,6 +120,10 @@ const BackRow = ({ label, value }: { label: string; value?: string }) => value ?
 ) : null
 
 export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalIDCardProps>((props, ref) => {
+  const normalizedRole = normalizeRole(props.role)
+  if (normalizedRole === 'teacher' || normalizedRole === 'staff' || normalizedRole === 'finance_officer' || normalizedRole === 'accountant') {
+    return <div ref={ref}><TeacherStaffLandscapeIDCard {...props} role={normalizedRole} /></div>
+  }
   const {
     name,
     idNumber,
@@ -147,7 +152,6 @@ export const ProfessionalIDCard = React.forwardRef<HTMLDivElement, ProfessionalI
     department,
   } = props
 
-  const normalizedRole = normalizeRole(role)
   const theme = cardCopy[normalizedRole] || cardCopy.user
   const displayValidityDate = formatDisplayDate(validityDate)
   const displayRole = roleLabel(role)
