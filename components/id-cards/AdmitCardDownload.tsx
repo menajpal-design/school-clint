@@ -18,7 +18,10 @@ type StudentOption = {
   rollNumber?: string;
   admissionNumber?: string;
   registrationNumber?: string;
+  dateOfBirth?: string;
   fatherName?: string;
+  motherName?: string;
+  guardianName?: string;
   userId?: {
     name?: string;
     avatar?: string;
@@ -55,6 +58,7 @@ type ExamItem = {
 };
 
 const getStudentName = (student?: StudentOption) => student?.userId?.name || "Unnamed student";
+const getStudentDob = (student?: StudentOption) => student?.dateOfBirth || student?.userId?.dateOfBirth || "";
 
 const getClassId = (value: ExamItem["classId"]) => {
   if (!value) return "";
@@ -131,13 +135,15 @@ export function AdmitCardDownload() {
       const name = s.userId?.name || "";
       const roll = s.rollNumber || s.admissionNumber || s.registrationNumber || "";
       const className = s.classId && typeof s.classId === 'object' ? s.classId.name || "" : "";
-      return [name, roll, className].some((v) => String(v).toLowerCase().includes(q));
+      const dob = getStudentDob(s);
+      return [name, roll, className, dob, s.fatherName, s.motherName].some((v) => String(v || "").toLowerCase().includes(q));
     });
   }, [students, filter]);
 
   const previewClassName = selectedStudent?.classId?.name || "";
   const previewSectionName = selectedStudent?.sectionId?.name ? `-${selectedStudent.sectionId.name}` : "";
   const previewRollNumber = selectedStudent?.rollNumber || selectedStudent?.admissionNumber || selectedStudent?.registrationNumber || selectedStudent?._id || "";
+  const previewDateOfBirth = getStudentDob(selectedStudent);
   const previewExamRows = useMemo(() => {
     if (!selectedExam) {
       return [{ courseCode: previewClassName || "Exam", examDate: "", examTime: "", examCentre: institution?.address || institution?.name || "" }];
@@ -184,7 +190,7 @@ export function AdmitCardDownload() {
         <div className="space-y-2">
           <Label htmlFor="student">Student</Label>
           <div className="flex gap-2">
-            <Input placeholder={loading ? "Loading students..." : "Search name/class/roll"} value={filter} onChange={(e) => setFilter((e.target as HTMLInputElement).value)} />
+            <Input placeholder={loading ? "Loading students..." : "Search name/class/roll/DOB"} value={filter} onChange={(e) => setFilter((e.target as HTMLInputElement).value)} />
             <Select value={selectedStudentId} onValueChange={setSelectedStudentId} disabled={loading || !students.length}>
               <SelectTrigger id="student">
                 <SelectValue placeholder={loading ? "Loading students..." : "Select student"} />
@@ -226,7 +232,7 @@ export function AdmitCardDownload() {
                 examCenter={institution?.address || ""}
                 centerCode={institution?.eiin || institution?.code || ""}
                 headName={institution?.headId?.name || institution?.headName || ""}
-                dateOfBirth={selectedStudent?.userId?.dateOfBirth || ""}
+                dateOfBirth={previewDateOfBirth}
                 fatherName={selectedStudent?.fatherName || ""}
                 stream={[previewClassName, previewSectionName].filter(Boolean).join(" ")}
                 examData={previewExamRows}
