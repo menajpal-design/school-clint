@@ -112,6 +112,17 @@ function HeadSettings() {
     setHoliday(getHolidaySettings());
     setAppControl(getAppControlSettings());
     loadServerSettings();
+    const handler = (e: any) => {
+      try {
+        const id = e?.detail?.id;
+        if (!id) return;
+        setSiteConfig((current: any) => ({ ...current, activeMongoId: id }));
+        // small timeout to ensure state updated before saving
+        setTimeout(() => { saveSiteConfig(); }, 150);
+      } catch (err) { /* ignore */ }
+    };
+    window.addEventListener('make-active-mongo', handler as any);
+    return () => window.removeEventListener('make-active-mongo', handler as any);
   }, []);
 
   const runSave = async (key: string, fn: () => Promise<void> | void, ok: string) => {
@@ -215,6 +226,8 @@ function HeadSettings() {
               <TextField label="ImgBB Upload URL" value={siteConfig.imgbbUploadUrl} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbUploadUrl: value })} />
               <TextField label={hasMongoUrl ? "Add new MongoDB URI (old URI will stay listed)" : "MongoDB URI"} type="password" value={siteConfig.mongodbUrl} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUrl: value })} placeholder="mongodb+srv://..." />
               <TextField label={hasImgbbKey ? "Add new ImgBB API Key (old key will stay listed)" : "ImgBB API Key"} type="password" value={siteConfig.imgbbApiKey} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbApiKey: value })} placeholder="ImgBB key" />
+              <CheckField label="Allow personal MongoDB fallback when central storage unavailable" checked={Boolean(siteConfig.allowPersonalMongo)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalMongo: checked })} />
+              <CheckField label="Allow personal storage (alternate flag)" checked={Boolean(siteConfig.allowPersonalStorage)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalStorage: checked })} />
               <TextField label="MongoDB used MB (optional manual update)" type="number" value={String(siteConfig.mongodbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUsedMb: value })} placeholder="475" />
               <TextField label="ImgBB used MB (optional manual update)" type="number" value={String(siteConfig.imgbbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbUsedMb: value })} placeholder="1950" />
             </div>
@@ -289,6 +302,7 @@ function StatusBox({ title, item }: { title: string; item: any }) {
 }
 
 function HistoryList({ title, items, type, warningAt }: { title: string; items: any[]; type: 'mongo' | 'imgbb'; warningAt: number }) {
+  // Placeholder: will receive makeActive callback via props if needed
   return (
     <div className="rounded-xl border p-4">
       <div className="mb-3 font-semibold">{title}</div>
@@ -306,6 +320,11 @@ function HistoryList({ title, items, type, warningAt }: { title: string; items: 
             <div className="mt-1 text-xs text-muted-foreground">Used: {Number(item.usedMb || 0)}MB / warning at {warningAt}MB</div>
             <div className="mt-1 text-xs text-muted-foreground">Added: {item.addedAt ? new Date(item.addedAt).toLocaleString() : 'N/A'}</div>
             {item.note && <div className="mt-1 text-xs text-muted-foreground">{item.note}</div>}
+            {!item.isActive && type === 'mongo' && (
+              <div className="mt-2">
+                <button className="rounded bg-primary px-3 py-1 text-xs text-white" onClick={() => window.dispatchEvent(new CustomEvent('make-active-mongo', { detail: { id: item.id } }))}>Make active</button>
+              </div>
+            )}
           </div>
         ))}
         {!items?.length && <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">No history yet.</div>}
