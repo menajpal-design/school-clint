@@ -42,6 +42,8 @@ const gatewayApiKey = process.env.NEXT_PUBLIC_GATEWAY_API_KEY || 'pg_live_ebb11c
 const configuredGatewayDomain = process.env.NEXT_PUBLIC_GATEWAY_DOMAIN || '';
 const gatewayReceiverNumber = process.env.NEXT_PUBLIC_GATEWAY_RECEIVER_NUMBER || '';
 const gatewayPaymentMethods = ['bkash', 'nagad'];
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+const stripeModeEnabled = Boolean(stripePublishableKey);
 
 type BillingInfo = {
   planCode: string;
@@ -143,6 +145,11 @@ export default function BillingPage() {
   const [status, setStatus] = useState('');
   const [isWidgetReady, setIsWidgetReady] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'bkash' | 'stripe'>('bkash');
+  const [stripeCardName, setStripeCardName] = useState('');
+  const [stripeCardNumber, setStripeCardNumber] = useState('');
+  const [stripeExpiry, setStripeExpiry] = useState('');
+  const [stripeCvc, setStripeCvc] = useState('');
   const [billingInfo, setBillingInfo] = useState<BillingInfo>({
     planCode: 'students_100',
     billingCycle: 'monthly',
@@ -241,6 +248,66 @@ export default function BillingPage() {
     }
   };
 
+  const submitStripeDemoPayment = async () => {
+    const cardLast4 = stripeCardNumber.replace(/\D/g, '').slice(-4);
+    if (!stripeCardName || !stripeCardNumber || !stripeExpiry || !stripeCvc) {
+      setStatus('Please fill all Stripe card details before continuing.');
+      return;
+    }
+
+    setStatus('Processing Stripe demo payment...');
+    setIsPaying(true);
+
+    try {
+      const demoTrxId = `STRIPE-DEMO-${Date.now()}`;
+      const payload = {
+        ...billingInfo,
+        paymentGateway: 'stripe',
+        paymentOrderId: `STRIPE-ORDER-${Date.now()}`,
+        paymentTime: new Date().toISOString(),
+        paymentTrxId: demoTrxId,
+        paymentSenderNumber: stripeCardName,
+        receivedAmount: due.total,
+        popupPaymentStatus: 'verified',
+        popupVerification: {
+          status: 'verified',
+          stripeDemo: true,
+          cardLast4,
+          paymentMethod: 'card',
+        },
+        popupPaymentResponse: {
+          gateway: 'stripe',
+          mode: stripeModeEnabled ? 'configured' : 'demo',
+          cardLast4,
+          paymentMethod: 'card',
+          status: 'verified',
+          transaction_id: demoTrxId,
+        },
+      };
+
+      const response = await api.institution.recordPayment(payload) as any;
+      setInstitution(response.institution);
+      if (response?.institution?.isActive) {
+        try {
+          const profileResponse = await api.auth.profile() as any;
+          const freshUser = profileResponse?.user || profileResponse;
+          if (freshUser) {
+            authManager.setUser(freshUser);
+          }
+          router.refresh();
+          router.replace('/dashboard');
+        } catch (profileError) {
+          console.warn('Failed to refresh auth session after stripe payment:', profileError);
+        }
+      }
+      setStatus(response.message || 'Stripe payment submitted successfully.');
+    } catch (error: any) {
+      setStatus(error?.message || 'Stripe payment submit failed.');
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
   const openPopupPayment = () => {
     if (typeof window === 'undefined' || !window.GatewayWidget?.open) {
       setStatus('Payment popup is not loaded yet. Please try again.');
@@ -286,6 +353,14 @@ export default function BillingPage() {
         void submitPopupPayment(normalizedPayment);
       },
     });
+  };
+
+  const startPayment = () => {
+    if (selectedPaymentMethod === 'stripe') {
+      void submitStripeDemoPayment();
+      return;
+    }
+    openPopupPayment();
   };
 
   if (loading || authLoading) {
@@ -407,10 +482,96 @@ export default function BillingPage() {
               Due amount: {formatCurrency(due.baseAmount)} + storage {formatCurrency(due.storageAmount)} = <span className="font-semibold">{formatCurrency(due.total)}</span>
             </div>
 
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium">Choose payment method</p>
+                <p className="text-sm text-slate-600">Use Bkash/Nagad popup or test Stripe card flow.</p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaymentMethod('bkash')}
+                  className={`rounded-lg border p-4 text-left transition ${selectedPaymentMethod === 'bkash' ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold">Bkash / Nagad popup</span>
+                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">Connected</span>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">Opens the GatewayFlow popup for wallet payment.</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaymentMethod('stripe')}
+                  className={`rounded-lg border p-4 text-left transition ${selectedPaymentMethod === 'stripe' ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold">Stripe</span>
+                    <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700">{stripeModeEnabled ? 'Configured' : 'Demo'}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {stripeModeEnabled
+                      ? 'Stripe publishable key is present. The UI exposes Stripe mode, and the current demo card flow is available for testing until a real checkout session is connected.'
+                      : 'Demo card entry for testing when no Stripe env key is set.'}
+                  </p>
+                </button>
+              </div>
+
+              {selectedPaymentMethod === 'stripe' && (
+                <div className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-2">
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium">Cardholder name</span>
+                    <input
+                      type="text"
+                      value={stripeCardName}
+                      onChange={(event) => setStripeCardName(event.target.value)}
+                      placeholder="Ayesha Khan"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium">Card number</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={stripeCardNumber}
+                      onChange={(event) => setStripeCardNumber(event.target.value.replace(/\D/g, '').slice(0, 16))}
+                      placeholder="4242 4242 4242 4242"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium">Expiry</span>
+                    <input
+                      type="text"
+                      value={stripeExpiry}
+                      onChange={(event) => setStripeExpiry(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                      placeholder="12/28"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium">CVC</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={stripeCvc}
+                      onChange={(event) => setStripeCvc(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                      placeholder="123"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-600">{status}</p>
-              <Button onClick={openPopupPayment} disabled={!isWidgetReady || isPaying} className="w-full sm:w-auto">
-                {isPaying ? 'Saving...' : 'Pay with Popup'}
+              <Button
+                onClick={startPayment}
+                disabled={isPaying || (selectedPaymentMethod === 'bkash' && !isWidgetReady)}
+                className="w-full sm:w-auto"
+              >
+                {isPaying ? 'Saving...' : selectedPaymentMethod === 'stripe' ? 'Pay with Stripe' : 'Pay with Popup'}
               </Button>
             </div>
           </CardContent>
