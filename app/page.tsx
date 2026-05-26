@@ -41,23 +41,23 @@ export default function Home() {
 
   if (checking) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50">
+      <main className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-7 w-7 animate-spin text-slate-700" />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
+    <main className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex flex-col sm:flex-row sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-2 sm:gap-0 py-3 sm:py-0">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground shadow-md shadow-primary/20">
               E
             </div>
             <div>
-              <p className="text-sm font-semibold leading-none">EASY SCHOOL</p>
-              <p className="mt-1 text-xs text-slate-500">School/Madrasah Management</p>
+              <p className="text-sm font-semibold leading-none text-foreground">EASY SCHOOL</p>
+              <p className="mt-1 text-xs text-muted-foreground">School/Madrasah Management</p>
             </div>
           </Link>
           <div className="flex items-center gap-2 flex-wrap">
@@ -83,10 +83,10 @@ export default function Home() {
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
             Role-based school operations
           </div>
-          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
             EASY SCHOOL - School/Madrasah Management System
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
+          <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             A professional dashboard for academics, attendance, finance, ID cards, documents, notices, parents and staff operations.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row flex-wrap">
@@ -112,14 +112,14 @@ export default function Home() {
 
           {/* Quick action tiles for mobile */}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:hidden">
-            <Link href="/id-cards/generate" className="rounded-md bg-card border border-border p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Generate ID</Link>
-            <Link href="/attendance/mark" className="rounded-md bg-card border border-border p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Scan & Mark</Link>
-            <Link href="/documents/upload" className="rounded-md bg-card border border-border p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Upload Doc</Link>
-            <Link href="/finance/collections" className="rounded-md bg-card border border-border p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Collect Fees</Link>
+            <Link href="/id-cards/generate" className="rounded-md border border-border bg-card p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Generate ID</Link>
+            <Link href="/attendance/mark" className="rounded-md border border-border bg-card p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Scan & Mark</Link>
+            <Link href="/documents/upload" className="rounded-md border border-border bg-card p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Upload Doc</Link>
+            <Link href="/finance/collections" className="rounded-md border border-border bg-card p-3 text-center text-sm font-medium shadow-sm hover:bg-popover">Collect Fees</Link>
           </div>
         </div>
 
-          <Card className="border-border bg-card shadow-sm">
+          <Card className="border-border bg-card shadow-lg shadow-slate-900/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <UsersRound className="h-5 w-5 text-blue-600" />
@@ -131,14 +131,14 @@ export default function Home() {
               {features.map((feature) => {
                 const Icon = feature.icon;
                 return (
-                  <div key={feature.title} className="rounded-lg border border-slate-200 p-4">
+                  <div key={feature.title} className="rounded-lg border border-border bg-gradient-to-br from-background to-muted/30 p-4">
                     <div className="flex items-start gap-3">
-                      <div className="rounded-lg bg-slate-100 p-2 text-slate-700">
+                      <div className="rounded-lg bg-primary/10 p-2 text-primary">
                         <Icon className="h-5 w-5" />
                       </div>
                       <div>
-                        <h2 className="font-semibold text-slate-900">{feature.title}</h2>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">{feature.description}</p>
+                        <h2 className="font-semibold text-foreground">{feature.title}</h2>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{feature.description}</p>
                       </div>
                     </div>
                   </div>

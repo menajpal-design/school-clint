@@ -13,9 +13,9 @@ const fallbackColors = ["#2563eb", "#059669", "#f59e0b", "#dc2626", "#7c3aed"];
 
 export function PieChartCard({ title, data }: PieChartCardProps) {
   return (
-    <Card className="border-slate-200 shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
+    <Card className="border-border bg-card shadow-lg shadow-slate-900/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent className="h-72">
         <ResponsiveContainer width="100%" height="100%">
@@ -25,7 +25,7 @@ export function PieChartCard({ title, data }: PieChartCardProps) {
                 <Cell key={entry.name} fill={entry.color || fallbackColors[index % fallbackColors.length]} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid hsl(var(--border))', background: 'hsl(var(--popover))' }} />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>
