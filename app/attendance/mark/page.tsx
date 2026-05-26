@@ -172,27 +172,77 @@ export default function AttendanceMarkPage() {
   const exportPdf = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
     const institution = getPrintInstitution();
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(institution.name || "EASY SCHOOL", 36, 32);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 36;
+    const columns = [idLabel, "Name", groupLabel, subGroupLabel, "Status"];
+    const widths = [92, 222, 150, 150, 88];
+
+    const drawHeader = () => {
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, pageWidth, 74, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(institution.name || "EASY SCHOOL", margin, 24);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      if (institution.address) doc.text(institution.address, margin, 40);
+      doc.text(`${activePeopleLabel.toUpperCase()} ATTENDANCE | ${date} | RECORDS: ${people.length}`, margin, institution.address ? 56 : 44);
+      doc.setFillColor(14, 116, 144);
+      doc.roundedRect(pageWidth - margin - 128, 18, 92, 28, 8, 8, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("ATTENDANCE PDF", pageWidth - margin - 82, 36, { align: "center" });
+    };
+
+    const drawTableHeader = (y: number) => {
+      let x = margin;
+      doc.setFillColor(226, 232, 240);
+      doc.rect(margin, y, pageWidth - margin * 2, 24, "F");
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      columns.forEach((column, index) => {
+        doc.text(column, x + 6, y + 16);
+        x += widths[index];
+      });
+    };
+
+    const addPage = () => {
+      doc.addPage();
+      drawHeader();
+      drawTableHeader(90);
+      return 118;
+    };
+
+    drawHeader();
+    drawTableHeader(90);
+
+    let y = 118;
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`${activePeopleLabel.toUpperCase()} Attendance | ${date} | Records: ${people.length}`, 36, 52);
-    let y = 88;
+    doc.setFontSize(9);
     const cols = [idLabel, "Name", groupLabel, subGroupLabel, "Status"];
-    const widths = [90, 220, 150, 150, 90];
-    doc.setFont("helvetica", "bold");
-    let x = 36;
-    cols.forEach((col, index) => { doc.text(col, x, y); x += widths[index]; });
-    y += 22;
-    doc.setFont("helvetica", "normal");
     people.forEach((person) => {
-      if (y > 540) { doc.addPage(); y = 40; }
+      if (y > pageHeight - 44) { y = addPage(); }
+      if (((y - 118) / 20) % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(margin, y - 14, pageWidth - margin * 2, 22, "F"); }
       const values = [personId(person), personName(person), personType === "student" ? classNameOf(person, selectedClass) : person.department || "-", personType === "student" ? sectionName(person) : person.designation || "-", person.status || "absent"];
       let tx = 36;
-      values.forEach((val, index) => { doc.text(String(val).slice(0, 32), tx, y); tx += widths[index]; });
+      values.forEach((val, index) => {
+        const cell = String(val).slice(0, 32);
+        doc.setTextColor(index === 4 && val === "present" ? 22 : 15, index === 4 && val === "present" ? 163 : 23, index === 4 && val === "present" ? 74 : 42);
+        doc.text(cell, tx + 6, y);
+        tx += widths[index];
+      });
       y += 20;
     });
+    const pages = doc.getNumberOfPages();
+    for (let page = 1; page <= pages; page += 1) {
+      doc.setPage(page);
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(8);
+      doc.text(`Page ${page} of ${pages}`, pageWidth - margin, pageHeight - 16, { align: "right" });
+    }
     doc.save(`attendance-${personType}-${date}.pdf`);
   };
 

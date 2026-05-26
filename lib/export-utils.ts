@@ -48,7 +48,7 @@ const inlineImages = async (root: HTMLElement) => {
   }));
 };
 
-const pageShell = (title: string, body: string, styles = "") => `<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${title}</title><style>@page{size:A4;margin:12mm}*{box-sizing:border-box}html,body{margin:0;color:#0f172a;font-family:Arial,Helvetica,sans-serif;background:#fff}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px;text-align:left}th{background:#f1f5f9;font-weight:700}.institution-header{display:flex;align-items:center;gap:14px;border-bottom:2px solid #0f172a;padding-bottom:12px;margin-bottom:16px}.institution-logo{width:58px;height:58px;border:1px solid #cbd5e1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:11px;font-weight:700;overflow:hidden}.institution-logo img{width:100%;height:100%;object-fit:contain;padding:4px}.institution-info h1{margin:0;font-size:22px;line-height:1.15;color:#0f172a}.institution-info p{margin:3px 0 0;font-size:12px;color:#475569}.print-card{border:1px solid #cbd5e1;border-radius:8px;padding:20px;background:#fff}.print-title{font-size:22px;font-weight:700;margin:0 0 4px}.print-muted{color:#64748b;font-size:12px}.print-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}.print-row{border-bottom:1px solid #e2e8f0;padding:6px 0;font-size:13px}.print-row strong{display:inline-block;min-width:120px}.signature{margin-top:48px;display:flex;justify-content:space-between;gap:40px;font-size:12px}.signature div{flex:1;border-top:1px solid #334155;padding-top:6px;text-align:center}.print-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}.print-qr{display:inline-flex;flex-direction:column;align-items:center;gap:4px;color:#475569;font-size:10px;font-weight:700;text-transform:uppercase}.print-qr img{width:82px;height:82px;border:1px solid #cbd5e1;border-radius:6px;padding:4px;background:#fff}${styles}</style></head><body>${body}</body></html>`;
+const pageShell = (title: string, body: string, styles = "") => `<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${title}</title><style>@page{size:A4;margin:12mm}*{box-sizing:border-box}html,body{margin:0;color:#0f172a;font-family:Arial,Helvetica,sans-serif;background:#fff}table{width:100%;border-collapse:collapse}th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px;text-align:left}th{background:#e2e8f0;font-weight:700;color:#0f172a}.institution-header{display:flex;align-items:center;justify-content:space-between;gap:14px;border-radius:18px;background:linear-gradient(135deg,#0f172a 0%,#0f766e 100%);color:#fff;padding:16px 18px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,23,42,.18)}.institution-logo{width:58px;height:58px;border:1px solid rgba(255,255,255,.25);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;overflow:hidden;background:rgba(255,255,255,.08)}.institution-logo img{width:100%;height:100%;object-fit:contain;padding:4px;background:#fff}.institution-info{flex:1;min-width:0}.institution-info h1{margin:0;font-size:22px;line-height:1.15;color:#fff}.institution-info p{margin:3px 0 0;font-size:12px;color:rgba(255,255,255,.84)}.institution-chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:rgba(255,255,255,.12);padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.print-card{border:1px solid #cbd5e1;border-radius:18px;padding:20px;background:#fff}.print-title{font-size:22px;font-weight:700;margin:0 0 4px}.print-muted{color:#64748b;font-size:12px}.print-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}.print-row{border-bottom:1px solid #e2e8f0;padding:6px 0;font-size:13px}.print-row strong{display:inline-block;min-width:120px}.signature{margin-top:48px;display:flex;justify-content:space-between;gap:40px;font-size:12px}.signature div{flex:1;border-top:1px solid #334155;padding-top:6px;text-align:center}.print-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}.print-qr{display:inline-flex;flex-direction:column;align-items:center;gap:4px;color:#475569;font-size:10px;font-weight:700;text-transform:uppercase}.print-qr img{width:82px;height:82px;border:1px solid #cbd5e1;border-radius:6px;padding:4px;background:#fff}.print-footer{margin-top:16px;padding-top:10px;border-top:1px dashed #cbd5e1;color:#64748b;font-size:11px;display:flex;justify-content:space-between;gap:12px}${styles}</style></head><body>${body}</body></html>`;
 
 export const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 export function downloadCsv(filename: string, rows: unknown[][]) { downloadFile(`\uFEFF${rows.map((r) => r.map(csvCell).join(",")).join("\r\n")}`, filename, "text/csv;charset=utf-8"); }
@@ -57,8 +57,8 @@ export async function downloadHtmlAsPdf(title: string, bodyHtml: string, styles 
   const html2canvas = (await import("html2canvas")).default;
   const jsPDF = (await import("jspdf")).default;
   const wrapper = document.createElement("div");
-  wrapper.style.position = "fixed"; wrapper.style.left = "0"; wrapper.style.top = "0"; wrapper.style.width = "794px"; wrapper.style.minHeight = "1123px"; wrapper.style.background = "#ffffff"; wrapper.style.padding = "45px"; wrapper.style.zIndex = "2147483647"; wrapper.style.pointerEvents = "none"; wrapper.style.visibility = "visible";
-  wrapper.innerHTML = pageShell(title, bodyHtml, styles).replace(/^[\s\S]*<body>/i, "").replace(/<\/body>[\s\S]*$/i, "");
+  wrapper.style.position = "fixed"; wrapper.style.left = "0"; wrapper.style.top = "0"; wrapper.style.width = "794px"; wrapper.style.minHeight = "1123px"; wrapper.style.background = "linear-gradient(180deg, #f8fafc 0%, #ffffff 18%)"; wrapper.style.padding = "28px"; wrapper.style.zIndex = "2147483647"; wrapper.style.pointerEvents = "none"; wrapper.style.visibility = "visible";
+  wrapper.innerHTML = pageShell(title, `<div style="border-radius:22px;background:#fff;padding:24px;box-shadow:0 18px 48px rgba(15,23,42,.12);border:1px solid #e2e8f0">${bodyHtml}</div><div class="print-footer"><span>${getPrintInstitution().name}</span><span>${new Date().toLocaleDateString()}</span></div>`, styles).replace(/^[\s\S]*<body>/i, "").replace(/<\/body>[\s\S]*$/i, "");
   document.body.appendChild(wrapper);
   try {
     await document.fonts?.ready?.catch(() => undefined); await inlineImages(wrapper); await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -81,8 +81,24 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   const fullWidth = Math.ceil(Math.max(target.scrollWidth, target.offsetWidth, rect.width, 1050));
   const fullHeight = Math.ceil(Math.max(target.scrollHeight, target.offsetHeight, rect.height, 600));
   const landscape = fullWidth >= 900 || fullWidth > fullHeight * 0.72;
+  const institution = getPrintInstitution();
+  const documentTitle = safeFilename(filename.replace(/\.pdf$/i, "").replace(/-/g, " ")) || "document";
   const wrapper = document.createElement("div");
-  wrapper.style.position = "fixed"; wrapper.style.left = "0"; wrapper.style.top = "0"; wrapper.style.width = `${fullWidth}px`; wrapper.style.minWidth = `${fullWidth}px`; wrapper.style.minHeight = `${fullHeight}px`; wrapper.style.background = "#ffffff"; wrapper.style.padding = "0"; wrapper.style.margin = "0"; wrapper.style.overflow = "visible"; wrapper.style.pointerEvents = "none"; wrapper.style.zIndex = "2147483647"; wrapper.style.visibility = "visible";
+  wrapper.style.position = "fixed"; wrapper.style.left = "0"; wrapper.style.top = "0"; wrapper.style.width = `${fullWidth}px`; wrapper.style.minWidth = `${fullWidth}px`; wrapper.style.minHeight = `${fullHeight}px`; wrapper.style.background = "linear-gradient(180deg, #f8fafc 0%, #ffffff 16%)"; wrapper.style.padding = "24px"; wrapper.style.margin = "0"; wrapper.style.overflow = "visible"; wrapper.style.pointerEvents = "none"; wrapper.style.zIndex = "2147483647"; wrapper.style.visibility = "visible";
+  const chrome = document.createElement("div");
+  chrome.style.borderRadius = "22px";
+  chrome.style.background = "linear-gradient(135deg, #0f172a 0%, #0f766e 100%)";
+  chrome.style.color = "#fff";
+  chrome.style.padding = "18px 20px";
+  chrome.style.marginBottom = "16px";
+  chrome.style.boxShadow = "0 12px 28px rgba(15, 23, 42, 0.18)";
+  chrome.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;"><div style="min-width:0;"><div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.85">${institution.name}</div><div style="font-size:22px;font-weight:800;line-height:1.1;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:${Math.max(240, fullWidth - 250)}px;">${documentTitle}</div><div style="font-size:12px;opacity:.82;margin-top:4px;">${new Date().toLocaleString()}</div></div><div style="border-radius:999px;background:rgba(255,255,255,.12);padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;">PDF Download</div></div>`;
+  const bodyShell = document.createElement("div");
+  bodyShell.style.borderRadius = "22px";
+  bodyShell.style.background = "#fff";
+  bodyShell.style.padding = "18px";
+  bodyShell.style.border = "1px solid #e2e8f0";
+  bodyShell.style.boxShadow = "0 12px 30px rgba(15, 23, 42, 0.08)";
   const clonedTarget = target.cloneNode(true) as HTMLElement;
   copyComputedStyles(clonedTarget, target);
   const forceFullCapture = (el: Element) => {
@@ -93,7 +109,20 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
     Array.from(el.children).forEach(forceFullCapture);
   };
   forceFullCapture(clonedTarget);
-  wrapper.appendChild(clonedTarget);
+  const footer = document.createElement("div");
+  footer.style.display = "flex";
+  footer.style.justifyContent = "space-between";
+  footer.style.gap = "12px";
+  footer.style.padding = "12px 4px 2px";
+  footer.style.marginTop = "12px";
+  footer.style.borderTop = "1px dashed #cbd5e1";
+  footer.style.color = "#64748b";
+  footer.style.fontSize = "11px";
+  footer.innerHTML = `<span>${institution.address || institution.phone || institution.email || 'Easy School PDF'}</span><span>${new Date().toLocaleDateString()}</span>`;
+  bodyShell.appendChild(clonedTarget);
+  wrapper.appendChild(chrome);
+  wrapper.appendChild(bodyShell);
+  wrapper.appendChild(footer);
   document.body.appendChild(wrapper);
   try {
     await inlineImages(wrapper); await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
