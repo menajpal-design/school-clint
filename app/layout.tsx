@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { ToastProvider } from '@/hooks/useToast'
 import { LanguageProvider } from '@/lib/i18n'
@@ -6,6 +7,12 @@ import { MobileTableEnhancer } from '@/components/layout/MobileTableEnhancer'
 import { ImageUploadGuard } from '@/components/layout/ImageUploadGuard'
 import { RootAppShell } from '@/components/layout/RootAppShell'
 import { AttendanceApiCompatLoader } from '@/components/layout/AttendanceApiCompatLoader'
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'EASY SCHOOL - School Management System',
@@ -24,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-background">
+      <body className={`${plusJakartaSans.variable} min-h-screen bg-background font-sans`}>
         <LanguageProvider>
           <ToastProvider>
             <AttendanceApiCompatLoader />
