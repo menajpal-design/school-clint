@@ -44,3 +44,5 @@ next-env.d.ts
 codex*
 codex-next*.log
 codex-next*.err.log
+build.log
+client-build-status.txt
