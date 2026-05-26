@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useMemo, useState } from 'react';
 import { Building2, CreditCard, Search, ShieldCheck, X } from 'lucide-react';
 import { api } from '@/lib/api';

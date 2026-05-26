@@ -1,5 +1,6 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CalendarX2, Database, Palette, RefreshCw, Save, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
