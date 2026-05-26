@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/types';
 import { authManager } from '@/lib/auth';
-import { api } from '@/lib/api';
+import { api, apiClient } from '@/lib/api';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -20,27 +20,21 @@ export function useAuth() {
           return;
         }
 
-        // First check if we have a token and stored user
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const token = apiClient.getToken();
         if (token) {
-          // Try to load user from storage first
           const storedUser = authManager.getUser();
           if (storedUser) {
             setUser(storedUser);
           }
           setIsLoading(false);
-          
-          // Then sync with server to get latest user info
+
           try {
             const profileData = await api.auth.profile() as User | { user: User };
             const userData = 'user' in profileData ? profileData.user : profileData;
             setUser(userData);
             authManager.setUser(userData);
           } catch (err) {
-            // If profile fetch fails but we have stored user, keep using that
-            if (storedUser) {
-              setUser(storedUser);
-            } else {
+            if (!storedUser) {
               throw err;
             }
           }

@@ -123,6 +123,7 @@ export const menuConfig: MenuItemConfig[] = [
   },
   { label: 'Parent Portal', href: '/parent-portal', roles: ['parent'], icon: 'Home' },
   { label: 'Notice Board', href: '/notices', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'student', 'parent', 'staff'], icon: 'Bell' },
+  { label: 'Homework', href: '/homework', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent'], icon: 'BookOpen' },
   {
     label: 'Profile & Auth', href: '/profile', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'], icon: 'User',
     children: [

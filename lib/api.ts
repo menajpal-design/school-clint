@@ -32,9 +32,34 @@ class ApiClient {
   private currentToken: string | null = null;
   private lastToast = 0;
 
-  setToken(value: string) { this.currentToken = value; if (isBrowser) localStorage.setItem('token', value); }
-  getToken() { if (this.currentToken) return this.currentToken; if (!isBrowser) return null; this.currentToken = localStorage.getItem('token'); return this.currentToken; }
-  clearToken() { this.currentToken = null; if (isBrowser) localStorage.removeItem('token'); }
+  setToken(value: string, persist = true) {
+    this.currentToken = value;
+    if (!isBrowser) return;
+
+    if (persist) {
+      localStorage.setItem('token', value);
+      sessionStorage.removeItem('token');
+      return;
+    }
+
+    sessionStorage.setItem('token', value);
+    localStorage.removeItem('token');
+  }
+
+  getToken() {
+    if (this.currentToken) return this.currentToken;
+    if (!isBrowser) return null;
+
+    this.currentToken = localStorage.getItem('token') || sessionStorage.getItem('token');
+    return this.currentToken;
+  }
+
+  clearToken() {
+    this.currentToken = null;
+    if (!isBrowser) return;
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+  }
 
   private headers(body?: any, extra?: any) {
     const h: any = { ...(extra || {}) };
@@ -139,9 +164,9 @@ export const api: any = {
   admissions: { schools: (p?: any) => apiClient.get('/admissions/public/schools', { params: p }), apply: (d: any) => apiClient.post('/admissions/public/apply', d), getAll: () => apiClient.get('/admissions'), accept: (id: string, d?: any) => apiClient.post(`/admissions/${id}/accept`, d), reject: (id: string) => apiClient.post(`/admissions/${id}/reject`) },
   publicResults: { schools: (p?: any) => apiClient.get('/academic/public/results/schools', { params: p }), options: (p?: any) => apiClient.get('/academic/public/results/options', { params: p }), lookup: (p: any) => apiClient.get('/academic/public/results', { params: p }) },
   users: { ...crud('/users'), getAllUsers: () => apiClient.get('/users/all'), updateStatus: (id: string, isActive: boolean) => apiClient.patch(`/users/${id}/status`, { isActive }), updateRole: (id: string, role: string) => apiClient.patch(`/users/${id}/role`, { role }), resetPassword: (id: string, password?: string) => apiClient.post(`/users/${id}/reset-password`, password ? { password } : undefined), permissions: () => apiClient.get('/users/permissions'), updatePermissions: (matrix: any) => apiClient.put('/users/permissions', { matrix }) },
-  students: studentApi, teachers: teacherApi, staff: crud('/staff'), documents: crud('/documents'), notices: crud('/notices'), idCards: idCardApi, payroll: crud('/payroll'), promotions: crud('/promotions'), holidays: crud('/holidays'), backup: backupApi,
+  students: studentApi, teachers: teacherApi, staff: crud('/staff'), documents: crud('/documents'), notices: crud('/notices'), homework: { getAll: (params?: any) => apiClient.get('/homework', { params }), create: (data: any) => apiClient.post('/homework', data), delete: (id: string) => apiClient.delete(`/homework/${id}`) }, idCards: idCardApi, payroll: crud('/payroll'), promotions: crud('/promotions'), holidays: crud('/holidays'), backup: backupApi,
   library: { books: crud('/library/books'), loans: crud('/library/loans'), issue: (d: any) => apiClient.post('/library/loans/issue', d), return: (d: any) => apiClient.post('/library/loans/return') },
-  institution: { plans: () => apiClient.get('/institution/plans'), profile: () => apiClient.get('/institution/profile'), updateProfile: (d: any) => apiClient.put('/institution/profile', d), recordPayment: (d: any) => apiClient.post('/institution/billing/payment', d) },
+  institution: { plans: () => apiClient.get('/institution/plans'), profile: () => apiClient.get('/institution/profile'), updateProfile: (d: any) => apiClient.put('/institution/profile', d), recordPayment: (d: any) => apiClient.post('/institution/billing/payment', d), createStripeCheckout: (d: any) => apiClient.post('/institution/billing/stripe/checkout', d) },
   admin: { schools: (p?: any) => apiClient.get('/admin/schools', { params: p }), accounting: (p?: any) => apiClient.get('/admin/accounting', { params: p }), updateSchool: (id: string, d: any) => apiClient.patch(`/admin/schools/${id}`, d), verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`), selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`), users: (p?: any) => apiClient.get('/admin/users', { params: p }) },
   academic: { classes: crud('/academic/classes'), sections: crud('/academic/sections'), subjects: crud('/academic/subjects'), exams: crud('/academic/exams'), results: crud('/academic/results'), reportCard: { students: (p: any) => apiClient.get('/academic/report-card/students', { params: p }), get: (p: any) => apiClient.get('/academic/report-card', { params: p }) } },
   attendance: { ...crud('/attendance'), getPeople: (p?: any) => apiClient.get('/attendance/people', { params: p }), getReports: (p?: any) => apiClient.get('/attendance/reports', { params: p }), getMine: (p?: any) => apiClient.get('/attendance/me', { params: p }), markMine: (d: any) => apiClient.post('/attendance/me/mark', d), mark: (d: any) => apiClient.post('/attendance/mark', d), reports: (p?: any) => apiClient.get('/attendance/reports', { params: p }), me: (p?: any) => apiClient.get('/attendance/me', { params: p }) },

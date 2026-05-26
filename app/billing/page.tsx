@@ -168,6 +168,14 @@ export default function BillingPage() {
   };
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment') === 'stripe' ? params.get('status') : null;
+    if (paymentStatus === 'success') {
+      setStatus('Stripe checkout completed. Refreshing billing status...');
+    } else if (paymentStatus === 'cancelled') {
+      setStatus('Stripe checkout was cancelled. You can try again anytime.');
+    }
+
     const user = authUser || authManager.getUser();
     if (!user) {
       router.replace('/login');
@@ -277,7 +285,7 @@ export default function BillingPage() {
         },
         popupPaymentResponse: {
           gateway: 'stripe',
-          mode: stripeModeEnabled ? 'configured' : 'demo',
+          mode: 'demo',
           cardLast4,
           paymentMethod: 'card',
           status: 'verified',
@@ -300,9 +308,32 @@ export default function BillingPage() {
           console.warn('Failed to refresh auth session after stripe payment:', profileError);
         }
       }
-      setStatus(response.message || 'Stripe payment submitted successfully.');
+      setStatus(response.message || 'Stripe demo payment submitted successfully.');
     } catch (error: any) {
       setStatus(error?.message || 'Stripe payment submit failed.');
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
+  const startStripeCheckout = async () => {
+    setStatus('Preparing Stripe checkout...');
+    setIsPaying(true);
+    try {
+      const response = await api.institution.createStripeCheckout({
+        planCode: billingInfo.planCode,
+        billingCycle: billingInfo.billingCycle,
+        useEasySchoolStorage: billingInfo.useEasySchoolStorage,
+      }) as any;
+
+      if (response?.url) {
+        window.location.href = response.url;
+        return;
+      }
+
+      setStatus(response?.message || 'Stripe checkout could not be started.');
+    } catch (error: any) {
+      setStatus(error?.message || 'Stripe checkout failed.');
     } finally {
       setIsPaying(false);
     }
@@ -357,6 +388,10 @@ export default function BillingPage() {
 
   const startPayment = () => {
     if (selectedPaymentMethod === 'stripe') {
+      if (stripeModeEnabled) {
+        void startStripeCheckout();
+        return;
+      }
       void submitStripeDemoPayment();
       return;
     }

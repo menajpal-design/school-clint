@@ -489,6 +489,7 @@ export async function demoRequest(method: string, url: string, data?: any): Prom
   if (root === 'staff') return handleCrud('staff', method, path, data, 'staff');
   if (root === 'documents') return handleCrud('documents', method, path, data, 'documents');
   if (root === 'notices') return handleCrud('notices', method, path, data, 'notices');
+  if (root === 'homework') return handleCrud('homework', method, path, data, 'homework');
   if (root === 'committee') return handleCrud('committee', method, path, data, 'committee');
   if (root === 'messages') return handleCrud('messages', method, path, data, 'messages');
   if (root === 'notifications') return handleCrud('notifications', method, path, data, 'notifications');

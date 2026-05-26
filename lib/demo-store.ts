@@ -10,6 +10,7 @@ export type DemoCollectionName =
   | 'teachers'
   | 'staff'
   | 'notices'
+  | 'homework'
   | 'documents'
   | 'classes'
   | 'subjects'
@@ -30,7 +31,7 @@ export type DemoState = {
 };
 
 const collectionNames: DemoCollectionName[] = [
-  'users', 'students', 'teachers', 'staff', 'notices', 'documents', 'classes', 'subjects', 'exams', 'results', 'attendance', 'fees', 'payments', 'idCards', 'admissions', 'messages', 'committee', 'notifications',
+  'users', 'students', 'teachers', 'staff', 'notices', 'homework', 'documents', 'classes', 'subjects', 'exams', 'results', 'attendance', 'fees', 'payments', 'idCards', 'admissions', 'messages', 'committee', 'notifications',
 ];
 
 const getStorage = () => {
@@ -89,6 +90,10 @@ function seedState(): DemoState {
     { id: 'notice-1', _id: 'notice-1', title: 'Welcome to Demo Mode', content: 'All data is stored locally in your browser.', category: 'general', priority: 'high', isPublished: true, createdAt: now(), publishedAt: now() },
   ];
 
+  const homework = [
+    { id: 'homework-1', _id: 'homework-1', title: 'Math practice', description: 'Complete pages 12-15.', subject: 'Mathematics', classId: classes[0], dueDate: now(), createdBy: baseUsers[2], isPublished: true, createdAt: now() },
+  ];
+
   const documents = [
     { id: 'doc-1', _id: 'doc-1', title: 'Demo Memo', fileName: 'demo-memo.pdf', type: 'memo', ownerName: 'Demo Head', ownerType: 'head', fileSize: 12104, createdAt: now(), fileUrl: '/uploads/demo-memo.pdf' },
   ];
@@ -144,6 +149,7 @@ function seedState(): DemoState {
       teachers,
       staff,
       notices,
+      homework,
       documents,
       classes,
       subjects,
@@ -164,6 +170,7 @@ function seedState(): DemoState {
       teachers: teachers.length,
       staff: staff.length,
       notices: notices.length,
+      homework: homework.length,
       documents: documents.length,
       classes: classes.length,
       subjects: subjects.length,

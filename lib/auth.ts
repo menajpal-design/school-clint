@@ -5,11 +5,19 @@ import { clearDemoSession, getDemoMode, getDemoUser, setDemoUser } from './demo-
 class AuthManager {
   private user: User | null = null;
 
-  setUser(user: User) {
+  setUser(user: User, persist = true) {
     this.user = user;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('user', JSON.stringify(user));
+    if (typeof window === 'undefined') return;
+
+    const payload = JSON.stringify(user);
+    if (persist) {
+      localStorage.setItem('user', payload);
+      sessionStorage.removeItem('user');
+      return;
     }
+
+    sessionStorage.setItem('user', payload);
+    localStorage.removeItem('user');
   }
 
   getUser(): User | null {
@@ -22,18 +30,19 @@ class AuthManager {
     }
 
     if (this.user) return this.user;
-    
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('user');
-        if (stored) {
-          this.user = JSON.parse(stored);
-          return this.user;
-        }
-      } catch (e) {
-        // Invalid JSON in storage
+
+    if (typeof window === 'undefined') return null;
+
+    try {
+      const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (stored) {
+        this.user = JSON.parse(stored);
+        return this.user;
       }
+    } catch (e) {
+      // Invalid JSON in storage
     }
+
     return null;
   }
 
@@ -71,7 +80,7 @@ class AuthManager {
     clearDemoSession();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user');
-      localStorage.removeItem('token');
+      sessionStorage.removeItem('user');
     }
   }
 

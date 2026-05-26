@@ -154,12 +154,16 @@ export default function LoginPage() {
       };
       const response = await api.auth.login(payload) as { token: string; user: User };
 
-      apiClient.setToken(response.token);
-      authManager.setUser(response.user);
+      apiClient.setToken(response.token, data.rememberMe);
+      authManager.setUser(response.user, data.rememberMe);
 
-      if (!data.rememberMe && typeof window !== "undefined") {
-        sessionStorage.setItem("token", response.token);
-        sessionStorage.setItem("user", JSON.stringify(response.user));
+      if (typeof window !== "undefined") {
+        if (response.user.institutionId) {
+          localStorage.setItem("selectedInstitutionId", String(response.user.institutionId));
+        }
+        if (response.user.institution?.name) {
+          localStorage.setItem("selectedInstitutionName", response.user.institution.name);
+        }
       }
 
       showToast(addToast, {
