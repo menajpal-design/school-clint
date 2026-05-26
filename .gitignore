@@ -39,3 +39,8 @@ next-env.d.ts
 .idea/
 *.swp
 *.swo
+ 
+# codex logs
+codex*
+codex-next*.log
+codex-next*.err.log
