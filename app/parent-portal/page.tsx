@@ -7,6 +7,8 @@ import { BookOpen, CalendarDays, CreditCard, FileText, GraduationCap, HeartHands
 import { IDCardPreview } from "@/components/id-cards/IDCardPreview";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
+import { PieChartCard } from '@/components/charts/PieChartCard';
+import { BarChartCard } from '@/components/charts/BarChartCard';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +51,8 @@ export default function ParentPortalPage() {
   const present = childAttendance.filter((item: any) => item.status === "present").length;
   const absent = childAttendance.filter((item: any) => item.status === "absent").length;
   const leave = childAttendance.filter((item: any) => item.status === "leave").length;
+  const attendanceData = [{ name: 'Present', value: present }, { name: 'Absent', value: absent }, { name: 'Leave', value: leave }];
+  const topPayments = (childPayments || []).slice().sort((a: any, b: any) => Number(b.amount||0)-Number(a.amount||0)).slice(0,8).map((p:any)=>({ name: p.receiptNumber || p.paymentMethod || 'Payment', value: Number(p.amount||0) }));
 
   return (
     <div className="space-y-5">
@@ -81,6 +85,11 @@ export default function ParentPortalPage() {
         <StatCard label="Absent / Leave" value={`${absent} / ${leave}`} icon={HeartHandshake} tone="rose" />
         <StatCard label="Fee Due" value={formatCurrency(dueAmount)} icon={CreditCard} tone="amber" />
         <StatCard label="Published Results" value={childResults.length || 0} icon={BookOpen} tone="emerald" />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PieChartCard title="Attendance breakdown" data={attendanceData} />
+        <BarChartCard title="Recent payments" data={topPayments} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">

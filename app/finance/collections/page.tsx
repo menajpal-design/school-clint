@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CreditCard, Printer, ScanLine, Search } from "lucide-react";
 
 import { WebcamScanner } from "@/components/id-cards/WebcamScanner";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
+import { BarChartCard } from '@/components/charts/BarChartCard';
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,8 @@ export default function CollectionsPage() {
     load().catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const topDues = useMemo(() => (students || []).slice().sort((a,b)=>Number(b.dueAmount||0)-Number(a.dueAmount||0)).slice(0,8).map((s:any)=>({ name: s.userId?.name || s.rollNumber || 'Student', value: Number(s.dueAmount||0) })), [students]);
 
   const collect = async () => {
     if (!selected) return setError("Select a student first.");
@@ -125,6 +128,9 @@ export default function CollectionsPage() {
       <div className="flex flex-col gap-2 sm:flex-row">
         <Input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} placeholder="Search by name, roll or ID card number" />
         <Button onClick={load} disabled={loading} className="w-full sm:w-auto"><Search className="mr-2 h-4 w-4" />{loading ? "Searching..." : "Search"}</Button>
+      </div>
+      <div className="mt-4">
+        <BarChartCard title="Top due students" data={topDues} />
       </div>
       <div className="mt-3 grid gap-2 md:grid-cols-3">
         {students.length === 0 ? <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground md:col-span-3">No student found. Search by name, roll or ID card number.</div> : students.map((s) => (

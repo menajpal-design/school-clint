@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { BarChartCard } from '@/components/charts/BarChartCard';
 
 interface Release {
   id: number;
@@ -81,6 +82,15 @@ export default function Downloads() {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
+  const assetDownloadCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    releases.flatMap(r => r.assets || []).forEach((asset) => {
+      const name = asset.name || 'asset';
+      map[name] = (map[name] || 0) + Number(asset.download_count || 0);
+    });
+    return Object.keys(map).slice(0, 12).map((k) => ({ name: k, value: map[k] }));
+  }, [releases]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -130,6 +140,14 @@ export default function Downloads() {
         {/* GitHub Releases Section */}
         {!loading && releases.length > 0 && (
           <div className="mb-12">
+            <div className="grid gap-5 mb-6">
+              <div className="rounded-lg border bg-card p-4 shadow-sm">
+                <h3 className="text-sm font-medium mb-2">Top downloaded assets</h3>
+                <div>
+                  <BarChartCard title="Downloads by asset" data={assetDownloadCounts} />
+                </div>
+              </div>
+            </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">📦 সকল রিলিজ</h2>
             <div className="space-y-4">
               {releases.map((release) => (

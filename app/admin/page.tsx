@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Building2, CheckCircle2, Clock, MessageSquare, ShieldCheck, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { PieChartCard } from '@/components/charts/PieChartCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function AdminPage() {
@@ -42,6 +43,26 @@ export default function AdminPage() {
             <CardContent><div className="text-2xl font-bold">{Number(value).toLocaleString()}</div></CardContent>
           </Card>
         ))}
+      </div>
+      <div className="grid gap-5 md:grid-cols-2">
+        <PieChartCard
+          title="School Status"
+          data={[
+            { name: 'Active', value: stats.active || 0, color: 'var(--brand-accent)' },
+            { name: 'Pending/Suspended', value: stats.pending || 0, color: 'var(--brand-warning)' },
+          ]}
+        />
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">Total schools: {stats.total}</div>
+              <div className="text-sm text-muted-foreground">Platform users (est): {stats.users}</div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Admin Tools</CardTitle></CardHeader>

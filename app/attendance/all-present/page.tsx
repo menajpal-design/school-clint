@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Barcode, Camera, CheckCircle2, Fingerprint, Keyboard, QrCode, ScanLine, Users } from 'lucide-react';
 import { WebcamScanner } from '@/components/id-cards/WebcamScanner';
+import ResponsiveTable from '@/components/shared/ResponsiveTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -276,42 +277,20 @@ export default function AllPresentScannerPage() {
             <Button onClick={markAllVisible} disabled={saving || !visiblePeople.length}>Mark all visible present</Button>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border">
-            <table className="w-full min-w-[1050px] text-sm">
-              <thead className="bg-muted/50 text-left">
-                <tr>
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Role</th>
-                  <th className="p-3">Code</th>
-                  <th className="p-3">Fingerprint ID</th>
-                  <th className="p-3">Class / Group</th>
-                  <th className="p-3">Section</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3 text-right">Present</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visiblePeople.map((person) => (
-                  <tr key={person._id} className="border-t hover:bg-muted/30">
-                    <td className="p-3 font-medium">{person.name}</td>
-                    <td className="p-3"><Badge variant="outline">{person.role}</Badge></td>
-                    <td className="p-3 text-muted-foreground">{person.code}</td>
-                    <td className="p-3 text-muted-foreground">{person.fingerprintCode || '-'}</td>
-                    <td className="p-3">{person.className}</td>
-                    <td className="p-3">{person.sectionName}</td>
-                    <td className="p-3">{person.status === 'present' ? <Badge>Present</Badge> : person.status === 'error' ? <Badge variant="destructive">Error</Badge> : <Badge variant="secondary">Pending</Badge>}</td>
-                    <td className="p-3 text-right">
-                      <div className="flex flex-wrap justify-end gap-2">
-                        <Button size="sm" onClick={() => markRowPresent(person)} disabled={saving}><CheckCircle2 className="mr-2 h-4 w-4" />Present</Button>
-                        <Button size="sm" variant="outline" onClick={() => markRowPresent(person, 'fingerprint')} disabled={saving}><Fingerprint className="mr-2 h-4 w-4" />Fingerprint</Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {!visiblePeople.length && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No people found.</td></tr>}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+            columns={["Name", "Role", "Code", "Fingerprint ID", "Class / Group", "Section", "Status", "Actions"]}
+            rows={visiblePeople.map((person) => ([
+              <div key="name" className="font-medium">{person.name}</div>,
+              <Badge key="role" variant="outline">{person.role}</Badge>,
+              <div key="code" className="text-muted-foreground">{person.code}</div>,
+              <div key="fingerprint" className="text-muted-foreground">{person.fingerprintCode || '-'}</div>,
+              <div key="class">{person.className}</div>,
+              <div key="section">{person.sectionName}</div>,
+              person.status === 'present' ? <Badge key="status-present">Present</Badge> : person.status === 'error' ? <Badge key="status-error" variant="destructive">Error</Badge> : <Badge key="status-pending" variant="secondary">Pending</Badge>,
+              <div key="actions" className="flex flex-wrap justify-end gap-2"><Button size="sm" onClick={() => markRowPresent(person)} disabled={saving}><CheckCircle2 className="mr-2 h-4 w-4" />Present</Button><Button size="sm" variant="outline" onClick={() => markRowPresent(person, 'fingerprint')} disabled={saving}><Fingerprint className="mr-2 h-4 w-4" />Fingerprint</Button></div>
+            ]))}
+            empty="No people found."
+          />
         </CardContent>
       </Card>
     </div>

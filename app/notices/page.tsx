@@ -1,11 +1,12 @@
 "use client";
 
-import { ChangeEvent, FormEvent, ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { CalendarClock, Edit3, FileText, Megaphone, Paperclip, Plus, Trash2 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PieChartCard } from '@/components/charts/PieChartCard';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +69,12 @@ export default function NoticesPage() {
   useEffect(() => {
     load().catch(() => undefined);
   }, []);
+
+  const noticesByCategory = useMemo(() => {
+    const map: Record<string, number> = {};
+    notices.forEach((n) => { map[n.category || 'general'] = (map[n.category || 'general'] || 0) + 1; });
+    return Object.keys(map).map((k) => ({ name: k, value: map[k] }));
+  }, [notices]);
 
   const resetForm = () => {
     setForm(initialForm);
@@ -171,6 +178,9 @@ export default function NoticesPage() {
       )}
 
       <section className="grid gap-4">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <PieChartCard title="Notices by category" data={noticesByCategory} />
+        </div>
         {isLoading ? (
           <div className="rounded-lg border border-border bg-card p-10 text-center text-muted-foreground shadow-sm">Loading notices...</div>
         ) : notices.length === 0 ? (

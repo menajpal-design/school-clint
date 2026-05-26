@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/i18n";
+import ResponsiveTable from '@/components/shared/ResponsiveTable';
 
 function currentMonth() {
   const date = new Date();
@@ -162,32 +163,18 @@ export default function SmsMonitoringPage() {
               ))}
             </div>
 
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[800px] text-left text-sm">
-                <thead>
-                  <tr className="border-b text-slate-600">
-                    <th className="py-3">{t("Date")}</th>
-                    <th>{t("Recipient")}</th>
-                    <th>{t("Phone")}</th>
-                    <th>{t("Purpose")}</th>
-                    <th>{t("Status")}</th>
-                    <th>{t("Message")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.map((log: any) => (
-                    <tr key={log._id} className="border-b last:border-0">
-                      <td className="py-3 text-slate-600">{formatDate(log.sentAt)}</td>
-                      <td>{log.recipientName || "-"}</td>
-                      <td>{log.recipientPhone}</td>
-                      <td>{log.purpose || "-"}</td>
-                      <td><Badge variant={log.status === "sent" ? "default" : log.status === "failed" ? "destructive" : "outline"}>{log.status}</Badge></td>
-                      <td className="max-w-[340px] whitespace-normal break-words">{log.message}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveTable
+              columns={[t('Date'), t('Recipient'), t('Phone'), t('Purpose'), t('Status'), t('Message')]}
+              rows={logs.map((log: any) => ([
+                <div key="date" className="text-slate-600">{formatDate(log.sentAt)}</div>,
+                <div key="recipient">{log.recipientName || '-'}</div>,
+                <div key="phone">{log.recipientPhone}</div>,
+                <div key="purpose">{log.purpose || '-'}</div>,
+                <Badge key="status" variant={log.status === 'sent' ? 'default' : log.status === 'failed' ? 'destructive' : 'outline'}>{log.status}</Badge>,
+                <div key="message" className="max-w-[340px] whitespace-normal break-words">{log.message}</div>,
+              ]))}
+              empty={t('No data found')}
+            />
           </CardContent>
         </Card>
       </div>

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { libraryClient } from '@/lib/library-client';
+import { PieChartCard } from '@/components/charts/PieChartCard';
 
 export default function LibraryPage() {
   const [books, setBooks] = useState<any[]>([]);
@@ -64,6 +65,19 @@ export default function LibraryPage() {
             <p className="mt-2 text-3xl font-semibold text-slate-900">{item.value}</p>
           </div>
         ))}
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <PieChartCard
+          title="Library Copies"
+          data={[
+            { name: 'Available', value: stats.available || 0 },
+            { name: 'Loaned', value: Math.max(0, (stats.totalCopies || 0) - (stats.available || 0)) },
+          ]}
+        />
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500 shadow-sm">
+          Library usage summary will appear here.
+        </div>
       </div>
 
       {loading && <p className="text-sm text-slate-500">Loading library data...</p>}

@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { BarChart3, Building2, CalendarDays, MessageSquare, RefreshCw, Send, XCircle } from "lucide-react";
+import { BarChartCard } from "@/components/charts/BarChartCard";
+import { LineChartCard } from "@/components/charts/LineChartCard";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import ResponsiveTable from '@/components/shared/ResponsiveTable';
 
 function currentMonth() {
   const date = new Date();
@@ -94,6 +97,17 @@ export default function AdminSmsUsagePage() {
           })}
         </div>
 
+        <div className="grid gap-5 md:grid-cols-2">
+          <LineChartCard
+            title="Monthly SMS Trend"
+            data={(data?.trend || []).map((t: any) => ({ name: t.month || t.name || t.date, value: Number(t.sent || t.value || t.count || 0) }))}
+          />
+          <BarChartCard
+            title="Top Institutions (sent)"
+            data={topInstitutions.map((s: any) => ({ name: s.name || 'Institution', value: Number(s.sentSms || 0) }))}
+          />
+        </div>
+
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><BarChart3 className="h-5 w-5" /> Top SMS Sending Institutions</CardTitle>
@@ -125,40 +139,22 @@ export default function AdminSmsUsagePage() {
             <CardTitle>Institution-wise SMS Details</CardTitle>
             <CardDescription>Admin route থেকে সব প্রতিষ্ঠানের SMS usage দেখা যাবে।</CardDescription>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-left text-sm">
-              <thead>
-                <tr className="border-b text-slate-600">
-                  <th className="py-3">Institution</th>
-                  <th>Location</th>
-                  <th>Limit</th>
-                  <th>Sent</th>
-                  <th>Failed</th>
-                  <th>Pending</th>
-                  <th>Remaining</th>
-                  <th>Last SMS</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {institutions.map((school: any) => (
-                  <tr key={school.institutionId} className="border-b last:border-0">
-                    <td className="py-3">
-                      <p className="font-semibold text-slate-900">{school.name}</p>
-                      <p className="text-xs text-slate-500">{school.email || school.phone || "-"}</p>
-                    </td>
-                    <td className="max-w-[260px] truncate">{school.address || "-"}</td>
-                    <td>{Number(school.monthlySmsLimit || 0).toLocaleString()}</td>
-                    <td>{Number(school.sentSms || 0).toLocaleString()}</td>
-                    <td>{Number(school.failedSms || 0).toLocaleString()}</td>
-                    <td>{Number(school.pendingSms || 0).toLocaleString()}</td>
-                    <td>{Number(school.remainingSms || 0).toLocaleString()}</td>
-                    <td>{formatDate(school.lastSentAt)}</td>
-                    <td><Badge variant={school.isActive ? "default" : "destructive"}>{school.isActive ? "Active" : "Inactive"}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <CardContent>
+            <ResponsiveTable
+              columns={["Institution", "Location", "Limit", "Sent", "Failed", "Pending", "Remaining", "Last SMS", "Status"]}
+              rows={institutions.map((school: any) => ([
+                <div key="institution"><p className="font-semibold text-slate-900">{school.name}</p><p className="text-xs text-slate-500">{school.email || school.phone || '-'}</p></div>,
+                <div key="location" className="max-w-[260px] truncate">{school.address || '-'}</div>,
+                Number(school.monthlySmsLimit || 0).toLocaleString(),
+                Number(school.sentSms || 0).toLocaleString(),
+                Number(school.failedSms || 0).toLocaleString(),
+                Number(school.pendingSms || 0).toLocaleString(),
+                Number(school.remainingSms || 0).toLocaleString(),
+                formatDate(school.lastSentAt),
+                <Badge key="status" variant={school.isActive ? 'default' : 'destructive'}>{school.isActive ? 'Active' : 'Inactive'}</Badge>,
+              ]))}
+              empty="No institutions found"
+            />
           </CardContent>
         </Card>
       </div>

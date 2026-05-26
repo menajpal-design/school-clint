@@ -6,6 +6,7 @@ import { ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import ResponsiveTable from '@/components/shared/ResponsiveTable';
 import { api } from "@/lib/api";
 
 const operations = ["dashboard", "academic", "attendance", "finance", "documents", "id_cards", "notices", "users", "settings"];
@@ -47,22 +48,19 @@ export default function PermissionsPage() {
     <div className="space-y-5">
       <PageHeader title="Permissions Matrix" description="Manage role access across core school operations." icon={ShieldCheck} actions={canEdit ? [{ label: "Save Permissions", onClick: save, icon: ShieldCheck }] : []} />
       {!canEdit && <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Only Head or Admin users can update permissions.</div>}
-      <section className="overflow-auto rounded-lg border border-border bg-card shadow-sm">
-        <table className="w-full min-w-[980px] text-sm">
-          <thead><tr className="border-b bg-muted"><th className="px-4 py-3 text-left font-semibold text-muted-foreground">Operation</th>{roles.map((role) => <th key={role} className="px-4 py-3 text-center font-semibold capitalize text-muted-foreground">{role.replace(/_/g, " ")}</th>)}</tr></thead>
-          <tbody>
-            {operations.map((operation) => (
-              <tr key={operation} className="border-b last:border-0">
-                <td className="px-4 py-3 font-medium capitalize text-slate-950">{operation.replace(/_/g, " ")}</td>
-                {roles.map((role) => (
-                  <td key={`${role}-${operation}`} className="px-4 py-3 text-center">
-                    <Checkbox checked={(matrix[role] || []).includes(operation)} disabled={!canEdit} onCheckedChange={(checked) => toggle(role, operation, checked === true)} />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <section className="overflow-auto rounded-lg border border-border bg-card shadow-sm p-4">
+        <ResponsiveTable
+          columns={['Operation', ...roles.map((r) => r.replace(/_/g, ' '))]}
+            rows={operations.map((operation) => ([
+            <div key="operation" className="font-medium capitalize">{operation.replace(/_/g, ' ')}</div>,
+            ...roles.map((role) => (
+              <div key={role} className="flex items-center justify-center">
+                <Checkbox checked={(matrix[role] || []).includes(operation)} disabled={!canEdit} onCheckedChange={(checked) => toggle(role, operation, checked === true)} />
+              </div>
+            )),
+          ]))}
+          empty="No operations"
+        />
       </section>
       {canEdit && <Button onClick={save}>Save Permissions</Button>}
     </div>

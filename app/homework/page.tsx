@@ -6,6 +6,7 @@ import { BookOpen, CalendarDays, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BarChartCard } from '@/components/charts/BarChartCard';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +51,15 @@ export default function HomeworkPage() {
     loadData().catch(() => undefined);
   }, []);
 
+  const classHomeworkCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    homework.forEach((h) => {
+      const name = h.classId?.name || (classes.find((c) => c._id === (h.classId || ''))?.name) || 'Unknown';
+      map[name] = (map[name] || 0) + 1;
+    });
+    return Object.keys(map).map((k) => ({ name: k, value: map[k] }));
+  }, [homework, classes]);
+
   const submit = async () => {
     if (!form.title || !form.classId || !form.dueDate) {
       setError('Please fill title, class, and due date.');
@@ -92,6 +102,10 @@ export default function HomeworkPage() {
       />
 
       {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+
+      <div className="grid gap-4">
+        <BarChartCard title="Homework per class" data={classHomeworkCounts} />
+      </div>
 
       {loading ? (
         <div className="rounded-lg border border-border bg-card p-10 text-sm text-muted-foreground">Loading homework…</div>

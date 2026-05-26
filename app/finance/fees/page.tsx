@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Edit2, Plus } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, apiClient } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { BarChartCard } from '@/components/charts/BarChartCard';
 
 const empty = { classId: "", studentId: "", type: "monthly", amount: 0, scholarship: 0, discount: 0, month: "All Months", year: new Date().getFullYear(), dueDate: new Date().toISOString().slice(0,10), status: "pending" };
 
@@ -55,6 +56,12 @@ export default function FeesPage() {
   };
   useEffect(() => { load().catch(() => undefined); }, []);
 
+  const feesByClass = useMemo(() => {
+    const map: Record<string, number> = {};
+    fees.forEach((f) => { const name = f.classId?.name || 'General'; map[name] = (map[name] || 0) + Number(f.amount || 0); });
+    return Object.keys(map).slice(0,12).map((k) => ({ name: k, value: map[k] }));
+  }, [fees]);
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!form.amount || Number(form.amount) <= 0) return setError("Fee amount must be greater than zero.");
@@ -85,6 +92,9 @@ export default function FeesPage() {
     {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
     {message && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
     <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      <div className="p-4">
+        <BarChartCard title="Fees collected (by class)" data={feesByClass} />
+      </div>
       <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Class</TableHead><TableHead>Student</TableHead><TableHead>Type</TableHead><TableHead>Month</TableHead><TableHead>Amount</TableHead><TableHead>Scholarship</TableHead><TableHead>Discount</TableHead><TableHead>Due Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>
         {loading ? <TableRow><TableCell colSpan={10} className="h-28 text-center text-slate-500">Loading fees...</TableCell></TableRow> : fees.length === 0 ? <TableRow><TableCell colSpan={10} className="h-28 text-center text-slate-500">No fees configured yet.</TableCell></TableRow> : fees.map((fee) => <TableRow key={fee._id}><TableCell>{fee.classId?.name || "All / student"}</TableCell><TableCell>{fee.studentId?.userId?.name || fee.studentId?.rollNumber || "-"}</TableCell><TableCell className="capitalize">{fee.type}</TableCell><TableCell>{fee.type === "monthly" ? "All Months" : fee.month || "-"}</TableCell><TableCell>{formatCurrency(fee.amount || 0)}</TableCell><TableCell>{formatCurrency(fee.scholarship || 0)}</TableCell><TableCell>{formatCurrency(fee.discount || 0)}</TableCell><TableCell>{formatDate(fee.dueDate)}</TableCell><TableCell><Badge variant="outline" className="capitalize">{fee.status}</Badge></TableCell><TableCell className="text-right"><Button size="icon" variant="outline" onClick={() => openEdit(fee)}><Edit2 className="h-4 w-4" /></Button></TableCell></TableRow>)}
       </TableBody></Table>

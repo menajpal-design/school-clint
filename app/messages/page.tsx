@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 
 interface Message {
   _id: string;
   fromUserName: string;
   fromUserEmail: string;
+  fromUserRole?: string;
+  fromUser?: { role?: string };
   subject: string;
   body: string;
   isRead: boolean;
@@ -18,6 +20,7 @@ export default function InboxPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'inbox' | 'sent'>('inbox');
+  const [selectedRole, setSelectedRole] = useState<'all' | 'head' | 'teacher' | 'parent' | 'staff'>('all');
 
   useEffect(() => {
     fetchMessages();
@@ -40,6 +43,38 @@ export default function InboxPage() {
       setLoading(false);
     }
   };
+
+  const getRole = (message: Message) => {
+    const role = (message as any).fromUserRole || message.fromUser?.role || (message as any).role;
+    if (role) return String(role).toLowerCase();
+    // fallback heuristics
+    const email = message.fromUserEmail || '';
+    if (email.includes('parent')) return 'parent';
+    if (email.includes('teacher') || email.includes('tchr')) return 'teacher';
+    if (email.includes('head') || email.includes('principal') || email.includes('admin')) return 'head';
+    return 'staff';
+  };
+
+  const roleLabel = (r: string) => {
+    if (r === 'head') return 'হেড';
+    if (r === 'teacher') return 'টিচার';
+    if (r === 'parent') return 'প্যারেন্ট';
+    return 'স্টাফ';
+  };
+
+  const roleBadgeClass = (r: string) => {
+    switch (r) {
+      case 'head': return 'bg-rose-100 text-rose-800 border border-rose-200';
+      case 'teacher': return 'bg-amber-100 text-amber-800 border border-amber-200';
+      case 'parent': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+      default: return 'bg-sky-100 text-sky-800 border border-sky-200';
+    }
+  };
+
+  const filteredMessages = useMemo(() => messages.filter((m) => {
+    if (selectedRole === 'all') return true;
+    return getRole(m) === selectedRole;
+  }), [messages, selectedRole]);
 
   const handleMarkAsRead = async (messageId: string) => {
     try {
@@ -113,67 +148,65 @@ export default function InboxPage() {
           </button>
         </div>
 
+        {/* Role Filters */}
+        <div className="flex gap-3 mb-6">
+          {[
+            { key: 'all', label: 'সব' },
+            { key: 'head', label: 'হেড' },
+            { key: 'teacher', label: 'টিচার' },
+            { key: 'parent', label: 'প্যারেন্ট' },
+            { key: 'staff', label: 'স্টাফ' },
+          ].map((item) => (
+            <button
+              key={item.key}
+              onClick={() => setSelectedRole(item.key as any)}
+              className={`px-3 py-1 rounded-md text-sm font-medium ${selectedRole === item.key ? 'bg-primary text-white' : 'bg-card border border-border hover:bg-popover'}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {/* Message List */}
         <div className="bg-card rounded-lg shadow-md overflow-hidden border border-border">
-          {messages.length === 0 ? (
+          {filteredMessages.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               {selectedTab === 'inbox' ? 'কোনো বার্তা নেই' : 'কোনো পাঠানো বার্তা নেই'}
             </div>
           ) : (
             <div className="divide-y">
-              {messages.map((message) => (
-                <div
-                  key={message._id}
-                  className={`p-4 hover:bg-gray-50 transition cursor-pointer ${
-                    !message.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-900 truncate">
-                          {message.subject}
-                        </h3>
-                        {!message.isRead && (
-                          <span className="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
-                        )}
+              {filteredMessages.map((message) => {
+                const role = getRole(message);
+                return (
+                  <div
+                    key={message._id}
+                    className={`p-4 transition cursor-pointer ${!message.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-gray-900 truncate">{message.subject}</h3>
+                          <span className={`inline-flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded ${roleBadgeClass(role)}`}>{roleLabel(role)}</span>
+                          {!message.isRead && <span className="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>}
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">
+                          {selectedTab === 'inbox' ? `থেকে: ${message.fromUserName}` : `প্রাপক: ${message.fromUserName}`}
+                        </p>
+                        <p className="text-sm text-gray-500 line-clamp-2 mt-1">{message.body}</p>
                       </div>
-                      <p className="text-sm text-gray-600 truncate">
-                        {selectedTab === 'inbox' 
-                          ? `থেকে: ${message.fromUserName}`
-                          : `প্রাপক: ${message.fromUserName}`
-                        }
-                      </p>
-                      <p className="text-sm text-gray-500 line-clamp-2 mt-1">
-                        {message.body}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <span className="text-xs text-gray-500 whitespace-nowrap">
-                        {formatDate(message.createdAt)}
-                      </span>
-                      <div className="flex gap-1">
-                        {selectedTab === 'inbox' && !message.isRead && (
-                          <button
-                            onClick={() => handleMarkAsRead(message._id)}
-                            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                            title="পড়া চিহ্নিত করুন"
-                          >
-                            ✓
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(message._id)}
-                          className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
-                          title="মুছুন"
-                        >
-                          ✕
-                        </button>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">{formatDate(message.createdAt)}</span>
+                        <div className="flex gap-1">
+                          {selectedTab === 'inbox' && !message.isRead && (
+                            <button onClick={() => handleMarkAsRead(message._id)} className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200" title="পড়া চিহ্নিত করুন">✓</button>
+                          )}
+                          <button onClick={() => handleDelete(message._id)} className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200" title="মুছুন">✕</button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

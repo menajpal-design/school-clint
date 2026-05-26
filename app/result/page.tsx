@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/lib/api';
+import { BarChartCard } from '@/components/charts/BarChartCard';
 
 export default function PublicResultPage() {
   const [schoolSearch, setSchoolSearch] = useState('');
@@ -145,6 +146,9 @@ export default function PublicResultPage() {
                     <Summary label="Total" value={`${result.summary.totalObtained}/${result.summary.totalMarks}`} />
                     <Summary label="Percentage" value={`${result.summary.percentage}%`} />
                     <Summary label="Status" value={result.summary.passed ? 'Passed' : 'Failed'} />
+                  </div>
+                  <div className="mt-4">
+                    <BarChartCard title="Subject-wise marks" data={(result.results || []).map((r:any)=>({ name: r.subjectName, value: Number(r.marksObtained||0) }))} />
                   </div>
                   <div className="overflow-hidden rounded-md border">
                     <table className="w-full text-sm">

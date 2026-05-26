@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { PieChartCard } from '@/components/charts/PieChartCard';
 
 export default function UsersRolesPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -53,6 +54,9 @@ export default function UsersRolesPage() {
       <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
         <h2 className="font-semibold text-foreground">Role Distribution</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="col-span-1 md:col-span-2 xl:col-span-1">
+            <PieChartCard title="Role distribution" data={Object.entries(roleCounts).map(([r,c])=>({ name: r.replace(/_/g,' '), value: c }))} />
+          </div>
           {Object.entries(roleCounts).map(([role, count]) => (
             <div key={role} className="rounded-md border border-border p-4">
               <div className="text-sm capitalize text-muted-foreground">

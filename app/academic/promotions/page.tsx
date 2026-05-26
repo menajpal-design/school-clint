@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api, apiClient } from "@/lib/api";
+import ResponsiveTable from '@/components/shared/ResponsiveTable';
 
 type ClassItem = {
   _id: string;
@@ -206,59 +207,32 @@ export default function PromotionsPage() {
           <CardTitle>Student Promotion Decision</CardTitle>
           <CardDescription>২/৩ subject fail হলেও Head বা Class Teacher চাইলে Manual Promoted দিতে পারবে। ৩টির বেশি fail হলে system block করবে।</CardDescription>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full min-w-[1050px] text-left text-sm">
-            <thead>
-              <tr className="border-b bg-muted/60">
-                <th className="p-3">Roll</th>
-                <th>Student</th>
-                <th>Section</th>
-                <th>Results</th>
-                <th>Failed</th>
-                <th>System Decision</th>
-                <th>Final Decision</th>
-                <th>Reason</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
-                <tr><td colSpan={9} className="h-32 text-center text-muted-foreground">Select filters and click Preview.</td></tr>
-              ) : rows.map((row) => {
-                const selectedDecision = decisions[row.studentId]?.decision || row.autoDecision;
-                const manualPromoted = row.autoDecision === 'failed' && selectedDecision === 'promoted';
-                return (
-                  <tr key={row.studentId} className="border-b last:border-0">
-                    <td className="p-3 font-medium">{row.rollNumber}</td>
-                    <td>{row.studentName}</td>
-                    <td>{row.sectionName || "-"}</td>
-                    <td>{row.resultCount}/{row.subjectCount}</td>
-                    <td>
-                      <div className="font-semibold">{row.failedSubjects}</div>
-                      <div className="text-xs text-muted-foreground">Missing: {row.missingSubjects}</div>
-                    </td>
-                    <td><DecisionBadge decision={row.autoDecision} /></td>
-                    <td>
-                      <select
-                        className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                        value={selectedDecision}
-                        disabled={row.failedSubjects > 3}
-                        onChange={(event) => updateDecision(row.studentId, event.target.value as "promoted" | "failed")}
-                      >
-                        <option value="promoted">Promoted</option>
-                        <option value="failed">Failed</option>
-                      </select>
-                      {manualPromoted && <div className="mt-1 text-xs font-medium text-blue-700">Manual promoted</div>}
-                    </td>
-                    <td><Input value={decisions[row.studentId]?.reason || ""} onChange={(event) => updateReason(row.studentId, event.target.value)} placeholder="Optional reason" /></td>
-                    <td>
-                      {row.alreadyProcessed ? <Badge className="bg-emerald-600">{row.processedDecision}</Badge> : row.failedSubjects > 3 ? <Badge variant="destructive">Blocked</Badge> : <Badge variant="outline">Pending</Badge>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <CardContent>
+          <ResponsiveTable
+            columns={["Roll", "Student", "Section", "Results", "Failed", "System Decision", "Final Decision", "Reason", "Status"]}
+            rows={rows.length === 0 ? [] : rows.map((row) => {
+              const selectedDecision = decisions[row.studentId]?.decision || row.autoDecision;
+              const manualPromoted = row.autoDecision === 'failed' && selectedDecision === 'promoted';
+              return ([
+                <div key="roll" className="font-medium">{row.rollNumber}</div>,
+                <div key="student">{row.studentName}</div>,
+                <div key="section">{row.sectionName || '-'}</div>,
+                <div key="results">{row.resultCount}/{row.subjectCount}</div>,
+                <div key="failed"><div className="font-semibold">{row.failedSubjects}</div><div className="text-xs text-muted-foreground">Missing: {row.missingSubjects}</div></div>,
+                <div key="system"><DecisionBadge decision={row.autoDecision} /></div>,
+                <div key="final">
+                  <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={selectedDecision} disabled={row.failedSubjects > 3} onChange={(event) => updateDecision(row.studentId, event.target.value as "promoted" | "failed")}>
+                    <option value="promoted">Promoted</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                  {manualPromoted && <div className="mt-1 text-xs font-medium text-blue-700">Manual promoted</div>}
+                </div>,
+                <div key="reason"><Input value={decisions[row.studentId]?.reason || ""} onChange={(event) => updateReason(row.studentId, event.target.value)} placeholder="Optional reason" /></div>,
+                <div key="status">{row.alreadyProcessed ? <Badge className="bg-emerald-600">{row.processedDecision}</Badge> : row.failedSubjects > 3 ? <Badge variant="destructive">Blocked</Badge> : <Badge variant="outline">Pending</Badge>}</div>,
+              ]);
+            })}
+            empty="Select filters and click Preview."
+          />
         </CardContent>
       </Card>
 

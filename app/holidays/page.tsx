@@ -6,8 +6,10 @@ import { CalendarDays, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BarChartCard } from '@/components/charts/BarChartCard';
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import ResponsiveTable from '@/components/shared/ResponsiveTable';
 
 const manageRoles = ["head", "assistant_head", "admin", "super_admin"];
 const bd = (date?: string) => date ? new Date(date).toLocaleDateString("bn-BD") : "-";
@@ -61,6 +63,16 @@ export default function HolidaysPage() {
     govt: holidays.filter((item) => item.type === "government").length,
     weekend: holidays.filter((item) => item.type === "weekend").length,
   }), [holidays]);
+
+  const holidaysByMonth = useMemo(() => {
+    const map: Record<string, number> = {};
+    holidays.forEach((h) => {
+      const d = h.startDate ? new Date(h.startDate) : null;
+      const m = d ? d.toLocaleString('default', { month: 'short' }) : 'Unknown';
+      map[m] = (map[m] || 0) + 1;
+    });
+    return Object.keys(map).map((k) => ({ name: k, value: map[k] }));
+  }, [holidays]);
 
   const selectWeeklyMode = (mode: string) => {
     setWeeklyMode(mode);
@@ -145,6 +157,10 @@ export default function HolidaysPage() {
         <Stat label="Weekly Holidays" value={summary.weekend} />
       </section>
 
+      <div className="mt-4">
+        <BarChartCard title="Holidays by month" data={holidaysByMonth} />
+      </div>
+
       <section className="rounded-lg border bg-card p-4 shadow-sm">
         <div className="grid gap-4 lg:grid-cols-[140px_1fr] lg:items-start">
           <div>
@@ -182,20 +198,17 @@ export default function HolidaysPage() {
 
       <section className="rounded-lg border bg-card p-4 shadow-sm">
         <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">Holiday List</h2><Badge variant="outline">{loading ? "Loading" : `${holidays.length} records`}</Badge></div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead><tr className="border-b text-left"><th className="p-2">Date</th><th className="p-2">Holiday</th><th className="p-2">Type</th><th className="p-2">School Status</th><th className="p-2">Action</th></tr></thead>
-            <tbody>
-              {holidays.length === 0 ? <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No holidays found. Click “Update Bangladesh Holidays”.</td></tr> : holidays.map((holiday) => <tr key={holiday._id} className="border-b opacity-100">
-                <td className="p-2">{bd(holiday.startDate)}{holiday.endDate && new Date(holiday.startDate).toDateString() !== new Date(holiday.endDate).toDateString() ? ` - ${bd(holiday.endDate)}` : ""}</td>
-                <td className="p-2"><div className="font-medium">{holiday.titleBn || holiday.title}</div><div className="text-xs text-muted-foreground">{holiday.title}</div></td>
-                <td className="p-2"><Badge variant="outline" className="capitalize">{holiday.type}</Badge></td>
-                <td className="p-2"><Badge variant={holiday.isEnabled !== false && holiday.isSchoolClosed ? "default" : "outline"}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "School Off" : "Open"}</Badge></td>
-                <td className="p-2"><div className="flex gap-2">{canManage && <><Button size="sm" variant="outline" onClick={() => updateClosed(holiday, !(holiday.isEnabled !== false && holiday.isSchoolClosed))}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "Open" : "Close"}</Button><Button size="sm" variant="destructive" onClick={() => removeHoliday(holiday._id)}><Trash2 className="h-4 w-4" /></Button></>}</div></td>
-              </tr>)}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable
+          columns={["Date", "Holiday", "Type", "School Status", "Action"]}
+          rows={holidays.length === 0 ? [] : holidays.map((holiday) => ([
+            <div key="date">{bd(holiday.startDate)}{holiday.endDate && new Date(holiday.startDate).toDateString() !== new Date(holiday.endDate).toDateString() ? ` - ${bd(holiday.endDate)}` : ""}</div>,
+            <div key="holiday"><div className="font-medium">{holiday.titleBn || holiday.title}</div><div className="text-xs text-muted-foreground">{holiday.title}</div></div>,
+            <Badge key="type" variant="outline" className="capitalize">{holiday.type}</Badge>,
+            <Badge key="status" variant={holiday.isEnabled !== false && holiday.isSchoolClosed ? "default" : "outline"}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "School Off" : "Open"}</Badge>,
+            <div key="action" className="flex gap-2">{canManage && <><Button size="sm" variant="outline" onClick={() => updateClosed(holiday, !(holiday.isEnabled !== false && holiday.isSchoolClosed))}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "Open" : "Close"}</Button><Button size="sm" variant="destructive" onClick={() => removeHoliday(holiday._id)}><Trash2 className="h-4 w-4" /></Button></>}</div>
+          ]))}
+          empty="No holidays found. Click 'Update Bangladesh Holidays'."
+        />
       </section>
     </div>
   );

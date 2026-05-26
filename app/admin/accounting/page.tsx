@@ -7,7 +7,10 @@ import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LineChartCard } from '@/components/charts/LineChartCard';
+import { BarChartCard } from '@/components/charts/BarChartCard';
 import { Input } from '@/components/ui/input';
+import ResponsiveTable from '@/components/shared/ResponsiveTable';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const money = (value: any) => formatCurrency(Number(value || 0));
@@ -117,60 +120,30 @@ export default function AdminAccountingPage() {
         ))}
       </div>
 
+      <div className="grid gap-5 md:grid-cols-2">
+        <LineChartCard title="Monthly Received Trend" data={(summary.monthlyTrend || []).map((m: any) => ({ name: m.month || m.name, value: Number(m.received || m.value || 0) }))} />
+        <BarChartCard title="Top Due Schools" data={(rows || []).slice().sort((a,b)=>Number(b.dueAmount||0)-Number(a.dueAmount||0)).slice(0,8).map((r:any)=>({ name: r.name, value: Number(r.dueAmount||0) }))} />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>School Accounting Ledger</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-sm">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="py-3 pr-3">School</th>
-                <th className="py-3 pr-3">Plan</th>
-                <th className="py-3 pr-3">Status</th>
-                <th className="py-3 pr-3 text-right">Due</th>
-                <th className="py-3 pr-3 text-right">Received</th>
-                <th className="py-3 pr-3 text-right">Balance</th>
-                <th className="py-3 pr-3">Payment</th>
-                <th className="py-3 pr-3">Dates</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row._id} className="border-b align-top hover:bg-muted/30">
-                  <td className="py-3 pr-3">
-                    <div className="font-medium">{row.name}</div>
-                    <div className="text-xs text-muted-foreground">{row.email} · {row.phone}</div>
-                  </td>
-                  <td className="py-3 pr-3">
-                    <div>{row.planName}</div>
-                    <div className="text-xs capitalize text-muted-foreground">{row.billingCycle}</div>
-                  </td>
-                  <td className="py-3 pr-3">
-                    <div className="flex flex-wrap gap-1">
-                      <Badge variant={row.isActive ? 'default' : 'secondary'}>{row.isActive ? 'Access' : 'Blocked'}</Badge>
-                      <Badge variant="outline">{row.billingStatus}</Badge>
-                    </div>
-                  </td>
-                  <td className="py-3 pr-3 text-right font-medium">{money(row.dueAmount)}</td>
-                  <td className="py-3 pr-3 text-right font-medium text-emerald-700">{money(row.receivedAmount)}</td>
-                  <td className="py-3 pr-3 text-right font-semibold text-amber-700">{money(row.balanceAmount)}</td>
-                  <td className="py-3 pr-3">
-                    <div>{row.paymentGateway || 'N/A'}</div>
-                    <div className="text-xs text-muted-foreground">TRX: {row.paymentTrxId || 'N/A'}</div>
-                    <div className="text-xs text-muted-foreground">Sender: {row.paymentSenderNumber || 'N/A'}</div>
-                  </td>
-                  <td className="py-3 pr-3 text-xs text-muted-foreground">
-                    <div>Paid: {dateText(row.receivedAt)}</div>
-                    <div>Expire: {dateText(row.subscriptionExpiresAt)}</div>
-                  </td>
-                </tr>
-              ))}
-              {!rows.length && (
-                <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">No accounting data found.</td></tr>
-              )}
-            </tbody>
-          </table>
+        <CardContent>
+          <ResponsiveTable
+            columns={["School", "Plan", "Status", "Due", "Received", "Balance", "Payment", "Dates"]}
+            rows={(rows || []).map((row) => ([
+              <div key="school"><div className="font-medium">{row.name}</div><div className="text-xs text-muted-foreground">{row.email} · {row.phone}</div></div>,
+              <div key="plan"><div>{row.planName}</div><div className="text-xs capitalize text-muted-foreground">{row.billingCycle}</div></div>,
+              <div key="status" className="flex flex-wrap gap-1"><Badge variant={row.isActive ? 'default' : 'secondary'}>{row.isActive ? 'Access' : 'Blocked'}</Badge><Badge variant="outline">{row.billingStatus}</Badge></div>,
+              <div key="due" className="text-right font-medium">{money(row.dueAmount)}</div>,
+              <div key="received" className="text-right font-medium text-emerald-700">{money(row.receivedAmount)}</div>,
+              <div key="balance" className="text-right font-semibold text-amber-700">{money(row.balanceAmount)}</div>,
+              <div key="payment"><div>{row.paymentGateway || 'N/A'}</div><div className="text-xs text-muted-foreground">TRX: {row.paymentTrxId || 'N/A'}</div><div className="text-xs text-muted-foreground">Sender: {row.paymentSenderNumber || 'N/A'}</div></div>,
+              <div key="dates" className="text-xs text-muted-foreground"><div>Paid: {dateText(row.receivedAt)}</div><div>Expire: {dateText(row.subscriptionExpiresAt)}</div></div>,
+            ]))}
+            empty="No accounting data found."
+          />
         </CardContent>
       </Card>
     </div>

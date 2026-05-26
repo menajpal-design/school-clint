@@ -29,6 +29,16 @@
     --info: 199 89% 48%;
     --brand-gradient: linear-gradient(135deg, hsl(224 78% 44%) 0%, hsl(199 89% 48%) 52%, hsl(160 84% 39%) 100%);
     --soft-gradient: linear-gradient(135deg, hsl(224 78% 44% / 0.10), hsl(199 89% 48% / 0.08), hsl(160 84% 39% / 0.08));
+    /* Hex palette (approved) */
+    --brand-primary: #0F62FE;
+    --brand-accent: #00BFA6;
+    --brand-background: #F7F9FC;
+    --brand-surface: #FFFFFF;
+    --brand-text: #0B2545;
+    --brand-muted: #5A6B87;
+    --brand-success: #16A34A;
+    --brand-warning: #F59E0B;
+    --brand-danger: #EF4444;
   }
 
   .dark {
@@ -455,3 +465,26 @@
 
 .professional-id-card { width: 800px !important; height: 500px !important; max-width: none !important; max-height: none !important; flex-shrink: 0 !important; }
 .admit-card { width: 186mm !important; height: 131.5mm !important; max-width: none !important; max-height: none !important; flex-shrink: 0 !important; }
+
+/* Brand mapping overrides: map common Tailwind utilities to the approved professional palette */
+.bg-slate-50, .bg-gray-50 { background: var(--brand-background) !important; }
+.min-h-screen.bg-slate-50, .min-h-screen.bg-gray-50 { background: var(--brand-background) !important; }
+.text-slate-950, .text-slate-900 { color: var(--brand-text) !important; }
+.text-slate-600, .text-slate-500, .text-slate-400 { color: var(--brand-muted) !important; }
+.text-muted-foreground { color: var(--brand-muted) !important; }
+.bg-amber-50 { background: rgba(245,158,11,0.08) !important; }
+.border-amber-200 { border-color: rgba(245,158,11,0.35) !important; }
+.text-amber-800 { color: rgba(133,77,14,1) !important; }
+.bg-slate-900, .bg-gray-900 { background: var(--brand-text) !important; color: var(--brand-surface) !important; }
+.bg-muted { background: hsl(var(--muted)) !important; }
+
+/* Ensure primary-like buttons get a cohesive brand look when using bg-primary fallback */
+button[class*="bg-primary"], a[class*="bg-primary"] {
+  background-image: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+  color: var(--brand-surface) !important;
+  border-color: transparent !important;
+}
+
+/* Map common text utility names to brand tokens */
+.text-foreground { color: var(--brand-text) !important; }
+.text-muted { color: var(--brand-muted) !important; }

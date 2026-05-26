@@ -8,6 +8,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BarChartCard } from '@/components/charts/BarChartCard';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,6 +66,20 @@ export default function AdminSchoolsPage() {
         <div className="flex gap-2">
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search school" />
           <Button onClick={() => load()}><Search className="h-4 w-4" /></Button>
+        </div>
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <BarChartCard title="Top Due Schools" data={(schools || []).slice().sort((a,b)=>Number((b.billing?.dueAmount)||0)-Number((a.billing?.dueAmount)||0)).slice(0,8).map((s:any)=>({ name: s.name, value: Number(s.billing?.dueAmount||0) }))} />
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">Total schools: {schools.length}</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 

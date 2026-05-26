@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { API_URL } from '@/lib/api';
+import ResponsiveTable from '@/components/shared/ResponsiveTable';
 import { User as UserIcon, Eye, Key, RefreshCw } from 'lucide-react';
 
 interface User {
@@ -147,57 +148,19 @@ export default function SubordinatesPage() {
               <p className="text-slate-600">No subordinates found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-slate-100 to-blue-50 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Name</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Username</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Email</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Role</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subordinates.map((subordinate) => (
-                    <tr key={subordinate._id} className="border-b border-slate-200 hover:bg-slate-50 transition">
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{subordinate.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-mono">{subordinate.username}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{subordinate.email}</td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(subordinate.role)}`}>
-                          {subordinate.role.replace('_', ' ')}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${subordinate.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {subordinate.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleViewCredentials(subordinate)}
-                            className="flex items-center gap-1 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs font-medium transition"
-                          >
-                            <Eye className="w-4 h-4" />
-                            Credentials
-                          </button>
-                          <button
-                            onClick={() => handleResetPassword(subordinate._id)}
-                            disabled={resettingPasswordId === subordinate._id}
-                            className="flex items-center gap-1 px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-medium transition disabled:opacity-50"
-                          >
-                            <RefreshCw className={`w-4 h-4 ${resettingPasswordId === subordinate._id ? 'animate-spin' : ''}`} />
-                            Reset Password
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="p-4">
+              <ResponsiveTable
+                columns={["Name", "Username", "Email", "Role", "Status", "Actions"]}
+                rows={subordinates.map((subordinate) => ([
+                  <div key="name" className="font-medium text-slate-900">{subordinate.name}</div>,
+                  <div key="username" className="font-mono text-sm text-slate-600">{subordinate.username}</div>,
+                  <div key="email" className="text-sm text-slate-600">{subordinate.email}</div>,
+                  <div key="role"><span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(subordinate.role)}`}>{subordinate.role.replace('_', ' ')}</span></div>,
+                  <div key="status"><span className={`px-3 py-1 rounded-full text-xs font-medium ${subordinate.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{subordinate.isActive ? 'Active' : 'Inactive'}</span></div>,
+                  <div key="actions" className="flex gap-2"><button onClick={() => handleViewCredentials(subordinate)} className="flex items-center gap-1 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs font-medium transition"><Eye className="w-4 h-4" />Credentials</button><button onClick={() => handleResetPassword(subordinate._id)} disabled={resettingPasswordId === subordinate._id} className="flex items-center gap-1 px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-medium transition disabled:opacity-50"><RefreshCw className={`w-4 h-4 ${resettingPasswordId === subordinate._id ? 'animate-spin' : ''}`} />Reset Password</button></div>
+                ]))}
+                empty="No subordinates found"
+              />
             </div>
           )}
         </div>

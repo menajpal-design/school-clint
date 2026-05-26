@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PieChartCard } from '@/components/charts/PieChartCard';
 import Link from "next/link";
 import { CreditCard, Edit, KeyRound, UserRound } from "lucide-react";
 
@@ -132,6 +133,14 @@ export default function ProfilePage() {
     };
   }, [owner, personalCard, cardRecord]);
 
+  const idCardStats = useMemo(() => {
+    const has = Boolean(personalCard && isOwnCard);
+    return [
+      { name: 'Has ID', value: has ? 1 : 0 },
+      { name: 'Missing', value: has ? 0 : 1 },
+    ];
+  }, [personalCard, isOwnCard]);
+
   const headName = institutionData?.headId?.name || institutionData?.headName || "";
 
   const uploadAvatar = (file?: File) => {
@@ -169,6 +178,9 @@ export default function ProfilePage() {
               <ProfessionalIDCard role={cardData.role} name={user?.name || "User"} idNumber={cardData.idNumber} rollNumber={cardData.rollNumber} institutionName={institutionData?.name || "Educational Institution"} institutionLogo={institutionData?.logo || institutionData?.logoUrl} institutionAddress={institutionData?.address} institutionPhone={institutionData?.phone} institutionEmail={institutionData?.email} institutionWebsite={institutionData?.website} institutionSeal={institutionData?.seal} headSignature={institutionData?.headSignature} headName={headName} stream={cardData.stream} designation={cardData.designation} department={cardData.department} validityDate={personalCard?.validityEnd || undefined} photoUrl={user?.avatar} dateOfBirth={cardData.dateOfBirth} fatherName={cardData.fatherName} motherName={cardData.motherName} admissionNumber={cardData.admissionNumber} registrationNumber={cardData.registrationNumber} />
             </div>
             <div className="mt-3"><DownloadButtons targetRef={previewRef} filename={personalCard?.cardNumber || `id-${user?._id || user?.id || 'me'}`} cardId={personalCard?._id} /></div>
+            <div className="mt-4">
+              <PieChartCard title="ID card status" data={idCardStats} />
+            </div>
           </div>
         </section>
       </div>

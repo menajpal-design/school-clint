@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { PieChartCard } from '@/components/charts/PieChartCard';
 
 type Profile = {
   name?: string;
@@ -84,6 +85,12 @@ export default function InstitutionPage() {
       percent: Math.min(100, Math.round((usedMb / limitMb) * 100)),
     };
   }, [students, teachers, staff, backups.length]);
+
+  const composition = useMemo(() => ([
+    { name: 'Students', value: students },
+    { name: 'Teachers', value: teachers },
+    { name: 'Staff', value: staff },
+  ]), [students, teachers, staff]);
 
   return (
     <div className="space-y-6 p-6">
@@ -171,6 +178,15 @@ export default function InstitutionPage() {
                 </Link>
               </Button>
             ))}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>People Composition</CardTitle>
+            <CardDescription>Students, teachers and staff distribution</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PieChartCard title="Institution composition" data={composition} />
           </CardContent>
         </Card>
       </div>

@@ -11,6 +11,7 @@ import { calculatePlanDue, getPlanByCode, schoolPlans } from '@/lib/plans';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PieChartCard } from '@/components/charts/PieChartCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 declare global {
@@ -204,6 +205,15 @@ export default function BillingPage() {
       })
       .finally(() => setLoading(false));
   }, [router, authUser]);
+
+  const billingComposition = useMemo(() => {
+    if (!institution) return [];
+    const billing = institution.billing || {};
+    return [
+      { name: 'Received', value: Number(billing.receivedAmount || 0) },
+      { name: 'Due', value: Number(billing.dueAmount || 0) || 0 },
+    ];
+  }, [institution]);
 
   const due = useMemo(
     () => calculatePlanDue(billingInfo.planCode, billingInfo.billingCycle, billingInfo.useEasySchoolStorage),

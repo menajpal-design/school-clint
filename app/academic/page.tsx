@@ -19,6 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient } from "@/lib/api";
+import { LineChartCard } from "@/components/charts/LineChartCard";
+import { BarChartCard } from "@/components/charts/BarChartCard";
 
 type AcademicSummary = {
   classes: any[];
@@ -281,6 +283,26 @@ export default function AcademicPage() {
           />
         ))}
       </section>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <BarChartCard
+          title="Class Size Distribution"
+          data={(summary.classes || []).map((c: any) => ({ name: c.name || c._id || 'Class', value: Number(c.count || c.students?.length || c.size || 0) }))}
+        />
+        <LineChartCard
+          title="Admissions Trend"
+          data={(() => {
+            const months: Record<string, number> = {};
+            (summary.students || []).forEach((s: any) => {
+              const d = new Date(s.admissionDate || s.createdAt || s.admittedAt || s.date || null);
+              if (!d || isNaN(d.getTime())) return;
+              const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+              months[key] = (months[key] || 0) + 1;
+            });
+            return Object.entries(months).sort().map(([k, v]) => ({ name: k, value: v }));
+          })()}
+        />
+      </div>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {quickLinks.map((link) => {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Bell, CheckCircle2, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { PieChartCard } from '@/components/charts/PieChartCard';
 
 interface Message {
   _id: string;
@@ -39,6 +40,8 @@ export default function NotificationsPage() {
   const filteredMessages = filter === 'unread' 
     ? messages.filter(m => !m.isRead)
     : messages;
+
+  const readUnread = [{ name: 'Unread', value: messages.filter(m => !m.isRead).length }, { name: 'Read', value: messages.filter(m => m.isRead).length }];
 
   const handleMarkAsRead = async (messageId: string) => {
     try {
@@ -106,6 +109,11 @@ export default function NotificationsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 hidden lg:block">
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <PieChartCard title="Messages" data={readUnread} />
+            </div>
+          </div>
           {/* Messages List */}
           <div className="lg:col-span-1">
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg shadow-slate-900/5">
