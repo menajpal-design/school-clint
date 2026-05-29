@@ -28,6 +28,11 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [nextRole, setNextRole] = useState('');
   const [profile, setProfile] = useState<any>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newInstitution, setNewInstitution] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -82,11 +87,37 @@ export default function AdminUsersPage() {
     window.alert(`Temporary password set for ${user.name}: ${tempPassword}`);
   };
 
+  const openCreateDialog = () => {
+    setNewName(''); setNewEmail(''); setNewPassword(''); setNewInstitution('');
+    setCreateOpen(true);
+  };
+
+  const createAdmin = async () => {
+    if (!newName || !newEmail || !newPassword || !newInstitution) {
+      window.alert('Please fill all fields');
+      return;
+    }
+    try {
+      await api.admin.createUser({ name: newName, email: newEmail, password: newPassword, role: 'admin', institutionId: newInstitution });
+      window.dispatchEvent(new CustomEvent('app-toast', { detail: { title: 'Success', message: 'Admin created', type: 'success', duration: 3000 } }));
+      setCreateOpen(false);
+      await refresh();
+    } catch (e: any) {
+      const msg = e?.message || 'Failed to create admin';
+      window.dispatchEvent(new CustomEvent('app-toast', { detail: { title: 'Error', message: msg, type: 'error', duration: 6000 } }));
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Filter platform users role-wise and school-wise, then update status, role, or password.</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Filter platform users role-wise and school-wise, then update status, role, or password.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={openCreateDialog}><Users className="mr-2 h-4 w-4" />Create Admin</Button>
+        </div>
       </div>
 
       <Card>
@@ -161,6 +192,24 @@ export default function AdminUsersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedUser(null)}>Cancel</Button>
             <Button onClick={saveRole}><ShieldCheck className="mr-2 h-4 w-4" />Save Role</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={createOpen} onOpenChange={(open) => setCreateOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Admin</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input value={newName} onChange={(e) => setNewName((e.target as HTMLInputElement).value)} placeholder="Full name" />
+            <Input value={newEmail} onChange={(e) => setNewEmail((e.target as HTMLInputElement).value)} placeholder="Email" />
+            <Input value={newPassword} onChange={(e) => setNewPassword((e.target as HTMLInputElement).value)} placeholder="Password" />
+            <Select value={newInstitution} onValueChange={setNewInstitution}><SelectTrigger><SelectValue placeholder="Select school" /></SelectTrigger><SelectContent><SelectItem value="">Choose</SelectItem>{schools.map((s) => <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>)}</SelectContent></Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={createAdmin}><ShieldCheck className="mr-2 h-4 w-4" />Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
