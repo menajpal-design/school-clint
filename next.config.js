@@ -9,7 +9,7 @@ const csp = `
   font-src 'self' https: data:;
   img-src 'self' data: https:;
   object-src 'none';
-  script-src 'self' https:;
+  script-src 'self' https: 'unsafe-inline';
   style-src 'self' 'unsafe-inline' https:;
   connect-src 'self' https: wss:;
 `;

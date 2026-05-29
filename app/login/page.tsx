@@ -377,10 +377,10 @@ export default function LoginPage() {
                   <code className="font-mono bg-green-100 px-1">teacher@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
                 </div>
                 <div>
-                  <p className="font-medium">👔 Admin:</p>
+                  <p className="font-medium">🏫 Head:</p>
                   <code className="font-mono bg-green-100 px-1">head@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
                 </div>
-                <p className="text-xs italic text-green-700 pt-1">All credentials use password: <code className="font-mono bg-green-100 px-1">admin123</code></p>
+                <p className="text-xs italic text-green-700 pt-1">All demo credentials use password: <code className="font-mono bg-green-100 px-1">admin123</code>. Platform admin and super admin are not included in demo login.</p>
               </div>
             </div>
 
