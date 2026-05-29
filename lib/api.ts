@@ -31,6 +31,9 @@ const showAppToast = (title: string, message: string, type: 'success' | 'error' 
 class ApiClient {
   private currentToken: string | null = null;
   private lastToast = 0;
+  private csrfToken: string | null = null;
+  private csrfHeaderName: string = (process.env.NEXT_PUBLIC_CSRF_HEADER_NAME || 'x-csrf-token');
+  private refreshing = false;
 
   setToken(value: string, persist = true) {
     this.currentToken = value;
@@ -77,9 +80,60 @@ class ApiClient {
     if (getDemoMode()) return await demoRequest(method, url, data) as T;
     const qs = config?.params ? `?${new URLSearchParams(Object.entries(config.params).filter(([, v]) => v !== undefined && v !== null) as any).toString()}` : '';
     const body = method === 'GET' || method === 'DELETE' ? undefined : (data instanceof FormData ? data : JSON.stringify(data || {}));
-    const init: RequestInit = { method, headers: this.headers(body instanceof FormData ? body : data, config.headers), body, credentials: 'include' };
-    try { const res = await withTimeout(`${API_URL}${url}${qs}`, init, 90000); return await this.parse<T>(res); }
+    const headers = this.headers(body instanceof FormData ? body : data, config.headers);
+
+    // Attach CSRF token for state-changing requests
+    if (method !== 'GET' && method !== 'DELETE') {
+      try {
+        await this.ensureCsrfToken();
+        if (this.csrfToken) headers[this.csrfHeaderName] = this.csrfToken;
+      } catch (err) {
+        // ignore CSRF fetch errors; request will likely fail and be handled
+      }
+    }
+
+    const init: RequestInit = { method, headers, body, credentials: 'include' };
+    try {
+      let res = await withTimeout(`${API_URL}${url}${qs}`, init, 90000);
+      // If unauthorized, try to refresh and retry once
+      if (res.status === 401 && isBrowser) {
+        const refreshed = await this.attemptRefresh();
+        if (refreshed) {
+          // retry original request
+          res = await withTimeout(`${API_URL}${url}${qs}`, init, 90000);
+        }
+      }
+      return await this.parse<T>(res);
+    }
     catch (e: any) { throw this.toError(e); }
+  }
+
+  private async ensureCsrfToken() {
+    if (!isBrowser) return;
+    if (this.csrfToken) return;
+    try {
+      const res = await withTimeout(`${API_URL}/csrf/token`, { method: 'GET', credentials: 'include' }, 15000);
+      if (!res.ok) return;
+      const data = await res.json();
+      this.csrfToken = data?.csrfToken || null;
+    } catch (e) {
+      // swallow
+    }
+  }
+
+  private async attemptRefresh(): Promise<boolean> {
+    if (!isBrowser) return false;
+    if (this.refreshing) return false;
+    this.refreshing = true;
+    try {
+      const res = await withTimeout(`${API_URL}/auth/refresh`, { method: 'POST', credentials: 'include' }, 15000);
+      if (!res.ok) return false;
+      // server sets refreshed cookies; optionally read new csrf token
+      this.csrfToken = null;
+      await this.ensureCsrfToken();
+      return true;
+    } catch (e) { return false; }
+    finally { this.refreshing = false; }
   }
 
   private async parse<T>(res: Response): Promise<T> {
@@ -160,17 +214,20 @@ const backupApi = {
 
 export const api: any = {
   auth: { login: (d: any) => apiClient.post('/auth/login', d), register: (d: any) => apiClient.post('/auth/register', d), forgotPassword: (d: any) => apiClient.post('/auth/forgot-password', d), profile: () => apiClient.get('/auth/profile'), updateProfile: (d: any) => apiClient.put('/auth/profile', d), changePassword: (d: any) => apiClient.post('/auth/change-password', d) },
-  dashboard: { summary: () => apiClient.get('/dashboard/summary'), charts: () => apiClient.get('/dashboard/charts'), composition: () => apiClient.get('/dashboard/composition'), recentNotices: () => apiClient.get('/dashboard/recent-notices'), feeOverview: () => apiClient.get('/finance/dashboard') },
+  dashboard: { summary: () => apiClient.get('/dashboard/summary'), charts: () => apiClient.get('/dashboard/charts'), composition: () => apiClient.get('/dashboard/composition'), recentNotices: () => apiClient.get('/dashboard/recent-notices'), feeOverview: () => apiClient.get('/finance') },
   admissions: { schools: (p?: any) => apiClient.get('/admissions/public/schools', { params: p }), apply: (d: any) => apiClient.post('/admissions/public/apply', d), getAll: () => apiClient.get('/admissions'), accept: (id: string, d?: any) => apiClient.post(`/admissions/${id}/accept`, d), reject: (id: string) => apiClient.post(`/admissions/${id}/reject`) },
   publicResults: { schools: (p?: any) => apiClient.get('/academic/public/results/schools', { params: p }), options: (p?: any) => apiClient.get('/academic/public/results/options', { params: p }), lookup: (p: any) => apiClient.get('/academic/public/results', { params: p }) },
   users: { ...crud('/users'), getAllUsers: () => apiClient.get('/users/all'), updateStatus: (id: string, isActive: boolean) => apiClient.patch(`/users/${id}/status`, { isActive }), updateRole: (id: string, role: string) => apiClient.patch(`/users/${id}/role`, { role }), resetPassword: (id: string, password?: string) => apiClient.post(`/users/${id}/reset-password`, password ? { password } : undefined), permissions: () => apiClient.get('/users/permissions'), updatePermissions: (matrix: any) => apiClient.put('/users/permissions', { matrix }) },
   students: studentApi, teachers: teacherApi, staff: crud('/staff'), documents: crud('/documents'), notices: crud('/notices'), homework: { getAll: (params?: any) => apiClient.get('/homework', { params }), create: (data: any) => apiClient.post('/homework', data), delete: (id: string) => apiClient.delete(`/homework/${id}`) }, idCards: idCardApi, payroll: crud('/payroll'), promotions: crud('/promotions'), holidays: crud('/holidays'), backup: backupApi,
   library: { books: crud('/library/books'), loans: crud('/library/loans'), issue: (d: any) => apiClient.post('/library/loans/issue', d), return: (d: any) => apiClient.post('/library/loans/return') },
   institution: { plans: () => apiClient.get('/institution/plans'), profile: () => apiClient.get('/institution/profile'), updateProfile: (d: any) => apiClient.put('/institution/profile', d), recordPayment: (d: any) => apiClient.post('/institution/billing/payment', d), createStripeCheckout: (d: any) => apiClient.post('/institution/billing/stripe/checkout', d) },
+  institutionSmsTopup: (d: any) => apiClient.post('/institution/sms/topup', d),
+  institutionSmsTopupPayment: (d: any) => apiClient.post('/institution/sms/topup/payment', d),
+  institutionSmsTopupHistory: (p?: any) => apiClient.get('/institution/sms/topup/history', { params: p }),
   admin: { schools: (p?: any) => apiClient.get('/admin/schools', { params: p }), accounting: (p?: any) => apiClient.get('/admin/accounting', { params: p }), updateSchool: (id: string, d: any) => apiClient.patch(`/admin/schools/${id}`, d), verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`), selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`), users: (p?: any) => apiClient.get('/admin/users', { params: p }) },
   academic: { classes: crud('/academic/classes'), sections: crud('/academic/sections'), subjects: crud('/academic/subjects'), exams: crud('/academic/exams'), results: crud('/academic/results'), reportCard: { students: (p: any) => apiClient.get('/academic/report-card/students', { params: p }), get: (p: any) => apiClient.get('/academic/report-card', { params: p }) } },
   attendance: { ...crud('/attendance'), getPeople: (p?: any) => apiClient.get('/attendance/people', { params: p }), getReports: (p?: any) => apiClient.get('/attendance/reports', { params: p }), getMine: (p?: any) => apiClient.get('/attendance/me', { params: p }), markMine: (d: any) => apiClient.post('/attendance/me/mark', d), mark: (d: any) => apiClient.post('/attendance/mark', d), reports: (p?: any) => apiClient.get('/attendance/reports', { params: p }), me: (p?: any) => apiClient.get('/attendance/me', { params: p }) },
-  finance: { dashboard: () => apiClient.get('/finance/dashboard'), myFees: () => apiClient.get('/finance/my-fees'), fees: () => apiClient.get('/finance/fees'), payments: () => apiClient.get('/finance/payments'), collections: () => apiClient.get('/finance/collections'), salary: () => apiClient.get('/finance/salary'), reports: (p?: any) => apiClient.get('/finance/reports', { params: p }) },
+  finance: { dashboard: () => apiClient.get('/finance'), myFees: () => apiClient.get('/finance/my-fees'), fees: () => apiClient.get('/finance/fees'), payments: () => apiClient.get('/finance/payments'), collections: () => apiClient.get('/finance/collections'), salary: () => apiClient.get('/finance/salary'), reports: (p?: any) => apiClient.get('/finance/reports', { params: p }) },
   notifications: { getAll: () => apiClient.get('/notifications'), markRead: (id: string) => apiClient.patch(`/notifications/${id}/read`), markAll: () => apiClient.patch('/notifications/read-all') },
   messages: { getAll: () => apiClient.get('/messages'), unread: () => apiClient.get('/messages/stats/unread'), send: (d: any) => apiClient.post('/messages', d) },
 };

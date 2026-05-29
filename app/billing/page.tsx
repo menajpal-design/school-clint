@@ -39,7 +39,10 @@ declare global {
 // server origin, not the merchant website or client portal.
 const gatewayOrigin = 'https://payment-gateway-server-ten.vercel.app';
 const paymentWidgetUrl = `${gatewayOrigin}/widget.js`;
-const gatewayApiKey = process.env.NEXT_PUBLIC_GATEWAY_API_KEY || 'pg_live_ebb11c91cb7d814c0949eeebbc549524fc0debe8543a9a40';
+// Gateway API keys must never be embedded into client bundles.
+// The payment gateway should issue short-lived tokens from a server-side endpoint.
+// Keep this empty on the client and fetch a token from your backend when needed.
+const gatewayApiKey = process.env.NEXT_PUBLIC_GATEWAY_API_KEY || '';
 const configuredGatewayDomain = process.env.NEXT_PUBLIC_GATEWAY_DOMAIN || '';
 const gatewayReceiverNumber = process.env.NEXT_PUBLIC_GATEWAY_RECEIVER_NUMBER || '';
 const gatewayPaymentMethods = ['bkash', 'nagad'];
@@ -50,6 +53,7 @@ type BillingInfo = {
   planCode: string;
   billingCycle: 'monthly' | 'yearly';
   useEasySchoolStorage: boolean;
+  smsChargeAmount: number;
   receivedAmount: string;
   paymentGateway: string;
   paymentOrderId: string;
@@ -146,6 +150,10 @@ export default function BillingPage() {
   const [status, setStatus] = useState('');
   const [isWidgetReady, setIsWidgetReady] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [topupAmount, setTopupAmount] = useState('');
+  const [isTopping, setIsTopping] = useState(false);
+  const [smsTopupHistory, setSmsTopupHistory] = useState<any[]>([]);
+  const [isLoadingTopups, setIsLoadingTopups] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'bkash' | 'stripe'>('bkash');
   const [stripeCardName, setStripeCardName] = useState('');
   const [stripeCardNumber, setStripeCardNumber] = useState('');
@@ -155,6 +163,7 @@ export default function BillingPage() {
     planCode: 'students_100',
     billingCycle: 'monthly',
     useEasySchoolStorage: true,
+    smsChargeAmount: 0,
     receivedAmount: '',
     paymentGateway: 'bkash',
     paymentOrderId: '',
@@ -195,6 +204,7 @@ export default function BillingPage() {
           planCode: billing.planCode || 'students_100',
           billingCycle: billing.billingCycle === 'yearly' ? 'yearly' : 'monthly',
           useEasySchoolStorage: billing.useEasySchoolStorage !== false,
+          smsChargeAmount: Number(billing.smsChargeAmount || 0),
           receivedAmount: billing.receivedAmount ? String(billing.receivedAmount) : '',
           paymentGateway: billing.paymentGateway || 'bkash',
           paymentOrderId: billing.paymentOrderId || '',
@@ -202,8 +212,17 @@ export default function BillingPage() {
           paymentTrxId: billing.paymentTrxId || '',
           paymentSenderNumber: billing.paymentSenderNumber || '',
         });
+        setIsLoadingTopups(true);
+        return api.institutionSmsTopupHistory({ limit: 10 });
       })
-      .finally(() => setLoading(false));
+      .then((historyResponse: any) => {
+        setSmsTopupHistory(Array.isArray(historyResponse?.history) ? historyResponse.history : []);
+      })
+      .catch(() => setSmsTopupHistory([]))
+      .finally(() => {
+        setIsLoadingTopups(false);
+        setLoading(false);
+      })
   }, [router, authUser]);
 
   const billingComposition = useMemo(() => {
@@ -219,16 +238,29 @@ export default function BillingPage() {
     () => calculatePlanDue(billingInfo.planCode, billingInfo.billingCycle, billingInfo.useEasySchoolStorage),
     [billingInfo]
   );
+  const totalWithSms = useMemo(() => Number(due.total || 0) + Number(billingInfo.smsChargeAmount || 0), [due, billingInfo]);
 
   const plan = getPlanByCode(billingInfo.planCode);
+
+  const refreshSmsTopupHistory = async () => {
+    setIsLoadingTopups(true);
+    try {
+      const historyResponse: any = await api.institutionSmsTopupHistory({ limit: 10 });
+      setSmsTopupHistory(Array.isArray(historyResponse?.history) ? historyResponse.history : []);
+    } catch {
+      setSmsTopupHistory([]);
+    } finally {
+      setIsLoadingTopups(false);
+    }
+  };
 
   const submitPopupPayment = async (payment: PopupPaymentResult) => {
     setStatus('Submitting popup payment...');
     setIsPaying(true);
     try {
       const popupAmount = Number(payment.receivedAmount || 0);
-      if (!popupAmount || popupAmount !== Number(due.total)) {
-        setStatus(`Payment amount mismatch. Required amount is ${formatCurrency(due.total)}.`);
+      if (!popupAmount || popupAmount !== Number(totalWithSms)) {
+        setStatus(`Payment amount mismatch. Required amount is ${formatCurrency(totalWithSms)}.`);
         return;
       }
 
@@ -266,6 +298,77 @@ export default function BillingPage() {
     }
   };
 
+  const submitSmsTopupPayment = async (payment: PopupPaymentResult, amount: number) => {
+    setStatus('Submitting SMS top-up payment...');
+    setIsTopping(true);
+    try {
+      const popupAmount = Number(payment.receivedAmount || 0);
+      if (!popupAmount || popupAmount !== Number(amount)) {
+        setStatus(`Top-up amount mismatch. Required amount is ${formatCurrency(amount)}.`);
+        return;
+      }
+
+      const response = await api.institutionSmsTopupPayment({
+        amount,
+        paymentGateway: payment.paymentGateway || 'popup',
+        paymentOrderId: payment.paymentOrderId || payment.orderId || '',
+        paymentTime: payment.paymentTime || new Date().toISOString(),
+        paymentTrxId: payment.paymentTrxId || payment.paymentReference || '',
+        paymentSenderNumber: payment.paymentSenderNumber || payment.customerReference || '',
+        popupPaymentResponse: payment.rawResponse,
+        popupVerification: payment.rawResponse?.verification || payment.rawResponse?.data?.verification,
+      }) as any;
+      setInstitution((current: any) => ({ ...current, billing: response.billing || current?.billing }));
+      await refreshSmsTopupHistory();
+      setStatus(response.message || 'SMS balance topped up successfully.');
+    } catch (error: any) {
+      setStatus(error?.message || 'SMS top-up payment failed.');
+    } finally {
+      setIsTopping(false);
+    }
+  };
+
+  const openSmsTopupPopup = () => {
+    const amount = Number(topupAmount || 0);
+    if (!amount || amount <= 0) {
+      setStatus('Enter a valid SMS top-up amount.');
+      return;
+    }
+    if (typeof window === 'undefined' || !window.GatewayWidget?.open) {
+      setStatus('Payment popup is not loaded yet. Please try again.');
+      return;
+    }
+
+    window.GATEWAY_WIDGET_URL = gatewayOrigin;
+    const domain = configuredGatewayDomain || window.location.hostname;
+    const callbackUrl = `${window.location.origin}${window.location.pathname}`;
+    const orderId = `SMS-TOPUP-${institution?._id || Date.now()}`;
+    const paymentTime = new Date().toISOString();
+    setStatus('Opening SMS top-up popup...');
+    window.GatewayWidget.open({
+      apiKey: gatewayApiKey,
+      domain,
+      amount,
+      callback: callbackUrl,
+      orderId,
+      receiverNumber: gatewayReceiverNumber || undefined,
+      paymentMethods: gatewayPaymentMethods,
+      preferredMethods: gatewayPaymentMethods,
+      customerPhone: billingInfo.paymentSenderNumber || institution?.phone || '',
+      onComplete: (result: any) => {
+        const normalizedPayment = normalizePopupPaymentResult(result, {
+          orderId,
+          paymentTime,
+          amount,
+          gateway: 'popup',
+          senderNumber: billingInfo.paymentSenderNumber || institution?.phone || '',
+        });
+        setStatus(result?.message || 'SMS top-up payment completed. Saving payment details...');
+        void submitSmsTopupPayment(normalizedPayment, amount);
+      },
+    });
+  };
+
   const submitStripeDemoPayment = async () => {
     const cardLast4 = stripeCardNumber.replace(/\D/g, '').slice(-4);
     if (!stripeCardName || !stripeCardNumber || !stripeExpiry || !stripeCvc) {
@@ -285,7 +388,7 @@ export default function BillingPage() {
         paymentTime: new Date().toISOString(),
         paymentTrxId: demoTrxId,
         paymentSenderNumber: stripeCardName,
-        receivedAmount: due.total,
+        receivedAmount: totalWithSms,
         popupPaymentStatus: 'verified',
         popupVerification: {
           status: 'verified',
@@ -364,7 +467,7 @@ export default function BillingPage() {
     window.GatewayWidget.open({
       apiKey: gatewayApiKey,
       domain,
-      amount: due.total,
+      amount: totalWithSms,
       callback: callbackUrl,
       orderId,
       receiverNumber: gatewayReceiverNumber || undefined,
@@ -375,7 +478,7 @@ export default function BillingPage() {
         const normalizedPayment = normalizePopupPaymentResult(result, {
           orderId,
           paymentTime,
-          amount: due.total,
+          amount: totalWithSms,
           gateway: billingInfo.paymentGateway || 'popup',
           senderNumber: billingInfo.paymentSenderNumber || institution?.phone || '',
         });
@@ -455,7 +558,7 @@ export default function BillingPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Billing Required</h1>
-            <p className="mt-2 text-sm text-slate-600">এই page-এ কোনো manual form নেই। Pay with Popup চাপলে payment popup খুলবে, সেখানে প্রয়োজনীয় তথ্য দেওয়া হবে।</p>
+            <p className="mt-2 text-sm text-slate-600">এই পাতায় কোনো ম্যানুয়াল ফর্ম নেই। পপআপে পেমেন্ট করতে পপআপ বাটন চাপুন; সেখানে প্রয়োজনীয় তথ্য পূরণ করে পেমেন্ট সম্পন্ন করুন।</p>
           </div>
           <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
         </div>
@@ -524,7 +627,7 @@ export default function BillingPage() {
             </div>
 
             <div className="rounded-lg border bg-slate-50 p-4 text-sm">
-              Due amount: {formatCurrency(due.baseAmount)} + storage {formatCurrency(due.storageAmount)} = <span className="font-semibold">{formatCurrency(due.total)}</span>
+              Due amount: {formatCurrency(due.baseAmount)} + storage {formatCurrency(due.storageAmount)} + SMS {formatCurrency(Number(billingInfo.smsChargeAmount || 0))} = <span className="font-semibold">{formatCurrency(totalWithSms)}</span>
             </div>
 
             <div className="space-y-3">
@@ -631,6 +734,69 @@ export default function BillingPage() {
             <div className="rounded-md border p-3"><span className="text-slate-500">Status</span><div className="font-semibold">{institution?.isActive ? 'Active' : 'Pending / Inactive'}</div></div>
             <div className="rounded-md border p-3"><span className="text-slate-500">Billing</span><div className="font-semibold">{institution?.billing?.billingStatus || 'pending'}</div></div>
             <div className="rounded-md border p-3"><span className="text-slate-500">Paid</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.receivedAmount || 0))}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">Base bill</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.baseDueAmount || 0))}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">SMS charge</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.smsChargeAmount || 0))}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">Monthly total</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.monthlyBillAmount || institution?.billing?.dueAmount || 0))}</div></div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Top-up SMS Balance</CardTitle>
+            <CardDescription>পপআপ পেমেন্ট দিয়ে SMS balance recharge করুন; অনুমোদিত ব্যবহারকারীরাই এটি করতে পারবেন।</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="space-y-2">
+                <span className="text-sm font-medium">Amount</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={topupAmount}
+                  onChange={(e) => setTopupAmount(e.target.value)}
+                  placeholder="100"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </label>
+              <div className="md:col-span-2 flex items-end">
+                <Button
+                  onClick={openSmsTopupPopup}
+                  disabled={isTopping || !isWidgetReady}
+                >
+                  {isTopping ? 'Processing...' : 'Recharge SMS'}
+                </Button>
+              </div>
+            </div>
+            <div className="text-sm text-slate-600">Current SMS balance: <span className="font-semibold">{formatCurrency(Number(institution?.billing?.smsBalance || 0))}</span></div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent SMS Top-ups</CardTitle>
+            <CardDescription>Latest recharge transactions for this institution.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingTopups ? (
+              <div className="text-sm text-slate-600">Loading top-up history...</div>
+            ) : smsTopupHistory.length ? (
+              <div className="space-y-3">
+                {smsTopupHistory.map((item) => (
+                  <div key={item._id} className="flex items-center justify-between rounded-md border p-3 text-sm">
+                    <div>
+                      <div className="font-semibold">{formatCurrency(Number(item.amount || 0))}</div>
+                      <div className="text-slate-600">{item.method || 'manual'} · {item.createdBy?.name || 'System'}</div>
+                    </div>
+                    <div className="text-right text-slate-600">
+                      <div>{item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}</div>
+                      <div>{item.createdBy?.role || ''}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-slate-600">No SMS top-ups yet.</div>
+            )}
           </CardContent>
         </Card>
       </div>
