@@ -35,6 +35,10 @@ class ApiClient {
   private csrfHeaderName: string = (process.env.NEXT_PUBLIC_CSRF_HEADER_NAME || 'x-csrf-token');
   private refreshing = false;
 
+  private shouldAttachInstitutionScope(url: string) {
+    return !url.startsWith('/admin/');
+  }
+
   setToken(value: string, persist = true) {
     this.currentToken = value;
     if (!isBrowser) return;
@@ -64,12 +68,12 @@ class ApiClient {
     sessionStorage.removeItem('token');
   }
 
-  private headers(body?: any, extra?: any) {
+  private headers(body?: any, extra?: any, url: string = '') {
     const h: any = { ...(extra || {}) };
     if (!(body instanceof FormData) && !h['Content-Type']) h['Content-Type'] = 'application/json';
     const auth = this.getToken();
     if (auth) h.Authorization = `Bearer ${auth}`;
-    if (isBrowser) {
+    if (isBrowser && this.shouldAttachInstitutionScope(url)) {
       const institutionId = localStorage.getItem('selectedInstitutionId');
       if (institutionId) h['x-institution-id'] = institutionId;
     }
@@ -80,7 +84,7 @@ class ApiClient {
     if (getDemoMode()) return await demoRequest(method, url, data) as T;
     const qs = config?.params ? `?${new URLSearchParams(Object.entries(config.params).filter(([, v]) => v !== undefined && v !== null) as any).toString()}` : '';
     const body = method === 'GET' || method === 'DELETE' ? undefined : (data instanceof FormData ? data : JSON.stringify(data || {}));
-    const headers = this.headers(body instanceof FormData ? body : data, config.headers);
+    const headers = this.headers(body instanceof FormData ? body : data, config.headers, url);
 
     // Attach CSRF token for state-changing requests
     if (method !== 'GET' && method !== 'DELETE') {
