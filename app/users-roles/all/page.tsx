@@ -14,9 +14,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 
-const allRoles = ["admin", "super_admin", "head", "assistant_head", "class_teacher", "subject_teacher", "teacher", "finance_officer", "staff", "student", "parent", "committee_member"];
-const schoolManagedRoles = ["assistant_head", "class_teacher", "subject_teacher", "teacher", "finance_officer", "staff", "student", "parent", "committee_member"];
-const platformRoles = ["admin", "super_admin"];
+const roleHierarchy = ["super_admin", "admin", "head", "assistant_head", "class_teacher", "subject_teacher", "teacher", "finance_officer", "staff", "student", "parent", "committee_member"];
+const getManagedRoles = (role?: string) => {
+  const index = roleHierarchy.indexOf(role || "");
+  return index >= 0 ? roleHierarchy.slice(index + 1) : [];
+};
 
 export default function UsersAllPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -33,10 +35,7 @@ export default function UsersAllPage() {
   };
   useEffect(() => { load().catch(() => undefined); }, []);
 
-  const roleOptions = useMemo(() => {
-    if (platformRoles.includes(profile?.role)) return allRoles;
-    return schoolManagedRoles;
-  }, [profile?.role]);
+  const roleOptions = useMemo(() => getManagedRoles(profile?.role), [profile?.role]);
 
   const filtered = useMemo(() => users.filter((user) => {
     const q = search.toLowerCase();
@@ -52,6 +51,7 @@ export default function UsersAllPage() {
 
   const saveRole = async () => {
     if (!selected) return;
+    if (!roleOptions.includes(role)) return;
     const data = await api.users.updateRole(selected._id, role) as any;
     setUsers((current) => current.map((item) => item._id === selected._id ? data.user : item));
     setSelected(null);
@@ -77,9 +77,9 @@ export default function UsersAllPage() {
             <TableRow key={user._id}>
               <TableCell><div className="font-medium text-slate-950">{user.name}</div><div className="text-xs text-slate-500">{user.email}</div></TableCell>
               <TableCell className="capitalize">{user.role?.replace(/_/g, " ")}</TableCell>
-              <TableCell><div className="flex items-center gap-2"><Switch checked={user.isActive !== false} onCheckedChange={(checked) => changeStatus(user, checked)} /><Badge variant="outline">{user.isActive !== false ? "Active" : "Inactive"}</Badge></div></TableCell>
+              <TableCell><div className="flex items-center gap-2"><Switch checked={user.isActive !== false} disabled={!roleOptions.includes(user.role)} onCheckedChange={(checked) => changeStatus(user, checked)} /><Badge variant="outline">{user.isActive !== false ? "Active" : "Inactive"}</Badge></div></TableCell>
               <TableCell>{user.lastLogin ? formatDate(user.lastLogin) : "Never"}</TableCell>
-              <TableCell><div className="flex justify-end gap-2"><Button size="sm" variant="outline" disabled={!platformRoles.includes(profile?.role) && (platformRoles.includes(user.role) || user.role === "head")} onClick={() => { setSelected(user); setRole(roleOptions.includes(user.role) ? user.role : roleOptions[0]); }}><UserCog className="mr-2 h-4 w-4" />Role</Button><Button size="sm" variant="outline" onClick={() => resetPassword(user)}><KeyRound className="mr-2 h-4 w-4" />Reset</Button></div></TableCell>
+              <TableCell><div className="flex justify-end gap-2"><Button size="sm" variant="outline" disabled={!roleOptions.includes(user.role)} onClick={() => { setSelected(user); setRole(roleOptions.includes(user.role) ? user.role : roleOptions[0]); }}><UserCog className="mr-2 h-4 w-4" />Role</Button><Button size="sm" variant="outline" disabled={!roleOptions.includes(user.role)} onClick={() => resetPassword(user)}><KeyRound className="mr-2 h-4 w-4" />Reset</Button></div></TableCell>
             </TableRow>
           ))}
         </TableBody></Table>

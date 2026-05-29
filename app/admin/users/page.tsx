@@ -12,7 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-const roles = ['all', 'admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'];
+const roleHierarchy = ['super_admin', 'admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'];
+const getManagedRoles = (role?: string) => {
+  const index = roleHierarchy.indexOf(role || '');
+  return index >= 0 ? roleHierarchy.slice(index + 1) : [];
+};
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -23,6 +27,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [nextRole, setNextRole] = useState('');
+  const [profile, setProfile] = useState<any>(null);
 
   const load = async () => {
     setLoading(true);
@@ -42,9 +47,12 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     api.admin.schools().then((data: any) => setSchools(data.schools || [])).catch(() => setSchools([]));
+    api.auth.profile().then((data: any) => setProfile(data.user || data)).catch(() => setProfile(null));
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const roleOptions = useMemo(() => getManagedRoles(profile?.role), [profile?.role]);
 
   const roleCounts = useMemo(() => users.reduce((acc: any, user) => ({ ...acc, [user.role]: (acc[user.role] || 0) + 1 }), {}), [users]);
 
@@ -57,11 +65,12 @@ export default function AdminUsersPage() {
 
   const openRoleDialog = (user: any) => {
     setSelectedUser(user);
-    setNextRole(user.role || 'head');
+    setNextRole(roleOptions.includes(user.role) ? user.role : roleOptions[0] || '');
   };
 
   const saveRole = async () => {
     if (!selectedUser || !nextRole) return;
+    if (!roleOptions.includes(nextRole)) return;
     await api.users.updateRole(selectedUser._id, nextRole);
     setSelectedUser(null);
     await refresh();
@@ -83,7 +92,7 @@ export default function AdminUsersPage() {
       <Card>
         <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_220px_220px_auto]">
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, phone, username, email" />
-          <Select value={role} onValueChange={setRole}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{roles.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select>
+          <Select value={role} onValueChange={setRole}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">all</SelectItem>{roleOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select>
           <Select value={institutionId} onValueChange={setInstitutionId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">all schools</SelectItem>{schools.map((school) => <SelectItem key={school._id} value={school._id}>{school.name}</SelectItem>)}</SelectContent></Select>
           <Button onClick={load} disabled={loading}><Search className="mr-2 h-4 w-4" />{loading ? 'Loading' : 'Search'}</Button>
         </CardContent>
@@ -127,8 +136,8 @@ export default function AdminUsersPage() {
                 <TableCell>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openRoleDialog(user)}><UserCog className="mr-2 h-4 w-4" />Role</Button>
-                    <Button size="sm" variant="outline" onClick={() => resetPassword(user)}><KeyRound className="mr-2 h-4 w-4" />Reset</Button>
+                    <Button size="sm" variant="outline" disabled={!roleOptions.includes(user.role)} onClick={() => openRoleDialog(user)}><UserCog className="mr-2 h-4 w-4" />Role</Button>
+                    <Button size="sm" variant="outline" disabled={!roleOptions.includes(user.role)} onClick={() => resetPassword(user)}><KeyRound className="mr-2 h-4 w-4" />Reset</Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -146,7 +155,7 @@ export default function AdminUsersPage() {
             <div className="text-sm text-muted-foreground">Selected user: {selectedUser?.name || '-'}</div>
             <Select value={nextRole} onValueChange={setNextRole}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{roles.filter((item) => item !== 'all').map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+              <SelectContent>{roleOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <DialogFooter>
