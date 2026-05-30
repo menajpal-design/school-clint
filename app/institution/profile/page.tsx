@@ -57,6 +57,15 @@ const fileToDataUrl = (file: File) =>
 
 export default function InstitutionProfilePage() {
   const [status, setStatus] = useState('');
+  const [subdomainAvailability, setSubdomainAvailability] = useState<string | null>(null);
+  const slugify = (input?: string) => String(input || '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40);
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -268,6 +277,26 @@ export default function InstitutionProfilePage() {
                       <FormLabel>Subdomain</FormLabel>
                       <FormControl><Input placeholder="my-school" {...field} /></FormControl>
                       <FormDescription>Enter a short lowercase identifier (letters, numbers, hyphens). This becomes <code>subdomain.MAIN_DOMAIN</code>.</FormDescription>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => {
+                          const name = form.getValues('name') || values.name || '';
+                          const slug = slugify(name || field.value || '');
+                          form.setValue('subdomain', slug, { shouldDirty: true });
+                          setSubdomainAvailability(null);
+                        }}>Generate</Button>
+                        <Button size="sm" onClick={async () => {
+                          const value = String(form.getValues('subdomain') || field.value || '').trim();
+                          if (!value) { setSubdomainAvailability('Enter a subdomain first'); return; }
+                          setSubdomainAvailability('Checking...');
+                          try {
+                            const res: any = await api.institution.checkSubdomain(value);
+                            setSubdomainAvailability(res?.available ? 'Available' : 'Not available');
+                          } catch (err) {
+                            setSubdomainAvailability('Check failed');
+                          }
+                        }}>Check</Button>
+                        {subdomainAvailability ? <div className="text-sm text-muted-foreground">{subdomainAvailability}</div> : null}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )} />
