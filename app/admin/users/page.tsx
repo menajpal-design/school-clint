@@ -126,7 +126,9 @@ export default function AdminUsersPage() {
           <p className="mt-1 text-sm text-muted-foreground">Filter platform users role-wise and school-wise, then update status, role, or password.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={openCreateDialog}><Users className="mr-2 h-4 w-4" />Create Admin</Button>
+          {profile?.role === 'super_admin' && (
+            <Button variant="secondary" onClick={openCreateDialog}><Users className="mr-2 h-4 w-4" />Create Admin</Button>
+          )}
         </div>
       </div>
 
