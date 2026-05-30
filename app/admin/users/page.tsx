@@ -33,6 +33,7 @@ export default function AdminUsersPage() {
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newInstitution, setNewInstitution] = useState('');
+  const isPlatformAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
 
   const load = async (prof?: any) => {
     setLoading(true);
@@ -75,16 +76,25 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
-    api.admin.schools().then((data: any) => setSchools(data.schools || [])).catch(() => setSchools([]));
     api.auth.profile()
       .then((data: any) => {
         const p = data.user || data;
         setProfile(p);
+        const canViewPlatformUsers = p?.role === 'admin' || p?.role === 'super_admin';
+        if (!canViewPlatformUsers) {
+          setUsers([]);
+          setSchools([]);
+          setLoading(false);
+          return;
+        }
+        api.admin.schools().then((schoolData: any) => setSchools(schoolData.schools || [])).catch(() => setSchools([]));
         load(p);
       })
       .catch(() => {
         setProfile(null);
-        load(null);
+        setSchools([]);
+        setUsers([]);
+        setLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
