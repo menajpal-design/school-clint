@@ -142,7 +142,7 @@ export default function AdminUsersPage() {
       </Card>
 
       <div className="flex flex-wrap gap-2">
-        {Object.entries(roleCounts).map(([name, count]) => <Badge key={name} variant="outline">{name}: {String(count)}</Badge>)}
+        <Badge variant="outline">Total users: {String(users.length)}</Badge>
       </div>
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
