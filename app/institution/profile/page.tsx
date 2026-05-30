@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,6 +23,7 @@ const profileSchema = z.object({
   phone: z.string().min(5, 'Phone is required'),
   email: z.string().email('Valid email is required'),
   website: z.string().optional(),
+  subdomain: z.string().optional(),
   domainsText: z.string().optional(),
   mongodbUri: z.string().optional(),
   imgbbApiKey: z.string().optional(),
@@ -66,6 +67,7 @@ export default function InstitutionProfilePage() {
       phone: '',
       email: '',
       website: '',
+      subdomain: '',
       domainsText: '',
       mongodbUri: '',
       imgbbApiKey: '',
@@ -101,6 +103,7 @@ export default function InstitutionProfilePage() {
           phone: institution.phone || '',
           email: institution.email || '',
           website: institution.website || '',
+          subdomain: institution.subdomain || '',
           domainsText: (institution.domains || []).join('\n'),
           mongodbUri: institution.settings?.mongodbUri || '',
           imgbbApiKey: institution.settings?.imgbbApiKey || '',
@@ -158,6 +161,7 @@ export default function InstitutionProfilePage() {
         .filter(Boolean);
       await api.institution.updateProfile({
         name: data.name,
+        subdomain: data.subdomain,
         eiin: data.eiin,
         type: data.type,
         address: data.address,
@@ -256,6 +260,14 @@ export default function InstitutionProfilePage() {
                     <FormItem>
                       <FormLabel>Website</FormLabel>
                       <FormControl><Input placeholder="https://www.easyschool.live" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="subdomain" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subdomain</FormLabel>
+                      <FormControl><Input placeholder="my-school" {...field} /></FormControl>
+                      <FormDescription>Enter a short lowercase identifier (letters, numbers, hyphens). This becomes <code>subdomain.MAIN_DOMAIN</code>.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )} />
