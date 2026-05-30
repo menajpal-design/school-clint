@@ -130,6 +130,16 @@ class ApiClient {
       if (!res.ok) return;
       const data = await res.json();
       this.csrfToken = data?.csrfToken || null;
+      // Fallback: if server set csrf cookie but token wasn't in JSON, read cookie directly
+      if (!this.csrfToken) {
+        try {
+          const cookieName = (process.env.NEXT_PUBLIC_CSRF_COOKIE_NAME || 'csrf_token');
+          const match = document.cookie.split(';').map(s => s.trim()).find(s => s.startsWith(cookieName + '='));
+          if (match) this.csrfToken = decodeURIComponent(match.split('=')[1] || '') || null;
+        } catch (e) {
+          // ignore
+        }
+      }
     } catch (e) {
       // swallow
     }
