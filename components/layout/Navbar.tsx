@@ -41,7 +41,8 @@ export function Navbar({ onMenuClick, isMobileMenuOpen }: NavbarProps) {
 
     const loadMessages = async () => {
       try {
-        const res: any = await api.messages.getUnreadCount();
+        const unreadFetcher = api.messages.getUnreadCount || api.messages.unread;
+        const res: any = await unreadFetcher();
         if (res?.unreadCount !== undefined) setUnreadMessages(res.unreadCount);
       } catch (error: any) {
         console.debug('Messages stats not available:', error?.message);

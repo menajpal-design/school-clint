@@ -26,7 +26,8 @@ export default function NotificationBell() {
 
   const fetchUnreadCount = async () => {
     try {
-      const response: any = await api.messages.getUnreadCount();
+      const unreadFetcher = api.messages.getUnreadCount || api.messages.unread;
+      const response: any = await unreadFetcher();
       if (response?.unreadCount !== undefined) {
         setUnreadCount(response.unreadCount);
       }

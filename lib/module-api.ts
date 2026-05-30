@@ -43,6 +43,8 @@ export const moduleApi = {
   },
 
   messages: {
+    getUnreadCount: () => apiClient.get('/messages/stats/unread'),
+    getInbox: () => apiClient.get('/messages/inbox'),
     unread: () => apiClient.get('/messages/stats/unread'),
     inbox: () => apiClient.get('/messages/inbox'),
     sent: () => apiClient.get('/messages/sent'),
