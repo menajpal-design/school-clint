@@ -233,5 +233,12 @@ export const api: any = {
   attendance: { ...crud('/attendance'), getPeople: (p?: any) => apiClient.get('/attendance/people', { params: p }), getReports: (p?: any) => apiClient.get('/attendance/reports', { params: p }), getMine: (p?: any) => apiClient.get('/attendance/me', { params: p }), markMine: (d: any) => apiClient.post('/attendance/me/mark', d), mark: (d: any) => apiClient.post('/attendance/mark', d), reports: (p?: any) => apiClient.get('/attendance/reports', { params: p }), me: (p?: any) => apiClient.get('/attendance/me', { params: p }) },
   finance: { dashboard: () => apiClient.get('/finance'), myFees: () => apiClient.get('/finance/my-fees'), fees: () => apiClient.get('/finance/fees'), payments: () => apiClient.get('/finance/payments'), collections: () => apiClient.get('/finance/collections'), salary: () => apiClient.get('/finance/salary'), reports: (p?: any) => apiClient.get('/finance/reports', { params: p }) },
   notifications: { getAll: () => apiClient.get('/notifications'), markRead: (id: string) => apiClient.patch(`/notifications/${id}/read`), markAll: () => apiClient.patch('/notifications/read-all') },
-  messages: { getAll: () => apiClient.get('/messages'), unread: () => apiClient.get('/messages/stats/unread'), send: (d: any) => apiClient.post('/messages', d) },
+  messages: {
+    getAll: () => apiClient.get('/messages'),
+    getInbox: () => apiClient.get('/messages/inbox'),
+    getUnreadCount: () => apiClient.get('/messages/stats/unread'),
+    unread: () => apiClient.get('/messages/stats/unread'),
+    markAsRead: (id: string) => apiClient.patch(`/messages/${id}/read`),
+    send: (d: any) => apiClient.post('/messages/send', d),
+  },
 };
