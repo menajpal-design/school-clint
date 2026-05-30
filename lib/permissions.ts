@@ -25,6 +25,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'SMS Usage', href: '/admin/sms-usage', roles: ['admin', 'super_admin'] },
       { label: 'Select School', href: '/admin/select-school', roles: ['admin', 'super_admin'] },
       { label: 'Manage Users', href: '/admin/users', roles: ['admin', 'super_admin'] },
+      { label: 'Backup & Restore', href: '/admin/backup', roles: ['super_admin'] },
     ],
   },
   { label: 'Dashboard', href: '/dashboard', roles: ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'finance_officer', 'staff', 'student', 'parent'], icon: 'LayoutGrid' },
