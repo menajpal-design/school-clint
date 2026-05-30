@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Building2, CreditCard, FileText, LayoutGrid, Search, Users } from 'lucide-react';
@@ -16,8 +16,8 @@ export default function SelectSchoolPage() {
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string>(() => typeof window === 'undefined' ? '' : localStorage.getItem('selectedInstitutionId') || '');
 
-  const load = () => api.admin.schools(search ? { search } : undefined).then((data: any) => setSchools(data.schools || []));
-  useEffect(() => { load().catch(() => setSchools([])); }, []);
+  const load = useCallback(() => api.admin.schools(search ? { search } : undefined).then((data: any) => setSchools(data.schools || [])), [search]);
+  useEffect(() => { load().catch(() => setSchools([])); }, [load]);
 
   const selectSchool = async (school: any) => {
     await api.admin.selectSchool(school._id);

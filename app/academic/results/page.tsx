@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -154,7 +154,7 @@ export default function ResultsPage() {
   const addSubjects = subjects.filter((subject) => !addForm.classId || subject.classId?._id === addForm.classId);
   const addExams = exams.filter((exam) => !addForm.classId || exam.classId?._id === addForm.classId);
 
-  const loadLookups = async () => {
+  const loadLookups = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -181,9 +181,9 @@ export default function ResultsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadRows = async () => {
+  const loadRows = useCallback(async () => {
     if (!classId || !examId || !subjectId) {
       setRows([]);
       return;
@@ -208,9 +208,9 @@ export default function ResultsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [classId, examId, sectionId, subjectId]);
 
-  const loadAddStudents = async (form: AddResultForm = addForm) => {
+  const loadAddStudents = useCallback(async (form: AddResultForm = addForm) => {
     if (!form.classId) {
       setAddStudents([]);
       return;
@@ -227,19 +227,19 @@ export default function ResultsPage() {
     } finally {
       setAddLoading(false);
     }
-  };
+  }, [addForm]);
 
   useEffect(() => {
     loadLookups();
-  }, []);
+  }, [loadLookups]);
 
   useEffect(() => {
     loadRows();
-  }, [classId, sectionId, examId, subjectId]);
+  }, [loadRows]);
 
   useEffect(() => {
     if (addOpen) loadAddStudents(addForm);
-  }, [addOpen, addForm.classId, addForm.sectionId]);
+  }, [addOpen, addForm, loadAddStudents]);
 
   const updateClass = (nextClassId: string) => {
     setClassId(nextClassId);

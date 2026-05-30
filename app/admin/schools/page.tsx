@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Building2, CreditCard, Search, ShieldCheck, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { calculatePlanDue, schoolPlans } from '@/lib/plans';
@@ -24,8 +24,8 @@ export default function AdminSchoolsPage() {
   const [form, setForm] = useState<any>({});
   const [status, setStatus] = useState('');
 
-  const load = () => api.admin.schools(search ? { search } : undefined).then((data: any) => setSchools(data.schools || []));
-  useEffect(() => { load().catch(() => setSchools([])); }, []);
+  const load = useCallback(() => api.admin.schools(search ? { search } : undefined).then((data: any) => setSchools(data.schools || [])), [search]);
+  useEffect(() => { load().catch(() => setSchools([])); }, [load]);
 
   const due = useMemo(() => calculatePlanDue(form.planCode, form.billingCycle, form.useEasySchoolStorage), [form]);
 

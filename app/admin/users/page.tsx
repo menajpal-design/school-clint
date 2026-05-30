@@ -34,15 +34,17 @@ export default function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState('');
   const [newInstitution, setNewInstitution] = useState('');
 
-  const load = async () => {
+  const load = async (prof?: any) => {
     setLoading(true);
     try {
       const params: any = {};
       if (role !== 'all') params.role = role;
       if (institutionId !== 'all') params.institutionId = institutionId;
       if (search) params.search = search;
-      const data = await api.admin.users(params) as any;
-      setUsers(Array.isArray(data.users) ? data.users : []);
+      // If profile indicates platform admin, use admin API; otherwise use scoped users API
+      const isPlatformAdmin = (prof?.role || profile?.role) === 'admin' || (prof?.role || profile?.role) === 'super_admin';
+      const data = isPlatformAdmin ? await api.admin.users(params) as any : await api.users.getAllUsers();
+      setUsers(Array.isArray(data?.users) ? data.users : Array.isArray(data) ? data : []);
     } catch {
       setUsers([]);
     } finally {
@@ -52,8 +54,16 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     api.admin.schools().then((data: any) => setSchools(data.schools || [])).catch(() => setSchools([]));
-    api.auth.profile().then((data: any) => setProfile(data.user || data)).catch(() => setProfile(null));
-    load();
+    api.auth.profile()
+      .then((data: any) => {
+        const p = data.user || data;
+        setProfile(p);
+        load(p);
+      })
+      .catch(() => {
+        setProfile(null);
+        load(null);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

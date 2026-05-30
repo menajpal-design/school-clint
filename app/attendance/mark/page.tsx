@@ -1,7 +1,7 @@
 "use client";
 
 import "@/lib/attendance-api-compat";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
 import { Camera, ClipboardCheck, Download, FileSpreadsheet, FileText, RefreshCw, Save } from "lucide-react";
 
@@ -74,7 +74,7 @@ export default function AttendanceMarkPage() {
 
   const notify = (title: string, description: string, type: "success" | "error" | "info" | "warning" = "success") => addToast({ title, message: description, type, duration: 4000 });
 
-  const loadClasses = async () => {
+  const loadClasses = useCallback(async () => {
     try {
       const data = await api.academic.classes.getAll() as { classes: ClassItem[] };
       const nextClasses = data.classes || [];
@@ -83,9 +83,9 @@ export default function AttendanceMarkPage() {
     } catch (error: any) {
       setMessage(error?.message || "Failed to load classes.");
     }
-  };
+  }, []);
 
-  const loadPeople = async () => {
+  const loadPeople = useCallback(async () => {
     if (personType === "student" && !classId) return;
     setLoading(true);
     setMessage("");
@@ -112,10 +112,10 @@ export default function AttendanceMarkPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [classId, date, personType, sectionId]);
 
-  useEffect(() => { loadClasses(); }, []);
-  useEffect(() => { loadPeople(); }, [personType, classId, sectionId, date]);
+  useEffect(() => { loadClasses(); }, [loadClasses]);
+  useEffect(() => { loadPeople(); }, [loadPeople]);
 
   const setAll = (status: Status) => setPeople((current) => current.map((person) => ({ ...person, status })));
   const setOne = (id: string, status: Status) => setPeople((current) => current.map((person) => person._id === id ? { ...person, status } : person));

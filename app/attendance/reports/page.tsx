@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
 import { Download, FileBarChart } from "lucide-react";
 
@@ -63,12 +63,12 @@ export default function AttendanceReportsPage() {
   const loadLookups = async () => {
     const classRes = await api.academic.classes.getAll() as { classes: ClassItem[] };
     setClasses(classRes.classes || []);
-  };
+  }, []);
 
   const loadPeople = async () => {
     const data = await api.attendance.getPeople({ personType, classId: personType === "student" ? classId || undefined : undefined, sectionId: personType === "student" ? sectionId || undefined : undefined }) as { people: Person[] };
     setPeople(data.people || []);
-  };
+  }, [classId, personType, sectionId]);
 
   const loadReports = async () => {
     setLoading(true);
@@ -109,9 +109,9 @@ export default function AttendanceReportsPage() {
     }
   };
 
-  useEffect(() => { loadLookups().catch(() => undefined); }, []);
-  useEffect(() => { loadPeople().catch(() => setPeople([])); }, [personType, classId, sectionId]);
-  useEffect(() => { loadReports().catch(() => undefined); }, [startDate, endDate, classId, sectionId, personId, personType]);
+  useEffect(() => { loadLookups().catch(() => undefined); }, [loadLookups]);
+  useEffect(() => { loadPeople().catch(() => setPeople([])); }, [loadPeople]);
+  useEffect(() => { loadReports().catch(() => undefined); }, [loadReports]);
 
   const reportRows = reports.map((item) => ({
     date: formatDate(dateKey(item.date)),

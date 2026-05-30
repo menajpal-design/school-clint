@@ -2,6 +2,9 @@
 const API_TARGET = process.env.API_TARGET || process.env.NEXT_PUBLIC_API_TARGET || 'https://school-server-b264c1a1fac6.herokuapp.com';
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || `${API_TARGET.replace(/\/$/, '')}/api`;
 
+const isDev = process.env.NODE_ENV !== 'production';
+const scriptSrcDev = isDev ? " 'unsafe-eval'" : '';
+const connectSrcDev = isDev ? " http://localhost:5000 ws://localhost:5000" : '';
 const csp = `
   default-src 'self';
   frame-ancestors 'none';
@@ -9,9 +12,9 @@ const csp = `
   font-src 'self' https: data:;
   img-src 'self' data: https:;
   object-src 'none';
-  script-src 'self' https: 'unsafe-inline';
+  script-src 'self' https: 'unsafe-inline'${scriptSrcDev};
   style-src 'self' 'unsafe-inline' https:;
-  connect-src 'self' https: wss:;
+  connect-src 'self' https: wss:${connectSrcDev};
 `;
 
 const securityHeaders = [
@@ -61,6 +64,14 @@ const nextConfig = {
         headers: securityHeaders,
       },
     ];
+  },
+  async rewrites() {
+    if (isDev) {
+      return [
+        { source: '/api/:path*', destination: 'http://localhost:5000/api/:path*' },
+      ];
+    }
+    return [];
   },
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,12 +30,12 @@ export default function PublicAdmissionPage() {
   const [form, setForm] = useState(emptyForm);
   const [status, setStatus] = useState('');
 
-  const loadSchools = async () => {
+  const loadSchools = useCallback(async () => {
     const data = await api.admissions.schools({ search }) as { schools: School[] };
     setSchools(data.schools || []);
-  };
+  }, [search]);
 
-  useEffect(() => { loadSchools().catch(() => setSchools([])); }, []);
+  useEffect(() => { loadSchools().catch(() => setSchools([])); }, [loadSchools]);
 
   const update = (key: keyof typeof emptyForm, value: string) => setForm((current) => ({ ...current, [key]: value }));
 

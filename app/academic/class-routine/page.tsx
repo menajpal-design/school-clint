@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, CheckCircle2, Download, Edit2, FileText, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -119,7 +119,7 @@ export default function ClassRoutinePage() {
     return merged.sort((a, b) => periodSort(a) - periodSort(b));
   }, [filteredRoutines]);
 
-  const loadLookups = async () => {
+  const loadLookups = useCallback(async () => {
     if (isViewOnly) return;
     setError("");
     try {
@@ -145,9 +145,9 @@ export default function ClassRoutinePage() {
       setTeachers(readJson(TEACHER_CACHE_KEY));
       setError(err?.message || "Failed to load class/subject/teacher list");
     }
-  };
+  }, [isViewOnly]);
 
-  const loadRoutines = async () => {
+  const loadRoutines = useCallback(async () => {
     setLoading(true); setError("");
     try {
       const params = new URLSearchParams();
@@ -164,10 +164,10 @@ export default function ClassRoutinePage() {
       if (cached.length) { setRoutines(cached); setMessage("Live routine load হয়নি, cached routine দেখানো হচ্ছে।"); }
       else setError(err?.message || "Failed to load class routines");
     } finally { setLoading(false); }
-  };
+  }, [classId, isViewOnly, sectionId]);
 
-  useEffect(() => { loadLookups().catch(() => undefined); }, [isViewOnly, role]);
-  useEffect(() => { loadRoutines(); }, [classId, sectionId, isViewOnly]);
+  useEffect(() => { loadLookups().catch(() => undefined); }, [loadLookups]);
+  useEffect(() => { loadRoutines(); }, [loadRoutines]);
 
   const openCreate = () => {
     const firstClass = classId || classOptions[0]?._id || classes[0]?._id || "";

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calculator, CreditCard, Download, RefreshCcw, Search, WalletCards } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
@@ -24,7 +24,7 @@ export default function AdminAccountingPage() {
   const [cycle, setCycle] = useState('all');
   const [loading, setLoading] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const data: any = await api.admin.accounting({ search, status, cycle });
@@ -33,11 +33,11 @@ export default function AdminAccountingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [cycle, search, status]);
 
   useEffect(() => {
     load().catch(() => undefined);
-  }, []);
+  }, [load]);
 
   const csv = useMemo(() => {
     const header = ['School', 'Email', 'Phone', 'Plan', 'Cycle', 'Status', 'Due', 'Received', 'Balance', 'Transaction ID', 'Sender Number', 'Received At', 'Expires At'];

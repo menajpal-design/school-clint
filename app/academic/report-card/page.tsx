@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { Download, FileText, Printer } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -46,7 +47,7 @@ export default function ReportCardPage() {
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
   const availableExams = useMemo(() => exams.filter((exam) => !classId || exam.classId?._id === classId), [exams, classId]);
 
-  const loadLookups = async () => {
+  const loadLookups = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -71,16 +72,16 @@ export default function ReportCardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadStudents = async () => {
+  const loadStudents = useCallback(async () => {
     if (!classId) return;
     const data = await api.academic.reportCard.students({ classId, sectionId: sectionId || undefined }) as { students: StudentItem[] };
     setStudents(data.students || []);
     setStudentId((current) => current || data.students?.[0]?._id || "");
-  };
+  }, [classId, sectionId]);
 
-  const loadReportCard = async () => {
+  const loadReportCard = useCallback(async () => {
     if (!studentId) return;
     setError("");
     try {
@@ -90,11 +91,11 @@ export default function ReportCardPage() {
       setError(err?.message || "Failed to load report card");
       setReportCard(null);
     }
-  };
+  }, [classId, examId, sectionId, studentId]);
 
-  useEffect(() => { loadLookups(); }, []);
-  useEffect(() => { loadStudents().catch(() => setStudents([])); }, [classId, sectionId]);
-  useEffect(() => { loadReportCard(); }, [studentId, examId, classId, sectionId]);
+  useEffect(() => { loadLookups(); }, [loadLookups]);
+  useEffect(() => { loadStudents().catch(() => setStudents([])); }, [loadStudents]);
+  useEffect(() => { loadReportCard(); }, [loadReportCard]);
 
   const downloadPdf = async () => {
     await downloadElementPdf(previewRef.current, `${reportCard?.studentName || "report-card"}.pdf`);
@@ -157,7 +158,7 @@ export default function ReportCardPage() {
                     <p className="text-sm text-slate-600">{reportCard.examName}</p>
                   </div>
                   <div className="h-24 w-20 overflow-hidden rounded-md border border-border bg-muted">
-                    {reportCard.idCard?.photoUrl ? <img src={reportCard.idCard.photoUrl} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">ID Photo</div>}
+                    {reportCard.idCard?.photoUrl ? <Image src={reportCard.idCard.photoUrl} alt="" width={80} height={96} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">ID Photo</div>}
                   </div>
                 </div>
 

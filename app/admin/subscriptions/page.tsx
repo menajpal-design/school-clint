@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, CreditCard, Search, ShieldAlert, WalletCards } from 'lucide-react';
 import { api } from '@/lib/api';
 import { calculatePlanDue, schoolPlans } from '@/lib/plans';
@@ -29,15 +29,15 @@ export default function AdminSubscriptionsPage() {
   const [form, setForm] = useState<any>({});
   const [message, setMessage] = useState('');
 
-  const load = () => {
+  const load = useCallback(() => {
     const params: any = {};
     if (search) params.search = search;
     return api.admin.schools(params).then((data: any) => setSchools(data.schools || []));
-  };
+  }, [search]);
 
   useEffect(() => {
     load().catch(() => setSchools([]));
-  }, []);
+  }, [load]);
 
   const filteredSchools = useMemo(() => {
     if (statusFilter === 'all') return schools;

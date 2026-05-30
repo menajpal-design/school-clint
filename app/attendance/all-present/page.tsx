@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Barcode, Camera, CheckCircle2, Fingerprint, Keyboard, QrCode, ScanLine, Users } from 'lucide-react';
 import { WebcamScanner } from '@/components/id-cards/WebcamScanner';
 import ResponsiveTable from '@/components/shared/ResponsiveTable';
@@ -119,9 +119,11 @@ export default function AllPresentScannerPage() {
     }
   };
 
-  useEffect(() => {
+  const loadPeopleCallback = useCallback(() => {
     loadPeople().catch(() => undefined);
-  }, [personKind]);
+  }, [loadPeople]);
+  
+  useEffect(loadPeopleCallback, [loadPeopleCallback]);
 
   const markPresent = async (rawCode: string, mode: ScanMode = scanMode) => {
     const cleanCode = rawCode.trim();

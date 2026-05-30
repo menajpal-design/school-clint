@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Download, Eye, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import ResponsiveTable from '@/components/shared/ResponsiveTable';
@@ -55,7 +55,7 @@ export default function ExamRoutinePage() {
   const sync = (e: any) => setRows(rowsFrom(e));
   const upsert = (exam: Exam) => setExams((cur) => { const next = unique([exam, ...cur.filter((x) => idOf(x) !== idOf(exam))]); write(EXAM_CACHE_KEY, next); return next; });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const cached = read(EXAM_CACHE_KEY);
     try {
       const [er, cr, sr] = await Promise.all([
@@ -69,9 +69,9 @@ export default function ExamRoutinePage() {
       const firstExam = nextExams.find((e) => idOf(e) === examId) || nextExams[0];
       if (firstExam) { setExamId(idOf(firstExam)); setClassId(idOf(firstExam.classId)); sync(firstExam); }
     } catch (e: any) { bad(e?.message || "Exam routine load failed"); }
-  };
-  useEffect(() => { load(); }, []);
-  useEffect(() => { if (selectedExam) sync(selectedExam); }, [examId]);
+  }, [examId]);
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (selectedExam) sync(selectedExam); }, [selectedExam]);
   useEffect(() => { if (!pendingDownload || idOf(pendingDownload) !== idOf(selectedExam) || !rows.length) return; const t = window.setTimeout(() => { downloadElementPdf(printRef.current, `exam-routine-${pendingDownload.name || "routine"}.pdf`); setPendingDownload(null); }, 250); return () => window.clearTimeout(t); }, [pendingDownload, selectedExam, rows.length]);
 
   const select = (e: Exam) => { setClassId(idOf(e.classId)); setExamId(idOf(e)); sync(e); };

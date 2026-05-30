@@ -88,9 +88,9 @@ export default function AcademicSyllabusPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const showSuccess = (text: string, title = "Syllabus success / কাজ হয়েছে") => { setMessage(text); setError(""); toast(title, text, "success"); };
-  const showError = (text: string, title = "Syllabus error / কাজ হয়নি") => { setError(text); setMessage(""); toast(title, text, "error"); };
-  const showInfo = (text: string, title = "Syllabus info") => { setMessage(text); setError(""); toast(title, text, "info"); };
+  const showSuccess = useCallback((text: string, title = "Syllabus success / কাজ হয়েছে") => { setMessage(text); setError(""); toast(title, text, "success"); }, []);
+  const showError = useCallback((text: string, title = "Syllabus error / কাজ হয়নি") => { setError(text); setMessage(""); toast(title, text, "error"); }, []);
+  const showInfo = useCallback((text: string, title = "Syllabus info") => { setMessage(text); setError(""); toast(title, text, "info"); }, []);
 
   const filteredSubjects = useMemo(() => {
     if (!form.classId) return subjects;
@@ -98,14 +98,14 @@ export default function AcademicSyllabusPage() {
     return matched.length ? matched : subjects;
   }, [subjects, form.classId]);
 
-  const mergeAndSetSyllabus = (items: any[], classItems = classes, subjectItems = subjects) => {
+  const mergeAndSetSyllabus = useCallback((items: any[], classItems = classes, subjectItems = subjects) => {
     const normalized = items.map((item) => normalizeItem(item, classItems, subjectItems));
     setSyllabus(normalized);
     writeCache(normalized);
     return normalized;
-  };
+  }, [classes, subjects]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -129,7 +129,9 @@ export default function AcademicSyllabusPage() {
       }
 
       const finalList = liveList.length ? liveList : readCache();
-      const normalized = mergeAndSetSyllabus(finalList, nextClasses, nextSubjects);
+      const normalized = finalList.map((item) => normalizeItem(item, nextClasses, nextSubjects));
+      setSyllabus(normalized);
+      writeCache(normalized);
       setForm((current: any) => ({ ...current, classId: current.classId || nextClasses?.[0]?._id || "" }));
       if (nextClasses.length || nextSubjects.length) showSuccess(`✅ Class/Subject loaded. Class: ${nextClasses.length}, Subject: ${nextSubjects.length}.`, "Class subject loaded / লোড হয়েছে");
       if (normalized.length) showSuccess(`✅ Syllabus list loaded successfully. মোট ${normalized.length}টি syllabus পাওয়া গেছে।`, "Syllabus loaded / লোড হয়েছে");
@@ -147,9 +149,9 @@ export default function AcademicSyllabusPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError, showInfo, showSuccess]);
 
-  useEffect(() => { load().catch(() => undefined); }, [user?.role]);
+  useEffect(() => { load().catch(() => undefined); }, [load]);
 
   const updateChapter = (index: number, key: string, value: any) => {
     setForm((current: any) => ({ ...current, chapters: current.chapters.map((chapter: any, i: number) => i === index ? { ...chapter, [key]: value } : chapter) }));

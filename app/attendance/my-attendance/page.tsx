@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, UserCheck } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -31,7 +31,7 @@ export default function MyAttendancePage() {
   const [loading, setLoading] = useState(false);
   const isHead = authManager.hasRole("head");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.attendance.getMine({ month, year }) as { attendance: AttendanceRecord[]; summary: typeof summary };
@@ -45,9 +45,9 @@ export default function MyAttendancePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [month, year]);
 
-  useEffect(() => { load().catch(() => undefined); }, [month, year]);
+  useEffect(() => { load().catch(() => undefined); }, [load]);
 
   const markSelf = async (status: AttendanceRecord["status"] = "present") => {
     setLoading(true);

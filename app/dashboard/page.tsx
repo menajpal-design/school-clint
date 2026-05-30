@@ -250,9 +250,9 @@ export default function Dashboard() {
     };
   }, []);
 
-  const quickActions = useMemo(() => getQuickActions(user?.role), [user?.role]);
+  const quickActions = useMemo(() => getQuickActions(user?.role), [user]);
 
-  const stats = [
+  const stats = useMemo(() => [
     { label: "Total Students", value: summary.totalStudents.toLocaleString(), helper: "Active student records", icon: Users, href: "/institution/admission" },
     { label: "Total Teachers", value: summary.totalTeachers.toLocaleString(), helper: "Teaching staff", icon: BookOpen, href: "/institution/teachers" },
     { label: "Total Staff", value: summary.totalStaff.toLocaleString(), helper: "Operational staff", icon: ShieldCheck, href: "/institution/staff" },
@@ -260,10 +260,10 @@ export default function Dashboard() {
     { label: "Monthly Fee Collection", value: money(summary.monthlyFeeCollection), helper: "Collected this month", icon: CreditCard, href: "/finance/reports" },
     { label: "Active Notices", value: summary.activeNotices.toLocaleString(), helper: "Published notices", icon: Bell, href: "/notices" },
     { label: "ID Cards Issued", value: summary.idCardsIssued.toLocaleString(), helper: "Total generated cards", icon: BadgeCheck, href: "/id-cards/reports" },
-  ];
+  ], [summary]);
 
   // Role-based visibility: define which roles see full dashboard
-  const isFullAdmin = user && ['admin', 'super_admin', 'head', 'assistant_head'].includes(user.role);
+  const isFullAdmin = useMemo(() => Boolean(user && ['admin', 'super_admin', 'head', 'assistant_head'].includes(user.role)), [user]);
 
   // Determine which stats should be visible for each role
   const visibleStats = useMemo(() => {

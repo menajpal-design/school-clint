@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { BookOpen, Edit2, Plus, RefreshCw, Trash2 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -70,7 +70,7 @@ export default function SubjectsPage() {
   const filteredSubjects = useMemo(() => subjects.filter((subject) => (classFilter === "all" || getId(subject.classId) === classFilter) && (typeFilter === "all" || subject.type === typeFilter)), [subjects, classFilter, typeFilter]);
   const activeSubjects = useMemo(() => subjects.filter((subject) => subject.isActive !== false).length, [subjects]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true); setError("");
     try {
       const cachedBefore = readCachedSubjects();
@@ -94,9 +94,9 @@ export default function SubjectsPage() {
       if (cached.length) { setSubjects(cached); showNotice("info", `ℹ️ Live API থেকে subject আসেনি, cached ${cached.length}টি subject দেখানো হচ্ছে।`, "Subjects cache loaded"); }
       else showNotice("error", `❌ Subject list load হয়নি। কারণ: ${err?.message || "Failed to load subject data"}`, "Subject API Error");
     } finally { setLoading(false); }
-  };
+  }, []);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [loadData]);
   const openAddModal = () => { setEditingSubject(null); setForm({ ...emptyForm(), classId: classes[0]?._id || "" }); setBulkLines(""); setFormOpen(true); };
   const openEditModal = (subject: SubjectItem) => { setEditingSubject(subject); setForm({ name: subject.name || "", code: subject.code || "", type: subject.type || "core", classId: getId(subject.classId), teacherId: getId(subject.teacherId), description: subject.description || "", creditHours: subject.creditHours || 1, isActive: subject.isActive !== false }); setFormOpen(true); };
   const parseBulkSubjects = () => bulkLines.split(/\n+/).map((line) => line.trim()).filter(Boolean).map((line) => { const [name = "", code = "", type = "", classId = "", teacherId = ""] = line.split("|").map((item) => item.trim()); return { name, code: code || name.toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 10) || `SUB${Date.now().toString().slice(-4)}`, type: (type as SubjectForm["type"]) || form.type, classId: classId || form.classId, teacherId: teacherId || form.teacherId, description: form.description, creditHours: form.creditHours, isActive: form.isActive }; }).filter((item) => item.name && item.classId);
