@@ -44,8 +44,30 @@ export default function AdminUsersPage() {
       if (search) params.search = search;
       // If profile indicates platform admin, use admin API; otherwise use scoped users API
       const isPlatformAdmin = (prof?.role || profile?.role) === 'admin' || (prof?.role || profile?.role) === 'super_admin';
-      const data = isPlatformAdmin ? await api.admin.users(params) as any : await api.users.getAllUsers();
-      setUsers(Array.isArray(data?.users) ? data.users : Array.isArray(data) ? data : []);
+      if (isPlatformAdmin) {
+        try {
+          const data: any = await api.admin.users(params);
+          const usersList = Array.isArray(data?.users) ? data.users : Array.isArray(data) ? data : [];
+          if (usersList.length) {
+            setUsers(usersList);
+          } else {
+            // Fallback: try scoped users endpoint in case admin API returned empty
+            const scoped: any = await api.users.getAllUsers();
+            setUsers(Array.isArray(scoped?.users) ? scoped.users : Array.isArray(scoped) ? scoped : []);
+          }
+        } catch (e) {
+          // If admin API fails (permissions or other), try scoped users
+          try {
+            const scoped: any = await api.users.getAllUsers();
+            setUsers(Array.isArray(scoped?.users) ? scoped.users : Array.isArray(scoped) ? scoped : []);
+          } catch {
+            setUsers([]);
+          }
+        }
+      } else {
+        const data = await api.users.getAllUsers();
+        setUsers(Array.isArray(data?.users) ? data.users : Array.isArray(data) ? data : []);
+      }
     } catch {
       setUsers([]);
     } finally {
