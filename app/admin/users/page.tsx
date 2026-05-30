@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { KeyRound, Search, ShieldCheck, UserCog, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
@@ -70,6 +71,8 @@ export default function AdminUsersPage() {
   const roleOptions = useMemo(() => getManagedRoles(profile?.role), [profile?.role]);
 
   const roleCounts = useMemo(() => users.reduce((acc: any, user) => ({ ...acc, [user.role]: (acc[user.role] || 0) + 1 }), {}), [users]);
+
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
 
   const refresh = () => load();
 
@@ -142,8 +145,31 @@ export default function AdminUsersPage() {
       </Card>
 
       <div className="flex flex-wrap gap-2">
-        <Badge variant="outline">Total users: {String(users.length)}</Badge>
+        <Badge variant="outline" className="cursor-pointer" onClick={() => setBreakdownOpen(true)}>Total users: {String(users.length)}</Badge>
       </div>
+
+      <Dialog open={breakdownOpen} onOpenChange={(open) => setBreakdownOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>User counts by role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {Object.keys(roleCounts).length === 0 ? (
+              <div className="text-sm text-muted-foreground">No users</div>
+            ) : (
+              Object.entries(roleCounts).map(([name, count]) => (
+                <div key={name} className="flex justify-between">
+                  <div className="capitalize">{name.replace(/_/g, ' ')}</div>
+                  <div>{String(count)}</div>
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBreakdownOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table>
