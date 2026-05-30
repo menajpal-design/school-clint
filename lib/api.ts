@@ -36,7 +36,17 @@ class ApiClient {
   private refreshing = false;
 
   private shouldAttachInstitutionScope(url: string) {
-    return !url.startsWith('/admin/');
+    if (url.startsWith('/admin/')) return false;
+    if (!isBrowser) return false;
+    const institutionId = localStorage.getItem('selectedInstitutionId');
+    if (!institutionId) return false;
+    const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || '';
+    // If running on the platform (main) domain and an institution is selected, attach header.
+    if (mainDomain && window.location.hostname.endsWith(mainDomain)) return true;
+    // In local development attach when selected
+    if (isLocal) return true;
+    // Otherwise don't attach and let host-based tenancy resolve on server
+    return false;
   }
 
   setToken(value: string, persist = true) {
