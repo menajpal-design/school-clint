@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { BookOpenCheck, Download, Plus, Printer, RefreshCw, Save, Trash2 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
