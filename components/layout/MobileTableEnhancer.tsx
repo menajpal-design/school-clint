@@ -25,9 +25,16 @@ function enhanceTables() {
 export function MobileTableEnhancer() {
   useEffect(() => {
     enhanceTables();
-    const observer = new MutationObserver(() => {
-      window.requestAnimationFrame(enhanceTables);
-    });
+    let scheduled = false;
+    const scheduleEnhance = () => {
+      if (scheduled) return;
+      scheduled = true;
+      window.setTimeout(() => {
+        scheduled = false;
+        enhanceTables();
+      }, 0);
+    };
+    const observer = new MutationObserver(scheduleEnhance);
     observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
   }, []);

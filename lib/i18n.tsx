@@ -352,7 +352,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const run = () => applyDomLanguage(language);
     run();
 
-    const observer = new MutationObserver(() => window.requestAnimationFrame(run));
+    let scheduled = false;
+    const scheduleRun = () => {
+      if (scheduled) return;
+      scheduled = true;
+      window.setTimeout(() => {
+        scheduled = false;
+        run();
+      }, 0);
+    };
+
+    const observer = new MutationObserver(scheduleRun);
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 
     return () => observer.disconnect();
