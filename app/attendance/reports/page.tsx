@@ -60,12 +60,12 @@ export default function AttendanceReportsPage() {
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
 
-  const loadLookups = async () => {
+  const loadLookups = useCallback(async () => {
     const classRes = await api.academic.classes.getAll() as { classes: ClassItem[] };
     setClasses(classRes.classes || []);
   }, []);
 
-  const loadPeople = async () => {
+  const loadPeople = useCallback(async () => {
     const data = await api.attendance.getPeople({ personType, classId: personType === "student" ? classId || undefined : undefined, sectionId: personType === "student" ? sectionId || undefined : undefined }) as { people: Person[] };
     setPeople(data.people || []);
   }, [classId, personType, sectionId]);
