@@ -32,6 +32,34 @@ export default function Home() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+      const isLocal = /^(localhost|127\.0\.0\.1)$/i.test(hostname);
+      const hostParts = hostname.split('.').filter(Boolean);
+
+      let sub = '';
+      if (hostname.endsWith(mainDomain)) {
+        const suffix = mainDomain.split('.').length;
+        if (hostParts.length > suffix) {
+          sub = hostParts.slice(0, hostParts.length - suffix).join('.');
+        }
+      } else if (isLocal) {
+        if (hostParts.length > 1) {
+          sub = hostParts.slice(0, hostParts.length - 1).join('.');
+        }
+      } else {
+        if (hostParts.length >= 3) {
+          sub = hostParts.slice(0, hostParts.length - 2).join('.');
+        }
+      }
+
+      if (sub && !['www', 'app', 'api', 'admin'].includes(sub.toLowerCase())) {
+        router.replace('/login');
+        return;
+      }
+    }
+
     if (authManager.isAuthenticated()) {
       router.replace("/dashboard");
       return;

@@ -121,8 +121,36 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [demoRole, setDemoRole] = useState<UserRole>('head');
   const [loginError, setLoginError] = useState("");
+  const [isSubdomain, setIsSubdomain] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+      const isLocal = /^(localhost|127\.0\.0\.1)$/i.test(hostname);
+      const hostParts = hostname.split('.').filter(Boolean);
+
+      let sub = '';
+      if (hostname.endsWith(mainDomain)) {
+        const suffix = mainDomain.split('.').length;
+        if (hostParts.length > suffix) {
+          sub = hostParts.slice(0, hostParts.length - suffix).join('.');
+        }
+      } else if (isLocal) {
+        if (hostParts.length > 1) {
+          sub = hostParts.slice(0, hostParts.length - 1).join('.');
+        }
+      } else {
+        if (hostParts.length >= 3) {
+          sub = hostParts.slice(0, hostParts.length - 2).join('.');
+        }
+      }
+
+      if (sub && !['www', 'app', 'api', 'admin'].includes(sub.toLowerCase())) {
+        setIsSubdomain(true);
+      }
+    }
+
     const user = authManager.getUser();
     if (authManager.isAuthenticated()) {
       router.replace(getLoginRedirect(user));
@@ -349,12 +377,14 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 rounded-lg bg-popover p-4 text-sm text-muted-foreground">
-              New institution or account?{" "}
-              <Link href="/register" className="font-semibold text-slate-950 hover:underline">
-                Register here
-              </Link>
-            </div>
+            {!isSubdomain && (
+              <div className="mt-6 rounded-lg bg-popover p-4 text-sm text-muted-foreground">
+                New institution or account?{" "}
+                <Link href="/register" className="font-semibold text-slate-950 hover:underline">
+                  Register here
+                </Link>
+              </div>
+            )}
 
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50/80 p-4">
               <div className="flex gap-2 text-sm text-blue-900">

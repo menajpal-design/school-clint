@@ -39,6 +39,8 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlanCode, setSelectedPlanCode] = useState('students_100');
   const [selectedBillingCycle, setSelectedBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [isSubdomain, setIsSubdomain] = useState(false);
+  const [subdomainName, setSubdomainName] = useState('');
 
   const {
     register,
@@ -51,6 +53,36 @@ export default function RegisterPage() {
   });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hostname = window.location.hostname;
+    const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+    const isLocal = /^(localhost|127\.0\.0\.1)$/i.test(hostname);
+    const hostParts = hostname.split('.').filter(Boolean);
+
+    let sub = '';
+    if (hostname.endsWith(mainDomain)) {
+      const suffix = mainDomain.split('.').length;
+      if (hostParts.length > suffix) {
+        sub = hostParts.slice(0, hostParts.length - suffix).join('.');
+      }
+    } else if (isLocal) {
+      if (hostParts.length > 1) {
+        sub = hostParts.slice(0, hostParts.length - 1).join('.');
+      }
+    } else {
+      if (hostParts.length >= 3) {
+        sub = hostParts.slice(0, hostParts.length - 2).join('.');
+      }
+    }
+
+    if (sub) {
+      const norm = sub.toLowerCase();
+      if (!['www', 'app', 'api', 'admin'].includes(norm)) {
+        setIsSubdomain(true);
+        setSubdomainName(norm);
+      }
+    }
+
     const params = new URLSearchParams(window.location.search);
     const planCode = params.get('plan') || 'students_100';
     const billingCycle = params.get('billingCycle') === 'yearly' ? 'yearly' : 'monthly';
@@ -104,6 +136,37 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   };
+
+  if (isSubdomain) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="w-full max-w-md bg-card rounded-lg shadow-xl overflow-hidden border border-border p-8 text-center space-y-6">
+          <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-gray-800">নিবন্ধন অনুমোদিত নয়</h1>
+            <p className="text-gray-600 text-sm">
+              সাবডোমেন <code className="bg-slate-100 px-1 rounded font-semibold text-slate-800">{subdomainName}.easyschool.live</code> থেকে নতুন প্রতিষ্ঠান নিবন্ধন করা সম্ভব নয়।
+            </p>
+            <p className="text-gray-400 text-xs">
+              (Registration is not allowed on subdomains. Please visit our main domain to register a new school.)
+            </p>
+          </div>
+          <div>
+            <a
+              href="https://easyschool.live/register"
+              className="inline-flex justify-center w-full py-2.5 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition"
+            >
+              প্রধান ডোমেইনে যান (Go to Main Domain)
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
