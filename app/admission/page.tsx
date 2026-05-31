@@ -32,7 +32,11 @@ export default function PublicAdmissionPage() {
 
   const loadSchools = useCallback(async () => {
     const data = await api.admissions.schools({ search }) as { schools: School[] };
-    setSchools(data.schools || []);
+    const list = data.schools || [];
+    setSchools(list);
+    if (list.length === 1) {
+      setSelectedSchool(list[0]);
+    }
   }, [search]);
 
   useEffect(() => { loadSchools().catch(() => setSchools([])); }, [loadSchools]);

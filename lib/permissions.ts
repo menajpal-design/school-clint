@@ -176,3 +176,47 @@ export function getMenuForUser(user?: User | null) {
     .filter((item) => item.roles.includes(user.role))
     .map((item) => ({ ...item, children: item.children?.filter((child) => child.roles.includes(user.role)) }));
 }
+
+export function isRouteAllowed(pathname: string, userRole: UserRole): boolean {
+  const path = pathname.replace(/\/$/, '') || '/';
+
+  const findConfig = (items: MenuItemConfig[]): MenuItemConfig | null => {
+    for (const item of items) {
+      const itemPath = item.href.replace(/\/$/, '') || '/';
+      if (itemPath === path) return item;
+      
+      if (item.children) {
+        const childMatch = findConfig(item.children);
+        if (childMatch) return childMatch;
+      }
+    }
+    return null;
+  };
+
+  const match = findConfig(menuConfig);
+  if (match) {
+    return match.roles.includes(userRole);
+  }
+
+  let mostSpecificParent: MenuItemConfig | null = null;
+  const findParentConfig = (items: MenuItemConfig[]) => {
+    for (const item of items) {
+      const itemPath = item.href.replace(/\/$/, '') || '/';
+      if (itemPath !== '/' && path.startsWith(itemPath)) {
+        if (!mostSpecificParent || itemPath.length > (mostSpecificParent.href.replace(/\/$/, '') || '/').length) {
+          mostSpecificParent = item;
+        }
+      }
+      if (item.children) {
+        findParentConfig(item.children);
+      }
+    }
+  };
+  findParentConfig(menuConfig);
+
+  if (mostSpecificParent) {
+    return (mostSpecificParent as MenuItemConfig).roles.includes(userRole);
+  }
+
+  return true;
+}

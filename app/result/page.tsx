@@ -29,7 +29,13 @@ export default function PublicResultPage() {
   );
 
   useEffect(() => {
-    api.publicResults.schools().then((data: any) => setSchools(data.schools || [])).catch(() => undefined);
+    api.publicResults.schools().then((data: any) => {
+      const list = data.schools || [];
+      setSchools(list);
+      if (list.length === 1) {
+        chooseSchool(list[0]);
+      }
+    }).catch(() => undefined);
   }, []);
 
   const searchSchools = async () => {
