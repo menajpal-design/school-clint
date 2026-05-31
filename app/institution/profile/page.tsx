@@ -55,9 +55,30 @@ const fileToDataUrl = (file: File) =>
     reader.readAsDataURL(file);
   });
 
+const getMainDomainLink = (sub: string) => {
+  if (typeof window === 'undefined') return `https://${sub}.easyschool.live`;
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  const port = window.location.port ? `:${window.location.port}` : '';
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//${sub}.localhost${port}`;
+  }
+  const envMainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || '';
+  if (envMainDomain) {
+    return `${protocol}//${sub}.${envMainDomain}`;
+  }
+  if (hostname.endsWith('easyschool.live')) {
+    return `${protocol}//${sub}.easyschool.live`;
+  }
+  const parts = hostname.split('.');
+  const domain = parts.length >= 2 ? parts.slice(-2).join('.') : hostname;
+  return `${protocol}//${sub}.${domain}`;
+};
+
 export default function InstitutionProfilePage() {
   const [status, setStatus] = useState('');
   const [subdomainAvailability, setSubdomainAvailability] = useState<string | null>(null);
+  const [savedSubdomain, setSavedSubdomain] = useState<string | null>(null);
   const slugify = (input?: string) => String(input || '')
     .toLowerCase()
     .trim()
@@ -104,6 +125,9 @@ export default function InstitutionProfilePage() {
       .then((data: any) => {
         const institution = data.institution || {};
         const billing = institution.billing || {};
+        if (institution.subdomain) {
+          setSavedSubdomain(institution.subdomain);
+        }
         form.reset({
           name: institution.name || '',
           eiin: institution.eiin || '',
@@ -201,6 +225,9 @@ export default function InstitutionProfilePage() {
           academicYears,
         },
       });
+      if (data.subdomain) {
+        setSavedSubdomain(data.subdomain);
+      }
       setStatus('Institution profile saved.');
     } catch (error: any) {
       setStatus(error?.message || 'Profile API placeholder is ready, but saving failed.');
@@ -275,28 +302,69 @@ export default function InstitutionProfilePage() {
                   <FormField control={form.control} name="subdomain" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Subdomain</FormLabel>
-                      <FormControl><Input placeholder="my-school" {...field} /></FormControl>
-                      <FormDescription>Enter a short lowercase identifier (letters, numbers, hyphens). This becomes <code>subdomain.MAIN_DOMAIN</code>.</FormDescription>
+                      <FormControl>
+                        <Input
+                          placeholder="my-school"
+                          disabled={!!savedSubdomain}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {savedSubdomain
+                          ? 'Your subdomain is locked and cannot be changed.'
+                          : 'Enter a short lowercase identifier (letters, numbers, hyphens). This becomes subdomain.MAIN_DOMAIN.'}
+                      </FormDescription>
                       <div className="mt-2 flex items-center gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => {
-                          const name = form.getValues('name') || values.name || '';
-                          const slug = slugify(name || field.value || '');
-                          form.setValue('subdomain', slug, { shouldDirty: true });
-                          setSubdomainAvailability(null);
-                        }}>Generate</Button>
-                        <Button size="sm" onClick={async () => {
-                          const value = String(form.getValues('subdomain') || field.value || '').trim();
-                          if (!value) { setSubdomainAvailability('Enter a subdomain first'); return; }
-                          setSubdomainAvailability('Checking...');
-                          try {
-                            const res: any = await api.institution.checkSubdomain(value);
-                            setSubdomainAvailability(res?.available ? 'Available' : 'Not available');
-                          } catch (err) {
-                            setSubdomainAvailability('Check failed');
-                          }
-                        }}>Check</Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={!!savedSubdomain}
+                          onClick={() => {
+                            const name = form.getValues('name') || values.name || '';
+                            const slug = slugify(name || field.value || '');
+                            form.setValue('subdomain', slug, { shouldDirty: true });
+                            setSubdomainAvailability(null);
+                          }}
+                        >
+                          Generate
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={!!savedSubdomain}
+                          onClick={async () => {
+                            const value = String(form.getValues('subdomain') || field.value || '').trim();
+                            if (!value) { setSubdomainAvailability('Enter a subdomain first'); return; }
+                            setSubdomainAvailability('Checking...');
+                            try {
+                              const res: any = await api.institution.checkSubdomain(value);
+                              setSubdomainAvailability(res?.available ? 'Available' : 'Not available');
+                            } catch (err) {
+                              setSubdomainAvailability('Check failed');
+                            }
+                          }}
+                        >
+                          Check
+                        </Button>
                         {subdomainAvailability ? <div className="text-sm text-muted-foreground">{subdomainAvailability}</div> : null}
                       </div>
+                      {field.value && (
+                        <div className="mt-2 text-xs">
+                          <span className="text-muted-foreground font-medium">Your Site Link: </span>
+                          <a
+                            href={getMainDomainLink(field.value)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 underline font-semibold transition-colors duration-150 inline-flex items-center gap-1"
+                          >
+                            {getMainDomainLink(field.value)}
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )} />
