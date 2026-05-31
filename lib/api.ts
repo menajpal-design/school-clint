@@ -117,6 +117,25 @@ class ApiClient {
           res = await withTimeout(`${API_URL}${url}${qs}`, init, 90000);
         }
       }
+
+      // Handle CSRF failures: try one recovery attempt by refetching token and retrying
+      if (res.status === 403 && isBrowser) {
+        let bodyText = '';
+        try { bodyText = await res.text(); } catch (_) { bodyText = ''; }
+        const parsed = bodyText ? (() => { try { return JSON.parse(bodyText); } catch { return bodyText; } })() : null;
+        const msg = typeof parsed === 'object' ? parsed?.message : parsed || '';
+        if (String(msg).toLowerCase().includes('csrf')) {
+          // clear cached token and attempt to fetch a fresh one, then retry once
+          this.csrfToken = null;
+          await this.ensureCsrfToken();
+          if (this.csrfToken) {
+            // reattach header
+            init.headers = { ...(init.headers || {}), [this.csrfHeaderName]: this.csrfToken };
+            res = await withTimeout(`${API_URL}${url}${qs}`, init, 90000);
+          }
+        }
+      }
+
       return await this.parse<T>(res);
     }
     catch (e: any) { throw this.toError(e); }
@@ -134,8 +153,26 @@ class ApiClient {
       if (!this.csrfToken) {
         try {
           const cookieName = (process.env.NEXT_PUBLIC_CSRF_COOKIE_NAME || 'csrf_token');
-          const match = document.cookie.split(';').map(s => s.trim()).find(s => s.startsWith(cookieName + '='));
-          if (match) this.csrfToken = decodeURIComponent(match.split('=')[1] || '') || null;
+          const cookies = document.cookie.split(';').map(s => s.trim()).filter(Boolean);
+          const values = cookies.filter(s => s.startsWith(cookieName + '=')).map(s => decodeURIComponent((s.split('=')[1] || ''))).filter(Boolean);
+          const unique = Array.from(new Set(values));
+          // If multiple different csrf cookie values exist, treat as conflict and force logout
+          if (unique.length > 1) {
+            try {
+              const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || '';
+              // remove host-only cookie
+              document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+              // remove domain cookie if possible
+              if (mainDomain) document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${mainDomain}`;
+            } catch (e) {
+              // ignore
+            }
+            // clear auth and force redirect to login to re-establish a clean session
+            this.clearToken();
+            if (isBrowser) window.location.href = '/login';
+            return;
+          }
+          if (unique.length === 1) this.csrfToken = unique[0] || null;
         } catch (e) {
           // ignore
         }

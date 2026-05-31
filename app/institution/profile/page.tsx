@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
+import RoleGuard from '@/components/RoleGuard';
 import { calculatePlanDue, schoolPlans } from '@/lib/plans';
 import { formatCurrency } from '@/lib/utils';
 
@@ -407,6 +409,50 @@ export default function InstitutionProfilePage() {
                     </CardContent>
                   </Card>
                 </div>
+
+                <RoleGuard roles={["head"]}>
+                  <Card className="border-dashed">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base"><Globe2 className="h-4 w-4" /> SMS Settings</CardTitle>
+                      <CardDescription>Configure SMS provider and API keys. Visible only to school head.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <FormField control={form.control} name="smsEnabled" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Enable SMS</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center gap-3">
+                              <Switch checked={Boolean(field.value)} onCheckedChange={(v) => field.onChange(v)} />
+                              <div className="text-sm text-muted-foreground">Turn SMS notifications on/off for this institution.</div>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="smsProvider" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Provider</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="smsApiUrl" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API URL</FormLabel>
+                          <FormControl><Input placeholder="https://anoncify.xyz/api/sms" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="smsApiKey" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API Key</FormLabel>
+                          <FormControl><Input type="password" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </CardContent>
+                  </Card>
+                </RoleGuard>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <Card className="border-dashed">
