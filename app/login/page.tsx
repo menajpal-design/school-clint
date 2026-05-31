@@ -386,55 +386,59 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50/80 p-4">
-              <div className="flex gap-2 text-sm text-blue-900">
-                <span className="font-semibold">💡 Tip:</span>
-                <p>
-                  {loginError ? "Login failed? Try the demo mode below to explore the system as a student or teacher, or contact your administrator." : "Students and teachers can use the demo mode below to explore the system without credentials."}
-                </p>
-              </div>
-            </div>
+            {!isSubdomain && (
+              <>
+                <div className="mt-4 rounded-lg border border-red-200 bg-red-50/80 p-4">
+                  <div className="flex gap-2 text-sm text-blue-900">
+                    <span className="font-semibold">💡 Tip:</span>
+                    <p>
+                      {loginError ? "Login failed? Try the demo mode below to explore the system as a student or teacher, or contact your administrator." : "Students and teachers can use the demo mode below to explore the system without credentials."}
+                    </p>
+                  </div>
+                </div>
 
-            <div className="mt-4 space-y-2 rounded-lg border border-border bg-popover p-4">
-              <p className="text-sm font-semibold text-foreground">Test Credentials (Development)</p>
-              <div className="space-y-2 text-xs text-muted-foreground">
-                <div>
-                  <p className="font-medium">📚 Student:</p>
-                  <code className="font-mono bg-green-100 px-1">student@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
+                <div className="mt-4 space-y-2 rounded-lg border border-border bg-popover p-4">
+                  <p className="text-sm font-semibold text-foreground">Test Credentials (Development)</p>
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <div>
+                      <p className="font-medium">📚 Student:</p>
+                      <code className="font-mono bg-green-100 px-1">student@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
+                    </div>
+                    <div>
+                      <p className="font-medium">👨‍🏫 Teacher:</p>
+                      <code className="font-mono bg-green-100 px-1">teacher@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
+                    </div>
+                    <div>
+                      <p className="font-medium">🏫 Head:</p>
+                      <code className="font-mono bg-green-100 px-1">head@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
+                    </div>
+                    <p className="text-xs italic text-green-700 pt-1">All demo credentials use password: <code className="font-mono bg-green-100 px-1">admin123</code>. Platform admin and super admin are not included in demo login.</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">👨‍🏫 Teacher:</p>
-                  <code className="font-mono bg-green-100 px-1">teacher@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
-                </div>
-                <div>
-                  <p className="font-medium">🏫 Head:</p>
-                  <code className="font-mono bg-green-100 px-1">head@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
-                </div>
-                <p className="text-xs italic text-green-700 pt-1">All demo credentials use password: <code className="font-mono bg-green-100 px-1">admin123</code>. Platform admin and super admin are not included in demo login.</p>
-              </div>
-            </div>
 
-            <div className="mt-4 rounded-lg border border-dashed border-border bg-popover p-4">
-              <div className="mb-3">
-                <p className="text-sm font-semibold text-foreground">Demo login</p>
-                <p className="text-xs text-muted-foreground">No server, no SMS, no mail, all data stays local.</p>
-              </div>
-              <label className="space-y-1 text-sm font-medium text-slate-700">
-                <span>Demo role</span>
-                <select
-                  value={demoRole}
-                  onChange={(event) => setDemoRole(event.target.value as UserRole)}
-                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                >
-                  {demoRoles.map((role) => (
-                    <option key={role} value={role}>{role.replace(/_/g, ' ')}</option>
-                  ))}
-                </select>
-              </label>
-              <Button type="button" onClick={startDemoSession} className="mt-3 w-full" variant="secondary">
-                Enter demo mode
-              </Button>
-            </div>
+                <div className="mt-4 rounded-lg border border-dashed border-border bg-popover p-4">
+                  <div className="mb-3">
+                    <p className="text-sm font-semibold text-foreground">Demo login</p>
+                    <p className="text-xs text-muted-foreground">No server, no SMS, no mail, all data stays local.</p>
+                  </div>
+                  <label className="space-y-1 text-sm font-medium text-slate-700">
+                    <span>Demo role</span>
+                    <select
+                      value={demoRole}
+                      onChange={(event) => setDemoRole(event.target.value as UserRole)}
+                      className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                    >
+                      {demoRoles.map((role) => (
+                        <option key={role} value={role}>{role.replace(/_/g, ' ')}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <Button type="button" onClick={startDemoSession} className="mt-3 w-full" variant="secondary">
+                    Enter demo mode
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </section>
