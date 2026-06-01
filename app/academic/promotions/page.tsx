@@ -93,8 +93,7 @@ export default function PromotionsPage() {
     setError("");
     setMessage("");
     try {
-      const query = new URLSearchParams({ fromClassId, examId });
-      const data = await apiClient.get(`/promotions/preview?${query.toString()}`) as any;
+      const data = await api.promotions.preview({ fromClassId, examId }) as any;
       const nextRows = data.rows || [];
       setRows(nextRows);
       setSummary(data.summary || {});
@@ -130,7 +129,7 @@ export default function PromotionsPage() {
           reason: decisions[row.studentId]?.reason || "",
         })),
       };
-      const data = await apiClient.post('/promotions/process', payload) as any;
+      const data = await api.promotions.process(payload) as any;
       setMessage(`${data.message} Promoted: ${data.summary?.promoted || 0}, Failed: ${data.summary?.failed || 0}, Blocked: ${data.summary?.blocked || 0}`);
       await preview();
     } catch (err: any) {

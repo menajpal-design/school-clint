@@ -53,7 +53,7 @@ export default function SalaryPage() {
     setError("");
     setMessage("");
     try {
-      const query = new URLSearchParams({
+      const data = await api.payroll.previewAttendanceSalary({
         employeeId: employee._id,
         employeeType: employee.employeeType,
         month,
@@ -61,8 +61,7 @@ export default function SalaryPage() {
         basicSalary: String(value(employee, "basicSalary")),
         deduction: String(value(employee, "deduction")),
         bonus: String(value(employee, "bonus")),
-      });
-      const data = await apiClient.get(`/payroll/salary-attendance/preview?${query.toString()}`) as any;
+      }) as any;
       setPreviews((prev) => ({ ...prev, [key]: data }));
       setMessage(`Preview ready for ${employee.userId?.name || "employee"}.`);
     } catch (err: any) {
@@ -79,7 +78,7 @@ export default function SalaryPage() {
     setError("");
     setMessage("");
     try {
-      const data = await apiClient.post('/payroll/salary-attendance/process', {
+      const data = await api.payroll.processAttendanceSalary({
         employeeId: employee._id,
         employeeType: employee.employeeType,
         month,
