@@ -253,7 +253,7 @@ export default function Dashboard() {
   const quickActions = useMemo(() => getQuickActions(user?.role), [user]);
 
   const stats = useMemo(() => [
-    { label: "Total Students", value: summary.totalStudents.toLocaleString(), helper: "Active student records", icon: Users, href: "/institution/admission" },
+    { label: "Total Students", value: summary.totalStudents.toLocaleString(), helper: "Active student records", icon: Users, href: "/institution/students" },
     { label: "Total Teachers", value: summary.totalTeachers.toLocaleString(), helper: "Teaching staff", icon: BookOpen, href: "/institution/teachers" },
     { label: "Total Staff", value: summary.totalStaff.toLocaleString(), helper: "Operational staff", icon: ShieldCheck, href: "/institution/staff" },
     { label: "Today Attendance", value: summary.todayAttendanceCount.toLocaleString(), helper: "Present today", icon: CalendarCheck, href: "/attendance/reports" },

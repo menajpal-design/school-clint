@@ -4,41 +4,41 @@
 
 @layer base {
   :root {
-    --background: 214 45% 97%;
-    --foreground: 222 47% 11%;
+    --background: 210 40% 98%;
+    --foreground: 222.2 47.4% 11.2%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 222.2 47.4% 11.2%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 224 78% 44%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 214 32% 93%;
-    --muted-foreground: 215 16% 42%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 199 89% 48%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 72% 51%;
+    --destructive: 350 80% 55%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 88%;
-    --input: 214 32% 88%;
-    --ring: 224 78% 44%;
-    --radius: 0.85rem;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
     --success: 160 84% 39%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
-    --brand-gradient: linear-gradient(135deg, hsl(224 78% 44%) 0%, hsl(199 89% 48%) 52%, hsl(160 84% 39%) 100%);
-    --soft-gradient: linear-gradient(135deg, hsl(224 78% 44% / 0.10), hsl(199 89% 48% / 0.08), hsl(160 84% 39% / 0.08));
+    --brand-gradient: linear-gradient(135deg, hsl(221.2 83.2% 53.3%) 0%, hsl(199 89% 48%) 52%, hsl(160 84% 39%) 100%);
+    --soft-gradient: linear-gradient(135deg, hsl(221.2 83.2% 53.3% / 0.10), hsl(199 89% 48% / 0.08), hsl(160 84% 39% / 0.08));
     /* Hex palette (approved) */
-    --brand-primary: #0F62FE;
-    --brand-accent: #00BFA6;
-    --brand-background: #F7F9FC;
-    --brand-surface: #FFFFFF;
-    --brand-text: #0B2545;
-    --brand-muted: #5A6B87;
-    --brand-success: #16A34A;
-    --brand-warning: #F59E0B;
-    --brand-danger: #EF4444;
+    --brand-primary: #2563eb;
+    --brand-accent: #3b82f6;
+    --brand-background: #f8fafc;
+    --brand-surface: #ffffff;
+    --brand-text: #0f172a;
+    --brand-muted: #64748b;
+    --brand-success: #10b981;
+    --brand-warning: #f59e0b;
+    --brand-danger: #ef4444;
   }
 
   .dark {
@@ -71,10 +71,10 @@
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background:
-      radial-gradient(circle at top left, hsl(224 78% 44% / 0.12), transparent 30rem),
-      radial-gradient(circle at top right, hsl(199 89% 48% / 0.10), transparent 28rem),
-      radial-gradient(circle at 50% 0%, hsl(160 84% 39% / 0.08), transparent 22rem),
-      linear-gradient(180deg, hsl(var(--background)), hsl(214 45% 98%));
+      radial-gradient(circle at top left, hsl(var(--primary) / 0.10), transparent 35rem),
+      radial-gradient(circle at top right, hsl(var(--accent) / 0.08), transparent 32rem),
+      radial-gradient(circle at 50% 0%, hsl(var(--success) / 0.06), transparent 26rem),
+      linear-gradient(180deg, hsl(var(--background)), #f8fafc);
     min-height: 100vh;
   }
   ::selection { background: hsl(var(--primary) / 0.20); }
@@ -488,3 +488,102 @@ button[class*="bg-primary"], a[class*="bg-primary"] {
 /* Map common text utility names to brand tokens */
 .text-foreground { color: var(--brand-text) !important; }
 .text-muted { color: var(--brand-muted) !important; }
+
+/* Premium UI styling additions - upgrades all 92 pages */
+@layer base {
+  body {
+    background:
+      radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
+      linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    background-attachment: fixed !important;
+  }
+  
+  /* Smooth scrolling and thin elegant scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+  }
+}
+
+/* Glassmorphism & Micro-animations */
+.card,
+[class*="bg-card"],
+div[class*="rounded-2xl"][class*="border"] {
+  background: rgba(255, 255, 255, 0.90) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.card:hover,
+[class*="bg-card"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08) !important;
+  border-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Button scale effect */
+button,
+a.button,
+button[class*="bg-primary"],
+a[class*="bg-primary"] {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+button:hover:not(:disabled),
+a.button:hover,
+button[class*="bg-primary"]:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.30) !important;
+}
+
+button:active:not(:disabled),
+a.button:active {
+  transform: scale(0.98) !important;
+}
+
+/* Form Inputs and selects */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  transition: all 0.2s ease-in-out !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  background-color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12) !important;
+}
+
+/* Table Hover Upgrades */
+table tbody tr {
+  transition: all 0.2s ease !important;
+}
+
+table tbody tr:hover {
+  background-color: rgba(239, 246, 255, 0.5) !important;
+}
+
+/* Page titles animations */
+h1, h2 {
+  letter-spacing: -0.02em;
+}

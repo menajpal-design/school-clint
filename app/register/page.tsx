@@ -12,7 +12,7 @@ import { authManager } from '@/lib/auth';
 import { useToast } from '@/hooks/useToast';
 import { User } from '@/types';
 import { calculatePlanDue, getPlanByCode } from '@/lib/plans';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getSubdomain } from '@/lib/utils';
 
 const DEFAULT_INSTITUTION_ID = process.env.NEXT_PUBLIC_DEFAULT_INSTITUTION_ID || '';
 
@@ -56,31 +56,11 @@ export default function RegisterPage() {
     if (typeof window === 'undefined') return;
     const hostname = window.location.hostname;
     const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
-    const isLocal = /^(localhost|127\.0\.0\.1)$/i.test(hostname);
-    const hostParts = hostname.split('.').filter(Boolean);
-
-    let sub = '';
-    if (hostname.endsWith(mainDomain)) {
-      const suffix = mainDomain.split('.').length;
-      if (hostParts.length > suffix) {
-        sub = hostParts.slice(0, hostParts.length - suffix).join('.');
-      }
-    } else if (isLocal) {
-      if (hostParts.length > 1) {
-        sub = hostParts.slice(0, hostParts.length - 1).join('.');
-      }
-    } else {
-      if (hostParts.length >= 3) {
-        sub = hostParts.slice(0, hostParts.length - 2).join('.');
-      }
-    }
+    const sub = getSubdomain(hostname, mainDomain);
 
     if (sub) {
-      const norm = sub.toLowerCase();
-      if (!['www', 'app', 'api', 'admin'].includes(norm)) {
-        setIsSubdomain(true);
-        setSubdomainName(norm);
-      }
+      setIsSubdomain(true);
+      setSubdomainName(sub);
     }
 
     const params = new URLSearchParams(window.location.search);

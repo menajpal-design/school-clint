@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, BadgeCheck, BookOpenCheck, CreditCard, Loader2, ShieldCheck, UsersRound } from "lucide-react";
+import { ArrowRight, BadgeCheck, BookOpenCheck, CreditCard, Loader2, ShieldCheck, UsersRound, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authManager } from "@/lib/auth";
 import { api } from "@/lib/api";
+import { getSubdomain } from "@/lib/utils";
 
 const features = [
   {
@@ -28,42 +29,62 @@ const features = [
   },
 ];
 
+const slides = [
+  {
+    image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1200",
+    badge: `ADMISSIONS OPEN FOR ${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+    title: "Nurturing Minds,\nShaping Futures",
+    description: "We provide a safe, encouraging, and academically challenging environment to help your children unlock their full potential."
+  },
+  {
+    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200",
+    badge: "STEM & CODING MODULES",
+    title: "Excellence in Academics\n& Innovation",
+    description: "Empowering students with modern science facilities, computer labs, and a curriculum designed for 21st-century leadership."
+  },
+  {
+    image: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1200",
+    badge: "BEYOND THE CLASSROOM",
+    title: "Holistic Development\n& Leadership",
+    description: "From sports and debate to arts and cultural events, we foster creativity, character, and teamwork in every student."
+  }
+];
+
 export default function Home() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [schoolData, setSchoolData] = useState<any>(null);
   const [isSubdomain, setIsSubdomain] = useState(false);
   const [subdomainName, setSubdomainName] = useState('');
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (!isSubdomain) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [isSubdomain]);
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
       const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
-      const isLocal = /^(localhost|127\.0\.0\.1)$/i.test(hostname);
-      const hostParts = hostname.split('.').filter(Boolean);
+      const sub = getSubdomain(hostname, mainDomain);
 
-      let sub = '';
-      if (hostname.endsWith(mainDomain)) {
-        const suffix = mainDomain.split('.').length;
-        if (hostParts.length > suffix) {
-          sub = hostParts.slice(0, hostParts.length - suffix).join('.');
-        }
-      } else if (isLocal) {
-        if (hostParts.length > 1) {
-          sub = hostParts.slice(0, hostParts.length - 1).join('.');
-        }
-      } else {
-        if (hostParts.length >= 3) {
-          sub = hostParts.slice(0, hostParts.length - 2).join('.');
-        }
-      }
-
-      if (sub && !['www', 'app', 'api', 'admin'].includes(sub.toLowerCase())) {
+      if (sub) {
         setIsSubdomain(true);
-        setSubdomainName(sub.toLowerCase());
+        setSubdomainName(sub);
 
         // Fetch the specific school's details for public display
-        api.admissions.schools()
+        api.admissions.schools({ subdomain: sub, domain: hostname })
           .then((res: any) => {
             const list = res.schools || [];
             if (list.length > 0) {
@@ -141,36 +162,88 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Hero Section */}
-        <section id="home" className="relative bg-slate-900 py-24 sm:py-32 lg:py-40 overflow-hidden min-h-[460px] flex items-center">
-          <div className="absolute inset-0 z-0 opacity-40">
-            <img 
-              src="https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1200" 
-              alt="School classroom" 
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-950 to-slate-950/80 mix-blend-multiply" />
-          </div>
+        {/* Hero Section (Sliding Banner) */}
+        <section id="home" className="relative bg-slate-955 min-h-[500px] md:min-h-[600px] flex items-center overflow-hidden">
           
-          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center sm:text-left text-white max-w-2xl">
-            <span className="inline-block px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-xs font-semibold uppercase tracking-wider text-blue-300 mb-6">
-              ADMISSIONS OPEN FOR {new Date().getFullYear()}-{new Date().getFullYear() + 1}
-            </span>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl text-white drop-shadow-sm leading-tight">
-              NURTURING MINDS,<br className="hidden sm:inline" /> SHAPING FUTURES
-            </h1>
-            <p className="mt-6 text-lg text-slate-300 max-w-xl leading-relaxed">
-              We provide a safe, encouraging, and academically challenging environment to help your children unlock their full potential.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center sm:justify-start">
-              <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md shadow-lg shadow-blue-500/20 px-8">
-                <Link href="/admission">APPLY NOW</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 hover:text-white font-bold rounded-md px-8">
-                <a href="#about">LEARN MORE</a>
-              </Button>
+          {/* Slides */}
+          {slides.map((slide, idx) => (
+            <div 
+              key={idx}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
+            >
+              {/* Background Image */}
+              <div className="absolute inset-0 opacity-40">
+                <img 
+                  src={slide.image} 
+                  alt={slide.title} 
+                  className="w-full h-full object-cover transform scale-105 transition-transform duration-[6000ms] ease-out"
+                  style={{
+                    transform: idx === currentSlide ? 'scale(1)' : 'scale(1.05)'
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/90 to-transparent mix-blend-multiply" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60" />
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40 flex items-center min-h-[500px] md:min-h-[600px]">
+                <div className="max-w-2xl text-left text-white space-y-6">
+                  <span className="inline-block px-3.5 py-1.5 rounded-full bg-blue-500/25 border border-blue-400/40 text-[10px] font-black uppercase tracking-widest text-blue-300">
+                    {slide.badge}
+                  </span>
+                  <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white leading-[1.1] drop-shadow-md whitespace-pre-line tracking-tight">
+                    {slide.title}
+                  </h1>
+                  <p className="text-sm sm:text-base md:text-lg text-slate-300 max-w-xl leading-relaxed font-medium">
+                    {slide.description}
+                  </p>
+                  <div className="pt-2 flex flex-col sm:flex-row gap-4">
+                    <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 px-8 transition active:scale-95 duration-200">
+                      <Link href="/admission">APPLY NOW</Link>
+                    </Button>
+                    <Button asChild variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 hover:text-white font-bold rounded-xl px-8 transition active:scale-95 duration-200">
+                      <a href="#about">LEARN MORE</a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
+          ))}
+
+          {/* Navigation Arrows */}
+          <button 
+            onClick={handlePrevSlide}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/35 hover:bg-black/55 text-white border border-white/10 hover:scale-105 active:scale-95 transition-all duration-200 hidden sm:flex items-center justify-center group"
+            aria-label="Previous Slide"
+          >
+            <ChevronLeft className="h-6 w-6 text-slate-200 group-hover:text-white" />
+          </button>
+          <button 
+            onClick={handleNextSlide}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/35 hover:bg-black/55 text-white border border-white/10 hover:scale-105 active:scale-95 transition-all duration-200 hidden sm:flex items-center justify-center group"
+            aria-label="Next Slide"
+          >
+            <ChevronRight className="h-6 w-6 text-slate-200 group-hover:text-white" />
+          </button>
+
+          {/* Indicators / Dots */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2.5">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`h-2.5 rounded-full transition-all duration-300 ${
+                  idx === currentSlide 
+                    ? 'w-7 bg-blue-500' 
+                    : 'w-2.5 bg-slate-500/50 hover:bg-slate-400'
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
           </div>
+
         </section>
 
         {/* Announcement Banner */}

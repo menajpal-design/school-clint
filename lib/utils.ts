@@ -237,3 +237,41 @@ export function setAppControlSettings(settings: AppControlSettings) {
     window.localStorage.setItem('easy_school_app_control_settings', JSON.stringify(settings));
   } catch (e) {}
 }
+
+export function getSubdomain(hostname: string, mainDomainEnv?: string): string {
+  const mainDomain = mainDomainEnv || 'easyschool.live';
+  const isLocal = /^(localhost|127\.0\.0\.1)$/i.test(hostname);
+  const hostParts = hostname.split('.').filter(Boolean);
+
+  let sub = '';
+  if (hostname.endsWith(mainDomain) && hostname !== mainDomain) {
+    const suffix = mainDomain.split('.').length;
+    if (hostParts.length > suffix) {
+      sub = hostParts.slice(0, hostParts.length - suffix).join('.');
+    }
+  } else if (hostname.endsWith('localhost') && hostname !== 'localhost') {
+    sub = hostParts.slice(0, -1).join('.');
+  } else if (hostname.endsWith('127.0.0.1') && hostname !== '127.0.0.1') {
+    if (hostParts.length > 4) {
+      sub = hostParts.slice(0, hostParts.length - 4).join('.');
+    }
+  } else if (isLocal) {
+    if (hostParts.length > 1) {
+      sub = hostParts.slice(0, hostParts.length - 1).join('.');
+    }
+  } else {
+    // General fallback for domains with 3 or more parts: e.g. school.customdomain.com
+    if (hostParts.length >= 3) {
+      sub = hostParts.slice(0, hostParts.length - 2).join('.');
+    }
+  }
+
+  if (sub) {
+    const norm = sub.toLowerCase();
+    if (!['www', 'app', 'api', 'admin'].includes(norm)) {
+      return norm;
+    }
+  }
+  return '';
+}
+

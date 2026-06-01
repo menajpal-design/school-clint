@@ -137,6 +137,20 @@ export default function ResultsPage() {
   const [addStudents, setAddStudents] = useState<StudentOption[]>([]);
   const [addLoading, setAddLoading] = useState(false);
 
+  const calculateGrade = useCallback((marks: number | string | undefined | null, total: number = 100) => {
+    if (marks === undefined || marks === null || marks === "") return "-";
+    const num = Number(marks);
+    if (isNaN(num)) return "-";
+    const percentage = total ? (num / total) * 100 : 0;
+    if (percentage >= 80) return "A+";
+    if (percentage >= 70) return "A";
+    if (percentage >= 60) return "A-";
+    if (percentage >= 50) return "B";
+    if (percentage >= 40) return "C";
+    if (percentage >= 33) return "D";
+    return "F";
+  }, []);
+
   const selectedClass = classes.find((item) => item._id === classId);
   const availableSections = selectedClass?.sections?.filter((section) => section.isActive !== false) || [];
   const availableSubjects = useMemo(
@@ -425,7 +439,7 @@ export default function ResultsPage() {
           </Filter>
           <Filter label="Subject" value={subjectId} onChange={setSubjectId}>
             <option value="">Select subject</option>
-            {availableSubjects.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
+            {availableSubjects.map((item) => <option key={item._id} value={item._id}>{item.name} {item.code ? `(${item.code})` : ""}</option>)}
           </Filter>
         </div>
       </section>
@@ -502,7 +516,11 @@ export default function ResultsPage() {
                         className="w-28"
                       />
                     </TableCell>
-                    <TableCell>{row.grade || "-"}</TableCell>
+                    <TableCell>
+                      {row.marksObtained !== "" && row.marksObtained !== undefined && row.marksObtained !== null
+                        ? calculateGrade(row.marksObtained, marksSetup.totalMarks)
+                        : row.grade || "-"}
+                    </TableCell>
                     <TableCell>
                       <Input
                         value={row.remarks || ""}
@@ -540,7 +558,7 @@ export default function ResultsPage() {
             </Filter>
             <Filter label="Subject" value={addForm.subjectId} onChange={(value) => updateAddForm("subjectId", value)}>
               <option value="">Select subject</option>
-              {addSubjects.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
+              {addSubjects.map((item) => <option key={item._id} value={item._id}>{item.name} {item.code ? `(${item.code})` : ""}</option>)}
             </Filter>
             <Filter label={addLoading ? "Student loading..." : "Student"} value={addForm.studentId} onChange={(value) => updateAddForm("studentId", value)}>
               <option value="">Select student</option>
