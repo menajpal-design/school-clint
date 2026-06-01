@@ -2,13 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, Send, GraduationCap, Building2, UserCheck, ArrowLeft, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-'use client';
-
-import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Search, Send, GraduationCap, Building2, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -166,15 +159,5 @@ export default function PublicAdmissionPage() {
         )}
       </div>
     </main>
-  );
-}
-      <Input 
-        type={type} 
-        value={value} 
-        onChange={(e) => onChange(e.target.value)} 
-        placeholder={label} 
-        className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition"
-      />
-    </div>
   );
 }
