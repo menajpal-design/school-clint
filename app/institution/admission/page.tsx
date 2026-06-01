@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
+import AdmissionFields from '@/components/admission/AdmissionFields';
 
 const admissionSchema = z.object({
   name: z.string().min(2, 'Student name is required'),

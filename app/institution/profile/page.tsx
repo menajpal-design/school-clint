@@ -549,6 +549,21 @@ export default function InstitutionProfilePage() {
                   </CardContent>
                 </Card>
 
+                <RoleGuard roles={["head", "assistant_head"]}>
+                  <Card className="border-dashed">
+                    <CardHeader className="pb-3">
+                      <CardTitle>Subscription</CardTitle>
+                      <CardDescription>Manage subscription and view active package.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex gap-2">
+                        <Button onClick={() => window.location.assign('/institution/subscription')}>Manage Subscription</Button>
+                        <Button onClick={() => window.location.assign('/institution/billing')}>Billing Dashboard</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </RoleGuard>
+
                 <div className="grid gap-4 md:grid-cols-3">
                   {assets.map((asset) => (
                     <div key={asset.name} className="rounded-md border p-4">

@@ -48,6 +48,9 @@ export const menuConfig: MenuItemConfig[] = [
     label: 'Institution', href: '/institution', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'], icon: 'Building2',
     children: [
       { label: 'Profile', href: '/institution/profile', roles: ['head', 'assistant_head'] },
+      { label: 'Billing', href: '/institution/billing', roles: ['head', 'assistant_head'] },
+      { label: 'Subscription', href: '/institution/subscription', roles: ['head', 'assistant_head'] },
+      { label: 'Finance Audit', href: '/institution/finance-audit', roles: ['head', 'assistant_head'] },
       { label: 'Students', href: '/institution/students', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'] },
       { label: 'Teachers', href: '/institution/teachers', roles: ['head', 'assistant_head'] },
       { label: 'Staff', href: '/institution/staff', roles: ['head', 'assistant_head'] },
