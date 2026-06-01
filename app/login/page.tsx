@@ -11,24 +11,13 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { api, apiClient } from "@/lib/api";
+import { API_URL, apiClient } from "@/lib/api";
 import { authManager } from "@/lib/auth";
 import { User, UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
 import { getSubdomain } from "@/lib/utils";
 
-const demoRoles: UserRole[] = [
-  'head',
-  'assistant_head',
-  'class_teacher',
-  'subject_teacher',
-  'teacher',
-  'finance_officer',
-  'staff',
-  'student',
-  'parent',
-  'committee_member',
-];
+const demoRoles: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'];
 
 const loginSchema = z.object({
   identifier: z.string().min(2, "Username, email or mobile number is required"),
@@ -66,15 +55,10 @@ function getLoginRedirect(user?: User | null) {
 
 function getLoginFailureMessage(error: any): string {
   const validationErrors = error?.error?.errors;
-
   const status = error?.error?.status || error?.status || error?.response?.status;
-  if ([500, 502, 503, 504].includes(Number(status))) {
-    return 'সার্ভারে সমস্যা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।';
-  }
 
-  if (error?.message === 'Network Error' || error?.code === 'ERR_NETWORK') {
-    return 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। ইন্টারনেট বা সার্ভার চেক করুন।';
-  }
+  if ([500, 502, 503, 504].includes(Number(status))) return 'সার্ভারে সমস্যা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।';
+  if (error?.message === 'Network Error' || error?.code === 'ERR_NETWORK') return 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। ইন্টারনেট বা সার্ভার চেক করুন।';
 
   if (Array.isArray(validationErrors) && validationErrors.length) {
     const message = validationErrors
@@ -86,7 +70,6 @@ function getLoginFailureMessage(error: any): string {
       })
       .filter(Boolean)
       .join(', ');
-
     return message || 'ইউজারনেম/ইমেইল/মোবাইল এবং পাসওয়ার্ড সঠিক দিন।';
   }
 
@@ -104,14 +87,54 @@ function getLoginFailureMessage(error: any): string {
   return String(rawMessage);
 }
 
-function showToast(
-  addToast: ReturnType<typeof useToast>['addToast'],
-  toast: { title: string; message: string; type: 'success' | 'error' | 'info' | 'warning'; duration?: number }
-) {
+function showToast(addToast: ReturnType<typeof useToast>['addToast'], toast: { title: string; message: string; type: 'success' | 'error' | 'info' | 'warning'; duration?: number }) {
   addToast(toast);
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('app-toast', { detail: toast }));
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('app-toast', { detail: toast }));
+}
+
+async function readJsonOrText(response: Response) {
+  const text = await response.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
   }
+}
+
+async function fetchCsrfToken() {
+  try {
+    const response = await fetch(`${API_URL}/csrf/token`, { method: 'GET', credentials: 'include' });
+    if (!response.ok) return '';
+    const data = await readJsonOrText(response);
+    return data?.csrfToken || '';
+  } catch {
+    return '';
+  }
+}
+
+async function loginSafely(payload: { identifier: string; password: string }) {
+  const csrfToken = await fetchCsrfToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (csrfToken) headers[process.env.NEXT_PUBLIC_CSRF_HEADER_NAME || 'x-csrf-token'] = csrfToken;
+
+  const response = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  const data = await readJsonOrText(response);
+  if (!response.ok) {
+    throw {
+      message: data?.message || response.statusText || 'Login failed',
+      status: response.status,
+      error: { ...(typeof data === 'object' && data ? data : {}), status: response.status },
+    };
+  }
+
+  return data as { token: string; user: User };
 }
 
 export default function LoginPage() {
@@ -129,10 +152,7 @@ export default function LoginPage() {
       const hostname = window.location.hostname;
       const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
       const sub = getSubdomain(hostname, mainDomain);
-
-      if (sub) {
-        setIsSubdomain(true);
-      }
+      if (sub) setIsSubdomain(true);
     }
 
     const user = authManager.getUser();
@@ -143,62 +163,34 @@ export default function LoginPage() {
     setIsChecking(false);
   }, [router]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginForm>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      identifier: "",
-      password: "",
-      rememberMe: true,
-    },
+    defaultValues: { identifier: "", password: "", rememberMe: true },
   });
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     setLoginError("");
     try {
-      const payload = {
-        identifier: data.identifier.trim(),
-        password: data.password,
-      };
-      const response = await api.auth.login(payload) as { token: string; user: User };
+      const payload = { identifier: data.identifier.trim(), password: data.password };
+      const response = await loginSafely(payload);
 
       apiClient.setToken(response.token, data.rememberMe);
       authManager.setUser(response.user, data.rememberMe);
 
       if (typeof window !== "undefined") {
-        if (response.user.institutionId) {
-          localStorage.setItem("selectedInstitutionId", String(response.user.institutionId));
-        }
-        if (response.user.institution?.name) {
-          localStorage.setItem("selectedInstitutionName", response.user.institution.name);
-        }
+        if (response.user.institutionId) localStorage.setItem("selectedInstitutionId", String(response.user.institutionId));
+        if (response.user.institution?.name) localStorage.setItem("selectedInstitutionName", response.user.institution.name);
       }
 
-      showToast(addToast, {
-        title: "Login successful",
-        message: "Redirecting to your workspace.",
-        type: "success",
-        duration: 1800,
-      });
-
+      showToast(addToast, { title: "Login successful", message: "Redirecting to your workspace.", type: "success", duration: 1800 });
       router.replace(getLoginRedirect(response.user));
     } catch (error: any) {
       console.error('Login error:', error);
       console.error('Error response:', error?.error);
-
       const detailMessage = getLoginFailureMessage(error);
-
       setLoginError(detailMessage);
-      showToast(addToast, {
-        title: "লগইন ব্যর্থ",
-        message: detailMessage,
-        type: "error",
-        duration: 6000,
-      });
+      showToast(addToast, { title: "লগইন ব্যর্থ", message: detailMessage, type: "error", duration: 6000 });
     } finally {
       setIsLoading(false);
     }
@@ -207,12 +199,7 @@ export default function LoginPage() {
   const startDemoSession = () => {
     if (demoRole === 'admin' || demoRole === 'super_admin') {
       setDemoRole('head');
-      showToast(addToast, {
-        title: 'Demo role not available',
-        message: 'Admin and Super Admin are not available in demo mode.',
-        type: 'warning',
-        duration: 2500,
-      });
+      showToast(addToast, { title: 'Demo role not available', message: 'Admin and Super Admin are not available in demo mode.', type: 'warning', duration: 2500 });
       return;
     }
 
@@ -227,12 +214,7 @@ export default function LoginPage() {
     };
 
     authManager.setDemoUser(user);
-    showToast(addToast, {
-      title: 'Demo mode enabled',
-      message: 'All data will stay in your browser only.',
-      type: 'success',
-      duration: 1800,
-    });
+    showToast(addToast, { title: 'Demo mode enabled', message: 'All data will stay in your browser only.', type: 'success', duration: 1800 });
     router.replace(getLoginRedirect(user));
   };
 
@@ -248,9 +230,7 @@ export default function LoginPage() {
     <main className="grid min-h-screen bg-background lg:grid-cols-[0.95fr_1.05fr]">
       <section className="hidden border-r border-border bg-background px-10 py-12 lg:flex lg:flex-col lg:justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-            E
-          </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">E</div>
           <div>
             <p className="font-semibold leading-none text-slate-950">EASY SCHOOL</p>
             <p className="mt-1 text-xs text-slate-500">School/Madrasah Management</p>
@@ -262,19 +242,13 @@ export default function LoginPage() {
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
             Secure role-based access
           </div>
-          <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-foreground">
-            Run every school operation from one professional dashboard.
-          </h1>
-          <p className="mt-4 max-w-lg text-sm leading-7 text-slate-600">
-            Manage academics, attendance, finance, ID cards, notices, documents and parent communication with clean permissions for every role.
-          </p>
+          <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-foreground">Run every school operation from one professional dashboard.</h1>
+          <p className="mt-4 max-w-lg text-sm leading-7 text-slate-600">Manage academics, attendance, finance, ID cards, notices, documents and parent communication with clean permissions for every role.</p>
         </div>
 
         <div className="grid grid-cols-3 gap-3 text-sm">
           {["Academic", "Finance", "ID Cards"].map((item) => (
-            <div key={item} className="rounded-lg border border-border p-3 font-medium text-muted-foreground">
-              {item}
-            </div>
+            <div key={item} className="rounded-lg border border-border p-3 font-medium text-muted-foreground">{item}</div>
           ))}
         </div>
       </section>
@@ -291,13 +265,7 @@ export default function LoginPage() {
                 <span>Username, email or mobile</span>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    {...register("identifier")}
-                    type="text"
-                    autoComplete="username"
-                    placeholder="username, you@example.com or 01XXXXXXXXX"
-                    className="pl-9"
-                  />
+                  <Input {...register("identifier")} type="text" autoComplete="username" placeholder="username, you@example.com or 01XXXXXXXXX" className="pl-9" />
                 </div>
                 {errors.identifier && <span className="text-xs font-medium text-red-600">{errors.identifier.message}</span>}
               </label>
@@ -306,19 +274,8 @@ export default function LoginPage() {
                 <span>Password</span>
                 <div className="relative">
                   <LockKeyhole className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                  <Input
-                    {...register("password")}
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    placeholder="Enter your password"
-                    className="pl-9 pr-10"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:bg-muted"
-                    onClick={() => setShowPassword((current) => !current)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
+                  <Input {...register("password")} type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" className="pl-9 pr-10" />
+                  <button type="button" className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:bg-muted" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? "Hide password" : "Show password"}>
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
@@ -334,39 +291,21 @@ export default function LoginPage() {
 
               <div className="flex items-center justify-between gap-3 text-sm">
                 <label className="flex items-center gap-2 text-slate-600">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-slate-900"
-                    {...register("rememberMe")}
-                  />
+                  <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-slate-900" {...register("rememberMe")} />
                   Remember me
                 </label>
-                <Link href="/forgot-password" className="font-medium text-foreground hover:underline">
-                  Forgot password?
-                </Link>
+                <Link href="/forgot-password" className="font-medium text-foreground hover:underline">Forgot password?</Link>
               </div>
 
               <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging in
-                  </>
-                ) : (
-                  <>
-                    Login
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
-                )}
+                {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Logging in</>) : (<>Login<ArrowRight className="ml-2 h-4 w-4" /></>)}
               </Button>
             </form>
 
             {!isSubdomain && (
               <div className="mt-6 rounded-lg bg-popover p-4 text-sm text-muted-foreground">
                 New institution or account?{" "}
-                <Link href="/register" className="font-semibold text-slate-950 hover:underline">
-                  Register here
-                </Link>
+                <Link href="/register" className="font-semibold text-slate-950 hover:underline">Register here</Link>
               </div>
             )}
 
@@ -375,27 +314,16 @@ export default function LoginPage() {
                 <div className="mt-4 rounded-lg border border-red-200 bg-red-50/80 p-4">
                   <div className="flex gap-2 text-sm text-blue-900">
                     <span className="font-semibold">💡 Tip:</span>
-                    <p>
-                      {loginError ? "Login failed? Try the demo mode below to explore the system as a student or teacher, or contact your administrator." : "Students and teachers can use the demo mode below to explore the system without credentials."}
-                    </p>
+                    <p>{loginError ? "Login failed? Try the demo mode below to explore the system as a student or teacher, or contact your administrator." : "Students and teachers can use the demo mode below to explore the system without credentials."}</p>
                   </div>
                 </div>
 
                 <div className="mt-4 space-y-2 rounded-lg border border-border bg-popover p-4">
                   <p className="text-sm font-semibold text-foreground">Test Credentials (Development)</p>
                   <div className="space-y-2 text-xs text-muted-foreground">
-                    <div>
-                      <p className="font-medium">📚 Student:</p>
-                      <code className="font-mono bg-green-100 px-1">student@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
-                    </div>
-                    <div>
-                      <p className="font-medium">👨‍🏫 Teacher:</p>
-                      <code className="font-mono bg-green-100 px-1">teacher@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
-                    </div>
-                    <div>
-                      <p className="font-medium">🏫 Head:</p>
-                      <code className="font-mono bg-green-100 px-1">head@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code>
-                    </div>
+                    <div><p className="font-medium">📚 Student:</p><code className="font-mono bg-green-100 px-1">student@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code></div>
+                    <div><p className="font-medium">👨‍🏫 Teacher:</p><code className="font-mono bg-green-100 px-1">teacher@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code></div>
+                    <div><p className="font-medium">🏫 Head:</p><code className="font-mono bg-green-100 px-1">head@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code></div>
                     <p className="text-xs italic text-green-700 pt-1">All demo credentials use password: <code className="font-mono bg-green-100 px-1">admin123</code>. Platform admin and super admin are not included in demo login.</p>
                   </div>
                 </div>
@@ -407,19 +335,11 @@ export default function LoginPage() {
                   </div>
                   <label className="space-y-1 text-sm font-medium text-slate-700">
                     <span>Demo role</span>
-                    <select
-                      value={demoRole}
-                      onChange={(event) => setDemoRole(event.target.value as UserRole)}
-                      className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                    >
-                      {demoRoles.map((role) => (
-                        <option key={role} value={role}>{role.replace(/_/g, ' ')}</option>
-                      ))}
+                    <select value={demoRole} onChange={(event) => setDemoRole(event.target.value as UserRole)} className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+                      {demoRoles.map((role) => (<option key={role} value={role}>{role.replace(/_/g, ' ')}</option>))}
                     </select>
                   </label>
-                  <Button type="button" onClick={startDemoSession} className="mt-3 w-full" variant="secondary">
-                    Enter demo mode
-                  </Button>
+                  <Button type="button" onClick={startDemoSession} className="mt-3 w-full" variant="secondary">Enter demo mode</Button>
                 </div>
               </>
             )}
