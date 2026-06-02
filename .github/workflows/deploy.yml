@@ -1,0 +1,46 @@
+name: Deploy to DigitalOcean (Client)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Frontend via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            # Detect client directory
+            if [ -d "$HOME/school-clint" ]; then
+              cd "$HOME/school-clint"
+            elif [ -d "$HOME/school-client" ]; then
+              cd "$HOME/school-client"
+            elif [ -d "/var/www/school-clint" ]; then
+              cd "/var/www/school-clint"
+            elif [ -d "/var/www/school-client" ]; then
+              cd "/var/www/school-client"
+            else
+              echo "School client directory not found. Please set it up first."
+              exit 1
+            fi
+
+            echo "Deploying to $(pwd)..."
+
+            # Pull the latest changes
+            git reset --hard
+            git pull origin main
+
+            # Install dependencies
+            npm install
+
+            # Build Next.js frontend
+            npm run build
+
+            # Restart using PM2 (checks school-client and school-clint first, then fallback to restart all, then starts)
+            pm2 restart school-client || pm2 restart school-clint || pm2 restart all || pm2 start npm --name "school-client" -- start
