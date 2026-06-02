@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { AlertTriangle, ArrowRight, Building2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +9,8 @@ interface SchoolNotFoundProps {
 }
 
 export default function SchoolNotFound({ subdomain }: SchoolNotFoundProps) {
+  const [countdown, setCountdown] = useState(3);
+
   const getMainDomainUrl = () => {
     if (typeof window === "undefined") return "/";
     const hostname = window.location.hostname;
@@ -31,6 +33,21 @@ export default function SchoolNotFound({ subdomain }: SchoolNotFoundProps) {
       window.location.href = getMainDomainUrl();
     }
   };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleGoToMainDomain();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 font-sans text-slate-800 relative overflow-hidden">
@@ -71,6 +88,28 @@ export default function SchoolNotFound({ subdomain }: SchoolNotFoundProps) {
               <p className="pt-1">
                 This subdomain is not registered in our system or is currently inactive. Please check the URL or contact the institution administrator.
               </p>
+            </div>
+          </div>
+
+          {/* Countdown Redirect Status */}
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between gap-4 animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-amber-500 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-md shadow-amber-500/20">
+                {countdown}
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-bold text-amber-800">
+                  প্রধান ওয়েবসাইটে রিডাইরেক্ট করা হচ্ছে...
+                </p>
+                <p className="text-[11px] text-amber-600 font-medium">
+                  Redirecting to main domain in {countdown} seconds...
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" style={{ animationDelay: "0s" }} />
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" style={{ animationDelay: "0.2s" }} />
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" style={{ animationDelay: "0.4s" }} />
             </div>
           </div>
 
