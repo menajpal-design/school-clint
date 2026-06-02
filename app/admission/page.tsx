@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
 import { getSubdomain } from '@/lib/utils';
 import AdmissionFields from '@/components/admission/AdmissionFields';
+import SchoolNotFound from '@/components/SchoolNotFound';
 
 type School = { _id: string; name: string; type: string; eiin?: string; address: string; phone?: string; email?: string };
 
@@ -33,6 +34,7 @@ export default function PublicAdmissionPage() {
   const [status, setStatus] = useState('');
   const [isSubdomain, setIsSubdomain] = useState(false);
   const [subdomainName, setSubdomainName] = useState('');
+  const [isValidSubdomain, setIsValidSubdomain] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
 
   const loadSchools = useCallback(async () => {
@@ -54,8 +56,19 @@ export default function PublicAdmissionPage() {
       setIsSubdomain(true);
       setSubdomainName(sub);
       api.admissions.schools({ subdomain: sub, domain: hostname })
-        .then((res: any) => { setSchools(res.schools || []); if ((res.schools || []).length > 0) setSelectedSchool((res.schools || [])[0]); })
-        .catch(() => {})
+        .then((res: any) => { 
+          const list = res.schools || [];
+          setSchools(list); 
+          if (list.length > 0) { 
+            setSelectedSchool(list[0]); 
+            setIsValidSubdomain(true);
+          } else {
+            setIsValidSubdomain(false);
+          }
+        })
+        .catch(() => {
+          setIsValidSubdomain(false);
+        })
         .finally(() => setInitialLoading(false));
     } else {
       api.admissions.schools({ domain: hostname })
@@ -78,6 +91,10 @@ export default function PublicAdmissionPage() {
       setStatus(err?.message || 'Submission failed.');
     }
   };
+
+  if (!initialLoading && isSubdomain && !isValidSubdomain) {
+    return <SchoolNotFound subdomain={subdomainName} />;
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4 font-sans text-slate-800">

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authManager } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { getSubdomain } from "@/lib/utils";
+import SchoolNotFound from "@/components/SchoolNotFound";
 
 const features = [
   {
@@ -56,6 +57,7 @@ export default function Home() {
   const [schoolData, setSchoolData] = useState<any>(null);
   const [isSubdomain, setIsSubdomain] = useState(false);
   const [subdomainName, setSubdomainName] = useState('');
+  const [isValidSubdomain, setIsValidSubdomain] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
@@ -89,10 +91,14 @@ export default function Home() {
             const list = res.schools || [];
             if (list.length > 0) {
               setSchoolData(list[0]);
+              setIsValidSubdomain(true);
+            } else {
+              setIsValidSubdomain(false);
             }
             setChecking(false);
           })
           .catch(() => {
+            setIsValidSubdomain(false);
             setChecking(false);
           });
         return;
@@ -112,6 +118,10 @@ export default function Home() {
         <Loader2 className="h-7 w-7 animate-spin text-slate-700" />
       </main>
     );
+  }
+
+  if (isSubdomain && !isValidSubdomain) {
+    return <SchoolNotFound subdomain={subdomainName} />;
   }
 
   if (isSubdomain) {

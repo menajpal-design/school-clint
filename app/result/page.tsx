@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { Loader2, RefreshCw, Printer, AlertTriangle, ArrowLeft, GraduationCap, Award, BookOpen, Building2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { getSubdomain } from '@/lib/utils';
+import SchoolNotFound from '@/components/SchoolNotFound';
 
 export default function PublicResultPage() {
   const [isSubdomain, setIsSubdomain] = useState(false);
   const [subdomainName, setSubdomainName] = useState('');
+  const [isValidSubdomain, setIsValidSubdomain] = useState(true);
   const [schools, setSchools] = useState<any[]>([]);
   const [selectedSchool, setSelectedSchool] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -92,10 +94,14 @@ export default function PublicResultPage() {
             const list = res.schools || [];
             if (list.length > 0) {
               setSelectedSchool(list[0]);
+              setIsValidSubdomain(true);
+            } else {
+              setIsValidSubdomain(false);
             }
             setInitialLoading(false);
           })
           .catch(() => {
+            setIsValidSubdomain(false);
             setInitialLoading(false);
           });
       } else {
@@ -193,6 +199,10 @@ export default function PublicResultPage() {
   };
 
   const { core, continuous } = getSubjectGroups();
+
+  if (!initialLoading && isSubdomain && !isValidSubdomain) {
+    return <SchoolNotFound subdomain={subdomainName} />;
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4 font-sans text-slate-800">
