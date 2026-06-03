@@ -203,7 +203,7 @@ class ApiClient {
     const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
     if (!res.ok) {
       if (isBrowser && (res.status === 428 || data?.code === 'STORAGE_CONFIG_REQUIRED')) {
-        const message = data?.message || 'দয়া করে MongoDB URL এবং ImgBB API Key সেট করুন।';
+        const message = data?.message || 'দয়া করে MongoDB URL সেট করুন।';
         this.toast(message, 'Storage configuration required');
         const redirectTo = data?.redirectTo || '/settings';
         if (window.location.pathname !== redirectTo) window.location.href = redirectTo;

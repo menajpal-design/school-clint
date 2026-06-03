@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
 import { getSubdomain } from '@/lib/utils';
 import AdmissionFields from '@/components/admission/AdmissionFields';
-import SchoolNotFound from '@/components/SchoolNotFound';
 
 type School = { _id: string; name: string; type: string; eiin?: string; address: string; phone?: string; email?: string };
 
@@ -34,8 +33,8 @@ export default function PublicAdmissionPage() {
   const [status, setStatus] = useState('');
   const [isSubdomain, setIsSubdomain] = useState(false);
   const [subdomainName, setSubdomainName] = useState('');
-  const [isValidSubdomain, setIsValidSubdomain] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [missingSchool, setMissingSchool] = useState(false);
 
   const loadSchools = useCallback(async () => {
     const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
@@ -50,25 +49,19 @@ export default function PublicAdmissionPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const hostname = window.location.hostname;
-    const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+    const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost';
     const sub = getSubdomain(hostname, mainDomain);
     if (sub) {
       setIsSubdomain(true);
       setSubdomainName(sub);
       api.admissions.schools({ subdomain: sub, domain: hostname })
-        .then((res: any) => { 
+        .then((res: any) => {
           const list = res.schools || [];
-          setSchools(list); 
-          if (list.length > 0) { 
-            setSelectedSchool(list[0]); 
-            setIsValidSubdomain(true);
-          } else {
-            setIsValidSubdomain(false);
-          }
+          setSchools(list);
+          if (list.length > 0) setSelectedSchool(list[0]);
+          if (list.length === 0) setMissingSchool(true);
         })
-        .catch(() => {
-          setIsValidSubdomain(false);
-        })
+        .catch(() => {})
         .finally(() => setInitialLoading(false));
     } else {
       api.admissions.schools({ domain: hostname })
@@ -77,6 +70,12 @@ export default function PublicAdmissionPage() {
         .finally(() => setInitialLoading(false));
     }
   }, []);
+
+  useEffect(() => {
+    if (missingSchool && subdomainName) {
+      window.location.replace(`/school-not-found?subdomain=${encodeURIComponent(subdomainName)}`);
+    }
+  }, [missingSchool, subdomainName]);
 
   const update = (key: keyof typeof emptyForm, value: string) => setForm((c) => ({ ...c, [key]: value }));
 
@@ -92,8 +91,8 @@ export default function PublicAdmissionPage() {
     }
   };
 
-  if (!initialLoading && isSubdomain && !isValidSubdomain) {
-    return <SchoolNotFound subdomain={subdomainName} />;
+  if (missingSchool) {
+    return null;
   }
 
   return (
@@ -119,6 +118,8 @@ export default function PublicAdmissionPage() {
             <p className="text-sm font-bold text-slate-500 tracking-wide">Resolving school portal details...</p>
           </div>
         )}
+
+        {missingSchool && null}
 
         {!initialLoading && (
           <div className={`grid gap-6 ${isSubdomain || selectedSchool ? 'grid-cols-1' : 'lg:grid-cols-[0.9fr_1.1fr]'}`}>

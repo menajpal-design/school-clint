@@ -16,7 +16,6 @@ import { authManager } from "@/lib/auth";
 import { User, UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
 import { getSubdomain } from "@/lib/utils";
-import SchoolNotFound from "@/components/SchoolNotFound";
 
 const demoRoles: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'];
 
@@ -147,34 +146,27 @@ export default function LoginPage() {
   const [demoRole, setDemoRole] = useState<UserRole>('head');
   const [loginError, setLoginError] = useState("");
   const [isSubdomain, setIsSubdomain] = useState(false);
+  const [missingSchool, setMissingSchool] = useState(false);
   const [subdomainName, setSubdomainName] = useState('');
-  const [isValidSubdomain, setIsValidSubdomain] = useState(true);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
-      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost';
       const sub = getSubdomain(hostname, mainDomain);
       if (sub) {
         setIsSubdomain(true);
         setSubdomainName(sub);
-
-        // Fetch public schools passing subdomain and domain to verify existence
         api.admissions.schools({ subdomain: sub, domain: hostname })
           .then((res: any) => {
             const list = res.schools || [];
-            if (list.length > 0) {
-              setIsValidSubdomain(true);
-            } else {
-              setIsValidSubdomain(false);
+            if (list.length === 0) {
+              setMissingSchool(true);
             }
-            setIsChecking(false);
           })
           .catch(() => {
-            setIsValidSubdomain(false);
-            setIsChecking(false);
+            setMissingSchool(true);
           });
-        return;
       }
     }
 
@@ -186,7 +178,17 @@ export default function LoginPage() {
     setIsChecking(false);
   }, [router]);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+  useEffect(() => {
+    if (missingSchool) {
+      window.location.replace(`/school-not-found?subdomain=${encodeURIComponent(subdomainName)}`);
+    }
+  }, [missingSchool, subdomainName]);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { identifier: "", password: "", rememberMe: true },
   });
@@ -249,8 +251,8 @@ export default function LoginPage() {
     );
   }
 
-  if (isSubdomain && !isValidSubdomain) {
-    return <SchoolNotFound subdomain={subdomainName} />;
+  if (missingSchool) {
+    return null;
   }
 
   return (

@@ -55,7 +55,7 @@ export default function RegisterPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const hostname = window.location.hostname;
-    const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+    const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost';
     const sub = getSubdomain(hostname, mainDomain);
 
     if (sub) {
@@ -129,7 +129,7 @@ export default function RegisterPage() {
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-gray-800">নিবন্ধন অনুমোদিত নয়</h1>
             <p className="text-gray-600 text-sm">
-              সাবডোমেন <code className="bg-slate-100 px-1 rounded font-semibold text-slate-800">{subdomainName}.easyschool.live</code> থেকে নতুন প্রতিষ্ঠান নিবন্ধন করা সম্ভব নয়।
+              সাবডোমেন <code className="bg-slate-100 px-1 rounded font-semibold text-slate-800">{subdomainName}.localhost</code> থেকে নতুন প্রতিষ্ঠান নিবন্ধন করা সম্ভব নয়।
             </p>
             <p className="text-gray-400 text-xs">
               (Registration is not allowed on subdomains. Please visit our main domain to register a new school.)
@@ -137,7 +137,7 @@ export default function RegisterPage() {
           </div>
           <div>
             <a
-              href="https://easyschool.live/register"
+              href="http://localhost:3000/register"
               className="inline-flex justify-center w-full py-2.5 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition"
             >
               প্রধান ডোমেইনে যান (Go to Main Domain)

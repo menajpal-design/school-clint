@@ -28,7 +28,6 @@ const profileSchema = z.object({
   subdomain: z.string().optional(),
   domainsText: z.string().optional(),
   mongodbUri: z.string().optional(),
-  imgbbApiKey: z.string().optional(),
   smsEnabled: z.boolean().default(true),
   smsProvider: z.string().optional(),
   smsApiUrl: z.string().optional(),
@@ -58,7 +57,7 @@ const fileToDataUrl = (file: File) =>
   });
 
 const getMainDomainLink = (sub: string) => {
-  if (typeof window === 'undefined') return `https://${sub}.easyschool.live`;
+  if (typeof window === 'undefined') return `http://${sub}.localhost:3000`;
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
   const port = window.location.port ? `:${window.location.port}` : '';
@@ -69,8 +68,8 @@ const getMainDomainLink = (sub: string) => {
   if (envMainDomain) {
     return `${protocol}//${sub}.${envMainDomain}`;
   }
-  if (hostname.endsWith('easyschool.live')) {
-    return `${protocol}//${sub}.easyschool.live`;
+  if (hostname.endsWith('localhost') || hostname.endsWith('127.0.0.1')) {
+    return `${protocol}//${sub}.localhost${port}`;
   }
   const parts = hostname.split('.');
   const domain = parts.length >= 2 ? parts.slice(-2).join('.') : hostname;
@@ -102,7 +101,6 @@ export default function InstitutionProfilePage() {
       subdomain: '',
       domainsText: '',
       mongodbUri: '',
-      imgbbApiKey: '',
       smsEnabled: true,
       smsProvider: 'anoncify',
       smsApiUrl: '',
@@ -141,14 +139,13 @@ export default function InstitutionProfilePage() {
           subdomain: institution.subdomain || '',
           domainsText: (institution.domains || []).join('\n'),
           mongodbUri: institution.settings?.mongodbUri || '',
-          imgbbApiKey: institution.settings?.imgbbApiKey || '',
           smsEnabled: institution.settings?.smsEnabled !== false,
           smsProvider: institution.settings?.smsProvider || 'anoncify',
           smsApiUrl: institution.settings?.smsApiUrl || '',
           smsApiKey: institution.settings?.smsApiKey || '',
           activeAcademicYear: institution.settings?.activeAcademicYear || '',
           academicYearsText: (institution.settings?.academicYears || [])
-            .map((item: any) => [item.year, item.mongodbUri, item.imgbbApiKey].filter(Boolean).join(' | '))
+            .map((item: any) => [item.year, item.mongodbUri].filter(Boolean).join(' | '))
             .join('\n'),
           logo: institution.logo || '',
           seal: institution.seal || '',
@@ -190,8 +187,8 @@ export default function InstitutionProfilePage() {
       const academicYears = String(data.academicYearsText || '')
         .split('\n')
         .map((line) => {
-          const [year, mongodbUri, imgbbApiKey] = line.split('|').map((part) => part.trim());
-          return year ? { year, mongodbUri, imgbbApiKey, isActive: year === data.activeAcademicYear } : null;
+          const [year, mongodbUri] = line.split('|').map((part) => part.trim());
+          return year ? { year, mongodbUri, isActive: year === data.activeAcademicYear } : null;
         })
         .filter(Boolean);
       await api.institution.updateProfile({
@@ -218,7 +215,6 @@ export default function InstitutionProfilePage() {
         },
         settings: {
           mongodbUri: data.mongodbUri,
-          imgbbApiKey: data.imgbbApiKey,
           smsEnabled: data.smsEnabled,
           smsProvider: data.smsProvider,
           smsApiUrl: data.smsApiUrl,
@@ -297,7 +293,7 @@ export default function InstitutionProfilePage() {
                   <FormField control={form.control} name="website" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Website</FormLabel>
-                      <FormControl><Input placeholder="https://www.easyschool.live" {...field} /></FormControl>
+                      <FormControl><Input placeholder="http://localhost:3000" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -397,14 +393,11 @@ export default function InstitutionProfilePage() {
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-base"><Server className="h-4 w-4" /> Storage</CardTitle>
-                      <CardDescription>Save this school&apos;s MongoDB URI and ImgBB key for institution-specific storage settings.</CardDescription>
+                      <CardDescription>Save this school&apos;s MongoDB URI for institution-specific storage settings.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <FormField control={form.control} name="mongodbUri" render={({ field }) => (
                         <FormItem><FormLabel>MongoDB URI</FormLabel><FormControl><Input type="password" placeholder="mongodb+srv://..." {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="imgbbApiKey" render={({ field }) => (
-                        <FormItem><FormLabel>ImgBB API Key</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
                     </CardContent>
                   </Card>
@@ -458,14 +451,14 @@ export default function InstitutionProfilePage() {
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base">Year Settings</CardTitle>
-                      <CardDescription>Use one line per year: year | mongodb uri | imgbb api key</CardDescription>
+                      <CardDescription>Use one line per year: year | mongodb uri</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <FormField control={form.control} name="activeAcademicYear" render={({ field }) => (
                         <FormItem><FormLabel>Active Academic Year</FormLabel><FormControl><Input placeholder="2026" {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
                       <FormField control={form.control} name="academicYearsText" render={({ field }) => (
-                        <FormItem><FormLabel>Year-wise Storage</FormLabel><FormControl><Textarea rows={4} placeholder={'2026 | mongodb+srv://... | imgbb-key\n2027 | mongodb+srv://... | imgbb-key'} {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Year-wise Storage</FormLabel><FormControl><Textarea rows={4} placeholder={'2026 | mongodb+srv://...\n2027 | mongodb+srv://...'} {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
                     </CardContent>
                   </Card>
@@ -511,7 +504,7 @@ export default function InstitutionProfilePage() {
                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
                             <SelectItem value="true">EASY SCHOOL storage - {formatCurrency(100)}/month</SelectItem>
-                            <SelectItem value="false">Own MongoDB URI and ImgBB API - no extra cost</SelectItem>
+                            <SelectItem value="false">Own MongoDB URI - no extra cost</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

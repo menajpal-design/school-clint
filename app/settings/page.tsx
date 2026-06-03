@@ -26,22 +26,17 @@ const weekDays = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thurs
 
 const emptySiteConfig = {
   siteName: "Easy School",
-  appBaseUrl: "https://easyschool.live",
-  apiBaseUrl: "https://school-server-b264c1a1fac6.herokuapp.com/api",
+  appBaseUrl: "http://localhost:3000",
+  apiBaseUrl: "http://localhost:5000/api",
   mongodbUrl: "",
-  imgbbApiKey: "",
-  imgbbUploadUrl: "https://api.imgbb.com/1/upload",
   mongodbUsedMb: "",
-  imgbbUsedMb: "",
 };
 
 const emptyStorageStatus = {
   primaryMongo: { connected: false, status: "unknown", message: "Not checked yet." },
   configuredMongo: { connected: false, status: "unknown", message: "Not checked yet.", usedMb: 0, warning: false, warningAtMb: 475 },
-  imgbb: { connected: false, status: "unknown", message: "Not checked yet.", usedMb: 0, warning: false, warningAtMb: 1950 },
   mongodbUris: [],
-  imgbbKeys: [],
-  warningLimits: { mongoMb: 475, imgbbMb: 1950 },
+  warningLimits: { mongoMb: 475 },
   checkedAt: "",
 };
 
@@ -65,7 +60,6 @@ function HeadSettings() {
   const [storageStatus, setStorageStatus] = useState<any>(emptyStorageStatus);
   const [checkingStorage, setCheckingStorage] = useState(false);
   const [hasMongoUrl, setHasMongoUrl] = useState(false);
-  const [hasImgbbKey, setHasImgbbKey] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState("");
@@ -78,7 +72,6 @@ function HeadSettings() {
       const status: any = await apiClient.get("/site-settings/storage-status");
       setStorageStatus({ ...emptyStorageStatus, ...status });
       setHasMongoUrl(Boolean(status.hasMongoUrl));
-      setHasImgbbKey(Boolean(status.hasImgbbKey));
     } catch (err: any) {
       setStorageStatus({ ...emptyStorageStatus, configuredMongo: { connected: false, status: "error", message: err?.message || "Storage status check failed." } });
     } finally {
@@ -93,9 +86,8 @@ function HeadSettings() {
         apiClient.get("/site-settings/site-config") as Promise<any>,
         apiClient.get("/site-settings/app-controls") as Promise<any>,
       ]);
-      setSiteConfig({ ...emptySiteConfig, ...(site.config || {}), mongodbUrl: "", imgbbApiKey: "" });
+      setSiteConfig({ ...emptySiteConfig, ...(site.config || {}), mongodbUrl: "" });
       setHasMongoUrl(Boolean(site.hasMongoUrl));
-      setHasImgbbKey(Boolean(site.hasImgbbKey));
       if (controls.settings && Object.keys(controls.settings).length) {
         const merged = { ...getAppControlSettings(), ...controls.settings };
         setAppControl(merged);
@@ -142,11 +134,10 @@ function HeadSettings() {
 
   const saveSiteConfig = () => runSave("site", async () => {
     const data: any = await apiClient.put("/site-settings/site-config", siteConfig);
-    setSiteConfig({ ...emptySiteConfig, ...(data.config || {}), mongodbUrl: "", imgbbApiKey: "" });
+    setSiteConfig({ ...emptySiteConfig, ...(data.config || {}), mongodbUrl: "" });
     setHasMongoUrl(Boolean(data.hasMongoUrl));
-    setHasImgbbKey(Boolean(data.hasImgbbKey));
     await loadStorageStatus();
-  }, "Site config saved. Old MongoDB URI and old ImgBB key are kept in history.");
+  }, "Site config saved. Old MongoDB URI is kept in history.");
 
   const saveCurrency = () => runSave("currency", () => setPreferredCurrency(currency), "Currency preference saved.");
   const saveAttendance = () => runSave("attendance", () => setAttendanceSettings(attendance), "Attendance settings saved.");
@@ -166,8 +157,6 @@ function HeadSettings() {
   };
 
   const mongoWarning = storageStatus?.configuredMongo?.warning;
-  const imgbbWarning = storageStatus?.imgbb?.warning;
-
   return (
     <div className="space-y-5 p-3 md:p-6">
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -175,7 +164,7 @@ function HeadSettings() {
           <div className="rounded-xl bg-primary/10 p-3 text-primary"><SettingsIcon className="h-6 w-6" /></div>
           <div>
             <h1 className="text-2xl font-bold md:text-3xl">Head Settings</h1>
-            <p className="text-sm text-muted-foreground">New MongoDB/ImgBB add করলে old URI/key delete হবে না; history list-এ থাকবে।</p>
+            <p className="text-sm text-muted-foreground">New MongoDB URI add করলে old URI delete হবে না; history list-এ থাকবে।</p>
           </div>
         </div>
         {message && <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
@@ -188,7 +177,7 @@ function HeadSettings() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Storage Connection Status</CardTitle>
-                <CardDescription>MongoDB connected হলে green dot, disconnected/error হলে red dot। MongoDB 475MB বা ImgBB 1950MB হলে warning দেখাবে।</CardDescription>
+                <CardDescription>MongoDB connected হলে green dot, disconnected/error হলে red dot। MongoDB 475MB হলে warning দেখাবে।</CardDescription>
               </div>
               <Button variant="outline" onClick={loadStorageStatus} disabled={checkingStorage}><RefreshCw className={`mr-2 h-4 w-4 ${checkingStorage ? 'animate-spin' : ''}`} />Refresh</Button>
             </div>
@@ -197,18 +186,15 @@ function HeadSettings() {
             <div className="grid gap-3 md:grid-cols-3">
               <StatusBox title="Primary Server MongoDB" item={storageStatus.primaryMongo} />
               <StatusBox title="Active MongoDB URI" item={storageStatus.configuredMongo} />
-              <StatusBox title="Active ImgBB Key" item={storageStatus.imgbb} />
             </div>
-            {(mongoWarning || imgbbWarning) && (
+            {mongoWarning && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
                 <div className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4" /> Storage warning</div>
                 {mongoWarning && <div className="mt-1">MongoDB data is {storageStatus.configuredMongo.usedMb}MB. Data is low/free limit near full — add a new MongoDB URI. Old URI will remain listed for old data.</div>}
-                {imgbbWarning && <div className="mt-1">ImgBB usage is {storageStatus.imgbb.usedMb}MB. Add a new ImgBB key. Old key will remain listed for old files.</div>}
               </div>
             )}
             <div className="grid gap-4 lg:grid-cols-2">
               <HistoryList title="MongoDB URI History" items={storageStatus.mongodbUris || siteConfig.mongodbUris || []} type="mongo" warningAt={storageStatus.warningLimits?.mongoMb || 475} />
-              <HistoryList title="ImgBB Key History" items={storageStatus.imgbbKeys || siteConfig.imgbbKeys || []} type="imgbb" warningAt={storageStatus.warningLimits?.imgbbMb || 1950} />
             </div>
             <div className="text-xs text-muted-foreground">Last checked: {storageStatus.checkedAt ? new Date(storageStatus.checkedAt).toLocaleString() : 'Not checked yet'}</div>
           </CardContent>
@@ -217,22 +203,19 @@ function HeadSettings() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Add New Storage Config</CardTitle>
-            <CardDescription>New URI/key দিলে সেটা active হবে, কিন্তু old URI/key delete হবে না। Old data access history হিসেবে থাকবে।</CardDescription>
+            <CardDescription>New MongoDB URI দিলে সেটা active হবে, কিন্তু old URI delete হবে না। Old data access history হিসেবে থাকবে।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <TextField label="Site Name" value={siteConfig.siteName} onChange={(value) => setSiteConfig({ ...siteConfig, siteName: value })} />
               <TextField label="App Base URL" value={siteConfig.appBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, appBaseUrl: value })} />
               <TextField label="API Base URL" value={siteConfig.apiBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, apiBaseUrl: value })} />
-              <TextField label="ImgBB Upload URL" value={siteConfig.imgbbUploadUrl} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbUploadUrl: value })} />
               <TextField label={hasMongoUrl ? "Add new MongoDB URI (old URI will stay listed)" : "MongoDB URI"} type="password" value={siteConfig.mongodbUrl} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUrl: value })} placeholder="mongodb+srv://..." />
-              <TextField label={hasImgbbKey ? "Add new ImgBB API Key (old key will stay listed)" : "ImgBB API Key"} type="password" value={siteConfig.imgbbApiKey} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbApiKey: value })} placeholder="ImgBB key" />
               <CheckField label="Allow personal MongoDB fallback when central storage unavailable" checked={Boolean(siteConfig.allowPersonalMongo)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalMongo: checked })} />
               <CheckField label="Allow personal storage (alternate flag)" checked={Boolean(siteConfig.allowPersonalStorage)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalStorage: checked })} />
               <TextField label="MongoDB used MB (optional manual update)" type="number" value={String(siteConfig.mongodbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUsedMb: value })} placeholder="475" />
-              <TextField label="ImgBB used MB (optional manual update)" type="number" value={String(siteConfig.imgbbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, imgbbUsedMb: value })} placeholder="1950" />
             </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">For security, saved MongoDB URI and ImgBB key are masked. New value দিলে old value replace না হয়ে history list-এ থাকবে।</div>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">For security, saved MongoDB URI is masked. New value দিলে old value replace না হয়ে history list-এ থাকবে।</div>
             <Button onClick={saveSiteConfig} disabled={saving === "site"}><Save className="mr-2 h-4 w-4" />{saving === "site" ? "Saving..." : "Save / Add storage config"}</Button>
           </CardContent>
         </Card>
@@ -302,7 +285,7 @@ function StatusBox({ title, item }: { title: string; item: any }) {
   );
 }
 
-function HistoryList({ title, items, type, warningAt }: { title: string; items: any[]; type: 'mongo' | 'imgbb'; warningAt: number }) {
+function HistoryList({ title, items, type, warningAt }: { title: string; items: any[]; type: 'mongo'; warningAt: number }) {
   // Placeholder: will receive makeActive callback via props if needed
   return (
     <div className="rounded-xl border p-4">

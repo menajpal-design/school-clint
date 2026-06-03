@@ -90,7 +90,7 @@ export default function PricingPage() {
               <div className="mt-1 text-sm text-slate-600">{money(easySchoolStorageMonthlyPrice)} monthly extra charge.</div>
             </div>
             <div className="rounded-md border p-4">
-              <div className="font-semibold">Use own MongoDB URI and ImgBB API</div>
+              <div className="font-semibold">Use own MongoDB URI</div>
               <div className="mt-1 text-sm text-slate-600">No extra storage cost.</div>
             </div>
           </CardContent>
