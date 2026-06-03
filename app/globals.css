@@ -534,6 +534,12 @@ div[class*="rounded-2xl"][class*="border"] {
   border-color: rgba(59, 130, 246, 0.25) !important;
 }
 
+/* Prevent any hover translation/movement on dialogs or fixed cards by preserving Tailwind's original translate properties */
+[role="dialog"]:hover,
+.fixed[class*="bg-card"]:hover {
+  transform: translate(var(--tw-translate-x, -50%), var(--tw-translate-y, -50%)) rotate(var(--tw-rotate, 0deg)) skewX(var(--tw-skew-x, 0deg)) skewY(var(--tw-skew-y, 0deg)) scaleX(var(--tw-scale-x, 1)) scaleY(var(--tw-scale-y, 1)) !important;
+}
+
 /* Button scale effect */
 button,
 a.button,
