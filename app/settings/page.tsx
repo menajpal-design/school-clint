@@ -219,7 +219,8 @@ function HeadSettings() {
             <CardDescription>New URI/key দিলে সেটা active হবে, কিন্তু old URI/key delete হবে না। Old data access history হিসেবে থাকবে।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2"              <TextField label="App Base URL" value={siteConfig.appBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, appBaseUrl: value })} />
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField label="App Base URL" value={siteConfig.appBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, appBaseUrl: value })} />
               <TextField label="API Base URL" value={siteConfig.apiBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, apiBaseUrl: value })} />
               <TextField label={hasMongoUrl ? "Add new MongoDB URI (old URI will stay listed)" : "MongoDB URI"} type="password" value={siteConfig.mongodbUrl} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUrl: value })} placeholder="mongodb+srv://..." />
               <CheckField label="Allow personal MongoDB fallback when central storage unavailable" checked={Boolean(siteConfig.allowPersonalMongo)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalMongo: checked })} />
@@ -227,8 +228,6 @@ function HeadSettings() {
               <TextField label="MongoDB used MB (optional manual update)" type="number" value={String(siteConfig.mongodbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUsedMb: value })} placeholder="475" />
             </div>
             <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">✅ Images are stored in MongoDB GridFS — no ImgBB API key needed.</div>
-            <Button onClick={saveSiteConfig} disabled={saving === "site"}><Save className="mr-2 h-4 w-4" />{saving === "site" ? "Saving..." : "Save / Add storage config"}</Button>
-
             <Button onClick={saveSiteConfig} disabled={saving === "site"}><Save className="mr-2 h-4 w-4" />{saving === "site" ? "Saving..." : "Save / Add storage config"}</Button>
           </CardContent>
         </Card>
