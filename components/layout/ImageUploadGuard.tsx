@@ -2,10 +2,10 @@
 
 import { useEffect } from 'react';
 
-const MAX_IMAGE_UPLOAD_BYTES = 100 * 1024;
+const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024; // 5MB — stored in MongoDB GridFS
 const RECOMMENDED_MIN_IMAGE_BYTES = 50 * 1024;
-const MAX_IMAGE_UPLOAD_LABEL = '100KB';
-const RECOMMENDED_IMAGE_LABEL = '50KB–100KB';
+const MAX_IMAGE_UPLOAD_LABEL = '5MB';
+const RECOMMENDED_IMAGE_LABEL = '50KB–5MB';
 
 function isImageFile(file: File) {
   return file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name);

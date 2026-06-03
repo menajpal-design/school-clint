@@ -527,8 +527,8 @@ div[class*="rounded-2xl"][class*="border"] {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.card:hover,
-[class*="bg-card"]:hover {
+.card:not([role="dialog"]):not(.fixed):hover,
+[class*="bg-card"]:not([role="dialog"]):not(.fixed):hover {
   transform: translateY(-2px);
   box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08) !important;
   border-color: rgba(59, 130, 246, 0.25) !important;

@@ -5,14 +5,15 @@ import Link from 'next/link';
 import { Loader2, RefreshCw, Printer, AlertTriangle, ArrowLeft, GraduationCap, Award, BookOpen, Building2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { getSubdomain } from '@/lib/utils';
+import SchoolNotFound from '@/components/SchoolNotFound';
 
 export default function PublicResultPage() {
   const [isSubdomain, setIsSubdomain] = useState(false);
   const [subdomainName, setSubdomainName] = useState('');
+  const [isValidSubdomain, setIsValidSubdomain] = useState(true);
   const [schools, setSchools] = useState<any[]>([]);
   const [selectedSchool, setSelectedSchool] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [missingSchool, setMissingSchool] = useState(false);
   
   // Form states
   const [board, setBoard] = useState('');
@@ -80,7 +81,7 @@ export default function PublicResultPage() {
 
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
-      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost';
+      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
       const sub = getSubdomain(hostname, mainDomain);
 
       if (sub) {
@@ -93,13 +94,14 @@ export default function PublicResultPage() {
             const list = res.schools || [];
             if (list.length > 0) {
               setSelectedSchool(list[0]);
+              setIsValidSubdomain(true);
             } else {
-              setMissingSchool(true);
+              setIsValidSubdomain(false);
             }
             setInitialLoading(false);
           })
           .catch(() => {
-            setMissingSchool(true);
+            setIsValidSubdomain(false);
             setInitialLoading(false);
           });
       } else {
@@ -119,12 +121,6 @@ export default function PublicResultPage() {
       }
     }
   }, []);
-
-  useEffect(() => {
-    if (missingSchool && subdomainName) {
-      window.location.replace(`/school-not-found?subdomain=${encodeURIComponent(subdomainName)}`);
-    }
-  }, [missingSchool, subdomainName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,8 +200,8 @@ export default function PublicResultPage() {
 
   const { core, continuous } = getSubjectGroups();
 
-  if (missingSchool) {
-    return null;
+  if (!initialLoading && isSubdomain && !isValidSubdomain) {
+    return <SchoolNotFound subdomain={subdomainName} />;
   }
 
   return (

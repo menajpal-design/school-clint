@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, CreditCard, Globe2, ImagePlus, Save, Server } from 'lucide-react';
+import { Building2, CreditCard, Globe2, ImagePlus, Loader2, Save, Server, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { api } from '@/lib/api';
 import RoleGuard from '@/components/RoleGuard';
 import { calculatePlanDue, schoolPlans } from '@/lib/plans';
 import { formatCurrency } from '@/lib/utils';
+import { uploadInstitutionImage, deleteImage, resolveImageUrl } from '@/lib/imageUpload';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Institution name is required'),
@@ -28,6 +29,7 @@ const profileSchema = z.object({
   subdomain: z.string().optional(),
   domainsText: z.string().optional(),
   mongodbUri: z.string().optional(),
+  imgbbApiKey: z.string().optional().describe('legacy — kept for backward compat, not used for new uploads'),
   smsEnabled: z.boolean().default(true),
   smsProvider: z.string().optional(),
   smsApiUrl: z.string().optional(),
@@ -48,16 +50,11 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-const fileToDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+// No longer used — images upload directly to GridFS via the server
+const _unused_fileToDataUrl = null;
 
 const getMainDomainLink = (sub: string) => {
-  if (typeof window === 'undefined') return `http://${sub}.localhost:3000`;
+  if (typeof window === 'undefined') return `https://${sub}.easyschool.live`;
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
   const port = window.location.port ? `:${window.location.port}` : '';
@@ -68,8 +65,8 @@ const getMainDomainLink = (sub: string) => {
   if (envMainDomain) {
     return `${protocol}//${sub}.${envMainDomain}`;
   }
-  if (hostname.endsWith('localhost') || hostname.endsWith('127.0.0.1')) {
-    return `${protocol}//${sub}.localhost${port}`;
+  if (hostname.endsWith('easyschool.live')) {
+    return `${protocol}//${sub}.easyschool.live`;
   }
   const parts = hostname.split('.');
   const domain = parts.length >= 2 ? parts.slice(-2).join('.') : hostname;
@@ -78,6 +75,7 @@ const getMainDomainLink = (sub: string) => {
 
 export default function InstitutionProfilePage() {
   const [status, setStatus] = useState('');
+  const [uploadingAsset, setUploadingAsset] = useState<string | null>(null);
   const [subdomainAvailability, setSubdomainAvailability] = useState<string | null>(null);
   const [savedSubdomain, setSavedSubdomain] = useState<string | null>(null);
   const slugify = (input?: string) => String(input || '')
@@ -101,6 +99,7 @@ export default function InstitutionProfilePage() {
       subdomain: '',
       domainsText: '',
       mongodbUri: '',
+      imgbbApiKey: '',
       smsEnabled: true,
       smsProvider: 'anoncify',
       smsApiUrl: '',
@@ -139,13 +138,14 @@ export default function InstitutionProfilePage() {
           subdomain: institution.subdomain || '',
           domainsText: (institution.domains || []).join('\n'),
           mongodbUri: institution.settings?.mongodbUri || '',
+          imgbbApiKey: institution.settings?.imgbbApiKey || '',
           smsEnabled: institution.settings?.smsEnabled !== false,
           smsProvider: institution.settings?.smsProvider || 'anoncify',
           smsApiUrl: institution.settings?.smsApiUrl || '',
           smsApiKey: institution.settings?.smsApiKey || '',
           activeAcademicYear: institution.settings?.activeAcademicYear || '',
           academicYearsText: (institution.settings?.academicYears || [])
-            .map((item: any) => [item.year, item.mongodbUri].filter(Boolean).join(' | '))
+            .map((item: any) => [item.year, item.mongodbUri, item.imgbbApiKey].filter(Boolean).join(' | '))
             .join('\n'),
           logo: institution.logo || '',
           seal: institution.seal || '',
@@ -176,9 +176,37 @@ export default function InstitutionProfilePage() {
     [values.logo, values.seal, values.headSignature]
   );
 
+  // Upload logo/seal/headSignature directly to GridFS
   const onUpload = async (field: keyof Pick<ProfileFormValues, 'logo' | 'seal' | 'headSignature'>, file?: File) => {
     if (!file) return;
-    form.setValue(field, await fileToDataUrl(file), { shouldDirty: true });
+    setUploadingAsset(field);
+    try {
+      const result = await uploadInstitutionImage(file, field);
+      form.setValue(field, result.url, { shouldDirty: true });
+    } catch (err: any) {
+      setStatus(err?.message || 'Image upload failed');
+    } finally {
+      setUploadingAsset(null);
+    }
+  };
+
+  // Delete institution image from GridFS
+  const onDeleteAsset = async (field: keyof Pick<ProfileFormValues, 'logo' | 'seal' | 'headSignature'>) => {
+    const currentUrl = form.getValues(field);
+    if (!currentUrl) return;
+    setUploadingAsset(field);
+    try {
+      // Try server-side delete (removes from institution + GridFS)
+      await api.institution.deleteImage(field).catch(() => {
+        // fallback: try direct image delete
+        if (currentUrl) deleteImage(currentUrl).catch(() => undefined);
+      });
+      form.setValue(field, '', { shouldDirty: true });
+    } catch (err: any) {
+      setStatus(err?.message || 'Image delete failed');
+    } finally {
+      setUploadingAsset(null);
+    }
   };
 
   const onSubmit = async (data: ProfileFormValues) => {
@@ -187,8 +215,8 @@ export default function InstitutionProfilePage() {
       const academicYears = String(data.academicYearsText || '')
         .split('\n')
         .map((line) => {
-          const [year, mongodbUri] = line.split('|').map((part) => part.trim());
-          return year ? { year, mongodbUri, isActive: year === data.activeAcademicYear } : null;
+          const [year, mongodbUri, imgbbApiKey] = line.split('|').map((part) => part.trim());
+          return year ? { year, mongodbUri, imgbbApiKey, isActive: year === data.activeAcademicYear } : null;
         })
         .filter(Boolean);
       await api.institution.updateProfile({
@@ -215,6 +243,7 @@ export default function InstitutionProfilePage() {
         },
         settings: {
           mongodbUri: data.mongodbUri,
+          imgbbApiKey: data.imgbbApiKey,
           smsEnabled: data.smsEnabled,
           smsProvider: data.smsProvider,
           smsApiUrl: data.smsApiUrl,
@@ -293,7 +322,7 @@ export default function InstitutionProfilePage() {
                   <FormField control={form.control} name="website" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Website</FormLabel>
-                      <FormControl><Input placeholder="http://localhost:3000" {...field} /></FormControl>
+                      <FormControl><Input placeholder="https://www.easyschool.live" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -393,12 +422,15 @@ export default function InstitutionProfilePage() {
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-base"><Server className="h-4 w-4" /> Storage</CardTitle>
-                      <CardDescription>Save this school&apos;s MongoDB URI for institution-specific storage settings.</CardDescription>
+                      <CardDescription>Images are stored in MongoDB GridFS. Set a per-school MongoDB URI for isolated tenant storage.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <FormField control={form.control} name="mongodbUri" render={({ field }) => (
-                        <FormItem><FormLabel>MongoDB URI</FormLabel><FormControl><Input type="password" placeholder="mongodb+srv://..." {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>MongoDB URI (optional)</FormLabel><FormControl><Input type="password" placeholder="mongodb+srv://..." {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
+                      <div className="rounded-md border bg-blue-50 border-blue-200 p-3 text-xs text-blue-800">
+                        ✅ Images are now stored in <strong>MongoDB GridFS</strong> — no external API key needed.
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -451,7 +483,7 @@ export default function InstitutionProfilePage() {
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base">Year Settings</CardTitle>
-                      <CardDescription>Use one line per year: year | mongodb uri</CardDescription>
+                      <CardDescription>Use one line per year: year | mongodb uri | imgbb api key</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <FormField control={form.control} name="activeAcademicYear" render={({ field }) => (
@@ -504,7 +536,7 @@ export default function InstitutionProfilePage() {
                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
                             <SelectItem value="true">EASY SCHOOL storage - {formatCurrency(100)}/month</SelectItem>
-                            <SelectItem value="false">Own MongoDB URI - no extra cost</SelectItem>
+                            <SelectItem value="false">Own MongoDB URI and ImgBB API - no extra cost</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -560,11 +592,42 @@ export default function InstitutionProfilePage() {
                 <div className="grid gap-4 md:grid-cols-3">
                   {assets.map((asset) => (
                     <div key={asset.name} className="rounded-md border p-4">
-                      <div className="mb-3 text-sm font-medium">{asset.label}</div>
-                      <label className="flex h-28 cursor-pointer items-center justify-center rounded-md border border-dashed bg-muted/40">
-                        {asset.value ? <img src={asset.value} alt="" className="h-full w-full rounded-md object-contain p-2" /> : <ImagePlus className="h-7 w-7 text-muted-foreground" />}
-                        <input type="file" accept="image/*" className="sr-only" onChange={(event) => onUpload(asset.name, event.target.files?.[0])} />
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="text-sm font-medium">{asset.label}</span>
+                        {asset.value && (
+                          <button
+                            type="button"
+                            onClick={() => onDeleteAsset(asset.name)}
+                            className="text-destructive hover:text-destructive/80 p-1"
+                            title={`Remove ${asset.label}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <label className="flex h-28 cursor-pointer items-center justify-center rounded-md border border-dashed bg-muted/40 relative">
+                        {uploadingAsset === asset.name ? (
+                          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                            <span className="text-xs">Uploading...</span>
+                          </div>
+                        ) : asset.value ? (
+                          <img src={resolveImageUrl(asset.value)} alt="" className="h-full w-full rounded-md object-contain p-2" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                            <ImagePlus className="h-7 w-7" />
+                            <span className="text-xs">Click to upload</span>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={uploadingAsset === asset.name}
+                          onChange={(event) => onUpload(asset.name, event.target.files?.[0])}
+                        />
                       </label>
+                      <p className="mt-1 text-center text-xs text-muted-foreground">Max 5MB · JPG, PNG, WebP</p>
                     </div>
                   ))}
                 </div>

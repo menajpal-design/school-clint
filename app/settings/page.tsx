@@ -26,8 +26,8 @@ const weekDays = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thurs
 
 const emptySiteConfig = {
   siteName: "Easy School",
-  appBaseUrl: "http://localhost:3000",
-  apiBaseUrl: "http://localhost:5000/api",
+  appBaseUrl: "https://easyschool.live",
+  apiBaseUrl: "https://school-server-b264c1a1fac6.herokuapp.com/api",
   mongodbUrl: "",
   mongodbUsedMb: "",
 };
@@ -35,8 +35,9 @@ const emptySiteConfig = {
 const emptyStorageStatus = {
   primaryMongo: { connected: false, status: "unknown", message: "Not checked yet." },
   configuredMongo: { connected: false, status: "unknown", message: "Not checked yet.", usedMb: 0, warning: false, warningAtMb: 475 },
+  imageStorage: { provider: 'gridfs', fileCount: 0, totalMb: 0, warning: false, status: 'unknown', message: 'Not checked yet.' },
   mongodbUris: [],
-  warningLimits: { mongoMb: 475 },
+  warningLimits: { mongoMb: 475, gridfsWarningMb: 400 },
   checkedAt: "",
 };
 
@@ -71,7 +72,6 @@ function HeadSettings() {
     try {
       const status: any = await apiClient.get("/site-settings/storage-status");
       setStorageStatus({ ...emptyStorageStatus, ...status });
-      setHasMongoUrl(Boolean(status.hasMongoUrl));
     } catch (err: any) {
       setStorageStatus({ ...emptyStorageStatus, configuredMongo: { connected: false, status: "error", message: err?.message || "Storage status check failed." } });
     } finally {
@@ -137,7 +137,7 @@ function HeadSettings() {
     setSiteConfig({ ...emptySiteConfig, ...(data.config || {}), mongodbUrl: "" });
     setHasMongoUrl(Boolean(data.hasMongoUrl));
     await loadStorageStatus();
-  }, "Site config saved. Old MongoDB URI is kept in history.");
+  }, "Site config saved.");
 
   const saveCurrency = () => runSave("currency", () => setPreferredCurrency(currency), "Currency preference saved.");
   const saveAttendance = () => runSave("attendance", () => setAttendanceSettings(attendance), "Attendance settings saved.");
@@ -157,6 +157,8 @@ function HeadSettings() {
   };
 
   const mongoWarning = storageStatus?.configuredMongo?.warning;
+  const gridfsWarning = storageStatus?.imageStorage?.warning;
+
   return (
     <div className="space-y-5 p-3 md:p-6">
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -164,7 +166,7 @@ function HeadSettings() {
           <div className="rounded-xl bg-primary/10 p-3 text-primary"><SettingsIcon className="h-6 w-6" /></div>
           <div>
             <h1 className="text-2xl font-bold md:text-3xl">Head Settings</h1>
-            <p className="text-sm text-muted-foreground">New MongoDB URI add করলে old URI delete হবে না; history list-এ থাকবে।</p>
+            <p className="text-sm text-muted-foreground">New MongoDB URI add করলে old URI delete হবে না; history list-এ থাকবে। Images এখন MongoDB GridFS-এ store হচ্ছে।</p>
           </div>
         </div>
         {message && <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
@@ -177,7 +179,7 @@ function HeadSettings() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Storage Connection Status</CardTitle>
-                <CardDescription>MongoDB connected হলে green dot, disconnected/error হলে red dot। MongoDB 475MB হলে warning দেখাবে।</CardDescription>
+                <CardDescription>MongoDB connected হলে green dot। Images MongoDB GridFS-এ store হচ্ছে — no external API key needed।</CardDescription>
               </div>
               <Button variant="outline" onClick={loadStorageStatus} disabled={checkingStorage}><RefreshCw className={`mr-2 h-4 w-4 ${checkingStorage ? 'animate-spin' : ''}`} />Refresh</Button>
             </div>
@@ -186,15 +188,26 @@ function HeadSettings() {
             <div className="grid gap-3 md:grid-cols-3">
               <StatusBox title="Primary Server MongoDB" item={storageStatus.primaryMongo} />
               <StatusBox title="Active MongoDB URI" item={storageStatus.configuredMongo} />
+              <GridFSStatusBox item={storageStatus.imageStorage} />
             </div>
-            {mongoWarning && (
+            {(mongoWarning || gridfsWarning) && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
                 <div className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4" /> Storage warning</div>
-                {mongoWarning && <div className="mt-1">MongoDB data is {storageStatus.configuredMongo.usedMb}MB. Data is low/free limit near full — add a new MongoDB URI. Old URI will remain listed for old data.</div>}
+                {mongoWarning && <div className="mt-1">MongoDB data is {storageStatus.configuredMongo.usedMb}MB. Near free limit — add a new MongoDB URI. Old URI will remain listed for old data.</div>}
+                {gridfsWarning && <div className="mt-1">GridFS images are {storageStatus.imageStorage?.totalMb}MB. Consider archiving old images.</div>}
               </div>
             )}
             <div className="grid gap-4 lg:grid-cols-2">
               <HistoryList title="MongoDB URI History" items={storageStatus.mongodbUris || siteConfig.mongodbUris || []} type="mongo" warningAt={storageStatus.warningLimits?.mongoMb || 475} />
+              <div className="rounded-xl border p-4">
+                <div className="mb-3 font-semibold">Image Storage</div>
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                  <div className="font-semibold">✅ MongoDB GridFS</div>
+                  <div className="mt-1">Files: {storageStatus.imageStorage?.fileCount ?? 0} images</div>
+                  <div>Used: {storageStatus.imageStorage?.totalMb ?? 0}MB</div>
+                  <div className="mt-2 text-xs">Images serve via <code>/api/images/:id</code></div>
+                </div>
+              </div>
             </div>
             <div className="text-xs text-muted-foreground">Last checked: {storageStatus.checkedAt ? new Date(storageStatus.checkedAt).toLocaleString() : 'Not checked yet'}</div>
           </CardContent>
@@ -203,19 +216,19 @@ function HeadSettings() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Add New Storage Config</CardTitle>
-            <CardDescription>New MongoDB URI দিলে সেটা active হবে, কিন্তু old URI delete হবে না। Old data access history হিসেবে থাকবে।</CardDescription>
+            <CardDescription>New URI/key দিলে সেটা active হবে, কিন্তু old URI/key delete হবে না। Old data access history হিসেবে থাকবে।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <TextField label="Site Name" value={siteConfig.siteName} onChange={(value) => setSiteConfig({ ...siteConfig, siteName: value })} />
-              <TextField label="App Base URL" value={siteConfig.appBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, appBaseUrl: value })} />
+            <div className="grid gap-4 md:grid-cols-2"              <TextField label="App Base URL" value={siteConfig.appBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, appBaseUrl: value })} />
               <TextField label="API Base URL" value={siteConfig.apiBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, apiBaseUrl: value })} />
               <TextField label={hasMongoUrl ? "Add new MongoDB URI (old URI will stay listed)" : "MongoDB URI"} type="password" value={siteConfig.mongodbUrl} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUrl: value })} placeholder="mongodb+srv://..." />
               <CheckField label="Allow personal MongoDB fallback when central storage unavailable" checked={Boolean(siteConfig.allowPersonalMongo)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalMongo: checked })} />
               <CheckField label="Allow personal storage (alternate flag)" checked={Boolean(siteConfig.allowPersonalStorage)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalStorage: checked })} />
               <TextField label="MongoDB used MB (optional manual update)" type="number" value={String(siteConfig.mongodbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUsedMb: value })} placeholder="475" />
             </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">For security, saved MongoDB URI is masked. New value দিলে old value replace না হয়ে history list-এ থাকবে।</div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">✅ Images are stored in MongoDB GridFS — no ImgBB API key needed.</div>
+            <Button onClick={saveSiteConfig} disabled={saving === "site"}><Save className="mr-2 h-4 w-4" />{saving === "site" ? "Saving..." : "Save / Add storage config"}</Button>
+
             <Button onClick={saveSiteConfig} disabled={saving === "site"}><Save className="mr-2 h-4 w-4" />{saving === "site" ? "Saving..." : "Save / Add storage config"}</Button>
           </CardContent>
         </Card>
@@ -285,7 +298,23 @@ function StatusBox({ title, item }: { title: string; item: any }) {
   );
 }
 
-function HistoryList({ title, items, type, warningAt }: { title: string; items: any[]; type: 'mongo'; warningAt: number }) {
+function GridFSStatusBox({ item }: { item: any }) {
+  const warning = Boolean(item?.warning);
+  return (
+    <div className={`rounded-xl border p-4 ${warning ? 'border-amber-300 bg-amber-50' : 'border-blue-200 bg-blue-50'}`}>
+      <div className="flex items-center gap-2">
+        <span className={`h-3 w-3 rounded-full ${warning ? 'bg-amber-500' : 'bg-blue-500'}`} />
+        <div className={`font-semibold ${warning ? 'text-amber-800' : 'text-blue-800'}`}>Image Storage (GridFS)</div>
+      </div>
+      <div className={`mt-2 text-xs ${warning ? 'text-amber-700' : 'text-blue-700'}`}>{item?.message || 'MongoDB GridFS active'}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{item?.fileCount ?? 0} files · {item?.totalMb ?? 0}MB used</div>
+      <div className="mt-1 text-[11px] uppercase tracking-wide text-blue-600">self-hosted · no api key</div>
+    </div>
+  );
+}
+
+
+function HistoryList({ title, items, type, warningAt }: { title: string; items: any[]; type: 'mongo' | 'imgbb'; warningAt: number }) {
   // Placeholder: will receive makeActive callback via props if needed
   return (
     <div className="rounded-xl border p-4">

@@ -239,7 +239,7 @@ export function setAppControlSettings(settings: AppControlSettings) {
 }
 
 export function getSubdomain(hostname: string, mainDomainEnv?: string): string {
-  const mainDomain = mainDomainEnv || 'localhost';
+  const mainDomain = mainDomainEnv || 'easyschool.live';
   const isLocal = /^(localhost|127\.0\.0\.1)$/i.test(hostname);
   const hostParts = hostname.split('.').filter(Boolean);
 

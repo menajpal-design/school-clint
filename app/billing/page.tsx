@@ -622,7 +622,7 @@ export default function BillingPage() {
               </div>
               <div className="rounded-lg border bg-card p-4">
                 <div className="text-sm text-slate-500">Storage</div>
-                <div className="mt-1 font-semibold">{billingInfo.useEasySchoolStorage ? `EASY SCHOOL storage - ${formatCurrency(100)}/month` : 'Own MongoDB - no extra cost'}</div>
+                <div className="mt-1 font-semibold">{billingInfo.useEasySchoolStorage ? `EASY SCHOOL storage - ${formatCurrency(100)}/month` : 'Own MongoDB + ImgBB - no cost'}</div>
               </div>
             </div>
 

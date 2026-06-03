@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authManager } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { getSubdomain } from "@/lib/utils";
+import SchoolNotFound from "@/components/SchoolNotFound";
 
 const features = [
   {
@@ -56,8 +57,8 @@ export default function Home() {
   const [schoolData, setSchoolData] = useState<any>(null);
   const [isSubdomain, setIsSubdomain] = useState(false);
   const [subdomainName, setSubdomainName] = useState('');
+  const [isValidSubdomain, setIsValidSubdomain] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [missingSchool, setMissingSchool] = useState(false);
 
   useEffect(() => {
     if (!isSubdomain) return;
@@ -77,7 +78,7 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
-      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'localhost';
+      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
       const sub = getSubdomain(hostname, mainDomain);
 
       if (sub) {
@@ -90,13 +91,14 @@ export default function Home() {
             const list = res.schools || [];
             if (list.length > 0) {
               setSchoolData(list[0]);
+              setIsValidSubdomain(true);
             } else {
-              setMissingSchool(true);
+              setIsValidSubdomain(false);
             }
             setChecking(false);
           })
           .catch(() => {
-            setMissingSchool(true);
+            setIsValidSubdomain(false);
             setChecking(false);
           });
         return;
@@ -110,12 +112,6 @@ export default function Home() {
     setChecking(false);
   }, [router]);
 
-  useEffect(() => {
-    if (missingSchool && subdomainName) {
-      router.replace(`/school-not-found?subdomain=${encodeURIComponent(subdomainName)}`);
-    }
-  }, [missingSchool, router, subdomainName]);
-
   if (checking) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
@@ -124,8 +120,8 @@ export default function Home() {
     );
   }
 
-  if (missingSchool) {
-    return null;
+  if (isSubdomain && !isValidSubdomain) {
+    return <SchoolNotFound subdomain={subdomainName} />;
   }
 
   if (isSubdomain) {
@@ -133,7 +129,7 @@ export default function Home() {
     const schoolType = schoolData?.type || 'school';
     const schoolAddress = schoolData?.address && schoolData.address !== 'Not provided' ? schoolData.address : '760 Education Ave, New York';
     const schoolPhone = schoolData?.phone && schoolData.phone !== 'Not provided' ? schoolData.phone : '+1 (555) 123-4567';
-    const schoolEmail = schoolData?.email ? schoolData.email : `info@${subdomainName}.localhost`;
+    const schoolEmail = schoolData?.email ? schoolData.email : `info@${subdomainName}.easyschool.live`;
     const schoolLogo = schoolData?.logo || '';
 
     return (
@@ -601,7 +597,7 @@ export default function Home() {
 
             <div className="flex flex-col sm:flex-row items-center justify-between pt-8 text-[10px] text-blue-300 gap-4 text-center sm:text-left">
               <p>© {new Date().getFullYear()} {schoolName}. All rights reserved.</p>
-              <p>Powered by <a href="/" className="text-white hover:underline font-bold">EASY SCHOOL</a></p>
+              <p>Powered by <a href="https://easyschool.live" className="text-white hover:underline font-bold">EASY SCHOOL</a></p>
             </div>
           </div>
         </footer>

@@ -203,7 +203,7 @@ class ApiClient {
     const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
     if (!res.ok) {
       if (isBrowser && (res.status === 428 || data?.code === 'STORAGE_CONFIG_REQUIRED')) {
-        const message = data?.message || 'দয়া করে MongoDB URL সেট করুন।';
+        const message = data?.message || 'দয়া করে MongoDB URL সেট করুন।';
         this.toast(message, 'Storage configuration required');
         const redirectTo = data?.redirectTo || '/settings';
         if (window.location.pathname !== redirectTo) window.location.href = redirectTo;
@@ -350,7 +350,12 @@ export const api: any = {
     issue: (d: any) => apiClient.post('/library/loans/issue', d),
     return: (d: any) => apiClient.post('/library/loans/return'),
   },
-  institution: { plans: () => apiClient.get('/institution/plans'), profile: () => apiClient.get('/institution/profile'), updateProfile: (d: any) => apiClient.put('/institution/profile', d), recordPayment: (d: any) => apiClient.post('/institution/billing/payment', d), createStripeCheckout: (d: any) => apiClient.post('/institution/billing/stripe/checkout', d), checkSubdomain: (sub: string) => apiClient.get('/institution/subdomain/check', { params: { subdomain: sub } }) },
+  institution: { plans: () => apiClient.get('/institution/plans'), profile: () => apiClient.get('/institution/profile'), updateProfile: (d: any) => apiClient.put('/institution/profile', d), recordPayment: (d: any) => apiClient.post('/institution/billing/payment', d), createStripeCheckout: (d: any) => apiClient.post('/institution/billing/stripe/checkout', d), checkSubdomain: (sub: string) => apiClient.get('/institution/subdomain/check', { params: { subdomain: sub } }), uploadImage: (formData: FormData) => apiClient.post('/institution/upload-image', formData), deleteImage: (imageType: string) => apiClient.delete(`/institution/delete-image?imageType=${imageType}`) },
+  images: {
+    upload: (formData: FormData) => apiClient.post('/images/upload', formData),
+    delete: (id: string) => apiClient.delete(`/images/${id}`),
+    info: (id: string) => apiClient.get(`/images/${id}/info`),
+  },
   institutionSmsTopup: (d: any) => apiClient.post('/institution/sms/topup', d),
   institutionSmsTopupPayment: (d: any) => apiClient.post('/institution/sms/topup/payment', d),
   institutionSmsTopupHistory: (p?: any) => apiClient.get('/institution/sms/topup/history', { params: p }),
