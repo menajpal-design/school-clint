@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const API_TARGET = process.env.API_TARGET || process.env.NEXT_PUBLIC_API_TARGET || 'https://school-server-b264c1a1fac6.herokuapp.com';
+const API_TARGET = process.env.API_TARGET || process.env.NEXT_PUBLIC_API_TARGET || 'http://localhost:5000';
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || `${API_TARGET.replace(/\/$/, '')}/api`;
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -61,6 +61,8 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: '**.herokuapp.com', pathname: '/api/images/**' },
       { protocol: 'https', hostname: 'school-server-b264c1a1fac6.herokuapp.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'easyschool.live', pathname: '/**' },
+      { protocol: 'https', hostname: '**.easyschool.live', pathname: '/**' },
     ],
   },
   async headers() {

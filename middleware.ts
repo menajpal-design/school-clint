@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const MAIN_DOMAIN = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  'https://school-server-b264c1a1fac6.herokuapp.com/api';
+  'http://localhost:5000/api';
 
 // Rate limiting (simple in-memory — fine for single-instance deployments)
 // For multi-instance production use Redis / Upstash instead.
