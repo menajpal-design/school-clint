@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { api } from '@/lib/api';
 import { getSubdomain } from '@/lib/utils';
-import AdmissionFields from '@/components/admission/AdmissionFields';
 import SchoolNotFound from '@/components/SchoolNotFound';
 
 type School = { _id: string; name: string; type: string; eiin?: string; address: string; phone?: string; email?: string };
@@ -30,6 +29,7 @@ export default function PublicAdmissionPage() {
   const [search, setSearch] = useState('');
   const [schools, setSchools] = useState<School[]>([]);
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
+  const [classes, setClasses] = useState<any[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [status, setStatus] = useState('');
   const [isSubdomain, setIsSubdomain] = useState(false);
@@ -78,10 +78,32 @@ export default function PublicAdmissionPage() {
     }
   }, []);
 
+  // Fetch academic classes when selectedSchool changes
+  useEffect(() => {
+    if (!selectedSchool) {
+      setClasses([]);
+      return;
+    }
+    api.publicResults.options({ institutionId: selectedSchool._id })
+      .then((res: any) => {
+        setClasses(res.classes || []);
+      })
+      .catch(() => {
+        setClasses([]);
+      });
+  }, [selectedSchool]);
+
   const update = (key: keyof typeof emptyForm, value: string) => setForm((c) => ({ ...c, [key]: value }));
 
   const submit = async () => {
     if (!selectedSchool) { setStatus('Select a school first.'); return; }
+    if (!form.studentName.trim()) { setStatus('Student Name is required.'); return; }
+    if (!form.dateOfBirth) { setStatus('Date of Birth is required.'); return; }
+    if (!form.requestedClass) { setStatus('Please select a class.'); return; }
+    if (!form.guardianName.trim()) { setStatus('Guardian Name is required.'); return; }
+    if (!form.guardianPhone.trim()) { setStatus('Guardian Phone is required.'); return; }
+    if (!form.address.trim()) { setStatus('Address is required.'); return; }
+
     setStatus('Submitting application...');
     try {
       await api.admissions.apply({ ...form, institutionId: selectedSchool._id });
@@ -103,10 +125,19 @@ export default function PublicAdmissionPage() {
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-br from-indigo-650 to-indigo-900 text-white rounded-2xl h-12 w-12 flex items-center justify-center font-extrabold text-lg shadow-lg">EA</div>
             <div>
-              <h1 className="text-lg md:text-xl font-black text-indigo-950 tracking-tight leading-tight">Admission Application</h1>
-              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Search a registered school and apply for admission</p>
+              <h1 className="text-lg md:text-xl font-black text-indigo-950 tracking-tight leading-tight">Admission Portal</h1>
+              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
+                {isSubdomain ? 'Apply for admission online' : 'Search a registered school and apply for admission'}
+              </p>
             </div>
           </div>
+          {selectedSchool && (
+            <div className="text-center sm:text-right border-l-0 sm:border-l sm:pl-4 border-slate-200/85">
+              <span className="text-[9px] font-black text-indigo-650 uppercase tracking-widest block mb-0.5">INSTITUTION PORTAL</span>
+              <p className="text-xs font-black text-slate-900 uppercase">{selectedSchool.name}</p>
+              {selectedSchool.eiin && <p className="text-[10px] text-slate-500 font-semibold">EIIN: {selectedSchool.eiin}</p>}
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <Link href="/" className="text-xs font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Back to Portal</Link>
             <Button asChild variant="outline" className="border-slate-350 text-slate-700 hover:bg-slate-50 font-bold rounded-xl shadow-sm text-xs px-4"><Link href="/login">LOGIN</Link></Button>
@@ -158,16 +189,112 @@ export default function PublicAdmissionPage() {
               </CardHeader>
               <CardContent className="p-6 md:p-8 space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <AdmissionFields values={form as any} onChange={(k, v) => update(k as any, v)} />
-                </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Student Name</label>
+                    <Input
+                      value={form.studentName}
+                      onChange={(e) => update('studentName', e.target.value)}
+                      placeholder="Student Name"
+                      className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition"
+                      required
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Full Address</span>
-                  <Textarea value={form.address} onChange={(e) => update('address', e.target.value)} placeholder="Street, City, State, Zip Code" className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition min-h-[90px]" />
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Date of Birth</label>
+                    <Input
+                      type="date"
+                      value={form.dateOfBirth}
+                      onChange={(e) => update('dateOfBirth', e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Requested Class</label>
+                    <select
+                      value={form.requestedClass}
+                      onChange={(e) => update('requestedClass', e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-semibold transition"
+                      required
+                    >
+                      <option value="">Select a class</option>
+                      {classes.map((cls: any) => (
+                        <option key={cls._id} value={cls.name}>
+                          {cls.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Previous School (Optional)</label>
+                    <Input
+                      value={form.previousSchool}
+                      onChange={(e) => update('previousSchool', e.target.value)}
+                      placeholder="Previous School Name (if any)"
+                      className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Previous Result (Optional)</label>
+                    <Input
+                      value={form.previousResult}
+                      onChange={(e) => update('previousResult', e.target.value)}
+                      placeholder="e.g. GPA 5.00 / Class Roll 1"
+                      className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Guardian Name</label>
+                    <Input
+                      value={form.guardianName}
+                      onChange={(e) => update('guardianName', e.target.value)}
+                      placeholder="Guardian Name"
+                      className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Guardian Phone</label>
+                    <Input
+                      value={form.guardianPhone}
+                      onChange={(e) => update('guardianPhone', e.target.value)}
+                      placeholder="Guardian Phone"
+                      className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Guardian Email (Optional)</label>
+                    <Input
+                      type="email"
+                      value={form.guardianEmail}
+                      onChange={(e) => update('guardianEmail', e.target.value)}
+                      placeholder="Guardian Email"
+                      className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition"
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Full Address</label>
+                    <Textarea
+                      value={form.address}
+                      onChange={(e) => update('address', e.target.value)}
+                      placeholder="Street, City, State, Zip Code"
+                      className="w-full px-4 py-2.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-medium transition min-h-[90px]"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100">
-                  <p className={`text-xs font-bold ${status.includes('successfully') ? 'text-emerald-700' : 'text-slate-600'}`}>{status}</p>
+                  <p className={`text-xs font-bold ${status.includes('successfully') ? 'text-emerald-700' : 'text-slate-650'}`}>{status}</p>
                   <Button onClick={submit} className="w-full sm:w-auto bg-indigo-650 hover:bg-indigo-850 text-white font-extrabold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 px-6 py-2.5"><Send className="h-4 w-4" />Submit Application</Button>
                 </div>
               </CardContent>
