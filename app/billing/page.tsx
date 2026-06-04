@@ -692,6 +692,19 @@ export default function BillingPage() {
               </div>
             </div>
 
+            <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 text-sm">
+              <div className="flex items-start gap-2">
+                <MessageSquare className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                <div>
+                  <span className="font-semibold text-emerald-800">🎁 স্টুডেন্ট প্যাকেজে বিনামূল্যে SMS অন্তর্ভুক্ত!</span>
+                  <p className="mt-1 text-emerald-700">
+                    আপনি যতজন স্টুডেন্টের প্যাকেজ কিনবেন — প্রতি মাসে সেই পরিমাণ SMS <strong>ফ্রিতে</strong> পাবেন।
+                    উদাহরণ: <strong>{plan.name} প্যাকেজ</strong> কিনলে <strong>{plan.studentLimit} SMS/মাস ফ্রি</strong>।
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="rounded-lg border bg-slate-50 p-4 text-sm">
               Due amount: {formatCurrency(due.baseAmount)} + storage {formatCurrency(due.storageAmount)} + SMS {formatCurrency(Number(billingInfo.smsChargeAmount || 0))} = <span className="font-semibold">{formatCurrency(totalWithSms)}</span>
             </div>
