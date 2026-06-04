@@ -207,7 +207,14 @@ function flattenMenu(items: MenuItemConfig[]): MenuItemConfig[] {
 const routeAliases: Record<string, string> = {
   '/documents/admit-cards': '/id-cards/admit-card',
   '/academic/holiday-list': '/holidays',
+  '/billing': '/billing',
+  '/institution/billing': '/institution/billing',
+  '/leave-application': '/leave-application',
+  '/leave-list': '/leave-list',
+  '/sms-monitoring': '/sms-monitoring',
+  '/class-routine': '/academic/class-routine',
 };
+
 
 export function isRouteAllowed(pathname: string, userRole: UserRole): boolean {
   if (getDemoMode()) return true;
