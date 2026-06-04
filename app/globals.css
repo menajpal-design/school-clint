@@ -417,50 +417,177 @@
 }
 
 @media print {
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-  body, html { margin: 0 !important; padding: 0 !important; background: #ffffff !important; }
+  /* ── Page setup ─────────────────────────────────────────────────── */
+  @page {
+    size: A4;
+    margin: 12mm 14mm;
+  }
 
-  .mobile-table-scroll { overflow: visible !important; border: 0 !important; }
-  .mobile-friendly-table { min-width: 100% !important; }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    background-attachment: initial !important;
+  }
+
+  /* ── Hide UI chrome ──────────────────────────────────────────────── */
+  nav,
+  aside,
+  header,
+  footer,
+  .sidebar,
+  [class*="sidebar"],
+  [class*="Sidebar"],
+  [data-app-shell],
+  [class*="Navbar"],
+  [class*="navbar"],
+  [class*="no-print"],
+  .no-print,
+  button:not(.print-btn),
+  [role="dialog"],
+  [data-radix-popper-content-wrapper] {
+    display: none !important;
+  }
+
+  /* ── Main content takes full width ─────────────────────────────── */
+  main,
+  .mobile-main-content,
+  [class*="flex-1"],
+  body > div,
+  #__next,
+  #__next > div {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
+    background: #ffffff !important;
+  }
+
+  /* ── Table fixes ────────────────────────────────────────────────── */
+  .mobile-table-scroll,
+  .overflow-x-auto {
+    overflow: visible !important;
+    border: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  table,
+  .mobile-friendly-table {
+    min-width: 100% !important;
+    width: 100% !important;
+    font-size: 10pt !important;
+    page-break-inside: auto !important;
+    border-collapse: collapse !important;
+  }
+
+  table tr { page-break-inside: avoid; page-break-after: auto; }
+  table thead { display: table-header-group; }
+  table tfoot { display: table-footer-group; }
+
   .mobile-friendly-table td:first-child,
   .mobile-friendly-table th:first-child,
   .overflow-x-auto > table td:first-child,
-  .overflow-x-auto > table th:first-child { position: static !important; box-shadow: none !important; }
+  .overflow-x-auto > table th:first-child {
+    position: static !important;
+    box-shadow: none !important;
+  }
 
+  /* ── ID Card special ────────────────────────────────────────────── */
   .professional-id-card {
     width: 800px !important;
     height: 500px !important;
     max-width: none !important;
     max-height: none !important;
     font-size: 12pt !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    color-adjust: exact !important;
+    page-break-inside: avoid;
   }
 
-  .professional-id-card > div { width: 800px !important; height: 500px !important; gap: 30px !important; flex-wrap: nowrap !important; }
-  .professional-id-card > div > section { width: 380px !important; height: 500px !important; flex: 0 0 auto !important; overflow: hidden !important; }
-  .professional-id-card img { max-width: 100% !important; height: auto !important; }
+  .professional-id-card > div {
+    width: 800px !important;
+    height: 500px !important;
+    gap: 30px !important;
+    flex-wrap: nowrap !important;
+  }
 
+  .professional-id-card > div > section {
+    width: 380px !important;
+    height: 500px !important;
+    flex: 0 0 auto !important;
+    overflow: hidden !important;
+  }
+
+  /* ── Admit Card ─────────────────────────────────────────────────── */
   .admit-card {
     width: 186mm !important;
     height: 131.5mm !important;
     max-width: none !important;
-    max-height: none !important;
     font-size: 12pt !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    color-adjust: exact !important;
     background: #fbf6e8 !important;
+    page-break-inside: avoid;
   }
 
-  .admit-card > section { width: 186mm !important; height: 131.5mm !important; max-width: none !important; min-height: auto !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 !important; }
+  .admit-card > section {
+    width: 186mm !important;
+    height: 131.5mm !important;
+    max-width: none !important;
+    min-height: auto !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+  }
+
   .admit-card .admit-photo { width: 38mm !important; height: 34mm !important; overflow: hidden !important; }
   .admit-card .admit-qr { width: 32mm !important; height: 34mm !important; padding: 3mm !important; }
   .admit-card main { padding-right: 0 !important; }
-  .admit-card .admit-info-line { min-height: 7mm !important; font-size: 11px !important; line-height: 1.2 !important; }
+  .admit-card .admit-info-line { min-height: 7mm !important; font-size: 11px !important; }
   .admit-card table { font-size: 10px !important; table-layout: fixed !important; word-break: break-word !important; }
-  .admit-card img { max-width: 100% !important; height: auto !important; }
+
+  /* ── Result / Report Card ───────────────────────────────────────── */
+  .print-page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 14mm !important;
+    page-break-after: always;
+    background: white !important;
+  }
+
+  /* ── No page break on cards/sections ───────────────────────────── */
+  .card, [class*="rounded-xl"], [class*="rounded-2xl"] {
+    page-break-inside: avoid;
+    background: white !important;
+    backdrop-filter: none !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+  h1 { font-size: 18pt !important; }
+  h2 { font-size: 15pt !important; }
+  h3 { font-size: 13pt !important; }
+  p, td, th, li { font-size: 10pt !important; line-height: 1.4 !important; }
+
+  /* ── Color ──────────────────────────────────────────────────────── */
+  .bg-primary, [class*="bg-primary"] {
+    background: #2563eb !important;
+    color: white !important;
+  }
 }
 
 .professional-id-card { width: 800px !important; height: 500px !important; max-width: none !important; max-height: none !important; flex-shrink: 0 !important; }

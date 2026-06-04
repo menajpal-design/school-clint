@@ -60,7 +60,7 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
         <Navbar onMenuClick={() => setIsSidebarOpen((open) => !open)} isMobileMenuOpen={isSidebarOpen} />
         <div className="flex min-h-0 flex-1 mobile-content-shell">
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-          <main className="min-w-0 flex-1 p-3 pb-20 md:p-4 lg:ml-0 lg:p-6 mobile-main-content">
+          <main className={`min-w-0 flex-1 p-3 pb-20 md:p-4 lg:p-6 mobile-main-content transition-all duration-300`}>
             <div className="mx-auto w-full max-w-[1600px] min-w-0">{children}</div>
           </main>
         </div>

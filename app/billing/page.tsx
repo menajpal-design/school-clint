@@ -623,11 +623,132 @@ export default function BillingPage() {
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Billing Required</h1>
-            <p className="mt-2 text-sm text-slate-600">এই পাতায় কোনো ম্যানুয়াল ফর্ম নেই। পপআপে পেমেন্ট করতে পপআপ বাটন চাপুন; সেখানে প্রয়োজনীয় তথ্য পূরণ করে পেমেন্ট সম্পন্ন করুন।</p>
+            <h1 className="text-3xl font-bold tracking-tight">💳 Billing & SMS</h1>
+            <p className="mt-2 text-sm text-muted-foreground">আপনার subscription এবং SMS ব্যালেন্স এখানে দেখুন ও manage করুন।</p>
           </div>
           <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
         </div>
+
+        {/* ── Active Package Status Card ───────────────────────────────── */}
+        {institution && (
+          <div className={`rounded-2xl border-2 p-5 ${
+            institution.billingStatus === 'active' || institution.isActive
+              ? 'border-emerald-300 bg-gradient-to-br from-emerald-50 to-green-50'
+              : institution.billingStatus === 'trial'
+              ? 'border-amber-300 bg-amber-50'
+              : 'border-red-300 bg-red-50'
+          }`}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                  institution.billingStatus === 'active' || institution.isActive ? 'bg-emerald-100' : 'bg-amber-100'
+                }`}>
+                  <CheckCircle2 className={`h-5 w-5 ${institution.billingStatus === 'active' || institution.isActive ? 'text-emerald-600' : 'text-amber-500'}`} />
+                </div>
+                <div>
+                  <div className="text-lg font-bold">
+                    {institution.billingStatus === 'active' || institution.isActive
+                      ? '✅ সক্রিয় প্যাকেজ'
+                      : institution.billingStatus === 'trial'
+                      ? '🔄 Trial চলছে'
+                      : '⚠️ Subscription নেই'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {institution.name || 'প্রতিষ্ঠান'}
+                  </div>
+                </div>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                institution.billingStatus === 'active' || institution.isActive
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-amber-100 text-amber-700'
+              }`}>
+                {institution.billingStatus || (institution.isActive ? 'active' : 'inactive')}
+              </span>
+            </div>
+            {(institution.billingStatus === 'active' || institution.isActive) && institution.billing && (
+              <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                <div className="rounded-xl bg-white/70 p-3 text-center">
+                  <div className="text-xs text-muted-foreground">প্যাকেজ</div>
+                  <div className="mt-1 font-bold text-emerald-700">
+                    {getPlanByCode(institution.billing?.planCode || '')?.name || institution.billing?.planCode || '—'}
+                  </div>
+                </div>
+                <div className="rounded-xl bg-white/70 p-3 text-center">
+                  <div className="text-xs text-muted-foreground">Billing Cycle</div>
+                  <div className="mt-1 font-bold capitalize">
+                    {institution.billing?.billingCycle || 'monthly'}
+                  </div>
+                </div>
+                <div className="rounded-xl bg-white/70 p-3 text-center">
+                  <div className="text-xs text-muted-foreground">ছাত্র সীমা</div>
+                  <div className="mt-1 font-bold">
+                    {getPlanByCode(institution.billing?.planCode || '')?.studentLimit || '—'} জন
+                  </div>
+                </div>
+                <div className="rounded-xl bg-white/70 p-3 text-center">
+                  <div className="text-xs text-muted-foreground">মাসিক ফ্রি SMS</div>
+                  <div className="mt-1 font-bold text-emerald-600">
+                    {getPlanByCode(institution.billing?.planCode || '')?.studentLimit || 0} টি
+                  </div>
+                </div>
+              </div>
+            )}
+            {institution.billing?.planExpiry && (
+              <div className="mt-3 text-xs text-muted-foreground">
+                মেয়াদ শেষ: {new Date(institution.billing.planExpiry).toLocaleDateString('bn-BD')}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── SMS Balance Card ─────────────────────────────────────────── */}
+        {institution && (() => {
+          const billing = institution.billing || {};
+          const smsBalance = Number(billing.smsBalance ?? 0);
+          const smsUsed = Number(billing.smsUsed ?? 0);
+          const monthlySmsLimit = Number(billing.monthlySmsLimit ?? 0);
+          const freeSmsFromPlan = getPlanByCode(billing.planCode || '')?.studentLimit ?? 0;
+          const totalAvailable = smsBalance + freeSmsFromPlan;
+          const lowBalance = smsBalance > 0 && smsBalance < 10;
+          return (
+            <div className={`rounded-2xl border-2 p-5 ${lowBalance ? 'border-amber-300 bg-amber-50' : 'border-blue-200 bg-gradient-to-br from-blue-50 to-sky-50'}`}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${lowBalance ? 'bg-amber-100' : 'bg-blue-100'}`}>
+                  <MessageSquare className={`h-5 w-5 ${lowBalance ? 'text-amber-600' : 'text-blue-600'}`} />
+                </div>
+                <div>
+                  <div className="text-lg font-bold">📱 SMS ব্যালেন্স</div>
+                  <div className="text-sm text-muted-foreground">আপনার অবশিষ্ট SMS সংখ্যা</div>
+                </div>
+              </div>
+              {lowBalance && (
+                <div className="mb-3 rounded-lg border border-amber-300 bg-amber-100 px-4 py-2 text-sm text-amber-800">
+                  ⚠️ SMS ব্যালেন্স কম! নিচে থেকে SMS প্যাকেজ কিনুন।
+                </div>
+              )}
+              <div className="grid gap-3 sm:grid-cols-4">
+                <div className="rounded-xl bg-white/80 p-3 text-center">
+                  <div className="text-xs text-muted-foreground">কেনা SMS বাকি</div>
+                  <div className={`mt-1 text-2xl font-bold ${lowBalance ? 'text-amber-600' : 'text-blue-600'}`}>{smsBalance}</div>
+                </div>
+                <div className="rounded-xl bg-white/80 p-3 text-center">
+                  <div className="text-xs text-muted-foreground">প্ল্যান থেকে ফ্রি</div>
+                  <div className="mt-1 text-2xl font-bold text-emerald-600">{freeSmsFromPlan}</div>
+                  <div className="text-[10px] text-muted-foreground">মাসিক</div>
+                </div>
+                <div className="rounded-xl bg-white/80 p-3 text-center">
+                  <div className="text-xs text-muted-foreground">এ মাসে পাঠানো</div>
+                  <div className="mt-1 text-2xl font-bold">{smsUsed}</div>
+                </div>
+                <div className="rounded-xl bg-white/80 p-3 text-center">
+                  <div className="text-xs text-muted-foreground">মোট ব্যবহারযোগ্য</div>
+                  <div className="mt-1 text-2xl font-bold text-primary">{totalAvailable > 0 ? totalAvailable : '∞'}</div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         <Card>
           <CardHeader>
