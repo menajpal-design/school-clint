@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
-import { CreditCard, Loader2, LogOut } from 'lucide-react';
+import { CreditCard, Loader2, LogOut, MessageSquare, CheckCircle2, Zap } from 'lucide-react';
 import { api } from '@/lib/api';
 import { authManager } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
@@ -159,6 +159,21 @@ export default function BillingPage() {
   const [stripeCardNumber, setStripeCardNumber] = useState('');
   const [stripeExpiry, setStripeExpiry] = useState('');
   const [stripeCvc, setStripeCvc] = useState('');
+
+  // SMS Package state
+  const SMS_PACKAGES = [
+    { code: 'sms_50',   smsCount: 50,   price: 30,   label: '৫০ SMS',   pricePerSms: 0.60 },
+    { code: 'sms_100',  smsCount: 100,  price: 55,   label: '১০০ SMS',  pricePerSms: 0.55 },
+    { code: 'sms_200',  smsCount: 200,  price: 100,  label: '২০০ SMS',  pricePerSms: 0.50 },
+    { code: 'sms_300',  smsCount: 300,  price: 150,  label: '৩০০ SMS',  pricePerSms: 0.50 },
+    { code: 'sms_500',  smsCount: 500,  price: 250,  label: '৫০০ SMS',  pricePerSms: 0.50 },
+    { code: 'sms_1000', smsCount: 1000, price: 500,  label: '১০০০ SMS', pricePerSms: 0.50 },
+    { code: 'sms_2000', smsCount: 2000, price: 1000, label: '২০০০ SMS', pricePerSms: 0.50 },
+    { code: 'sms_5000', smsCount: 5000, price: 2500, label: '৫০০০ SMS', pricePerSms: 0.50 },
+  ];
+  const [selectedSmsPackage, setSelectedSmsPackage] = useState<string>('');
+  const [isPurchasingSms, setIsPurchasingSms] = useState(false);
+  const [smsPackageStatus, setSmsPackageStatus] = useState('');
   const [billingInfo, setBillingInfo] = useState<BillingInfo>({
     planCode: 'students_100',
     billingCycle: 'monthly',
@@ -252,6 +267,57 @@ export default function BillingPage() {
     } finally {
       setIsLoadingTopups(false);
     }
+  };
+
+  const openSmsPackagePurchasePopup = () => {
+    const pkg = SMS_PACKAGES.find((p) => p.code === selectedSmsPackage);
+    if (!pkg) { setSmsPackageStatus('একটি প্যাকেজ বেছে নিন।'); return; }
+    if (typeof window === 'undefined' || !window.GatewayWidget?.open) {
+      setSmsPackageStatus('Payment popup লোড হয়নি। একটু পরে চেষ্টা করুন।');
+      return;
+    }
+    window.GATEWAY_WIDGET_URL = gatewayOrigin;
+    const domain = configuredGatewayDomain || window.location.hostname;
+    const callbackUrl = `${window.location.origin}${window.location.pathname}`;
+    const orderId = `SMS-PKG-${institution?._id || Date.now()}-${pkg.code}`;
+    const paymentTime = new Date().toISOString();
+    setSmsPackageStatus(`${pkg.label} কেনার জন্য পেমেন্ট পপআপ খুলছে...`);
+    window.GatewayWidget.open({
+      apiKey: gatewayApiKey,
+      domain,
+      amount: pkg.price,
+      callback: callbackUrl,
+      orderId,
+      receiverNumber: gatewayReceiverNumber || undefined,
+      paymentMethods: gatewayPaymentMethods,
+      preferredMethods: gatewayPaymentMethods,
+      customerPhone: institution?.phone || '',
+      onComplete: async (result: any) => {
+        setIsPurchasingSms(true);
+        setSmsPackageStatus('পেমেন্ট সম্পন্ন। SMS প্যাকেজ activate করা হচ্ছে...');
+        const normalized = normalizePopupPaymentResult(result, { orderId, paymentTime, amount: pkg.price, gateway: 'popup' });
+        try {
+          const response = await api.institutionSmsPurchasePackage({
+            packageCode: pkg.code,
+            paymentGateway: normalized.paymentGateway || 'popup',
+            paymentOrderId: normalized.paymentOrderId || orderId,
+            paymentTime: normalized.paymentTime || paymentTime,
+            paymentTrxId: normalized.paymentTrxId || '',
+            paymentSenderNumber: normalized.paymentSenderNumber || '',
+            receivedAmount: normalized.receivedAmount || pkg.price,
+            popupPaymentResponse: result,
+            popupVerification: result?.verification || result?.data?.verification || {},
+          }) as any;
+          setInstitution((curr: any) => ({ ...curr, billing: response.billing || curr?.billing }));
+          await refreshSmsTopupHistory();
+          setSmsPackageStatus(`✅ ${pkg.label} সফলভাবে কেনা হয়েছে! ${pkg.smsCount} SMS credit যোগ হয়েছে।`);
+        } catch (error: any) {
+          setSmsPackageStatus(`❌ ${error?.message || 'SMS প্যাকেজ activate করতে সমস্যা হয়েছে।'}`);
+        } finally {
+          setIsPurchasingSms(false);
+        }
+      },
+    });
   };
 
   const submitPopupPayment = async (payment: PopupPaymentResult) => {
@@ -799,6 +865,108 @@ export default function BillingPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* ===================== SMS PACKAGE PURCHASE SECTION ===================== */}
+        <Card className="overflow-hidden border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50">
+          <CardHeader className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              SMS প্যাকেজ কিনুন
+            </CardTitle>
+            <CardDescription className="text-emerald-100">
+              প্রতি মাসে আপনার স্টুডেন্ট সংখ্যার সমান SMS প্যাকেজ কিনুন। ১ ক্রেডিট = ১ SMS।
+              বর্তমান ব্যালেন্স: <span className="font-bold text-white">{Number(institution?.billing?.smsBalance ?? 0)} SMS credit</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 p-6">
+            {/* Recommended notice based on plan */}
+            {(() => {
+              const planStudentLimit = institution?.billing?.studentLimit || plan?.studentLimit || 100;
+              const recommended = SMS_PACKAGES.find((p) => p.smsCount >= planStudentLimit) || SMS_PACKAGES[SMS_PACKAGES.length - 1];
+              return (
+                <div className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-100 px-4 py-3 text-sm text-emerald-800">
+                  <Zap className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  আপনার প্ল্যানে <strong>{planStudentLimit} জন স্টুডেন্ট</strong> — Recommended প্যাকেজ: <strong>{recommended.label} ({formatCurrency(recommended.price)})</strong>
+                </div>
+              );
+            })()}
+
+            {/* Package grid */}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {SMS_PACKAGES.map((pkg) => {
+                const planStudentLimit = institution?.billing?.studentLimit || plan?.studentLimit || 100;
+                const isRecommended = pkg.smsCount >= planStudentLimit && (SMS_PACKAGES.find((p) => p.smsCount >= planStudentLimit)?.code === pkg.code);
+                const isSelected = selectedSmsPackage === pkg.code;
+                return (
+                  <button
+                    key={pkg.code}
+                    type="button"
+                    onClick={() => setSelectedSmsPackage(pkg.code)}
+                    className={`relative rounded-xl border-2 p-4 text-left transition-all duration-200 ${
+                      isSelected
+                        ? 'border-emerald-500 bg-emerald-50 shadow-md scale-[1.02]'
+                        : isRecommended
+                          ? 'border-teal-400 bg-teal-50 hover:border-teal-500'
+                          : 'border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50'
+                    }`}
+                  >
+                    {isRecommended && (
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-teal-500 px-2.5 py-0.5 text-[10px] font-bold text-white whitespace-nowrap">
+                        ⭐ RECOMMENDED
+                      </span>
+                    )}
+                    {isSelected && (
+                      <CheckCircle2 className="absolute right-2 top-2 h-4 w-4 text-emerald-500" />
+                    )}
+                    <div className="mt-1">
+                      <div className="text-lg font-bold text-gray-800">{pkg.label}</div>
+                      <div className="text-2xl font-extrabold text-emerald-700">{formatCurrency(pkg.price)}</div>
+                      <div className="mt-1 text-xs text-gray-500">{pkg.pricePerSms === 0.50 ? '০.৫০ টাকা' : `${pkg.pricePerSms} টাকা`}/SMS</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Selected package summary + payment button */}
+            {selectedSmsPackage && (() => {
+              const pkg = SMS_PACKAGES.find((p) => p.code === selectedSmsPackage)!;
+              return (
+                <div className="rounded-xl border border-emerald-300 bg-white p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="font-semibold text-gray-800">নির্বাচিত: {pkg.label}</div>
+                      <div className="text-sm text-gray-500">
+                        {pkg.smsCount} SMS credit × ০.৫০ টাকা = <span className="font-semibold text-emerald-700">{formatCurrency(pkg.price)}</span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        কেনার পর মোট ব্যালেন্স: <span className="font-semibold">{Number(institution?.billing?.smsBalance ?? 0) + pkg.smsCount} SMS</span>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={openSmsPackagePurchasePopup}
+                      disabled={isPurchasingSms || !isWidgetReady}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-6"
+                    >
+                      {isPurchasingSms ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Activating...</> : `Bkash/Nagad দিয়ে কিনুন`}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {smsPackageStatus && (
+              <p className={`text-sm font-medium ${
+                smsPackageStatus.startsWith('✅') ? 'text-emerald-700' :
+                smsPackageStatus.startsWith('❌') ? 'text-red-600' : 'text-slate-600'
+              }`}>
+                {smsPackageStatus}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        {/* ====================================================================== */}
+
       </div>
     </main>
   );

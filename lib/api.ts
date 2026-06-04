@@ -359,6 +359,8 @@ export const api: any = {
   institutionSmsTopup: (d: any) => apiClient.post('/institution/sms/topup', d),
   institutionSmsTopupPayment: (d: any) => apiClient.post('/institution/sms/topup/payment', d),
   institutionSmsTopupHistory: (p?: any) => apiClient.get('/institution/sms/topup/history', { params: p }),
+  institutionSmsPackages: () => apiClient.get('/institution/sms/packages'),
+  institutionSmsPurchasePackage: (d: any) => apiClient.post('/institution/sms/package/purchase', d),
   admin: { schools: (p?: any) => apiClient.get('/admin/schools', { params: p }), accounting: (p?: any) => apiClient.get('/admin/accounting', { params: p }), updateSchool: (id: string, d: any) => apiClient.patch(`/admin/schools/${id}`, d), verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`), selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`), users: (p?: any) => apiClient.get('/admin/users', { params: p }), createUser: (d: any) => apiClient.post('/admin/users', d), backupExportAll: () => apiClient.get('/admin/backup/export-all'), backupImportAll: (data: any) => apiClient.post('/admin/backup/import-all', data) },
   academic: {
     classes: crud('/academic/classes'),
