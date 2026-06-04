@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 type WorkflowStatus = "draft" | "review" | "approved" | "published";
 
@@ -396,6 +397,12 @@ export default function ResultsPage() {
     ? Math.round(rows.reduce((sum, row) => sum + (typeof row.marksObtained === "number" ? row.marksObtained : 0), 0) / filledMarks)
     : 0;
   const publishBlocked = localMissingMarks > 0 || missingMarks > 0 || workflowStatus !== "approved";
+  const { user } = useAuth();
+  const isManagement = ["head", "assistant_head", "class_teacher", "subject_teacher", "teacher"].includes(user?.role || "");
+
+  if (user && !isManagement) {
+    return <StudentResultsView user={user} />;
+  }
 
   return (
     <div className="space-y-5">
@@ -670,4 +677,173 @@ function actionSuccess(action: "review" | "assistant" | "head" | "publish") {
   if (action === "assistant") return "Assistant approval saved.";
   if (action === "head") return "Head approval saved.";
   return "Results published successfully.";
+}
+
+function StudentResultsView({ user }: { user: any }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [children, setChildren] = useState<any[]>([]);
+  const [studentId, setStudentId] = useState("");
+  const [examId, setExamId] = useState("");
+  const [subjectId, setSubjectId] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [examOptions, setExamOptions] = useState<any[]>([]);
+  const [subjectOptions, setSubjectOptions] = useState<any[]>([]);
+  const [summary, setSummary] = useState<any>(null);
+
+  // Fetch children if parent
+  useEffect(() => {
+    if (user?.role === "parent") {
+      setLoading(true);
+      api.parent.portal()
+        .then((res: any) => {
+          const kids = res.portal?.children || [];
+          setChildren(kids);
+          if (kids.length > 0) {
+            setStudentId(kids[0]._id);
+          }
+        })
+        .catch((err: any) => {
+          setError(err?.message || "Failed to load children list");
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [user]);
+
+  // Load results
+  const loadResults = useCallback(async () => {
+    if (user?.role === "parent" && !studentId) return;
+    setLoading(true);
+    setError("");
+    try {
+      const params: any = {};
+      if (examId) params.examId = examId;
+      if (subjectId) params.subjectId = subjectId;
+      if (studentId) params.studentId = studentId;
+
+      const data = await api.academic.results.getOwn(params) as any;
+      setResults(data.results || []);
+      setSummary(data.summary);
+      if (data.filters) {
+        setExamOptions(data.filters.exams || []);
+        setSubjectOptions(data.filters.subjects || []);
+      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to load results");
+    } finally {
+      setLoading(false);
+    }
+  }, [user, studentId, examId, subjectId]);
+
+  useEffect(() => {
+    loadResults();
+  }, [loadResults]);
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title="আমার ফলাফল (My Results)"
+        description="আপনার পরীক্ষার ফলাফল ও বিষয়ভিত্তিক গ্রেড বিবরণী দেখুন।"
+        icon={ClipboardCheck}
+        actions={[
+          <Button key="refresh" variant="outline" size="sm" onClick={loadResults}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            রিফ্রেশ (Refresh)
+          </Button>
+        ]}
+      />
+
+      {summary && (
+        <section className="grid gap-3 md:grid-cols-4">
+          <MetricCard title="মোট বিষয়" value={summary.totalSubjects} helper="অংশগ্রহণকৃত বিষয়" icon={Users} />
+          <MetricCard title="মোট প্রাপ্ত নম্বর" value={`${summary.totalObtained} / ${summary.totalMarks}`} helper={`গড় শতকরা: ${summary.percentage}%`} icon={Save} />
+          <MetricCard title="জিপিএ (GPA)" value={summary.gpa} helper={summary.passed ? "উত্তীর্ণ (Passed)" : "অনূত্তীর্ণ (Failed)"} icon={CheckCircle2} />
+          <MetricCard title="ফলাফল স্ট্যাটাস" value={summary.passed ? "Passed" : "Failed"} helper="চূড়ান্ত ফলাফল" icon={ClipboardCheck} />
+        </section>
+      )}
+
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
+        <div className="grid gap-3 md:grid-cols-3">
+          {user?.role === "parent" && (
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-slate-700">বাচ্চা নির্বাচন করুন (Select Child)</span>
+              <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={studentId} onChange={(e) => { setStudentId(e.target.value); setExamId(""); setSubjectId(""); }}>
+                {children.map((child) => (
+                  <option key={child._id} value={child._id}>
+                    {child.userId?.name || "Student"} - Roll: {child.rollNumber} ({child.classId?.name})
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">পরীক্ষা (Exam)</span>
+            <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={examId} onChange={(e) => setExamId(e.target.value)}>
+              <option value="">সকল পরীক্ষা (All Exams)</option>
+              {examOptions.map((e) => <option key={e._id} value={e._id}>{e.name}</option>)}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">বিষয় (Subject)</span>
+            <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
+              <option value="">সকল বিষয় (All Subjects)</option>
+              {subjectOptions.map((s) => <option key={s._id} value={s._id}>{s.name} {s.code ? `(${s.code})` : ""}</option>)}
+            </select>
+          </label>
+        </div>
+      </section>
+
+      {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
+
+      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
+        <h2 className="mb-4 text-base font-semibold text-foreground">ফলাফল বিবরণী (Result Sheet)</h2>
+        <div className="overflow-hidden rounded-lg border border-slate-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted hover:bg-muted">
+                <TableHead>পরীক্ষা (Exam)</TableHead>
+                <TableHead>বিষয় (Subject)</TableHead>
+                <TableHead>প্রাপ্ত নম্বর (Marks)</TableHead>
+                <TableHead>গ্রেড (Grade)</TableHead>
+                <TableHead>জিপিএ (GPA)</TableHead>
+                <TableHead>মন্তব্য (Remarks)</TableHead>
+                <TableHead>স্ট্যাটাস (Status)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">ফলাফল লোড হচ্ছে...</TableCell>
+                </TableRow>
+              ) : results.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">কোনো ফলাফল পাওয়া যায়নি।</TableCell>
+                </TableRow>
+              ) : (
+                results.map((row) => (
+                  <TableRow key={row._id}>
+                    <TableCell className="font-semibold text-slate-900">{row.examName}</TableCell>
+                    <TableCell>{row.subjectName} {row.subjectCode ? `(${row.subjectCode})` : ""}</TableCell>
+                    <TableCell className="font-medium">{row.marksObtained} / {row.totalMarks}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn("font-bold", row.grade === "F" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700")}>
+                        {row.grade}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{row.gradePoint}</TableCell>
+                    <TableCell>{row.remarks || "-"}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 font-bold capitalize">
+                        {row.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </section>
+    </div>
+  );
 }

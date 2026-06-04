@@ -384,7 +384,8 @@ export const api: any = {
       submitReview: (data: any) => apiClient.post('/academic/results/submit-review', data),
       assistantApprove: (data: any) => apiClient.post('/academic/results/assistant-approve', data),
       headApprove: (data: any) => apiClient.post('/academic/results/head-approve', data),
-      publish: (data: any) => apiClient.post('/academic/results/publish', data)
+      publish: (data: any) => apiClient.post('/academic/results/publish', data),
+      getOwn: (params?: any) => apiClient.get('/academic/results/me', { params })
     },
     reportCard: { students: (p: any) => apiClient.get('/academic/report-card/students', { params: p }), get: (p: any) => apiClient.get('/academic/report-card', { params: p }) }
   },
@@ -412,4 +413,7 @@ export const api: any = {
     markAsRead: (id: string) => apiClient.patch(`/messages/${id}/read`),
     send: (d: any) => apiClient.post('/messages/send', d),
   },
+  parent: {
+    portal: () => apiClient.get('/parent/portal')
+  }
 };
