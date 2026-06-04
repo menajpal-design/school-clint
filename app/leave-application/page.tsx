@@ -28,6 +28,7 @@ const dayCount = (start: string, end: string) => {
 export default function LeaveApplicationPage() {
   const { user } = useAuth();
   const canReview = approvalRoles.includes(user?.role || "");
+  const canApply = ["student", "parent", "head", "assistant_head", "admin", "super_admin"].includes(user?.role || "");
   const [leaves, setLeaves] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [form, setForm] = useState({ studentId: "", startDate: today(), endDate: today(), reason: "", guardianNote: "" });
@@ -48,6 +49,9 @@ export default function LeaveApplicationPage() {
       if (canReview) {
         const people = await apiClient.get("/attendance/people?personType=student") as any;
         setStudents(people.people || []);
+      } else if (user?.role === 'parent') {
+        const parentData = await apiClient.get("/parent/portal") as any;
+        setStudents(parentData.portal?.children || []);
       }
     } catch (err: any) {
       setError(err?.message || "Failed to load leave applications.");
@@ -56,7 +60,11 @@ export default function LeaveApplicationPage() {
     }
   };
 
-  useEffect(() => { load().catch(() => undefined); }, [canReview]);
+  useEffect(() => {
+    if (user) {
+      load().catch(() => undefined);
+    }
+  }, [user, canReview]);
 
   const submit = async () => {
     setSaving(true);
@@ -101,18 +109,37 @@ export default function LeaveApplicationPage() {
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       {message && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
 
-      <section className="rounded-2xl border bg-card p-4 shadow-sm md:p-5">
-        <h2 className="mb-3 text-lg font-semibold">Apply for Leave</h2>
-        <div className="grid gap-3 md:grid-cols-2">
-          {canReview && <label className="space-y-2"><span className="text-sm font-medium">Student</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={form.studentId} onChange={(e) => setForm({ ...form, studentId: e.target.value })}><option value="">Select student</option>{students.map((student: any) => <option key={student._id} value={student._id}>{student.userId?.name || "Student"} — Roll {student.rollNumber || "-"}</option>)}</select></label>}
-          <label className="space-y-2"><span className="text-sm font-medium">Start Date</span><Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></label>
-          <label className="space-y-2"><span className="text-sm font-medium">End Date</span><Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></label>
-          <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800">Requested leave: <strong>{totalDays}</strong> day{totalDays === 1 ? "" : "s"}</div>
-          <label className="space-y-2 md:col-span-2"><span className="text-sm font-medium">Why leave is needed</span><textarea className="min-h-28 w-full rounded-md border px-3 py-2 text-sm" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Example: illness, family matter, urgent work..." /></label>
-          <label className="space-y-2 md:col-span-2"><span className="text-sm font-medium">Guardian note / optional</span><Input value={form.guardianNote} onChange={(e) => setForm({ ...form, guardianNote: e.target.value })} /></label>
-        </div>
-        <div className="mt-4"><Button disabled={saving || !form.startDate || !form.endDate || form.reason.trim().length < 5} onClick={submit}><Send className="mr-2 h-4 w-4" />{saving ? "Submitting..." : "Submit Application"}</Button></div>
-      </section>
+      {canApply && (
+        <section className="rounded-2xl border bg-card p-4 shadow-sm md:p-5">
+          <h2 className="mb-3 text-lg font-semibold">Apply for Leave</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {(canReview || user?.role === 'parent') && (
+              <label className="space-y-2">
+                <span className="text-sm font-medium">Student</span>
+                <select
+                  className="h-10 w-full rounded-md border px-3 text-sm"
+                  value={form.studentId}
+                  onChange={(e) => setForm({ ...form, studentId: e.target.value })}
+                  required
+                >
+                  <option value="">Select student</option>
+                  {students.map((student: any) => (
+                    <option key={student._id} value={student._id}>
+                      {student.userId?.name || "Student"} — Roll {student.rollNumber || "-"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="space-y-2"><span className="text-sm font-medium">Start Date</span><Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></label>
+            <label className="space-y-2"><span className="text-sm font-medium">End Date</span><Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></label>
+            <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800">Requested leave: <strong>{totalDays}</strong> day{totalDays === 1 ? "" : "s"}</div>
+            <label className="space-y-2 md:col-span-2"><span className="text-sm font-medium">Why leave is needed</span><textarea className="min-h-28 w-full rounded-md border px-3 py-2 text-sm" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Example: illness, family matter, urgent work..." /></label>
+            <label className="space-y-2 md:col-span-2"><span className="text-sm font-medium">Guardian note / optional</span><Input value={form.guardianNote} onChange={(e) => setForm({ ...form, guardianNote: e.target.value })} /></label>
+          </div>
+          <div className="mt-4"><Button disabled={saving || !form.startDate || !form.endDate || form.reason.trim().length < 5 || ((canReview || user?.role === 'parent') && !form.studentId)} onClick={submit}><Send className="mr-2 h-4 w-4" />{saving ? "Submitting..." : "Submit Application"}</Button></div>
+        </section>
+      )}
 
       <section className="rounded-2xl border bg-card p-4 shadow-sm md:p-5">
         <h2 className="mb-3 text-lg font-semibold">Leave Applications</h2>
