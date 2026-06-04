@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CalendarX2, Database, Palette, RefreshCw, Save, Settings as SettingsIcon, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CalendarX2, Database, MessageSquare, Palette, RefreshCw, Save, Settings as SettingsIcon, ShieldCheck, TestTube2 } from "lucide-react";
 import { RoleGuard } from "@/components/RoleGuard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,14 @@ function HeadSettings() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState("");
+  // SMS Settings
+  const [smsKey, setSmsKey] = useState("");
+  const [smsEnabled, setSmsEnabled] = useState(true);
+  const [smsApiUrl, setSmsApiUrl] = useState("https://anoncify.xyz/api/sms");
+  const [smsKeySet, setSmsKeySet] = useState(false);
+  const [smsDiagnostic, setSmsDiagnostic] = useState<any>(null);
+  const [testPhone, setTestPhone] = useState("");
+  const [smsTestResult, setSmsTestResult] = useState("");
 
   const closureDays = useMemo(() => getClosureDaysCount(holiday.closureStartDate, holiday.closureEndDate), [holiday.closureStartDate, holiday.closureEndDate]);
 
@@ -82,9 +90,10 @@ function HeadSettings() {
   const loadServerSettings = async () => {
     setError("");
     try {
-      const [site, controls] = await Promise.all([
+      const [site, controls, smsSettings] = await Promise.all([
         apiClient.get("/site-settings/site-config") as Promise<any>,
         apiClient.get("/site-settings/app-controls") as Promise<any>,
+        apiClient.get("/institution/sms-settings").catch(() => null) as Promise<any>,
       ]);
       setSiteConfig({ ...emptySiteConfig, ...(site.config || {}), mongodbUrl: "" });
       setHasMongoUrl(Boolean(site.hasMongoUrl));
@@ -92,6 +101,11 @@ function HeadSettings() {
         const merged = { ...getAppControlSettings(), ...controls.settings };
         setAppControl(merged);
         setAppControlSettings(merged);
+      }
+      if (smsSettings) {
+        setSmsKeySet(Boolean(smsSettings.smsApiKeySet));
+        setSmsEnabled(smsSettings.smsEnabled ?? true);
+        setSmsApiUrl(smsSettings.smsApiUrl || "https://anoncify.xyz/api/sms");
       }
       await loadStorageStatus();
     } catch (err: any) {
@@ -138,6 +152,34 @@ function HeadSettings() {
     setHasMongoUrl(Boolean(data.hasMongoUrl));
     await loadStorageStatus();
   }, "Site config saved.");
+
+  const saveSmsSettings = () => runSave("sms", async () => {
+    const payload: any = { smsEnabled, smsApiUrl };
+    if (smsKey.trim()) payload.smsApiKey = smsKey.trim();
+    await apiClient.post("/institution/sms-settings", payload);
+    setSmsKeySet(true);
+    setSmsKey("");
+  }, "SMS settings saved. SMS should now work.");
+
+  const runSmsDiagnostic = async () => {
+    try {
+      const result: any = await apiClient.get("/institution/sms-diagnostic");
+      setSmsDiagnostic(result.diagnosis);
+    } catch (err: any) {
+      setSmsDiagnostic({ verdict: `Error: ${err?.message}` });
+    }
+  };
+
+  const sendSmsTest = async () => {
+    if (!testPhone) return;
+    setSmsTestResult("Sending...");
+    try {
+      const result: any = await apiClient.post("/institution/sms-test", { phone: testPhone });
+      setSmsTestResult(result.message || (result.sent ? "✅ SMS sent!" : "❌ SMS failed"));
+    } catch (err: any) {
+      setSmsTestResult(`❌ Error: ${err?.message}`);
+    }
+  };
 
   const saveCurrency = () => runSave("currency", () => setPreferredCurrency(currency), "Currency preference saved.");
   const saveAttendance = () => runSave("attendance", () => setAttendanceSettings(attendance), "Attendance settings saved.");
@@ -265,6 +307,71 @@ function HeadSettings() {
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5" />Attendance Calendar Colors</CardTitle><CardDescription>Used by leave list and attendance calendar design.</CardDescription></CardHeader>
           <CardContent className="space-y-4"><div className="grid gap-3 md:grid-cols-5"><ColorField label="Present" value={appControl.presentColor} onChange={(value) => setAppControl({ ...appControl, presentColor: value })} /><ColorField label="Absent" value={appControl.absentColor} onChange={(value) => setAppControl({ ...appControl, absentColor: value })} /><ColorField label="Leave" value={appControl.leaveColor} onChange={(value) => setAppControl({ ...appControl, leaveColor: value })} /><ColorField label="Weekend" value={appControl.weekendColor} onChange={(value) => setAppControl({ ...appControl, weekendColor: value })} /><ColorField label="Closed" value={appControl.closureColor} onChange={(value) => setAppControl({ ...appControl, closureColor: value })} /></div><Button onClick={saveAppControl} disabled={saving === "controls"}>Save colors</Button></CardContent>
+        </Card>
+
+        <Card className="border-2 border-emerald-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5 text-emerald-600" />SMS Configuration (Anoncify)</CardTitle>
+            <CardDescription>আপনার anoncify.xyz API key এখানে সেট করুন। সার্ভারের .env ফাইল না বদলে, এখান থেকেই key সেভ হবে।</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              {smsKeySet ? "✅ SMS API key সেট আছে — SMS পাঠানো সম্ভব" : "❌ SMS API key সেট নেই — key দিলে SMS কাজ করবে"}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium">Anoncify API Key {smsKeySet && <span className="text-xs text-emerald-600">(already set — enter new to replace)</span>}</span>
+                <input
+                  type="password"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={smsKey}
+                  onChange={(e) => setSmsKey(e.target.value)}
+                  placeholder={smsKeySet ? "Enter new key to replace existing" : "Paste your anoncify API key here"}
+                />
+              </label>
+              <TextField label="SMS API URL" value={smsApiUrl} onChange={setSmsApiUrl} placeholder="https://anoncify.xyz/api/sms" />
+            </div>
+            <CheckField label="Enable SMS" checked={smsEnabled} onChange={setSmsEnabled} />
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={saveSmsSettings} disabled={saving === "sms"}>
+                <Save className="mr-2 h-4 w-4" />{saving === "sms" ? "Saving..." : "Save SMS Settings"}
+              </Button>
+              <Button variant="outline" onClick={runSmsDiagnostic}>
+                <ShieldCheck className="mr-2 h-4 w-4" />Run Diagnostic
+              </Button>
+            </div>
+            {smsDiagnostic && (
+              <div className={`rounded-lg border p-4 text-sm ${
+                String(smsDiagnostic.verdict).startsWith("✅") ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-red-200 bg-red-50 text-red-800"
+              }`}>
+                <div className="font-semibold">{smsDiagnostic.verdict}</div>
+                <div className="mt-1 text-xs">Key source: {smsDiagnostic.keySource} | Provider: {smsDiagnostic.provider}</div>
+                {smsDiagnostic.recentFailures?.length > 0 && (
+                  <div className="mt-2">
+                    <div className="font-medium">Recent failures:</div>
+                    {smsDiagnostic.recentFailures.map((f: string, i: number) => <div key={i} className="text-xs">• {f}</div>)}
+                  </div>
+                )}
+                {smsDiagnostic.fix && <div className="mt-2 font-medium text-orange-700">Fix: {smsDiagnostic.fix}</div>}
+              </div>
+            )}
+            <div className="border-t pt-4">
+              <div className="mb-2 text-sm font-medium">Test SMS (key সেট করার পর test করুন)</div>
+              <div className="flex gap-3">
+                <input
+                  type="tel"
+                  className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                  value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value)}
+                  placeholder="01XXXXXXXXX"
+                />
+                <Button variant="outline" onClick={sendSmsTest} disabled={!testPhone}>
+                  <TestTube2 className="mr-2 h-4 w-4" />Send Test
+                </Button>
+              </div>
+              {smsTestResult && <div className="mt-2 text-sm font-medium">{smsTestResult}</div>}
+            </div>
+          </CardContent>
         </Card>
 
         <Card>
