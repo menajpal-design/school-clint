@@ -171,7 +171,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => { setCollapsed(!collapsed); try { localStorage.setItem('sidebarCollapsed', !collapsed ? '1' : '0'); } catch (e) {} }}
               className="rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-muted"
             >
-              {collapsed ? 'Expand' : 'Collapse'}
+              {collapsed ? 'বড় করুন' : 'ছোট করুন'}
             </button>
           </div>
         </div>
