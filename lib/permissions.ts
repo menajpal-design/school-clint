@@ -15,15 +15,22 @@ const SCHOOL_LEADERS: UserRole[] = ['head', 'assistant_head'];
 const TEACHERS: UserRole[] = ['class_teacher', 'subject_teacher', 'teacher'];
 const EMPLOYEES: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
 const SCHOOL_USERS: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'];
-const ACADEMIC_VIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent'];
-const ATTENDANCE_VIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent'];
-const ATTENDANCE_MANAGE: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
+const STUDENT_PARENT: UserRole[] = ['student', 'parent'];
+const ACADEMIC_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, ...STUDENT_PARENT];
+const ACADEMIC_MANAGE: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS];
+const RESULT_MANAGE: UserRole[] = [...SCHOOL_LEADERS, 'class_teacher', 'subject_teacher', 'teacher'];
+const ATTENDANCE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT];
+const ATTENDANCE_MANAGE: UserRole[] = EMPLOYEES;
 const SMS_MONITORING: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
 const HOLIDAY_VIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff', 'finance_officer'];
-const ID_CARD_OWN: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent'];
-const NOTICE_VIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'];
+const ID_CARD_OWN: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT];
+const NOTICE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT, 'committee_member'];
 const DOCUMENT_VIEW: UserRole[] = ['head', 'assistant_head', 'finance_officer', 'staff', 'student', 'parent'];
-const LIBRARY_VIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'staff', 'student', 'parent'];
+const LIBRARY_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, 'staff', 'student', 'parent'];
+const LIBRARY_MANAGE: UserRole[] = [...SCHOOL_LEADERS, 'staff'];
+const HOMEWORK_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, 'student', 'parent'];
+const LEAVE_REVIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
+const LEAVE_APPLY: UserRole[] = ['student', 'parent'];
 
 export const menuConfig: MenuItemConfig[] = [
   {
@@ -70,15 +77,15 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Academic', href: '/academic-menu', roles: ACADEMIC_VIEW, icon: 'BookOpen',
     children: [
-      { label: 'Overview', href: '/academic', roles: [...SCHOOL_LEADERS, ...TEACHERS] },
+      { label: 'Overview', href: '/academic', roles: ACADEMIC_MANAGE },
       { label: 'Classes', href: '/academic/classes', roles: SCHOOL_LEADERS },
       { label: 'Sections', href: '/academic/sections', roles: SCHOOL_LEADERS },
-      { label: 'Subjects', href: '/academic/subjects', roles: [...SCHOOL_LEADERS, 'subject_teacher', 'teacher', 'class_teacher'] },
+      { label: 'Subjects', href: '/academic/subjects', roles: ACADEMIC_MANAGE },
       { label: 'Syllabus', href: '/academic/syllabus', roles: ACADEMIC_VIEW },
       { label: 'Class Routine', href: '/academic/class-routine', roles: ACADEMIC_VIEW },
       { label: 'Exam Routine', href: '/academic/exam-routine', roles: ACADEMIC_VIEW },
-      { label: 'Exams', href: '/academic/exams', roles: [...SCHOOL_LEADERS, 'subject_teacher', 'teacher', 'class_teacher'] },
-      { label: 'Results', href: '/academic/results', roles: [...SCHOOL_LEADERS, 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent'] },
+      { label: 'Exams', href: '/academic/exams', roles: ACADEMIC_VIEW },
+      { label: 'Results', href: '/academic/results', roles: [...RESULT_MANAGE, ...STUDENT_PARENT] },
       { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
       { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
     ],
@@ -94,10 +101,10 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Leave Application', href: '/leave-application-menu', roles: [...EMPLOYEES, 'student', 'parent'], icon: 'CalendarDays',
+    label: 'Leave Application', href: '/leave-application-menu', roles: [...LEAVE_REVIEW, ...LEAVE_APPLY], icon: 'CalendarDays',
     children: [
-      { label: 'Apply for Leave', href: '/leave-application', roles: [...EMPLOYEES, 'student', 'parent'] },
-      { label: 'Leave List', href: '/leave-list', roles: [...SCHOOL_LEADERS, 'student', 'parent'] },
+      { label: 'Apply for Leave', href: '/leave-application', roles: [...LEAVE_REVIEW, ...LEAVE_APPLY] },
+      { label: 'Leave List', href: '/leave-list', roles: LEAVE_REVIEW },
     ],
   },
   {
@@ -133,11 +140,11 @@ export const menuConfig: MenuItemConfig[] = [
     label: 'Library', href: '/library', roles: LIBRARY_VIEW, icon: 'BookMarked',
     children: [
       { label: 'Books', href: '/library/books', roles: LIBRARY_VIEW },
-      { label: 'Loans', href: '/library/loans', roles: LIBRARY_VIEW },
+      { label: 'Loans', href: '/library/loans', roles: LIBRARY_MANAGE },
     ],
   },
   { label: 'Parent Portal', href: '/parent-portal', roles: ['parent'], icon: 'Home' },
-  { label: 'Homework', href: '/homework', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent'], icon: 'BookOpen' },
+  { label: 'Homework', href: '/homework', roles: HOMEWORK_VIEW, icon: 'BookOpen' },
   { label: 'SMS Monitoring', href: '/sms-monitoring', roles: SMS_MONITORING, icon: 'MessageSquare' },
   {
     label: 'Profile', href: '/profile', roles: ALL_ROLES, icon: 'User',
@@ -155,12 +162,18 @@ export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
 }
 
 export const rolePermissions: Record<UserRole, string[]> = {
-  admin: ['*'], super_admin: ['*'], head: ['*'],
-  assistant_head: ['manage:assignedArea', 'generate:idcard', 'edit:idcard', 'download:idcard', 'manage:academic', 'post:notice'],
-  class_teacher: ['manage:attendance', 'manage:class_students', 'view:academic'],
-  subject_teacher: ['manage:results', 'view:academic'], teacher: ['manage:results', 'view:academic'],
-  finance_officer: ['manage:finance', 'view:payments', 'view:attendance'], staff: ['manage:idcard', 'download:idcard', 'view:documents'],
-  student: ['view:own'], parent: ['view:child'], committee_member: ['post:notice'],
+  admin: ['*'],
+  super_admin: ['*'],
+  head: ['*'],
+  assistant_head: ['manage:assignedArea', 'generate:idcard', 'edit:idcard', 'download:idcard', 'manage:academic', 'post:notice', 'review:leave'],
+  class_teacher: ['manage:attendance', 'manage:class_students', 'view:academic', 'review:leave', 'manage:homework'],
+  subject_teacher: ['manage:results', 'view:academic', 'manage:homework'],
+  teacher: ['manage:results', 'view:academic', 'manage:homework'],
+  finance_officer: ['manage:finance', 'view:payments', 'view:attendance'],
+  staff: ['manage:idcard', 'download:idcard', 'view:documents', 'manage:library'],
+  student: ['view:own', 'apply:leave', 'view:syllabus', 'view:routine', 'view:homework', 'view:library'],
+  parent: ['view:child', 'apply:leave', 'view:syllabus', 'view:routine', 'view:homework', 'view:library'],
+  committee_member: ['post:notice'],
 };
 
 export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
@@ -213,8 +226,9 @@ const routeAliases: Record<string, string> = {
   '/leave-list': '/leave-list',
   '/sms-monitoring': '/sms-monitoring',
   '/class-routine': '/academic/class-routine',
+  '/my-result': '/academic/results',
+  '/academic/my-results': '/academic/results',
 };
-
 
 export function isRouteAllowed(pathname: string, userRole: UserRole): boolean {
   if (getDemoMode()) return true;
@@ -233,6 +247,5 @@ export function isRouteAllowed(pathname: string, userRole: UserRole): boolean {
 
   if (parentMatch) return parentMatch.roles.includes(userRole);
 
-  // Unknown authenticated pages should not become public by mistake.
   return false;
 }
