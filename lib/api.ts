@@ -121,7 +121,7 @@ class ApiClient {
       // Handle CSRF failures: try one recovery attempt by refetching token and retrying
       if (res.status === 403 && isBrowser) {
         let bodyText = '';
-        try { bodyText = await res.text(); } catch (_) { bodyText = ''; }
+        try { bodyText = await res.clone().text(); } catch (_) { bodyText = ''; }
         const parsed = bodyText ? (() => { try { return JSON.parse(bodyText); } catch { return bodyText; } })() : null;
         const msg = typeof parsed === 'object' ? parsed?.message : parsed || '';
         if (String(msg).toLowerCase().includes('csrf')) {
