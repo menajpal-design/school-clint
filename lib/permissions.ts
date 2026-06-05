@@ -20,7 +20,7 @@ const STUDENT_PARENT: UserRole[] = ['student', 'parent'];
 const ACADEMIC_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, ...STUDENT_PARENT];
 const RESULT_ENTRY: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'];
 const RESULT_APPROVE: UserRole[] = ['head', 'assistant_head', 'admin', 'super_admin'];
-const RESULT_PUBLISH: UserRole[] = ['head', 'admin', 'super_admin'];
+const RESULT_PUBLISH: UserRole[] = ['head', 'assistant_head', 'admin', 'super_admin'];
 const EXAM_WRITE: UserRole[] = SCHOOL_LEADER_ADMIN;
 const SUBJECT_MANAGE: UserRole[] = SCHOOL_LEADER_ADMIN;
 const CLASS_MANAGE: UserRole[] = SCHOOL_LEADER_ADMIN;
@@ -182,13 +182,13 @@ export const rolePermissions: Record<UserRole, string[]> = {
   admin: ['*'],
   super_admin: ['*'],
   head: ['*'],
-  assistant_head: ['result:approve_assistant', 'exam:publish', 'idcard:generate', 'idcard:manage', 'attendance:mark', 'leave:approve', 'library:manage'],
+  assistant_head: ['result:approve_assistant', 'result:approve_head', 'result:publish', 'exam:publish', 'idcard:generate', 'idcard:manage', 'attendance:mark', 'leave:approve', 'library:manage'],
   class_teacher: ['result:create', 'result:update', 'attendance:mark', 'leave:approve', 'manage:homework'],
   subject_teacher: ['result:create', 'result:update', 'manage:homework'],
   teacher: ['result:create', 'result:update', 'manage:homework'],
   finance_officer: ['manage:finance', 'view:payments', 'view:own_attendance', 'leave:create'],
   librarian: ['view:documents', 'view:own_attendance', 'leave:create', 'library:manage'],
-  staff: ['view:documents', 'view:own_attendance', 'leave:create'],
+  staff: ['view:documents', 'view:own_attendance', 'leave:create', 'library:manage'],
   student: ['view:own', 'leave:create', 'view:syllabus', 'view:routine', 'view:homework', 'view:library'],
   parent: ['view:child', 'leave:create', 'view:syllabus', 'view:routine', 'view:homework', 'view:library'],
   committee_member: ['post:notice'],
