@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { libraryClient } from '@/lib/library-client';
+import { useAuth } from '@/hooks/useAuth';
+import { XCircle } from 'lucide-react';
 
 const issueInitial = {
   bookId: '',
@@ -14,6 +16,8 @@ const returnInitial = {
 };
 
 export default function LoansPage() {
+  const { user } = useAuth();
+  const canManage = useMemo(() => ['head', 'assistant_head', 'admin', 'super_admin', 'librarian', 'staff'].includes(user?.role || ''), [user]);
   const [books, setBooks] = useState<any[]>([]);
   const [loans, setLoans] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,8 +42,11 @@ export default function LoansPage() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (canManage) {
+      loadData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canManage]);
 
   const submitIssue = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -78,6 +85,18 @@ export default function LoansPage() {
       setSaving(false);
     }
   };
+
+  if (!canManage) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center p-6 text-center bg-slate-50">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 max-w-md shadow-sm">
+          <XCircle className="mx-auto h-12 w-12 text-red-600 mb-3" />
+          <h2 className="text-xl font-bold text-red-950">Access Denied</h2>
+          <p className="mt-2 text-sm text-red-700">You do not have permission to manage library loans.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">

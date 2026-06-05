@@ -79,6 +79,8 @@ export default function ExamsPage() {
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+  const [children, setChildren] = useState<any[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [publishingExamId, setPublishingExamId] = useState<string | null>(null);
@@ -89,12 +91,40 @@ export default function ExamsPage() {
   const [deleteTarget, setDeleteTarget] = useState<ExamItem | null>(null);
   const [form, setForm] = useState<ExamForm>(emptyForm);
 
+  const loadParentPortal = async () => {
+    if (user?.role !== "parent") return;
+    try {
+      const res = await api.parent.portal() as any;
+      const childList = res?.portal?.children || [];
+      setChildren(childList);
+      setSelectedChildId((current) => current || childList[0]?._id || "");
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === "parent") {
+      loadParentPortal().catch(() => undefined);
+    }
+  }, [user]);
+
+  const selectedChild = useMemo(() => user?.role === "parent" ? children.find((c) => c._id === selectedChildId) || children[0] : null, [user, children, selectedChildId]);
+
+  const displayExams = useMemo(() => {
+    if (user?.role === "parent" && selectedChild) {
+      const childClassId = String(selectedChild.classId?._id || selectedChild.classId || "");
+      return exams.filter((exam) => String(exam.classId?._id || exam.classId || "") === childClassId);
+    }
+    return exams;
+  }, [exams, user, selectedChild]);
+
   const selectedClassSubjects = useMemo(() => {
     const matched = subjects.filter((subject) => idOf(subject.classId) === form.classId);
     return matched.length ? matched : subjects;
   }, [subjects, form.classId]);
-  const scheduledExams = useMemo(() => exams.filter((exam) => exam.status === "scheduled" || exam.status === "approved").length, [exams]);
-  const publicRoutineCount = useMemo(() => exams.filter((exam) => exam.isPublished).length, [exams]);
+  const scheduledExams = useMemo(() => displayExams.filter((exam) => exam.status === "scheduled" || exam.status === "approved").length, [displayExams]);
+  const publicRoutineCount = useMemo(() => displayExams.filter((exam) => exam.isPublished).length, [displayExams]);
 
   const isRoutineReady = (exam: ExamItem) => {
     const marks = exam.subjectMarks || [];
@@ -338,6 +368,28 @@ export default function ExamsPage() {
       />
       {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
       {success && <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700">{success}</div>}
+
+      {user?.role === "parent" && children.length > 0 && (
+        <section className="rounded-lg border bg-card p-4 shadow-sm">
+          <div className="max-w-xs">
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-slate-800">Select Child</span>
+              <select
+                className="h-10 w-full rounded-md border px-3 text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                value={selectedChildId}
+                onChange={(e) => setSelectedChildId(e.target.value)}
+              >
+                {children.map((item) => (
+                  <option key={item._id} value={item._id}>
+                    {item.userId?.name || `Roll: ${item.rollNumber}`} ({item.classId?.name || "N/A"})
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+      )}
+
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table>
           <TableHeader>
@@ -357,10 +409,10 @@ export default function ExamsPage() {
           <TableBody>
             {loading ? (
               <TableRow><TableCell colSpan={canManage ? 10 : 9} className="h-32 text-center text-slate-500">Loading exams...</TableCell></TableRow>
-            ) : exams.length === 0 ? (
+            ) : displayExams.length === 0 ? (
               <TableRow><TableCell colSpan={canManage ? 10 : 9} className="h-32 text-center text-slate-500">No exams found.</TableCell></TableRow>
             ) : (
-              exams.map((exam) => (
+              displayExams.map((exam) => (
                 <TableRow key={exam._id}>
                   <TableCell>
                     <div className="font-medium text-slate-950">{exam.name}</div>

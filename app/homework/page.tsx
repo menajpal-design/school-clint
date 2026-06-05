@@ -19,6 +19,8 @@ export default function HomeworkPage() {
   const { user } = useAuth();
   const [homework, setHomework] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
+  const [children, setChildren] = useState<any[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState("");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +28,24 @@ export default function HomeworkPage() {
 
   const canManage = useMemo(() => canManageHomework(user?.role), [user?.role]);
   const isLearnerView = user?.role === 'student' || user?.role === 'parent';
+
+  const loadParentPortal = async () => {
+    if (user?.role !== "parent") return;
+    try {
+      const res = await api.parent.portal() as any;
+      const childList = res?.portal?.children || [];
+      setChildren(childList);
+      setSelectedChildId((current) => current || childList[0]?._id || "");
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === "parent") {
+      loadParentPortal().catch(() => undefined);
+    }
+  }, [user]);
 
   const loadData = async () => {
     setLoading(true);
@@ -54,6 +74,17 @@ export default function HomeworkPage() {
     const today = new Date().toISOString().slice(0, 10);
     return homework.filter((item) => String(item.createdAt || item.assignedDate || '').slice(0, 10) === today || String(item.dueDate || '').slice(0, 10) === today);
   }, [homework]);
+
+  const selectedChild = useMemo(() => user?.role === "parent" ? children.find((c) => c._id === selectedChildId) || children[0] : null, [user, children, selectedChildId]);
+
+  const displayHomework = useMemo(() => {
+    let list = isLearnerView && todaysHomework.length ? todaysHomework : homework;
+    if (user?.role === "parent" && selectedChild) {
+      const childClassId = String(selectedChild.classId?._id || selectedChild.classId || "");
+      list = list.filter((item) => String(item.classId?._id || item.classId || "") === childClassId);
+    }
+    return list;
+  }, [homework, isLearnerView, todaysHomework, user, selectedChild]);
 
   const submit = async () => {
     if (!canManage) return;
@@ -89,7 +120,7 @@ export default function HomeworkPage() {
     }
   };
 
-  const visibleHomework = isLearnerView && todaysHomework.length ? todaysHomework : homework;
+  const visibleHomework = displayHomework;
 
   return (
     <div className="space-y-5">
@@ -100,6 +131,27 @@ export default function HomeworkPage() {
         status={<Badge variant="outline">{visibleHomework.length} homework</Badge>}
         actions={canManage ? [{ label: 'Create Homework', icon: Plus, onClick: () => setOpen(true) }] : []}
       />
+
+      {user?.role === "parent" && children.length > 0 && (
+        <section className="rounded-lg border bg-card p-4 shadow-sm">
+          <div className="max-w-xs">
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-slate-800">Select Child</span>
+              <select
+                className="h-10 w-full rounded-md border px-3 text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                value={selectedChildId}
+                onChange={(e) => setSelectedChildId(e.target.value)}
+              >
+                {children.map((item) => (
+                  <option key={item._id} value={item._id}>
+                    {item.userId?.name || `Roll: ${item.rollNumber}`} ({item.classId?.name || "N/A"})
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+      )}
 
       {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
 

@@ -36,6 +36,8 @@ export default function ExamRoutinePage() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [children, setChildren] = useState<any[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState("");
   const [classId, setClassId] = useState("");
   const [examId, setExamId] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
@@ -45,9 +47,40 @@ export default function ExamRoutinePage() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
-  const selectedExam = useMemo(() => exams.find((e) => idOf(e) === examId) || exams.find((e: any) => !classId || idOf(e.classId) === classId) || exams[0], [exams, examId, classId]);
-  const visibleExams = useMemo(() => exams.filter((e: any) => !classId || idOf(e.classId) === classId), [exams, classId]);
-  const saved = useMemo(() => [...exams].sort((a: any, b: any) => new Date(b.updatedAt || b.endDate || 0).getTime() - new Date(a.updatedAt || a.endDate || 0).getTime()), [exams]);
+  const loadParentPortal = async () => {
+    if (user?.role !== "parent") return;
+    try {
+      const res = await api.parent.portal() as any;
+      const childList = res?.portal?.children || [];
+      setChildren(childList);
+      setSelectedChildId((current) => current || childList[0]?._id || "");
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === "parent") {
+      loadParentPortal().catch(() => undefined);
+    }
+  }, [user]);
+
+  const selectedChild = useMemo(() => user?.role === "parent" ? children.find((c) => c._id === selectedChildId) || children[0] : null, [user, children, selectedChildId]);
+
+  const displayExams = useMemo(() => {
+    if (user?.role === "parent" && selectedChild) {
+      const childClassId = String(selectedChild.classId?._id || selectedChild.classId || "");
+      return exams.filter((exam) => String(exam.classId?._id || exam.classId || "") === childClassId);
+    }
+    return exams;
+  }, [exams, user, selectedChild]);
+
+  const displaySaved = useMemo(() => {
+    return [...displayExams].sort((a: any, b: any) => new Date(b.updatedAt || b.endDate || 0).getTime() - new Date(a.updatedAt || a.endDate || 0).getTime());
+  }, [displayExams]);
+
+  const selectedExam = useMemo(() => displayExams.find((e) => idOf(e) === examId) || displayExams.find((e: any) => !classId || idOf(e.classId) === classId) || displayExams[0], [displayExams, examId, classId]);
+  const visibleExams = useMemo(() => displayExams.filter((e: any) => !classId || idOf(e.classId) === classId), [displayExams, classId]);
   const classSubjects = useMemo(() => { const all = unique([...subjects, ...subjectFromExams(exams)]); const match = all.filter((s: any) => !classId || idOf(s.classId) === classId); return match.length ? match : all; }, [subjects, exams, classId]);
 
   const ok = (x: string) => { setMsg(x); setErr(""); toast(x); };
@@ -92,15 +125,37 @@ export default function ExamRoutinePage() {
 
   return <div className="space-y-5">
     <style jsx global>{`@media print{body *{visibility:hidden!important}#exam-routine-print,#exam-routine-print *{visibility:visible!important}#exam-routine-print{position:absolute;left:0;top:0;width:100%!important;min-width:1050px!important;background:#fff;color:#000}.no-print{display:none!important}@page{size:A4 landscape;margin:8mm}}`}</style>
-    <PageHeader title="Exam Routine" description="Saved list থেকে Edit, Preview, Publish/Unpublish ও Download করা যাবে।" icon={CalendarDays} status={<Badge variant="outline">{saved.length} saved routines</Badge>} actions={[<Button key="refresh" size="sm" variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>, canManage && <Button key="save" size="sm" disabled={saving || !selectedExam} onClick={save}><Save className="mr-2 h-4 w-4" />Save Routine</Button>, <Button key="pdf" size="sm" variant="outline" onClick={() => downloadElementPdf(printRef.current, `exam-routine-${selectedExam?.name || "routine"}.pdf`)}><Download className="mr-2 h-4 w-4" />PDF</Button>].filter(Boolean) as any} />
+    <PageHeader title="Exam Routine" description="Saved list থেকে Edit, Preview, Publish/Unpublish ও Download করা যাবে।" icon={CalendarDays} status={<Badge variant="outline">{displaySaved.length} saved routines</Badge>} actions={[<Button key="refresh" size="sm" variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>, canManage && <Button key="save" size="sm" disabled={saving || !selectedExam} onClick={save}><Save className="mr-2 h-4 w-4" />Save Routine</Button>, <Button key="pdf" size="sm" variant="outline" onClick={() => downloadElementPdf(printRef.current, `exam-routine-${selectedExam?.name || "routine"}.pdf`)}><Download className="mr-2 h-4 w-4" />PDF</Button>].filter(Boolean) as any} />
     {msg && <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">{msg}</div>}{err && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{err}</div>}
+    
+    {user?.role === "parent" && children.length > 0 && (
+      <section className="no-print rounded-lg border bg-card p-4 shadow-sm">
+        <div className="max-w-xs">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-800">Select Child</span>
+            <select
+              className="h-10 w-full rounded-md border px-3 text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
+              value={selectedChildId}
+              onChange={(e) => setSelectedChildId(e.target.value)}
+            >
+              {children.map((item) => (
+                <option key={item._id} value={item._id}>
+                  {item.userId?.name || `Roll: ${item.rollNumber}`} ({item.classId?.name || "N/A"})
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+    )}
+
     <section className="no-print rounded-lg border bg-card p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-3"><select className="h-10 rounded-md border px-3 text-sm" value={classId} onChange={(e) => { setClassId(e.target.value); setExamId(""); }}><option value="">All classes</option>{classes.map((c: any) => <option key={c._id} value={c._id}>{c.name}</option>)}</select><select className="h-10 rounded-md border px-3 text-sm md:col-span-2" value={examId} onChange={(e) => setExamId(e.target.value)}><option value="">Select exam</option>{visibleExams.map((e) => <option key={idOf(e)} value={idOf(e)}>{e.name} {e.classId?.name ? `- ${e.classId.name}` : ""}</option>)}</select></div></section>
     <section className="no-print rounded-lg border bg-card p-4 shadow-sm">
       <h2 className="font-semibold">Saved Routine List</h2>
       <p className="mb-3 text-xs text-muted-foreground">Preview button চাপলে dialog box-এ routine দেখা যাবে।</p>
           <ResponsiveTable
             columns={["Exam", "Class", "Date", "Subjects", "Routine", "Publish", "Action"]}
-            rows={saved.length === 0 ? [] : saved.map((e) => ([
+            rows={displaySaved.length === 0 ? [] : displaySaved.map((e) => ([
               <div key="exam" className="break-words font-medium">{e.name}<div className="text-xs text-muted-foreground">{e.type || 'term'}</div></div>,
               <div key="class">{e.classId?.name || e.className || '-'}</div>,
               <div key="date">{fmt(e.startDate)} {e.endDate ? `- ${fmt(e.endDate)}` : ''}</div>,

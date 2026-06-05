@@ -67,7 +67,7 @@ const PARENT_QUICK_ACTIONS: QuickAction[] = [
   { label: "Leave Application", href: "/leave-application", icon: CalendarCheck, description: "Apply for child leave." },
 ];
 
-export function getDashboardQuickActions(role?: UserRole | string): QuickAction[] {
+function getDashboardQuickActions(role?: UserRole | string): QuickAction[] {
   const normalizedRole = normalizeDashboardRole(role);
 
   if (normalizedRole === "student") return STUDENT_QUICK_ACTIONS;

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { libraryClient } from '@/lib/library-client';
+import { useAuth } from '@/hooks/useAuth';
 
 const emptyForm = {
   title: '',
@@ -15,6 +16,8 @@ const emptyForm = {
 };
 
 export default function BooksPage() {
+  const { user } = useAuth();
+  const canManage = useMemo(() => ['head', 'assistant_head', 'admin', 'super_admin', 'librarian', 'staff'].includes(user?.role || ''), [user]);
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -82,39 +85,41 @@ export default function BooksPage() {
         <p className="mt-2 text-sm text-slate-500">Total books: {bookCount}</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <form onSubmit={onSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">Add new book</h2>
-          {[
-            ['title', 'Title'],
-            ['author', 'Author'],
-            ['isbn', 'ISBN'],
-            ['publisher', 'Publisher'],
-            ['category', 'Category'],
-            ['location', 'Location'],
-            ['copiesTotal', 'Total copies'],
-            ['tags', 'Tags (comma separated)'],
-          ].map(([key, label]) => (
-            <label key={key} className="block space-y-1 text-sm">
-              <span className="font-medium text-slate-700">{label}</span>
-              <input
-                value={(form as any)[key]}
-                onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
-                required={['title', 'author', 'copiesTotal'].includes(key)}
-              />
-            </label>
-          ))}
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
-          >
-            {saving ? 'Saving...' : 'Create book'}
-          </button>
-          {success && <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{success}</p>}
-          {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-        </form>
+      <div className={canManage ? "grid gap-6 lg:grid-cols-[380px_1fr]" : "grid gap-6"}>
+        {canManage && (
+          <form onSubmit={onSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900">Add new book</h2>
+            {[
+              ['title', 'Title'],
+              ['author', 'Author'],
+              ['isbn', 'ISBN'],
+              ['publisher', 'Publisher'],
+              ['category', 'Category'],
+              ['location', 'Location'],
+              ['copiesTotal', 'Total copies'],
+              ['tags', 'Tags (comma separated)'],
+            ].map(([key, label]) => (
+              <label key={key} className="block space-y-1 text-sm">
+                <span className="font-medium text-slate-700">{label}</span>
+                <input
+                  value={(form as any)[key]}
+                  onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                  required={['title', 'author', 'copiesTotal'].includes(key)}
+                />
+              </label>
+            ))}
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+            >
+              {saving ? 'Saving...' : 'Create book'}
+            </button>
+            {success && <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{success}</p>}
+            {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          </form>
+        )}
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between gap-3">
@@ -147,7 +152,7 @@ export default function BooksPage() {
                 <p className="mt-2 text-sm text-slate-500">{book.category || 'General'} {book.location ? `• ${book.location}` : ''}</p>
                 <div className="mt-4 flex items-center justify-between gap-2">
                   <p className="text-xs text-slate-400">{book.isbn || 'No ISBN'}</p>
-                  <button onClick={() => onDelete(book._id)} className="text-sm font-medium text-red-600">Delete</button>
+                  {canManage && <button onClick={() => onDelete(book._id)} className="text-sm font-medium text-red-600">Delete</button>}
                 </div>
               </div>
             ))}

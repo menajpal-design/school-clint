@@ -34,7 +34,7 @@ const ID_CARD_GENERATE: UserRole[] = SCHOOL_LEADER_ADMIN;
 const NOTICE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT, 'committee_member'];
 const DOCUMENT_VIEW: UserRole[] = ['head', 'assistant_head', 'finance_officer', 'staff', 'student', 'parent'];
 const LIBRARY_VIEW: UserRole[] = [...SCHOOL_LEADER_ADMIN, ...TEACHERS, 'staff', 'student', 'parent'];
-const LIBRARY_MANAGE: UserRole[] = SCHOOL_LEADER_ADMIN;
+const LIBRARY_MANAGE: UserRole[] = [...SCHOOL_LEADER_ADMIN, 'staff'];
 const HOMEWORK_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, 'student', 'parent'];
 const LEAVE_REVIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
 const LEAVE_APPLY: UserRole[] = ['student', 'parent', 'teacher', 'subject_teacher', 'class_teacher', 'staff', 'finance_officer'];
@@ -187,6 +187,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
   subject_teacher: ['result:create', 'result:update', 'manage:homework'],
   teacher: ['result:create', 'result:update', 'manage:homework'],
   finance_officer: ['manage:finance', 'view:payments', 'view:own_attendance', 'leave:create'],
+  librarian: ['view:documents', 'view:own_attendance', 'leave:create', 'library:manage'],
   staff: ['view:documents', 'view:own_attendance', 'leave:create'],
   student: ['view:own', 'leave:create', 'view:syllabus', 'view:routine', 'view:homework', 'view:library'],
   parent: ['view:child', 'leave:create', 'view:syllabus', 'view:routine', 'view:homework', 'view:library'],

@@ -82,6 +82,8 @@ export default function AcademicSyllabusPage() {
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [syllabus, setSyllabus] = useState<any[]>([]);
+  const [children, setChildren] = useState<any[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState("");
   const [form, setForm] = useState<any>(emptyForm);
   const [editingId, setEditingId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -91,6 +93,34 @@ export default function AcademicSyllabusPage() {
   const showSuccess = useCallback((text: string, title = "Syllabus success / কাজ হয়েছে") => { setMessage(text); setError(""); toast(title, text, "success"); }, []);
   const showError = useCallback((text: string, title = "Syllabus error / কাজ হয়নি") => { setError(text); setMessage(""); toast(title, text, "error"); }, []);
   const showInfo = useCallback((text: string, title = "Syllabus info") => { setMessage(text); setError(""); toast(title, text, "info"); }, []);
+
+  const loadParentPortal = useCallback(async () => {
+    if (user?.role !== "parent") return;
+    try {
+      const res = await api.parent.portal() as any;
+      const childList = res?.portal?.children || [];
+      setChildren(childList);
+      setSelectedChildId((current) => current || childList[0]?._id || "");
+    } catch {
+      // ignore
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.role === "parent") {
+      loadParentPortal().catch(() => undefined);
+    }
+  }, [user, loadParentPortal]);
+
+  const selectedChild = useMemo(() => user?.role === "parent" ? children.find((c) => c._id === selectedChildId) || children[0] : null, [user, children, selectedChildId]);
+
+  const displaySyllabus = useMemo(() => {
+    if (user?.role === "parent" && selectedChild) {
+      const childClassId = String(selectedChild.classId?._id || selectedChild.classId || "");
+      return syllabus.filter((item) => String(item.classId?._id || item.classId || "") === childClassId);
+    }
+    return syllabus;
+  }, [syllabus, user, selectedChild]);
 
   const filteredSubjects = useMemo(() => {
     if (!form.classId) return subjects;
@@ -241,9 +271,30 @@ export default function AcademicSyllabusPage() {
       title="Academic Syllabus"
       description="Class and subject-wise syllabus create, publish, view, print and download."
       icon={BookOpenCheck}
-      status={<Badge variant="outline">{syllabus.length} syllabus</Badge>}
+      status={<Badge variant="outline">{displaySyllabus.length} syllabus</Badge>}
       actions={[<Button key="refresh" size="sm" variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>]}
     />
+
+    {user?.role === "parent" && children.length > 0 && (
+      <section className="rounded-lg border bg-card p-4 shadow-sm">
+        <div className="max-w-xs">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-800">Select Child</span>
+            <select
+              className="h-10 w-full rounded-md border px-3 text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
+              value={selectedChildId}
+              onChange={(e) => setSelectedChildId(e.target.value)}
+            >
+              {children.map((item) => (
+                <option key={item._id} value={item._id}>
+                  {item.userId?.name || `Roll: ${item.rollNumber}`} ({item.classId?.name || "N/A"})
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+    )}
 
     {message && <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">{message}</div>}
     {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{error}</div>}
@@ -275,7 +326,7 @@ export default function AcademicSyllabusPage() {
     </section>}
 
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {loading ? <div className="rounded-lg border p-6 text-muted-foreground">Loading syllabus...</div> : syllabus.length === 0 ? <div className="rounded-lg border p-6 text-muted-foreground">No syllabus found. Add a syllabus from the form above.</div> : syllabus.map((item) => <article key={item._id} className="rounded-lg border bg-card p-4 shadow-sm">
+      {loading ? <div className="rounded-lg border p-6 text-muted-foreground">Loading syllabus...</div> : displaySyllabus.length === 0 ? <div className="rounded-lg border p-6 text-muted-foreground">{canManage ? "No syllabus found. Add a syllabus from the form above." : "No syllabus found."}</div> : displaySyllabus.map((item) => <article key={item._id} className="rounded-lg border bg-card p-4 shadow-sm">
         <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold">{item.title}</h2><p className="mt-1 text-sm text-muted-foreground">{item.classId?.name || "Class"} • {item.subjectId?.name || "All subjects"} • {item.academicYear}</p></div><Badge variant={item.status === "published" ? "default" : "outline"}>{item.status}</Badge></div>
         {item.objectives && <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{item.objectives}</p>}
         <div className="mt-3 rounded-md border p-3 text-sm"><b>{item.chapters?.length || 0}</b> chapters/topics</div>

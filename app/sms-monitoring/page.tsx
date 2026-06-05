@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/i18n";
+import { useAuth } from "@/hooks/useAuth";
 import ResponsiveTable from '@/components/shared/ResponsiveTable';
 
 function currentMonth() {
@@ -21,12 +22,16 @@ function formatDate(value?: string | null) {
 }
 
 export default function SmsMonitoringPage() {
+  const { user } = useAuth();
   const { t } = useLanguage();
   const [month, setMonth] = useState(currentMonth());
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  const isDenied = user?.role === 'student' || user?.role === 'parent';
+
   const loadData = async () => {
+    if (isDenied) return;
     setLoading(true);
     try {
       const result = await apiClient.get(`/sms/head/monthly?month=${month}`);
@@ -39,14 +44,28 @@ export default function SmsMonitoringPage() {
   };
 
   useEffect(() => {
-    loadData();
+    if (!isDenied) {
+      loadData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month]);
+  }, [month, isDenied]);
 
   const recipients = Array.isArray(data?.recipients) ? data.recipients : [];
   const logs = Array.isArray(data?.logs) ? data.logs : [];
   const sentRecipients = useMemo(() => recipients.filter((item: any) => item.smsSent), [recipients]);
   const notSentRecipients = useMemo(() => recipients.filter((item: any) => !item.smsSent), [recipients]);
+
+  if (isDenied) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center p-6 text-center bg-slate-50">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 max-w-md shadow-sm">
+          <XCircle className="mx-auto h-12 w-12 text-red-600 mb-3" />
+          <h2 className="text-xl font-bold text-red-950">Access Denied</h2>
+          <p className="mt-2 text-sm text-red-700">You do not have permission to access the SMS Monitoring logs.</p>
+        </div>
+      </div>
+    );
+  }
 
   const stats = [
     { label: "Monthly SMS Limit", value: data?.limit?.monthlySmsLimit || 0, icon: MessageSquare },

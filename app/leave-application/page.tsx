@@ -62,7 +62,7 @@ export default function LeaveApplicationPage() {
     finally { setSaving(false); }
   };
 
-  const isOwnLeave = (leave: any) => idOf(leave.userId) === idOf(user?._id || user?.id);
+  const isOwnLeave = (leave: any) => idOf(leave.userId) === idOf((user as any)?._id || user?.id);
   const review = async (leaveId: string, status: "approved" | "rejected" | "pending") => {
     setSaving(true); setError(""); setMessage("");
     try {
