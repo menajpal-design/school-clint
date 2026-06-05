@@ -21,16 +21,24 @@ const ACADEMIC_MANAGE: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS];
 const RESULT_MANAGE: UserRole[] = [...SCHOOL_LEADERS, 'class_teacher', 'subject_teacher', 'teacher'];
 const ATTENDANCE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT];
 const ATTENDANCE_MANAGE: UserRole[] = EMPLOYEES;
-const SMS_MONITORING: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
+const SMS_MONITORING: UserRole[] = ['admin', 'super_admin', 'head'];
 const HOLIDAY_VIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff', 'finance_officer'];
-const ID_CARD_OWN: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT];
+const ID_CARD_OWN: UserRole[] = [...EMPLOYEES, 'student'];
 const NOTICE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT, 'committee_member'];
 const DOCUMENT_VIEW: UserRole[] = ['head', 'assistant_head', 'finance_officer', 'staff', 'student', 'parent'];
 const LIBRARY_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, 'staff', 'student', 'parent'];
-const LIBRARY_MANAGE: UserRole[] = [...SCHOOL_LEADERS, 'staff'];
+const LIBRARY_MANAGE: UserRole[] = [...SCHOOL_LEADERS, 'staff', 'admin', 'super_admin'];
 const HOMEWORK_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, 'student', 'parent'];
 const LEAVE_REVIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
 const LEAVE_APPLY: UserRole[] = ['student', 'parent'];
+
+export function normalizeUserRole(role?: string | null): UserRole | undefined {
+  if (!role) return undefined;
+  const normalized = String(role).toLowerCase().replace(/[\s-]+/g, '_');
+  if (normalized === 'guardian' || normalized === 'parent_guardian') return 'parent';
+  if (ALL_ROLES.includes(normalized as UserRole)) return normalized as UserRole;
+  return undefined;
+}
 
 export const menuConfig: MenuItemConfig[] = [
   {
@@ -158,7 +166,8 @@ export const menuConfig: MenuItemConfig[] = [
 ];
 
 export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
-  return filterMenuByRole(userRole);
+  const role = normalizeUserRole(userRole) || userRole;
+  return filterMenuByRole(role);
 }
 
 export const rolePermissions: Record<UserRole, string[]> = {
@@ -180,16 +189,18 @@ export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
   if (!user) return false;
   if (getDemoMode()) return true;
   if (!roles) return true;
-  if (['admin', 'super_admin', 'head'].includes(user.role)) return true;
-  if (Array.isArray(roles)) return roles.includes(user.role);
-  return user.role === roles;
+  const role = normalizeUserRole(user.role) || user.role;
+  if (['admin', 'super_admin', 'head'].includes(role)) return true;
+  if (Array.isArray(roles)) return roles.includes(role);
+  return role === roles;
 }
 
 export function hasPermission(user?: User | null, permission?: string) {
   if (!user || !permission) return false;
   if (getDemoMode()) return true;
-  if (['admin', 'super_admin', 'head'].includes(user.role)) return true;
-  const rolePerms = rolePermissions[user.role] || [];
+  const role = normalizeUserRole(user.role) || user.role;
+  if (['admin', 'super_admin', 'head'].includes(role)) return true;
+  const rolePerms = rolePermissions[role] || [];
   if (rolePerms.includes('*')) return true;
   if (rolePerms.includes(permission)) return true;
   if (Array.isArray(user.permissions) && user.permissions.includes(permission)) return true;
@@ -208,7 +219,8 @@ function filterMenuByRole(userRole: UserRole) {
 export function getMenuForUser(user?: User | null) {
   if (!user) return [];
   if (getDemoMode()) return menuConfig;
-  return filterMenuByRole(user.role);
+  const role = normalizeUserRole(user.role);
+  return role ? filterMenuByRole(role) : [];
 }
 
 const normalizePath = (pathname: string) => pathname.split('?')[0].replace(/\/$/, '') || '/';
@@ -230,22 +242,24 @@ const routeAliases: Record<string, string> = {
   '/academic/my-results': '/academic/results',
 };
 
-export function isRouteAllowed(pathname: string, userRole: UserRole): boolean {
+export function isRouteAllowed(pathname: string, userRole: UserRole | string): boolean {
   if (getDemoMode()) return true;
-  if (['admin', 'super_admin', 'head'].includes(userRole)) return true;
+  const role = normalizeUserRole(userRole);
+  if (!role) return false;
+  if (['admin', 'super_admin', 'head'].includes(role)) return true;
 
   const path = routeAliases[normalizePath(pathname)] || normalizePath(pathname);
   const allRoutes = flattenMenu(menuConfig).sort((a, b) => normalizePath(b.href).length - normalizePath(a.href).length);
 
   const exactMatch = allRoutes.find((route) => normalizePath(route.href) === path);
-  if (exactMatch) return exactMatch.roles.includes(userRole);
+  if (exactMatch) return exactMatch.roles.includes(role);
 
   const parentMatch = allRoutes.find((route) => {
     const routePath = normalizePath(route.href);
     return routePath !== '/' && path.startsWith(`${routePath}/`);
   });
 
-  if (parentMatch) return parentMatch.roles.includes(userRole);
+  if (parentMatch) return parentMatch.roles.includes(role);
 
   return false;
 }
