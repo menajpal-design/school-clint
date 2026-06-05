@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 
-const approvalRoles = ["head", "assistant_head", "admin", "super_admin"];
+const approvalRoles = ["head", "assistant_head", "class_teacher", "admin", "super_admin"];
+const applicantRoles = ["student", "parent"];
 const statusClass: Record<string, string> = {
   pending: "border-amber-200 bg-amber-50 text-amber-700",
   approved: "border-sky-200 bg-sky-50 text-sky-700",
@@ -28,7 +29,7 @@ const dayCount = (start: string, end: string) => {
 export default function LeaveApplicationPage() {
   const { user } = useAuth();
   const canReview = approvalRoles.includes(user?.role || "");
-  const canApply = ["student", "parent", "head", "assistant_head", "admin", "super_admin"].includes(user?.role || "");
+  const canApply = applicantRoles.includes(user?.role || "");
   const [leaves, setLeaves] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [form, setForm] = useState({ studentId: "", startDate: today(), endDate: today(), reason: "", guardianNote: "" });
@@ -72,7 +73,7 @@ export default function LeaveApplicationPage() {
     setMessage("");
     try {
       await apiClient.post("/leaves", form);
-      setMessage("Leave application submitted to Head / Assistant Head.");
+      setMessage("Leave application submitted to Head / Assistant Head / Class Teacher.");
       setForm({ studentId: "", startDate: today(), endDate: today(), reason: "", guardianNote: "" });
       await load();
     } catch (err: any) {
@@ -88,7 +89,7 @@ export default function LeaveApplicationPage() {
     setMessage("");
     try {
       await apiClient.patch(`/leaves/${leaveId}/review`, { status, reviewNote: reviewNote[leaveId] || "" });
-      setMessage(status === "approved" ? "Leave approved. Attendance is now marked as Leave, not Present/Absent." : status === "rejected" ? "Leave rejected." : "Leave returned to pending.");
+      setMessage(status === "approved" ? "Leave approved. Attendance calendar will show these days as Leave with leave color, not Present/Absent." : status === "rejected" ? "Leave rejected." : "Leave returned to pending.");
       await load();
     } catch (err: any) {
       setError(err?.message || "Failed to review leave.");
@@ -101,7 +102,7 @@ export default function LeaveApplicationPage() {
     <div className="space-y-5">
       <PageHeader
         title="Leave Application"
-        description="Students can apply to the Head. Head or Assistant Head can approve. Approved leave will show as Leave in attendance."
+        description="Students and parents can apply. Head, Assistant Head, or Class Teacher can approve. Approved leave is shown with a Leave color in attendance."
         icon={CalendarDays}
         status={<Badge variant="outline">{leaves.length} applications</Badge>}
       />
@@ -113,7 +114,7 @@ export default function LeaveApplicationPage() {
         <section className="rounded-2xl border bg-card p-4 shadow-sm md:p-5">
           <h2 className="mb-3 text-lg font-semibold">Apply for Leave</h2>
           <div className="grid gap-3 md:grid-cols-2">
-            {(canReview || user?.role === 'parent') && (
+            {user?.role === 'parent' && (
               <label className="space-y-2">
                 <span className="text-sm font-medium">Student</span>
                 <select
@@ -125,7 +126,7 @@ export default function LeaveApplicationPage() {
                   <option value="">Select student</option>
                   {students.map((student: any) => (
                     <option key={student._id} value={student._id}>
-                      {student.userId?.name || "Student"} — Roll {student.rollNumber || "-"}
+                      {student.userId?.name || student.name || "Student"} — Roll {student.rollNumber || "-"}
                     </option>
                   ))}
                 </select>
@@ -137,7 +138,7 @@ export default function LeaveApplicationPage() {
             <label className="space-y-2 md:col-span-2"><span className="text-sm font-medium">Why leave is needed</span><textarea className="min-h-28 w-full rounded-md border px-3 py-2 text-sm" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Example: illness, family matter, urgent work..." /></label>
             <label className="space-y-2 md:col-span-2"><span className="text-sm font-medium">Guardian note / optional</span><Input value={form.guardianNote} onChange={(e) => setForm({ ...form, guardianNote: e.target.value })} /></label>
           </div>
-          <div className="mt-4"><Button disabled={saving || !form.startDate || !form.endDate || form.reason.trim().length < 5 || ((canReview || user?.role === 'parent') && !form.studentId)} onClick={submit}><Send className="mr-2 h-4 w-4" />{saving ? "Submitting..." : "Submit Application"}</Button></div>
+          <div className="mt-4"><Button disabled={saving || !form.startDate || !form.endDate || form.reason.trim().length < 5 || (user?.role === 'parent' && !form.studentId)} onClick={submit}><Send className="mr-2 h-4 w-4" />{saving ? "Submitting..." : "Submit Application"}</Button></div>
         </section>
       )}
 
