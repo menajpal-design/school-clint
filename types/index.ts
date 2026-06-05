@@ -22,6 +22,7 @@ export type UserRole =
   | 'subject_teacher' 
   | 'teacher'
   | 'finance_officer' 
+  | 'librarian'
   | 'staff' 
   | 'student' 
   | 'parent' 
@@ -118,86 +119,3 @@ export interface Notice {
   title: string;
   content: string;
   category: 'general' | 'academic' | 'finance' | 'event' | 'urgent';
-  priority: 'low' | 'medium' | 'high';
-  postedBy: string;
-  isPublished: boolean;
-  publishedAt?: Date;
-  expiryDate?: Date;
-}
-
-// Institution
-export interface Institution {
-  id: string;
-  name: string;
-  type: 'school' | 'madrasah';
-  eiin?: string;
-  address: string;
-  phone: string;
-  email: string;
-  logo?: string;
-  website?: string;
-  isActive?: boolean;
-  billing?: {
-    planCode?: string;
-    planName?: string;
-    billingCycle?: 'monthly' | 'yearly';
-    dueAmount?: number;
-    receivedAmount?: number;
-    billingStatus?: string;
-    paymentTrxId?: string;
-    paymentSenderNumber?: string;
-    subscriptionExpiresAt?: string;
-    smsUsed?: number;
-    monthlySmsLimit?: number;
-  };
-}
-
-// Class
-export interface Class {
-  id: string;
-  name: string;
-  grade: string;
-  sections: string[];
-  subjects: string[];
-  academicYear: string;
-}
-
-// Section
-export interface Section {
-  id: string;
-  name: string;
-  classId: string;
-  capacity: number;
-  currentStudents: number;
-}
-
-// Subject
-export interface Subject {
-  id: string;
-  name: string;
-  code: string;
-  type: 'core' | 'elective' | 'optional';
-  classId: string;
-  creditHours: number;
-}
-
-// Dashboard
-export interface DashboardStats {
-  totalStudents: number;
-  totalTeachers: number;
-  totalStaff: number;
-  todayAttendance: number;
-  pendingFees: number;
-  activeNotices: number;
-}
-
-export interface AttendanceOverview {
-  status: string;
-  count: number;
-}
-
-export interface FeeOverview {
-  status: string;
-  count: number;
-  total: number;
-}
