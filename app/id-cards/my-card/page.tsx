@@ -46,7 +46,7 @@ export default function MyCardPage() {
   const [cardLookupFailed, setCardLookupFailed] = useState(false);
 
   useEffect(() => {
-    api.idCards.getMine()
+    api.idCards.getMine({ skipToast: true })
       .then((data: any) => {
         setCard(data);
         setCardLookupFailed(false);

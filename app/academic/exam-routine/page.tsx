@@ -107,7 +107,7 @@ export default function ExamRoutinePage() {
               <div key="subjects">{e.subjectMarks?.length || 0}</div>,
               <div key="routine"><Badge variant="outline" className={ready(e) ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}>{ready(e) ? 'Ready' : 'Incomplete'}</Badge></div>,
               <div key="publish"><Badge variant="outline" className={e.isPublished ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 bg-slate-50 text-slate-600'}>{e.isPublished ? 'Public' : 'Private'}</Badge></div>,
-              <div key="action" className="flex flex-wrap justify-end gap-2"><Button size="sm" variant="outline" onClick={() => select(e)}>Edit</Button><Button size="sm" variant="outline" onClick={() => setPreview(e)}>Preview</Button><Button size="sm" variant={e.isPublished ? 'outline' : 'default'} disabled={saving} onClick={() => publish(e)}>{e.isPublished ? 'Unpublish' : 'Publish'}</Button><Button size="sm" variant="outline" onClick={() => download(e)}><Download className="mr-1 h-3.5 w-3.5" />Download</Button></div>,
+              <div key="action" className="flex flex-wrap justify-end gap-2">{canManage && <Button size="sm" variant="outline" onClick={() => select(e)}>Edit</Button>}<Button size="sm" variant="outline" onClick={() => setPreview(e)}>Preview</Button>{canManage && <Button size="sm" variant={e.isPublished ? 'outline' : 'default'} disabled={saving} onClick={() => publish(e)}>{e.isPublished ? 'Unpublish' : 'Publish'}</Button>}<Button size="sm" variant="outline" onClick={() => download(e)}><Download className="mr-1 h-3.5 w-3.5" />Download</Button></div>,
             ]))}
             empty="No saved routine found."
           />
@@ -127,7 +127,7 @@ export default function ExamRoutinePage() {
       />
     </section>}
     <Paper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />
-    <Dialog open={Boolean(preview)} onOpenChange={(open) => !open && setPreview(null)}><DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto"><DialogHeader><DialogTitle>Routine Preview</DialogTitle></DialogHeader><Paper exam={preview} rows={rowsFrom(preview)} /><DialogFooter><Button variant="outline" onClick={() => setPreview(null)}>Close</Button>{preview && <Button variant="outline" onClick={() => download(preview)}><Download className="mr-2 h-4 w-4" />Download</Button>}{preview && <Button onClick={() => publish(preview)}>{preview.isPublished ? "Unpublish" : "Publish"}</Button>}</DialogFooter></DialogContent></Dialog>
+    <Dialog open={Boolean(preview)} onOpenChange={(open) => !open && setPreview(null)}><DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto"><DialogHeader><DialogTitle>Routine Preview</DialogTitle></DialogHeader><Paper exam={preview} rows={rowsFrom(preview)} /><DialogFooter><Button variant="outline" onClick={() => setPreview(null)}>Close</Button>{preview && <Button variant="outline" onClick={() => download(preview)}><Download className="mr-2 h-4 w-4" />Download</Button>}{canManage && preview && <Button onClick={() => publish(preview)}>{preview.isPublished ? "Unpublish" : "Publish"}</Button>}</DialogFooter></DialogContent></Dialog>
   </div>;
 }
 

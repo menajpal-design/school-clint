@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, apiClient } from "@/lib/api";
 import { cn, formatDate } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 type ClassOption = { _id: string; name: string; grade?: string };
 type SubjectOption = { _id: string; name: string; code: string; classId?: ClassOption | string };
@@ -72,6 +73,9 @@ const emptyForm = (): ExamForm => ({
 });
 
 export default function ExamsPage() {
+  const { user } = useAuth();
+  const canManage = useMemo(() => ["head", "assistant_head", "admin", "super_admin", "subject_teacher", "class_teacher", "teacher"].includes(user?.role || ""), [user]);
+
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
@@ -322,12 +326,93 @@ export default function ExamsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Exam Management" description="Create exam schedules first. Routine subject/date can be completed now or later from Exam Routine page." icon={CalendarClock} status={<Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">{scheduledExams} scheduled • {publicRoutineCount} public routines</Badge>} actions={[<Button key="refresh" variant="outline" size="sm" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>, <Button key="create-exam" size="sm" onClick={openCreateModal}><Plus className="mr-2 h-4 w-4" />Create Exam</Button>]} />
+      <PageHeader
+        title="Exam Management"
+        description="Create exam schedules first. Routine subject/date can be completed now or later from Exam Routine page."
+        icon={CalendarClock}
+        status={<Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">{scheduledExams} scheduled • {publicRoutineCount} public routines</Badge>}
+        actions={[
+          <Button key="refresh" variant="outline" size="sm" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
+          canManage && <Button key="create-exam" size="sm" onClick={openCreateModal}><Plus className="mr-2 h-4 w-4" />Create Exam</Button>
+        ].filter(Boolean) as any}
+      />
       {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
       {success && <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700">{success}</div>}
-      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"><Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Exam name</TableHead><TableHead>Routine</TableHead><TableHead>Public routine</TableHead><TableHead>Type</TableHead><TableHead>Class</TableHead><TableHead>Start date</TableHead><TableHead>End date</TableHead><TableHead>Approval</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">Loading exams...</TableCell></TableRow> : exams.length === 0 ? <TableRow><TableCell colSpan={10} className="h-32 text-center text-slate-500">No exams found.</TableCell></TableRow> : exams.map((exam) => <TableRow key={exam._id}><TableCell><div className="font-medium text-slate-950">{exam.name}</div><div className="text-xs text-slate-500">{exam.subjectMarks?.length || 0} subject schedule</div></TableCell><TableCell><Badge variant="outline" className={cn("w-fit capitalize", isRoutineReady(exam) ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700")}>{isRoutineReady(exam) ? "Routine ready" : "Routine incomplete"}</Badge></TableCell><TableCell><div className="flex flex-col gap-2"><Badge variant="outline" className={exam.isPublished ? "w-fit border-blue-200 bg-blue-50 text-blue-700" : "w-fit border-slate-200 bg-slate-50 text-slate-600"}>{exam.isPublished ? "Public" : "Private"}</Badge><Button type="button" size="sm" variant={exam.isPublished ? "outline" : "default"} className="w-fit" disabled={publishingExamId === exam._id} onClick={() => togglePublicRoutine(exam)}>{exam.isPublished ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}{publishingExamId === exam._id ? "Updating..." : exam.isPublished ? "Make private" : "Publish routine"}</Button></div></TableCell><TableCell><Badge variant="outline" className="capitalize">{exam.type}</Badge></TableCell><TableCell>{exam.classId?.name || "Unassigned"}</TableCell><TableCell>{exam.startDate ? formatDate(exam.startDate) : "Not set"}</TableCell><TableCell>{exam.endDate ? formatDate(exam.endDate) : "Not set"}</TableCell><TableCell>{exam.approvalRequired ? "Yes" : "No"}</TableCell><TableCell><Badge variant="outline" className={statusClass(exam.status || "scheduled")}>{exam.status || "scheduled"}</Badge></TableCell><TableCell><div className="flex justify-end gap-2"><Button type="button" variant="outline" size="icon" title="Edit exam" onClick={() => openEditModal(exam)}><Edit2 className="h-4 w-4" /></Button><Button type="button" variant="destructive" size="icon" title="Delete exam" onClick={() => setDeleteTarget(exam)}><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>)}</TableBody></Table></section>
-      <ExamFormDialog open={formOpen} editing={Boolean(editingExam)} form={form} classes={classes} selectedClassSubjects={selectedClassSubjects} saving={saving} routineReady={formRoutineReady} onOpenChange={setFormOpen} onSubmit={submitForm} onFormChange={setForm} onClassChange={updateClass} onTypeChange={updateType} onUpdateSubjectMark={updateSubjectMark} />
-      <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}><DialogContent><DialogHeader><DialogTitle>Delete exam?</DialogTitle><DialogDescription>This will remove {deleteTarget?.name}. Exams with submitted results cannot be deleted.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button><Button type="button" variant="destructive" disabled={saving} onClick={confirmDelete}>{saving ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead>Exam name</TableHead>
+              <TableHead>Routine</TableHead>
+              <TableHead>Public routine</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Class</TableHead>
+              <TableHead>Start date</TableHead>
+              <TableHead>End date</TableHead>
+              <TableHead>Approval</TableHead>
+              <TableHead>Status</TableHead>
+              {canManage && <TableHead className="text-right">Actions</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow><TableCell colSpan={canManage ? 10 : 9} className="h-32 text-center text-slate-500">Loading exams...</TableCell></TableRow>
+            ) : exams.length === 0 ? (
+              <TableRow><TableCell colSpan={canManage ? 10 : 9} className="h-32 text-center text-slate-500">No exams found.</TableCell></TableRow>
+            ) : (
+              exams.map((exam) => (
+                <TableRow key={exam._id}>
+                  <TableCell>
+                    <div className="font-medium text-slate-950">{exam.name}</div>
+                    <div className="text-xs text-slate-500">{exam.subjectMarks?.length || 0} subject schedule</div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn("w-fit capitalize", isRoutineReady(exam) ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700")}>
+                      {isRoutineReady(exam) ? "Routine ready" : "Routine incomplete"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-2">
+                      <Badge variant="outline" className={exam.isPublished ? "w-fit border-blue-200 bg-blue-50 text-blue-700" : "w-fit border-slate-200 bg-slate-50 text-slate-600"}>
+                        {exam.isPublished ? "Public" : "Private"}
+                      </Badge>
+                      {canManage && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={exam.isPublished ? "outline" : "default"}
+                          className="w-fit"
+                          disabled={publishingExamId === exam._id}
+                          onClick={() => togglePublicRoutine(exam)}
+                        >
+                          {exam.isPublished ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                          {publishingExamId === exam._id ? "Updating..." : exam.isPublished ? "Make private" : "Publish routine"}
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell><Badge variant="outline" className="capitalize">{exam.type}</Badge></TableCell>
+                  <TableCell>{exam.classId?.name || "Unassigned"}</TableCell>
+                  <TableCell>{exam.startDate ? formatDate(exam.startDate) : "Not set"}</TableCell>
+                  <TableCell>{exam.endDate ? formatDate(exam.endDate) : "Not set"}</TableCell>
+                  <TableCell>{exam.approvalRequired ? "Yes" : "No"}</TableCell>
+                  <TableCell><Badge variant="outline" className={statusClass(exam.status || "scheduled")}>{exam.status || "scheduled"}</Badge></TableCell>
+                  {canManage && (
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Button type="button" variant="outline" size="icon" title="Edit exam" onClick={() => openEditModal(exam)}><Edit2 className="h-4 w-4" /></Button>
+                        <Button type="button" variant="destructive" size="icon" title="Delete exam" onClick={() => setDeleteTarget(exam)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </section>
+      {canManage && <ExamFormDialog open={formOpen} editing={Boolean(editingExam)} form={form} classes={classes} selectedClassSubjects={selectedClassSubjects} saving={saving} routineReady={formRoutineReady} onOpenChange={setFormOpen} onSubmit={submitForm} onFormChange={setForm} onClassChange={updateClass} onTypeChange={updateType} onUpdateSubjectMark={updateSubjectMark} />}
+      {canManage && <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}><DialogContent><DialogHeader><DialogTitle>Delete exam?</DialogTitle><DialogDescription>This will remove {deleteTarget?.name}. Exams with submitted results cannot be deleted.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button><Button type="button" variant="destructive" disabled={saving} onClick={confirmDelete}>{saving ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog>}
     </div>
   );
 }

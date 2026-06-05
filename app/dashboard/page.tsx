@@ -153,6 +153,25 @@ function getQuickActions(role?: UserRole) {
     { label: "Notice Board", href: "/notices", icon: Bell },
   ];
 
+  if (role === 'student') {
+    return [
+      { label: "My Attendance", href: "/attendance/my-attendance", icon: CalendarCheck },
+      { label: "My Fees", href: "/finance/my-fees", icon: CreditCard },
+      { label: "Admit Card", href: "/documents/admit-cards", icon: Download },
+      { label: "My ID Card", href: "/id-cards/my-card", icon: BadgeCheck },
+      ...common
+    ].slice(0, 6);
+  }
+
+  if (role === 'parent') {
+    return [
+      { label: "Parent Portal", href: "/parent-portal", icon: Users },
+      { label: "My Fees", href: "/finance/my-fees", icon: CreditCard },
+      { label: "Notices", href: "/notices", icon: Bell },
+      ...common
+    ].slice(0, 6);
+  }
+
   const byRole: Partial<Record<UserRole, typeof common>> = {
     head: [
       { label: "Add Student", href: "/institution/admission", icon: Plus },
@@ -177,17 +196,6 @@ function getQuickActions(role?: UserRole) {
     finance_officer: [
       { label: "Collect Fees", href: "/finance/collections", icon: CreditCard },
       { label: "Finance Reports", href: "/finance/reports", icon: FileText },
-    ],
-    student: [
-      { label: "My Attendance", href: "/attendance/my-attendance", icon: CalendarCheck },
-      { label: "My Fees", href: "/finance/my-fees", icon: CreditCard },
-      { label: "Admit Card", href: "/documents/admit-cards", icon: Download },
-      { label: "My ID Card", href: "/id-cards/my-card", icon: BadgeCheck },
-    ],
-    parent: [
-      { label: "Parent Portal", href: "/parent-portal", icon: Users },
-      { label: "My Fees", href: "/finance/my-fees", icon: CreditCard },
-      { label: "Notices", href: "/notices", icon: Bell },
     ],
     staff: [
       { label: "Documents", href: "/documents", icon: FileText },

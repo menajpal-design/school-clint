@@ -68,7 +68,7 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Academic', href: '/academic', roles: ACADEMIC_VIEW, icon: 'BookOpen',
+    label: 'Academic', href: '/academic-menu', roles: ACADEMIC_VIEW, icon: 'BookOpen',
     children: [
       { label: 'Overview', href: '/academic', roles: [...SCHOOL_LEADERS, ...TEACHERS] },
       { label: 'Classes', href: '/academic/classes', roles: SCHOOL_LEADERS },
@@ -94,14 +94,14 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Leave Application', href: '/leave-application', roles: [...EMPLOYEES, 'student', 'parent'], icon: 'CalendarDays',
+    label: 'Leave Application', href: '/leave-application-menu', roles: [...EMPLOYEES, 'student', 'parent'], icon: 'CalendarDays',
     children: [
-      { label: 'Apply for Leave', href: '/leave-application', roles: [...EMPLOYEES, 'student'] },
-      { label: 'Leave List', href: '/leave-list', roles: SCHOOL_LEADERS },
+      { label: 'Apply for Leave', href: '/leave-application', roles: [...EMPLOYEES, 'student', 'parent'] },
+      { label: 'Leave List', href: '/leave-list', roles: [...SCHOOL_LEADERS, 'student', 'parent'] },
     ],
   },
   {
-    label: 'Finance', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer', 'student', 'parent'], icon: 'DollarSign',
+    label: 'Finance', href: '/finance-menu', roles: ['head', 'assistant_head', 'finance_officer', 'student', 'parent'], icon: 'DollarSign',
     children: [
       { label: 'Overview', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'Fees', href: '/finance/fees', roles: ['head', 'assistant_head', 'finance_officer'] },

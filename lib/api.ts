@@ -136,9 +136,9 @@ class ApiClient {
         }
       }
 
-      return await this.parse<T>(res);
+      return await this.parse<T>(res, config);
     }
-    catch (e: any) { throw this.toError(e); }
+    catch (e: any) { throw this.toError(e, config?.skipToast); }
   }
 
   private async ensureCsrfToken() {
@@ -197,7 +197,7 @@ class ApiClient {
     finally { this.refreshing = false; }
   }
 
-  private async parse<T>(res: Response): Promise<T> {
+  private async parse<T>(res: Response, config: any = {}): Promise<T> {
     if (res.status === 401) { this.clearToken(); if (isBrowser) window.location.href = '/login'; }
     const text = await res.text();
     const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
@@ -208,15 +208,17 @@ class ApiClient {
         const redirectTo = data?.redirectTo || '/settings';
         if (window.location.pathname !== redirectTo) window.location.href = redirectTo;
       }
-      throw this.toError(data || { message: res.statusText });
+      throw this.toError(data || { message: res.statusText }, config?.skipToast);
     }
     return data as T;
   }
 
-  private toError(err: any) {
+  private toError(err: any, skipToast = false) {
     const raw = typeof err?.message === 'string' ? err.message : (typeof err === 'string' ? err : 'Server connection failed');
     const message = raw.includes('abort') || raw.includes('signal') ? 'Server response timeout. Please restart dyno or check database/API.' : raw;
-    this.toast(message);
+    if (!skipToast) {
+      this.toast(message);
+    }
     return { message, error: err };
   }
 
@@ -290,7 +292,7 @@ const holidaysApi = {
 const idCardApi = {
   getAll: (params?: any) => apiClient.get('/id-cards', { params }),
   getById: (id: string) => apiClient.get(`/id-cards/${id}`),
-  getMine: () => apiClient.get('/id-cards/me/card'),
+  getMine: (config?: any) => apiClient.get('/id-cards/me/card', config),
   stats: () => apiClient.get('/id-cards/reports/stats'),
   searchOwners: (params?: any) => apiClient.get('/id-cards/owners/search', { params }),
   generate: (data: any) => apiClient.post('/id-cards/generate', data),
