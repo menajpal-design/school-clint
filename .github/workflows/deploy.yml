@@ -17,7 +17,11 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
             # Detect client directory
-            if [ -d "$HOME/school-clint" ]; then
+            if [ -d "$HOME/projects/school/school-clint" ]; then
+              cd "$HOME/projects/school/school-clint"
+            elif [ -d "$HOME/projects/school/school-client" ]; then
+              cd "$HOME/projects/school/school-client"
+            elif [ -d "$HOME/school-clint" ]; then
               cd "$HOME/school-clint"
             elif [ -d "$HOME/school-client" ]; then
               cd "$HOME/school-client"
