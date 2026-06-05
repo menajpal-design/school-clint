@@ -6,7 +6,6 @@ import { BookOpen, CalendarDays, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BarChartCard } from '@/components/charts/BarChartCard';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,18 +25,18 @@ export default function HomeworkPage() {
   const [form, setForm] = useState({ title: '', description: '', subject: '', classId: '', dueDate: '' });
 
   const canManage = useMemo(() => canManageHomework(user?.role), [user?.role]);
+  const isLearnerView = user?.role === 'student' || user?.role === 'parent';
 
   const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [homeworkResponse, classResponse] = await Promise.all([
-        api.homework.getAll() as Promise<any>,
-        api.academic.classes.getAll() as Promise<any>,
-      ]);
-
+      const homeworkResponse = await api.homework.getAll() as any;
       setHomework(homeworkResponse?.homework || []);
-      setClasses(classResponse?.classes || []);
+      if (canManage) {
+        const classResponse = await api.academic.classes.getAll() as any;
+        setClasses(classResponse?.classes || []);
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to load homework');
       setHomework([]);
@@ -49,18 +48,15 @@ export default function HomeworkPage() {
 
   useEffect(() => {
     loadData().catch(() => undefined);
-  }, []);
+  }, [canManage]);
 
-  const classHomeworkCounts = useMemo(() => {
-    const map: Record<string, number> = {};
-    homework.forEach((h) => {
-      const name = h.classId?.name || (classes.find((c) => c._id === (h.classId || ''))?.name) || 'Unknown';
-      map[name] = (map[name] || 0) + 1;
-    });
-    return Object.keys(map).map((k) => ({ name: k, value: map[k] }));
-  }, [homework, classes]);
+  const todaysHomework = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return homework.filter((item) => String(item.createdAt || item.assignedDate || '').slice(0, 10) === today || String(item.dueDate || '').slice(0, 10) === today);
+  }, [homework]);
 
   const submit = async () => {
+    if (!canManage) return;
     if (!form.title || !form.classId || !form.dueDate) {
       setError('Please fill title, class, and due date.');
       return;
@@ -84,6 +80,7 @@ export default function HomeworkPage() {
   };
 
   const remove = async (id: string) => {
+    if (!canManage) return;
     try {
       await api.homework.delete(id);
       await loadData();
@@ -92,31 +89,36 @@ export default function HomeworkPage() {
     }
   };
 
+  const visibleHomework = isLearnerView && todaysHomework.length ? todaysHomework : homework;
+
   return (
     <div className="space-y-5">
       <PageHeader
         title="Homework"
-        description="Create and manage homework assignments for classes, and let students and parents review them from one place."
+        description={isLearnerView ? "Students and parents can only view today's assigned class work." : "Teachers can create homework. Students and parents only see assigned work."}
         icon={BookOpen}
+        status={<Badge variant="outline">{visibleHomework.length} homework</Badge>}
         actions={canManage ? [{ label: 'Create Homework', icon: Plus, onClick: () => setOpen(true) }] : []}
       />
 
       {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
 
-      <div className="grid gap-4">
-        <BarChartCard title="Homework per class" data={classHomeworkCounts} />
-      </div>
+      {isLearnerView && (
+        <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 shadow-sm">
+          <strong>Read only:</strong> You can see homework only. Add, edit, and delete actions are hidden for student/parent accounts.
+        </section>
+      )}
 
       {loading ? (
         <div className="rounded-lg border border-border bg-card p-10 text-sm text-muted-foreground">Loading homework…</div>
-      ) : homework.length === 0 ? (
+      ) : visibleHomework.length === 0 ? (
         <div className="rounded-lg border border-border bg-card p-10 text-center text-muted-foreground">
           {canManage ? 'No homework created yet. Add your first assignment.' : 'No homework is available for your class right now.'}
         </div>
       ) : (
         <div className="grid gap-4">
-          {homework.map((item) => (
-            <article key={item._id} className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          {visibleHomework.map((item) => (
+            <article key={item._id} className="rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
@@ -141,7 +143,7 @@ export default function HomeworkPage() {
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      {canManage && <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create Homework</DialogTitle>
@@ -181,7 +183,7 @@ export default function HomeworkPage() {
             <Button onClick={submit}>Save Homework</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog>}
     </div>
   );
 }
