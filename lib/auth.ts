@@ -9,6 +9,8 @@ class AuthManager {
     this.user = user;
     if (typeof window === 'undefined') return;
 
+    localStorage.removeItem('easy-school:mode'); // Clear demo mode flag on real user set
+
     const payload = JSON.stringify(user);
     if (persist) {
       localStorage.setItem('user', payload);

@@ -3,7 +3,6 @@
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { hasPermission, hasRole } from '@/lib/permissions'
-import { getDemoMode } from '@/lib/demo-store'
 
 type Props = {
   roles?: string[]
@@ -16,7 +15,6 @@ export function RoleGuard({ roles, permissions, fallback = null, children }: Pro
   const { user } = useAuth() as any
 
   if (!user) return null
-  if (getDemoMode()) return <>{children}</>
 
   // School head and platform admins bypass permission checks.
   if (['admin', 'super_admin', 'head'].includes(user.role)) return <>{children}</>

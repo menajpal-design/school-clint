@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { permissionActions, hasPermission } from "@/lib/permissions";
+import { permissionActions, hasPermission, normalizeUserRole } from "@/lib/permissions";
 
 type WorkflowStatus = "draft" | "review" | "approved" | "published";
 type SectionItem = { _id: string; name: string; isActive?: boolean };
@@ -29,7 +29,8 @@ const studentRoles = ["student", "parent"];
 
 export default function ResultsPage() {
   const { user } = useAuth();
-  if (user && studentRoles.includes(user.role)) return <StudentResultsView user={user} />;
+  const normalizedRole = user ? normalizeUserRole(user.role) : undefined;
+  if (normalizedRole && studentRoles.includes(normalizedRole)) return <StudentResultsView user={user} />;
   return <ResultManagementView user={user} />;
 }
 

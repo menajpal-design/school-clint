@@ -93,7 +93,7 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Academic', href: '/academic-menu', roles: ACADEMIC_VIEW, icon: 'BookOpen',
     children: [
-      { label: 'Overview', href: '/academic', roles: [...SCHOOL_LEADERS, ...TEACHERS] },
+      { label: 'Overview', href: '/academic', roles: SCHOOL_LEADER_ADMIN },
       { label: 'Classes', href: '/academic/classes', roles: CLASS_MANAGE },
       { label: 'Sections', href: '/academic/sections', roles: CLASS_MANAGE },
       { label: 'Subjects', href: '/academic/subjects', roles: SUBJECT_MANAGE },
@@ -196,7 +196,6 @@ export const rolePermissions: Record<UserRole, string[]> = {
 
 export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
   if (!user) return false;
-  if (getDemoMode()) return true;
   if (!roles) return true;
   const role = normalizeUserRole(user.role) || user.role;
   if (['admin', 'super_admin', 'head'].includes(role)) return true;
@@ -206,7 +205,6 @@ export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
 
 export function hasPermission(user?: User | null, permission?: string) {
   if (!user || !permission) return false;
-  if (getDemoMode()) return true;
   const role = normalizeUserRole(user.role) || user.role;
   if (['admin', 'super_admin', 'head'].includes(role)) return true;
   const rolePerms = rolePermissions[role] || [];
@@ -242,7 +240,6 @@ function filterMenuByRole(userRole: UserRole) {
 
 export function getMenuForUser(user?: User | null) {
   if (!user) return [];
-  if (getDemoMode()) return menuConfig;
   const role = normalizeUserRole(user.role);
   return role ? filterMenuByRole(role) : [];
 }
@@ -267,7 +264,6 @@ const routeAliases: Record<string, string> = {
 };
 
 export function isRouteAllowed(pathname: string, userRole: UserRole | string): boolean {
-  if (getDemoMode()) return true;
   const role = normalizeUserRole(userRole);
   if (!role) return false;
   if (['admin', 'super_admin', 'head'].includes(role)) return true;
