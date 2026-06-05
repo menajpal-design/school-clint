@@ -25,6 +25,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/types";
 
+type DashboardRole = UserRole | "guardian" | "parent_guardian";
+
 type QuickAction = {
   label: string;
   href: string;
@@ -32,42 +34,51 @@ type QuickAction = {
   description: string;
 };
 
-function roleLabel(role?: UserRole) {
+function normalizeDashboardRole(role?: string): DashboardRole | undefined {
+  if (!role) return undefined;
+  const normalized = role.toLowerCase().replace(/[-\s]+/g, "_") as DashboardRole;
+  if (normalized === "guardian" || normalized === "parent_guardian") return "parent";
+  return normalized;
+}
+
+function roleLabel(role?: string) {
   if (!role) return "Guest";
   return role.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
 
-export function getDashboardQuickActions(role?: UserRole): QuickAction[] {
+const STUDENT_QUICK_ACTIONS: QuickAction[] = [
+  { label: "My Result", href: "/academic/results", icon: GraduationCap, description: "View and download your own result only." },
+  { label: "My Attendance", href: "/attendance/my-attendance", icon: CalendarCheck, description: "View your own attendance record." },
+  { label: "My ID Card", href: "/id-cards/my-card", icon: BadgeCheck, description: "Preview or download your ID card." },
+  { label: "My Fees", href: "/finance/my-fees", icon: CreditCard, description: "View your own fee status." },
+  { label: "Syllabus", href: "/academic/syllabus", icon: FileText, description: "View your class syllabus only." },
+  { label: "Class Routine", href: "/academic/class-routine", icon: BookOpen, description: "View your class routine only." },
+  { label: "Homework", href: "/homework", icon: BookOpen, description: "See today's and previous homework." },
+  { label: "Leave Application", href: "/leave-application", icon: CalendarCheck, description: "Apply for leave and view your applications." },
+];
+
+const PARENT_QUICK_ACTIONS: QuickAction[] = [
+  { label: "Child Result", href: "/academic/results", icon: GraduationCap, description: "View and download child result only." },
+  { label: "Child Attendance", href: "/attendance/my-attendance", icon: CalendarCheck, description: "View child attendance." },
+  { label: "Child Fees", href: "/finance/my-fees", icon: CreditCard, description: "View child fee status." },
+  { label: "Child Routine", href: "/academic/class-routine", icon: BookOpen, description: "View child class routine." },
+  { label: "Child Syllabus", href: "/academic/syllabus", icon: FileText, description: "View child class syllabus." },
+  { label: "Homework", href: "/homework", icon: BookOpen, description: "View child homework." },
+  { label: "Leave Application", href: "/leave-application", icon: CalendarCheck, description: "Apply for child leave." },
+];
+
+export function getDashboardQuickActions(role?: UserRole | string): QuickAction[] {
+  const normalizedRole = normalizeDashboardRole(role);
+
+  if (normalizedRole === "student") return STUDENT_QUICK_ACTIONS;
+  if (normalizedRole === "parent") return PARENT_QUICK_ACTIONS;
+
   const common: QuickAction[] = [
     { label: "My Profile", href: "/profile", icon: UserRound, description: "View and update your own profile." },
     { label: "Notice Board", href: "/notices", icon: Bell, description: "Read published school notices." },
   ];
 
-  if (role === "student") {
-    return [
-      { label: "My Result", href: "/academic/results", icon: GraduationCap, description: "View and download your own result only." },
-      { label: "My Attendance", href: "/attendance/my-attendance", icon: CalendarCheck, description: "View your own attendance record." },
-      { label: "My ID Card", href: "/id-cards/my-card", icon: BadgeCheck, description: "Preview or download your ID card." },
-      { label: "My Fees", href: "/finance/my-fees", icon: CreditCard, description: "View your own fee status." },
-      { label: "Syllabus", href: "/academic/syllabus", icon: FileText, description: "View your class syllabus only." },
-      { label: "Class Routine", href: "/academic/class-routine", icon: BookOpen, description: "View your class routine only." },
-      { label: "Homework", href: "/homework", icon: BookOpen, description: "See today's and previous homework." },
-      { label: "Leave Application", href: "/leave-application", icon: CalendarCheck, description: "Apply for leave and view your applications." },
-    ];
-  }
-
-  if (role === "parent") {
-    return [
-      { label: "Child Result", href: "/academic/results", icon: GraduationCap, description: "View and download child result only." },
-      { label: "Child Attendance", href: "/attendance/my-attendance", icon: CalendarCheck, description: "View child attendance." },
-      { label: "Child Fees", href: "/finance/my-fees", icon: CreditCard, description: "View child fee status." },
-      { label: "Child Routine", href: "/academic/class-routine", icon: BookOpen, description: "View child class routine." },
-      { label: "Homework", href: "/homework", icon: BookOpen, description: "View child homework." },
-      { label: "Leave Application", href: "/leave-application", icon: CalendarCheck, description: "Apply for child leave." },
-    ];
-  }
-
-  if (role === "head" || role === "assistant_head") {
+  if (normalizedRole === "head" || normalizedRole === "assistant_head") {
     return [
       { label: "Add Student", href: "/institution/admission", icon: Plus, description: "Admit a new student." },
       { label: "Students", href: "/institution/students", icon: Users, description: "Manage student records." },
@@ -78,7 +89,7 @@ export function getDashboardQuickActions(role?: UserRole): QuickAction[] {
     ];
   }
 
-  if (role === "class_teacher") {
+  if (normalizedRole === "class_teacher") {
     return [
       { label: "Mark Attendance", href: "/attendance/mark", icon: CalendarCheck, description: "Mark assigned class attendance." },
       { label: "Class Results", href: "/academic/results", icon: GraduationCap, description: "Enter or manage class results." },
@@ -88,7 +99,7 @@ export function getDashboardQuickActions(role?: UserRole): QuickAction[] {
     ].slice(0, 6);
   }
 
-  if (role === "subject_teacher" || role === "teacher") {
+  if (normalizedRole === "subject_teacher" || normalizedRole === "teacher") {
     return [
       { label: "Enter Results", href: "/academic/results", icon: GraduationCap, description: "Enter results for assigned subjects." },
       { label: "Homework", href: "/homework", icon: BookOpen, description: "Create homework for students." },
@@ -97,7 +108,7 @@ export function getDashboardQuickActions(role?: UserRole): QuickAction[] {
     ].slice(0, 6);
   }
 
-  if (role === "finance_officer") {
+  if (normalizedRole === "finance_officer") {
     return [
       { label: "Collect Fees", href: "/finance/collections", icon: CreditCard, description: "Manage fee collection." },
       { label: "Finance Reports", href: "/finance/reports", icon: FileText, description: "View finance reports." },
@@ -105,7 +116,7 @@ export function getDashboardQuickActions(role?: UserRole): QuickAction[] {
     ].slice(0, 6);
   }
 
-  if (role === "staff") {
+  if (normalizedRole === "staff") {
     return [
       { label: "Documents", href: "/documents", icon: FileText, description: "Manage permitted documents." },
       { label: "Library", href: "/library", icon: BookOpen, description: "Manage library records if assigned." },
@@ -119,18 +130,19 @@ export function getDashboardQuickActions(role?: UserRole): QuickAction[] {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const quickActions = getDashboardQuickActions(user?.role as UserRole | undefined);
+  const normalizedRole = normalizeDashboardRole(user?.role);
+  const quickActions = getDashboardQuickActions(user?.role);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description={`Role-based dashboard for ${roleLabel(user?.role as UserRole | undefined)}. Only permitted actions are shown here.`}
+        description={`Role-based dashboard for ${roleLabel(normalizedRole)}. Only permitted actions are shown here.`}
         icon={ShieldCheck}
-        status={<Badge variant="outline">{roleLabel(user?.role as UserRole | undefined)}</Badge>}
+        status={<Badge variant="outline">{roleLabel(normalizedRole)}</Badge>}
       />
 
-      {(user?.role === "student" || user?.role === "parent") && (
+      {(normalizedRole === "student" || normalizedRole === "parent") && (
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4 text-sm text-blue-800">
             Student/Parent accounts are view-only for academic data. They cannot add students, enter or publish results, mark attendance, or access SMS monitoring.
