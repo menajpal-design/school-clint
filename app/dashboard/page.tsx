@@ -37,7 +37,7 @@ function roleLabel(role?: UserRole) {
   return role.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
 
-function getQuickActions(role?: UserRole): QuickAction[] {
+export function getDashboardQuickActions(role?: UserRole): QuickAction[] {
   const common: QuickAction[] = [
     { label: "My Profile", href: "/profile", icon: UserRound, description: "View and update your own profile." },
     { label: "Notice Board", href: "/notices", icon: Bell, description: "Read published school notices." },
@@ -45,23 +45,25 @@ function getQuickActions(role?: UserRole): QuickAction[] {
 
   if (role === "student") {
     return [
-      { label: "My Result", href: "/academic/results", icon: GraduationCap, description: "View your own published results only." },
+      { label: "My Result", href: "/academic/results", icon: GraduationCap, description: "View and download your own result only." },
       { label: "My Attendance", href: "/attendance/my-attendance", icon: CalendarCheck, description: "View your own attendance record." },
+      { label: "My ID Card", href: "/id-cards/my-card", icon: BadgeCheck, description: "Preview or download your ID card." },
+      { label: "My Fees", href: "/finance/my-fees", icon: CreditCard, description: "View your own fee status." },
       { label: "Syllabus", href: "/academic/syllabus", icon: FileText, description: "View your class syllabus only." },
       { label: "Class Routine", href: "/academic/class-routine", icon: BookOpen, description: "View your class routine only." },
-      { label: "Homework", href: "/homework", icon: BookOpen, description: "See today&apos;s assigned homework." },
-      { label: "My ID Card", href: "/id-cards/my-card", icon: BadgeCheck, description: "Preview or download your ID card." },
+      { label: "Homework", href: "/homework", icon: BookOpen, description: "See today's and previous homework." },
+      { label: "Leave Application", href: "/leave-application", icon: CalendarCheck, description: "Apply for leave and view your applications." },
     ];
   }
 
   if (role === "parent") {
     return [
-      { label: "Parent Portal", href: "/parent-portal", icon: Users, description: "View child information." },
-      { label: "Child Result", href: "/academic/results", icon: GraduationCap, description: "View child published results only." },
+      { label: "Child Result", href: "/academic/results", icon: GraduationCap, description: "View and download child result only." },
       { label: "Child Attendance", href: "/attendance/my-attendance", icon: CalendarCheck, description: "View child attendance." },
-      { label: "Leave Application", href: "/leave-application", icon: CalendarCheck, description: "Apply for child leave." },
+      { label: "Child Fees", href: "/finance/my-fees", icon: CreditCard, description: "View child fee status." },
+      { label: "Child Routine", href: "/academic/class-routine", icon: BookOpen, description: "View child class routine." },
       { label: "Homework", href: "/homework", icon: BookOpen, description: "View child homework." },
-      { label: "Notice Board", href: "/notices", icon: Bell, description: "Read published notices." },
+      { label: "Leave Application", href: "/leave-application", icon: CalendarCheck, description: "Apply for child leave." },
     ];
   }
 
@@ -117,7 +119,7 @@ function getQuickActions(role?: UserRole): QuickAction[] {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const quickActions = getQuickActions(user?.role as UserRole | undefined);
+  const quickActions = getDashboardQuickActions(user?.role as UserRole | undefined);
 
   return (
     <div className="space-y-6">
@@ -131,7 +133,7 @@ export default function Dashboard() {
       {(user?.role === "student" || user?.role === "parent") && (
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4 text-sm text-blue-800">
-            Student/Parent accounts are view-only for academic data. They cannot add students, enter results, publish results, mark attendance, or access SMS monitoring.
+            Student/Parent accounts are view-only for academic data. They cannot add students, enter or publish results, mark attendance, or access SMS monitoring.
           </CardContent>
         </Card>
       )}
@@ -141,7 +143,7 @@ export default function Dashboard() {
           <CardTitle>Quick Actions</CardTitle>
           <CardDescription>Actions are filtered by your role and permission.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
