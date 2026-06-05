@@ -118,10 +118,10 @@ class ApiClient {
         }
       }
 
+      let bodyText: string | null = null;
       // Handle CSRF failures: try one recovery attempt by refetching token and retrying
       if (res.status === 403 && isBrowser) {
-        let bodyText = '';
-        try { bodyText = await res.clone().text(); } catch (_) { bodyText = ''; }
+        try { bodyText = await res.text(); } catch (_) { bodyText = ''; }
         const parsed = bodyText ? (() => { try { return JSON.parse(bodyText); } catch { return bodyText; } })() : null;
         const msg = typeof parsed === 'object' ? parsed?.message : parsed || '';
         if (String(msg).toLowerCase().includes('csrf')) {
@@ -132,11 +132,12 @@ class ApiClient {
             // reattach header
             init.headers = { ...(init.headers || {}), [this.csrfHeaderName]: this.csrfToken };
             res = await withTimeout(`${API_URL}${url}${qs}`, init, 90000);
+            bodyText = null;
           }
         }
       }
 
-      return await this.parse<T>(res, config);
+      return await this.parse<T>(res, config, bodyText);
     }
     catch (e: any) { throw this.toError(e, config?.skipToast); }
   }
@@ -197,9 +198,9 @@ class ApiClient {
     finally { this.refreshing = false; }
   }
 
-  private async parse<T>(res: Response, config: any = {}): Promise<T> {
+  private async parse<T>(res: Response, config: any = {}, preReadText?: string | null): Promise<T> {
     if (res.status === 401) { this.clearToken(); if (isBrowser) window.location.href = '/login'; }
-    const text = await res.text();
+    const text = (preReadText !== undefined && preReadText !== null) ? preReadText : await res.text();
     const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : null;
     if (!res.ok) {
       if (isBrowser && (res.status === 428 || data?.code === 'STORAGE_CONFIG_REQUIRED')) {
