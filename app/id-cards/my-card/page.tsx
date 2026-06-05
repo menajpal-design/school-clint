@@ -32,6 +32,10 @@ function getNested(...values: any[]) {
   return values.find((value) => value !== undefined && value !== null && value !== "") || "";
 }
 
+function idOf(value: any) {
+  return String(value?._id || value?.id || value || "");
+}
+
 function isGenericServerError(message?: string) {
   const value = String(message || "").toLowerCase();
   return !value || value === "server error" || value.includes("server connection failed") || value.includes("failed to fetch");
@@ -64,11 +68,34 @@ export default function MyCardPage() {
 
   const cardRecord = card?.card || card;
   const cardOwner = cardRecord?.ownerId;
-  const profileId = String(profile?._id || profile?.id || "");
-  const cardOwnerId = String(typeof cardOwner === "object" ? cardOwner?._id || cardOwner?.id || "" : cardOwner || "");
-  const isOwnCard = Boolean(cardRecord?._id && profileId && cardOwnerId && cardOwnerId === profileId);
-  const personalCard = isOwnCard ? cardRecord : null;
   const owner = profile || {};
+  const studentProfile = owner?.student || owner?.studentId || owner?.studentProfile || {};
+  const teacherProfile = owner?.teacher || owner?.teacherId || owner?.teacherProfile || {};
+  const staffProfile = owner?.staff || owner?.staffId || owner?.staffProfile || {};
+  const parentProfile = owner?.parent || owner?.guardian || owner?.parentProfile || {};
+  const profileOwnerIds = [
+    idOf(profile?._id),
+    idOf(profile?.id),
+    idOf(studentProfile),
+    idOf(studentProfile?._id),
+    idOf(studentProfile?.id),
+    idOf(studentProfile?.userId),
+    idOf(teacherProfile),
+    idOf(teacherProfile?._id),
+    idOf(teacherProfile?.id),
+    idOf(teacherProfile?.userId),
+    idOf(staffProfile),
+    idOf(staffProfile?._id),
+    idOf(staffProfile?.id),
+    idOf(staffProfile?.userId),
+    idOf(parentProfile),
+    idOf(parentProfile?._id),
+    idOf(parentProfile?.id),
+    idOf(parentProfile?.userId),
+  ].filter(Boolean);
+  const cardOwnerId = idOf(cardOwner);
+  const isOwnCard = Boolean(cardRecord?._id && cardOwnerId && profileOwnerIds.includes(cardOwnerId));
+  const personalCard = isOwnCard ? cardRecord : null;
   const institutionData = institution || owner?.institution || profile?.institution || {};
 
   const cardData = useMemo(() => {
@@ -86,7 +113,7 @@ export default function MyCardPage() {
     const designation = getNested(personalCard?.designation, cardRecord?.designation, roleProfile?.designation, owner?.designation, roleLabel(role));
     const department = getNested(personalCard?.department, cardRecord?.department, roleProfile?.department, owner?.department, role === "student" ? className : "");
     const stream = role === "student" ? [className, sectionName ? `Section ${sectionName}` : ""].filter(Boolean).join(" · ") : getNested(designation, department, roleLabel(role));
-    const idNumber = role === "student" ? getNested(personalCard?.cardNumber, rollNumber, owner?.admissionNumber, owner?._id, "ROLL") : getNested(personalCard?.cardNumber, employeeId, owner?.username, owner?._id, "ID");
+    const idNumber = role === "student" ? getNested(personalCard?.cardNumber, cardRecord?.cardNumber, rollNumber, owner?.admissionNumber, owner?._id, "ROLL") : getNested(personalCard?.cardNumber, cardRecord?.cardNumber, employeeId, owner?.username, owner?._id, "ID");
 
     return {
       role,
@@ -111,7 +138,7 @@ export default function MyCardPage() {
       <PageHeader title="My ID Card" description="Preview, download, print or email your current ID card." icon={BadgeCheck} status={<Badge variant="outline" className="capitalize">{status}</Badge>} />
       {error && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">{error}</div>}
       {cardLookupFailed && !error && profile && <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">No saved personal ID card was found. A downloadable role-based preview is shown instead.</div>}
-      {cardRecord?._id && !isOwnCard && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">Your personal ID card was not found for this account. Showing role-based preview.</div>}
+      {cardRecord?._id && !isOwnCard && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">The card returned by the server did not match this account or linked profile. Showing role-based preview.</div>}
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-6">
         <div ref={previewRef} className="relative flex justify-start overflow-x-auto md:justify-center">
           <ProfessionalIDCard
