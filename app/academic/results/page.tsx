@@ -1,122 +1,39 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  AlertCircle,
-  CheckCircle2,
-  ClipboardCheck,
-  Plus,
-  RefreshCw,
-  Save,
-  Send,
-  Upload,
-  Users,
-} from "lucide-react";
-
+import { AlertCircle, CheckCircle2, ClipboardCheck, Plus, RefreshCw, Save, Send, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { permissionActions, hasPermission } from "@/lib/permissions";
 
 type WorkflowStatus = "draft" | "review" | "approved" | "published";
-
-type SectionItem = {
-  _id: string;
-  name: string;
-  isActive?: boolean;
-};
-
-type ClassItem = {
-  _id: string;
-  name: string;
-  sections?: SectionItem[];
-};
-
-type SubjectItem = {
-  _id: string;
-  name: string;
-  code: string;
-  classId?: { _id: string; name: string };
-};
-
-type ExamItem = {
-  _id: string;
-  name: string;
-  type: string;
-  classId?: { _id: string; name: string };
-  subjectMarks?: Array<{
-    subjectId?: { _id: string; name: string; code: string };
-    totalMarks?: number;
-    passingMarks?: number;
-  }>;
-};
-
-type StudentOption = {
-  _id: string;
-  rollNumber: string;
-  userId?: { name?: string; email?: string };
-  sectionId?: { _id?: string; name?: string };
-};
-
-type ResultRow = {
-  studentId: string;
-  resultId?: string;
-  rollNumber: string;
-  studentName: string;
-  section: string;
-  marksObtained?: number | "";
-  grade?: string;
-  remarks?: string;
-  workflowStatus: WorkflowStatus;
-};
-
-type MarksSetup = {
-  totalMarks: number;
-  passingMarks: number;
-};
-
-type AddResultForm = {
-  classId: string;
-  sectionId: string;
-  examId: string;
-  subjectId: string;
-  studentId: string;
-  marksObtained: string;
-  remarks: string;
-};
+type SectionItem = { _id: string; name: string; isActive?: boolean };
+type ClassItem = { _id: string; name: string; sections?: SectionItem[] };
+type SubjectItem = { _id: string; name: string; code: string; classId?: { _id: string; name: string } };
+type ExamItem = { _id: string; name: string; type: string; classId?: { _id: string; name: string }; subjectMarks?: Array<{ subjectId?: { _id: string; name: string; code: string }; totalMarks?: number; passingMarks?: number }> };
+type StudentOption = { _id: string; rollNumber: string; userId?: { name?: string; email?: string }; sectionId?: { _id?: string; name?: string } };
+type ResultRow = { studentId: string; resultId?: string; rollNumber: string; studentName: string; section: string; marksObtained?: number | ""; grade?: string; remarks?: string; workflowStatus: WorkflowStatus };
+type MarksSetup = { totalMarks: number; passingMarks: number };
+type AddResultForm = { classId: string; sectionId: string; examId: string; subjectId: string; studentId: string; marksObtained: string; remarks: string };
 
 const defaultMarksSetup: MarksSetup = { totalMarks: 100, passingMarks: 33 };
-
-const emptyAddForm: AddResultForm = {
-  classId: "",
-  sectionId: "",
-  examId: "",
-  subjectId: "",
-  studentId: "",
-  marksObtained: "",
-  remarks: "",
-};
+const emptyAddForm: AddResultForm = { classId: "", sectionId: "", examId: "", subjectId: "", studentId: "", marksObtained: "", remarks: "" };
+const studentRoles = ["student", "parent"];
 
 export default function ResultsPage() {
+  const { user } = useAuth();
+  if (user && studentRoles.includes(user.role)) return <StudentResultsView user={user} />;
+  return <ResultManagementView user={user} />;
+}
+
+function ResultManagementView({ user }: { user: any }) {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [subjects, setSubjects] = useState<SubjectItem[]>([]);
   const [exams, setExams] = useState<ExamItem[]>([]);
@@ -138,10 +55,16 @@ export default function ResultsPage() {
   const [addStudents, setAddStudents] = useState<StudentOption[]>([]);
   const [addLoading, setAddLoading] = useState(false);
 
+  const canEntry = permissionActions.canResultEntry(user);
+  const canAssistantApprove = permissionActions.canResultApproveAssistant(user);
+  const canHeadApprove = permissionActions.canResultApproveHead(user);
+  const canPublish = permissionActions.canResultPublish(user);
+  const canDelete = hasPermission(user, "result:delete");
+
   const calculateGrade = useCallback((marks: number | string | undefined | null, total: number = 100) => {
     if (marks === undefined || marks === null || marks === "") return "-";
     const num = Number(marks);
-    if (isNaN(num)) return "-";
+    if (Number.isNaN(num)) return "-";
     const percentage = total ? (num / total) * 100 : 0;
     if (percentage >= 80) return "A+";
     if (percentage >= 70) return "A";
@@ -154,20 +77,13 @@ export default function ResultsPage() {
 
   const selectedClass = classes.find((item) => item._id === classId);
   const availableSections = selectedClass?.sections?.filter((section) => section.isActive !== false) || [];
-  const availableSubjects = useMemo(
-    () => subjects.filter((subject) => !classId || subject.classId?._id === classId),
-    [subjects, classId]
-  );
-  const availableExams = useMemo(
-    () => exams.filter((exam) => !classId || exam.classId?._id === classId),
-    [exams, classId]
-  );
+  const availableSubjects = useMemo(() => subjects.filter((subject) => !classId || subject.classId?._id === classId || String(subject.classId as any) === classId), [subjects, classId]);
+  const availableExams = useMemo(() => exams.filter((exam) => !classId || exam.classId?._id === classId || String(exam.classId as any) === classId), [exams, classId]);
   const readyForEntry = Boolean(classId && examId && subjectId);
-
   const addSelectedClass = classes.find((item) => item._id === addForm.classId);
   const addSections = addSelectedClass?.sections?.filter((section) => section.isActive !== false) || [];
-  const addSubjects = subjects.filter((subject) => !addForm.classId || subject.classId?._id === addForm.classId);
-  const addExams = exams.filter((exam) => !addForm.classId || exam.classId?._id === addForm.classId);
+  const addSubjects = subjects.filter((subject) => !addForm.classId || subject.classId?._id === addForm.classId || String(subject.classId as any) === addForm.classId);
+  const addExams = exams.filter((exam) => !addForm.classId || exam.classId?._id === addForm.classId || String(exam.classId as any) === addForm.classId);
 
   const loadLookups = useCallback(async () => {
     setLoading(true);
@@ -184,15 +100,14 @@ export default function ResultsPage() {
       setClasses(nextClasses);
       setSubjects(nextSubjects);
       setExams(nextExams);
-
       const firstClass = nextClasses[0]?._id || "";
-      const firstExam = nextExams.find((exam) => exam.classId?._id === firstClass)?._id || nextExams[0]?._id || "";
-      const firstSubject = nextSubjects.find((subject) => subject.classId?._id === firstClass)?._id || nextSubjects[0]?._id || "";
+      const firstExam = nextExams.find((exam) => exam.classId?._id === firstClass || String(exam.classId as any) === firstClass)?._id || nextExams[0]?._id || "";
+      const firstSubject = nextSubjects.find((subject) => subject.classId?._id === firstClass || String(subject.classId as any) === firstClass)?._id || nextSubjects[0]?._id || "";
       setClassId((current) => current || firstClass);
       setExamId((current) => current || firstExam);
       setSubjectId((current) => current || firstSubject);
     } catch (err: any) {
-      setError(err?.message || "Failed to load result filters");
+      setError(err?.message || "Failed to load scoped result filters");
     } finally {
       setLoading(false);
     }
@@ -203,81 +118,53 @@ export default function ResultsPage() {
       setRows([]);
       return;
     }
-
     setLoading(true);
     setError("");
     try {
-      const data = await api.academic.results.getEntry({
-        classId,
-        sectionId: sectionId || undefined,
-        examId,
-        subjectId,
-      }) as { rows: ResultRow[]; marksSetup?: MarksSetup; workflowStatus?: WorkflowStatus; missingMarks?: number };
-
+      const data = await api.academic.results.getEntry({ classId, sectionId: sectionId || undefined, examId, subjectId }) as { rows: ResultRow[]; marksSetup?: MarksSetup; workflowStatus?: WorkflowStatus; missingMarks?: number };
       setRows((data.rows || []).map((row) => ({ ...row, marksObtained: row.marksObtained ?? "" })));
       setMarksSetup(data.marksSetup || defaultMarksSetup);
       setWorkflowStatus(data.workflowStatus || "draft");
       setMissingMarks(data.missingMarks || 0);
     } catch (err: any) {
-      setError(err?.message || "Failed to load marks entry table");
+      setRows([]);
+      setError(err?.message || "Failed to load scoped marks entry table");
     } finally {
       setLoading(false);
     }
   }, [classId, examId, sectionId, subjectId]);
 
   const loadAddStudents = useCallback(async (form: AddResultForm = addForm) => {
-    if (!form.classId) {
+    if (!form.classId || !canEntry) {
       setAddStudents([]);
       return;
     }
     setAddLoading(true);
     try {
-      const data = await api.academic.reportCard.students({
-        classId: form.classId,
-        sectionId: form.sectionId || undefined,
-      }) as { students: StudentOption[] };
+      const data = await api.academic.reportCard.students({ classId: form.classId, sectionId: form.sectionId || undefined }) as { students: StudentOption[] };
       setAddStudents(data.students || []);
     } catch {
       setAddStudents([]);
     } finally {
       setAddLoading(false);
     }
-  }, [addForm]);
+  }, [addForm, canEntry]);
 
-  useEffect(() => {
-    loadLookups();
-  }, [loadLookups]);
-
-  useEffect(() => {
-    loadRows();
-  }, [loadRows]);
-
-  useEffect(() => {
-    if (addOpen) loadAddStudents(addForm);
-  }, [addOpen, addForm, loadAddStudents]);
+  useEffect(() => { loadLookups(); }, [loadLookups]);
+  useEffect(() => { loadRows(); }, [loadRows]);
+  useEffect(() => { if (addOpen) loadAddStudents(addForm); }, [addOpen, addForm, loadAddStudents]);
 
   const updateClass = (nextClassId: string) => {
     setClassId(nextClassId);
     setSectionId("");
-    const nextExam = exams.find((exam) => exam.classId?._id === nextClassId)?._id || "";
-    const nextSubject = subjects.find((subject) => subject.classId?._id === nextClassId)?._id || "";
-    setExamId(nextExam);
-    setSubjectId(nextSubject);
+    setExamId(exams.find((exam) => exam.classId?._id === nextClassId || String(exam.classId as any) === nextClassId)?._id || "");
+    setSubjectId(subjects.find((subject) => subject.classId?._id === nextClassId || String(subject.classId as any) === nextClassId)?._id || "");
   };
 
   const openAddDialog = () => {
+    if (!canEntry) return;
     const nextClassId = classId || classes[0]?._id || "";
-    const nextExamId = examId || exams.find((exam) => exam.classId?._id === nextClassId)?._id || exams[0]?._id || "";
-    const nextSubjectId = subjectId || subjects.find((subject) => subject.classId?._id === nextClassId)?._id || subjects[0]?._id || "";
-    const nextForm = {
-      classId: nextClassId,
-      sectionId: sectionId || "",
-      examId: nextExamId,
-      subjectId: nextSubjectId,
-      studentId: "",
-      marksObtained: "",
-      remarks: "",
-    };
+    const nextForm = { classId: nextClassId, sectionId: sectionId || "", examId: examId || addExams[0]?._id || "", subjectId: subjectId || addSubjects[0]?._id || "", studentId: "", marksObtained: "", remarks: "" };
     setAddForm(nextForm);
     setAddStudents([]);
     setAddOpen(true);
@@ -289,8 +176,8 @@ export default function ResultsPage() {
       if (key === "classId") {
         next.sectionId = "";
         next.studentId = "";
-        next.examId = exams.find((exam) => exam.classId?._id === value)?._id || "";
-        next.subjectId = subjects.find((subject) => subject.classId?._id === value)?._id || "";
+        next.examId = exams.find((exam) => exam.classId?._id === value || String(exam.classId as any) === value)?._id || "";
+        next.subjectId = subjects.find((subject) => subject.classId?._id === value || String(subject.classId as any) === value)?._id || "";
       }
       if (key === "sectionId") next.studentId = "";
       return next;
@@ -298,82 +185,49 @@ export default function ResultsPage() {
   };
 
   const updateMark = (studentId: string, value: Partial<ResultRow>) => {
+    if (!canEntry) return;
     setRows((current) => current.map((row) => (row.studentId === studentId ? { ...row, ...value } : row)));
   };
 
   const saveDraft = async () => {
-    if (!readyForEntry) return;
-    setSaving(true);
-    setError("");
-    setSuccess("");
+    if (!readyForEntry || !canEntry) return;
+    setSaving(true); setError(""); setSuccess("");
     try {
-      const data = await api.academic.results.saveDraft({
-        classId,
-        sectionId: sectionId || undefined,
-        examId,
-        subjectId,
-        rows,
-      }) as { rows: ResultRow[]; workflowStatus?: WorkflowStatus; missingMarks?: number; marksSetup?: MarksSetup };
+      const data = await api.academic.results.saveDraft({ classId, sectionId: sectionId || undefined, examId, subjectId, rows }) as { rows: ResultRow[]; workflowStatus?: WorkflowStatus; missingMarks?: number; marksSetup?: MarksSetup };
       setRows((data.rows || []).map((row) => ({ ...row, marksObtained: row.marksObtained ?? "" })));
       setWorkflowStatus(data.workflowStatus || "draft");
       setMissingMarks(data.missingMarks || 0);
       setMarksSetup(data.marksSetup || marksSetup);
       setSuccess("Draft saved successfully.");
-    } catch (err: any) {
-      setError(err?.message || "Failed to save draft");
-    } finally {
-      setSaving(false);
-    }
+    } catch (err: any) { setError(err?.message || "Failed to save draft"); }
+    finally { setSaving(false); }
   };
 
   const saveSingleResult = async () => {
-    setSaving(true);
-    setError("");
-    setSuccess("");
+    if (!canEntry) return;
+    setSaving(true); setError(""); setSuccess("");
     try {
       if (!addForm.classId || !addForm.examId || !addForm.subjectId || !addForm.studentId || addForm.marksObtained === "") {
         setError("Please select class, exam, subject, student and marks.");
         return;
       }
-
       const selectedStudent = addStudents.find((student) => student._id === addForm.studentId);
-      await api.academic.results.saveDraft({
-        classId: addForm.classId,
-        sectionId: addForm.sectionId || undefined,
-        examId: addForm.examId,
-        subjectId: addForm.subjectId,
-        rows: [{
-          studentId: addForm.studentId,
-          rollNumber: selectedStudent?.rollNumber || "",
-          studentName: selectedStudent?.userId?.name || "Student",
-          section: selectedStudent?.sectionId?.name || "",
-          marksObtained: Number(addForm.marksObtained),
-          remarks: addForm.remarks,
-          workflowStatus: "draft",
-        }],
-      });
-
-      setClassId(addForm.classId);
-      setSectionId(addForm.sectionId);
-      setExamId(addForm.examId);
-      setSubjectId(addForm.subjectId);
-      setAddOpen(false);
+      await api.academic.results.saveDraft({ classId: addForm.classId, sectionId: addForm.sectionId || undefined, examId: addForm.examId, subjectId: addForm.subjectId, rows: [{ studentId: addForm.studentId, rollNumber: selectedStudent?.rollNumber || "", studentName: selectedStudent?.userId?.name || "Student", section: selectedStudent?.sectionId?.name || "", marksObtained: Number(addForm.marksObtained), remarks: addForm.remarks, workflowStatus: "draft" }] });
+      setClassId(addForm.classId); setSectionId(addForm.sectionId); setExamId(addForm.examId); setSubjectId(addForm.subjectId); setAddOpen(false);
       setSuccess("Result added successfully.");
       await loadRows();
-    } catch (err: any) {
-      setError(err?.message || "Failed to add result");
-    } finally {
-      setSaving(false);
-    }
+    } catch (err: any) { setError(err?.message || "Failed to add result"); }
+    finally { setSaving(false); }
   };
 
   const runWorkflowAction = async () => {
     if (!confirmAction || !readyForEntry) return;
-    setSaving(true);
-    setError("");
-    setSuccess("");
+    if (confirmAction === "review" && !canEntry) return;
+    if (confirmAction === "assistant" && !canAssistantApprove) return;
+    if (confirmAction === "head" && !canHeadApprove) return;
+    if (confirmAction === "publish" && !canPublish) return;
+    setSaving(true); setError(""); setSuccess("");
     const payload = { classId, sectionId: sectionId || undefined, examId, subjectId };
-
     try {
       if (confirmAction === "review") await api.academic.results.submitReview(payload);
       if (confirmAction === "assistant") await api.academic.results.assistantApprove(payload);
@@ -382,46 +236,23 @@ export default function ResultsPage() {
       setSuccess(actionSuccess(confirmAction));
       setConfirmAction(null);
       await loadRows();
-    } catch (err: any) {
-      setError(err?.message || "Workflow action failed");
-    } finally {
-      setSaving(false);
-    }
+    } catch (err: any) { setError(err?.message || "Workflow action failed"); }
+    finally { setSaving(false); }
   };
 
   const localMissingMarks = rows.filter((row) => row.marksObtained === "" || row.marksObtained === undefined || row.marksObtained === null).length;
   const filledMarks = rows.length - localMissingMarks;
   const passCount = rows.filter((row) => typeof row.marksObtained === "number" && row.marksObtained >= marksSetup.passingMarks).length;
   const failCount = rows.filter((row) => typeof row.marksObtained === "number" && row.marksObtained < marksSetup.passingMarks).length;
-  const averageMarks = filledMarks
-    ? Math.round(rows.reduce((sum, row) => sum + (typeof row.marksObtained === "number" ? row.marksObtained : 0), 0) / filledMarks)
-    : 0;
+  const averageMarks = filledMarks ? Math.round(rows.reduce((sum, row) => sum + (typeof row.marksObtained === "number" ? row.marksObtained : 0), 0) / filledMarks) : 0;
   const publishBlocked = localMissingMarks > 0 || missingMarks > 0 || workflowStatus !== "approved";
-  const { user } = useAuth();
-  const isManagement = ["head", "assistant_head", "class_teacher", "subject_teacher", "teacher"].includes(user?.role || "");
-
-  if (user && !isManagement) {
-    return <StudentResultsView user={user} />;
-  }
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Result Management"
-        description="Enter marks, add individual results, manage approval workflow and publish verified results."
-        icon={ClipboardCheck}
-        status={<WorkflowBadge status={workflowStatus} />}
-        actions={[
-          <Button key="add" size="sm" onClick={openAddDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Result
-          </Button>,
-          <Button key="refresh" variant="outline" size="sm" onClick={loadRows}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
-          </Button>,
-        ]}
-      />
+      <PageHeader title="Result Management" description="Scoped result entry and approval actions follow backend role permissions." icon={ClipboardCheck} status={<WorkflowBadge status={workflowStatus} />} actions={[
+        canEntry ? <Button key="add" size="sm" onClick={openAddDialog}><Plus className="mr-2 h-4 w-4" />Add Result</Button> : null,
+        <Button key="refresh" variant="outline" size="sm" onClick={loadRows}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
+      ].filter(Boolean) as any} />
 
       <section className="grid gap-3 md:grid-cols-4">
         <MetricCard title="Students" value={rows.length} helper="Loaded for selected filters" icon={Users} />
@@ -432,22 +263,10 @@ export default function ResultsPage() {
 
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-4">
-          <Filter label="Class" value={classId} onChange={updateClass}>
-            <option value="">Select class</option>
-            {classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
-          </Filter>
-          <Filter label="Section" value={sectionId} onChange={setSectionId}>
-            <option value="">All sections</option>
-            {availableSections.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
-          </Filter>
-          <Filter label="Exam" value={examId} onChange={setExamId}>
-            <option value="">Select exam</option>
-            {availableExams.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
-          </Filter>
-          <Filter label="Subject" value={subjectId} onChange={setSubjectId}>
-            <option value="">Select subject</option>
-            {availableSubjects.map((item) => <option key={item._id} value={item._id}>{item.name} {item.code ? `(${item.code})` : ""}</option>)}
-          </Filter>
+          <Filter label="Class" value={classId} onChange={updateClass}><option value="">Select class</option>{classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Filter>
+          <Filter label="Section" value={sectionId} onChange={setSectionId}><option value="">All sections</option>{availableSections.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Filter>
+          <Filter label="Exam" value={examId} onChange={setExamId}><option value="">Select exam</option>{availableExams.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Filter>
+          <Filter label="Subject" value={subjectId} onChange={setSubjectId}><option value="">Select subject</option>{availableSubjects.map((item) => <option key={item._id} value={item._id}>{item.name} {item.code ? `(${item.code})` : ""}</option>)}</Filter>
         </div>
       </section>
 
@@ -456,196 +275,35 @@ export default function ResultsPage() {
 
       <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Marks entry table</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Total marks {marksSetup.totalMarks}, passing marks {marksSetup.passingMarks}. Missing marks: {localMissingMarks}
-            </p>
-          </div>
+          <div><h2 className="text-base font-semibold text-foreground">Marks entry table</h2><p className="mt-1 text-sm text-slate-500">Total marks {marksSetup.totalMarks}, passing marks {marksSetup.passingMarks}. Missing marks: {localMissingMarks}</p></div>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" disabled={!readyForEntry || saving} onClick={saveDraft}>
-              <Save className="mr-2 h-4 w-4" />
-              Save Draft
-            </Button>
-            <Button type="button" variant="outline" disabled={!readyForEntry || saving || rows.length === 0} onClick={() => setConfirmAction("review")}>
-              <Send className="mr-2 h-4 w-4" />
-              Submit for Review
-            </Button>
-            <Button type="button" variant="outline" disabled={!readyForEntry || saving || workflowStatus === "draft"} onClick={() => setConfirmAction("assistant")}>
-              Assistant Approval
-            </Button>
-            <Button type="button" variant="outline" disabled={!readyForEntry || saving || workflowStatus === "draft"} onClick={() => setConfirmAction("head")}>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Head Approval
-            </Button>
-            <Button type="button" disabled={!readyForEntry || saving || publishBlocked} onClick={() => setConfirmAction("publish")}>
-              <Upload className="mr-2 h-4 w-4" />
-              Publish Result
-            </Button>
+            {canEntry && <Button type="button" variant="outline" disabled={!readyForEntry || saving} onClick={saveDraft}><Save className="mr-2 h-4 w-4" />Save Draft</Button>}
+            {canEntry && <Button type="button" variant="outline" disabled={!readyForEntry || saving || rows.length === 0} onClick={() => setConfirmAction("review")}><Send className="mr-2 h-4 w-4" />Submit for Review</Button>}
+            {canAssistantApprove && <Button type="button" variant="outline" disabled={!readyForEntry || saving || workflowStatus === "draft"} onClick={() => setConfirmAction("assistant")}>Assistant Approval</Button>}
+            {canHeadApprove && <Button type="button" variant="outline" disabled={!readyForEntry || saving || workflowStatus === "draft"} onClick={() => setConfirmAction("head")}><CheckCircle2 className="mr-2 h-4 w-4" />Head Approval</Button>}
+            {canPublish && <Button type="button" disabled={!readyForEntry || saving || publishBlocked} onClick={() => setConfirmAction("publish")}><Upload className="mr-2 h-4 w-4" />Publish Result</Button>}
           </div>
         </div>
-
-        <div className="overflow-hidden rounded-lg border border-slate-200">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted hover:bg-muted">
-                <TableHead>Roll</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Section</TableHead>
-                <TableHead>Marks</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>Remarks</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">Loading result rows...</TableCell>
-                </TableRow>
-              ) : rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">Select filters or click Add Result to enter marks.</TableCell>
-                </TableRow>
-              ) : (
-                rows.map((row) => (
-                  <TableRow key={row.studentId}>
-                    <TableCell>{row.rollNumber}</TableCell>
-                    <TableCell className="font-medium text-slate-950">{row.studentName}</TableCell>
-                    <TableCell>{row.section || "-"}</TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={marksSetup.totalMarks}
-                        value={row.marksObtained}
-                        onChange={(event) => updateMark(row.studentId, { marksObtained: event.target.value === "" ? "" : Number(event.target.value) })}
-                        className="w-28"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {row.marksObtained !== "" && row.marksObtained !== undefined && row.marksObtained !== null
-                        ? calculateGrade(row.marksObtained, marksSetup.totalMarks)
-                        : row.grade || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={row.remarks || ""}
-                        onChange={(event) => updateMark(row.studentId, { remarks: event.target.value })}
-                        placeholder="Optional"
-                      />
-                    </TableCell>
-                    <TableCell><WorkflowBadge status={row.workflowStatus || workflowStatus} /></TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <div className="overflow-hidden rounded-lg border border-slate-200"><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>Roll</TableHead><TableHead>Student</TableHead><TableHead>Section</TableHead><TableHead>Marks</TableHead><TableHead>Grade</TableHead><TableHead>Remarks</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">Loading result rows...</TableCell></TableRow> : rows.length === 0 ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">No scoped result rows found. If you are a teacher, confirm assigned class/subject setup.</TableCell></TableRow> : rows.map((row) => <TableRow key={row.studentId}><TableCell>{row.rollNumber}</TableCell><TableCell className="font-medium text-slate-950">{row.studentName}</TableCell><TableCell>{row.section || "-"}</TableCell><TableCell><Input type="number" min={0} max={marksSetup.totalMarks} value={row.marksObtained} disabled={!canEntry} onChange={(event) => updateMark(row.studentId, { marksObtained: event.target.value === "" ? "" : Number(event.target.value) })} className="w-28" /></TableCell><TableCell>{row.marksObtained !== "" && row.marksObtained !== undefined && row.marksObtained !== null ? calculateGrade(row.marksObtained, marksSetup.totalMarks) : row.grade || "-"}</TableCell><TableCell><Input disabled={!canEntry} value={row.remarks || ""} onChange={(event) => updateMark(row.studentId, { remarks: event.target.value })} placeholder="Optional" /></TableCell><TableCell><WorkflowBadge status={row.workflowStatus || workflowStatus} /></TableCell></TableRow>)}</TableBody></Table></div>
       </section>
 
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add Result</DialogTitle>
-            <DialogDescription>Select class, exam, subject and student, then enter marks. This saves as draft and can be approved later.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Filter label="Class" value={addForm.classId} onChange={(value) => updateAddForm("classId", value)}>
-              <option value="">Select class</option>
-              {classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
-            </Filter>
-            <Filter label="Section" value={addForm.sectionId} onChange={(value) => updateAddForm("sectionId", value)}>
-              <option value="">All sections</option>
-              {addSections.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
-            </Filter>
-            <Filter label="Exam" value={addForm.examId} onChange={(value) => updateAddForm("examId", value)}>
-              <option value="">Select exam</option>
-              {addExams.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}
-            </Filter>
-            <Filter label="Subject" value={addForm.subjectId} onChange={(value) => updateAddForm("subjectId", value)}>
-              <option value="">Select subject</option>
-              {addSubjects.map((item) => <option key={item._id} value={item._id}>{item.name} {item.code ? `(${item.code})` : ""}</option>)}
-            </Filter>
-            <Filter label={addLoading ? "Student loading..." : "Student"} value={addForm.studentId} onChange={(value) => updateAddForm("studentId", value)}>
-              <option value="">Select student</option>
-              {addStudents.map((student) => <option key={student._id} value={student._id}>{student.rollNumber} - {student.userId?.name || "Student"}</option>)}
-            </Filter>
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">Marks</span>
-              <Input
-                type="number"
-                min={0}
-                max={marksSetup.totalMarks}
-                value={addForm.marksObtained}
-                onChange={(event) => updateAddForm("marksObtained", event.target.value)}
-                placeholder={`Out of ${marksSetup.totalMarks}`}
-              />
-            </label>
-            <label className="space-y-2 md:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Remarks</span>
-              <Input value={addForm.remarks} onChange={(event) => updateAddForm("remarks", event.target.value)} placeholder="Optional remarks" />
-            </label>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button type="button" disabled={saving || !addForm.classId || !addForm.examId || !addForm.subjectId || !addForm.studentId || addForm.marksObtained === ""} onClick={saveSingleResult}>
-              {saving ? "Saving..." : "Save Result"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Dialog open={addOpen} onOpenChange={setAddOpen}><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Add Result</DialogTitle><DialogDescription>Select only scoped class, exam, subject and student. This saves as draft.</DialogDescription></DialogHeader><div className="grid gap-4 md:grid-cols-2"><Filter label="Class" value={addForm.classId} onChange={(value) => updateAddForm("classId", value)}><option value="">Select class</option>{classes.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Filter><Filter label="Section" value={addForm.sectionId} onChange={(value) => updateAddForm("sectionId", value)}><option value="">All sections</option>{addSections.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Filter><Filter label="Exam" value={addForm.examId} onChange={(value) => updateAddForm("examId", value)}><option value="">Select exam</option>{addExams.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Filter><Filter label="Subject" value={addForm.subjectId} onChange={(value) => updateAddForm("subjectId", value)}><option value="">Select subject</option>{addSubjects.map((item) => <option key={item._id} value={item._id}>{item.name} {item.code ? `(${item.code})` : ""}</option>)}</Filter><Filter label={addLoading ? "Student loading..." : "Student"} value={addForm.studentId} onChange={(value) => updateAddForm("studentId", value)}><option value="">Select student</option>{addStudents.map((student) => <option key={student._id} value={student._id}>{student.rollNumber} - {student.userId?.name || "Student"}</option>)}</Filter><label className="space-y-2"><span className="text-sm font-medium text-slate-700">Marks</span><Input type="number" min={0} max={marksSetup.totalMarks} value={addForm.marksObtained} onChange={(event) => updateAddForm("marksObtained", event.target.value)} placeholder={`Out of ${marksSetup.totalMarks}`} /></label><label className="space-y-2 md:col-span-2"><span className="text-sm font-medium text-slate-700">Remarks</span><Input value={addForm.remarks} onChange={(event) => updateAddForm("remarks", event.target.value)} placeholder="Optional remarks" /></label></div><DialogFooter><Button type="button" variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button><Button type="button" disabled={saving || !addForm.classId || !addForm.examId || !addForm.subjectId || !addForm.studentId || addForm.marksObtained === ""} onClick={saveSingleResult}>{saving ? "Saving..." : "Save Result"}</Button></DialogFooter></DialogContent></Dialog>
 
-      <Dialog open={Boolean(confirmAction)} onOpenChange={(open) => !open && setConfirmAction(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{actionTitle(confirmAction)}</DialogTitle>
-            <DialogDescription>{actionDescription(confirmAction, localMissingMarks)}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
-            <Button type="button" disabled={saving || (confirmAction === "publish" && publishBlocked)} onClick={runWorkflowAction}>
-              {saving ? "Working..." : "Confirm"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Dialog open={Boolean(confirmAction)} onOpenChange={(open) => !open && setConfirmAction(null)}><DialogContent><DialogHeader><DialogTitle>{actionTitle(confirmAction)}</DialogTitle><DialogDescription>{actionDescription(confirmAction, localMissingMarks)}</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button><Button type="button" disabled={saving || (confirmAction === "publish" && publishBlocked)} onClick={runWorkflowAction}>{saving ? "Working..." : "Confirm"}</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 }
 
 function Filter({ label, value, onChange, children }: { label: string; value: string; onChange: (value: string) => void; children: React.ReactNode }) {
-  return (
-    <label className="space-y-2">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>
-        {children}
-      </select>
-    </label>
-  );
+  return <label className="space-y-2"><span className="text-sm font-medium text-slate-700">{label}</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>{children}</select></label>;
 }
 
 function MetricCard({ title, value, helper, icon: Icon }: { title: string; value: string | number; helper: string; icon: any }) {
-  return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">{title}</p>
-          <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
-        </div>
-        <div className="rounded-lg bg-primary/10 p-2 text-primary"><Icon className="h-5 w-5" /></div>
-      </div>
-    </div>
-  );
+  return <div className="rounded-lg border border-border bg-card p-4 shadow-sm"><div className="flex items-start justify-between gap-3"><div><p className="text-sm text-muted-foreground">{title}</p><p className="mt-1 text-2xl font-bold text-foreground">{value}</p><p className="mt-1 text-xs text-muted-foreground">{helper}</p></div><div className="rounded-lg bg-primary/10 p-2 text-primary"><Icon className="h-5 w-5" /></div></div></div>;
 }
 
 function WorkflowBadge({ status }: { status: WorkflowStatus }) {
-  return (
-    <Badge variant="outline" className={cn("capitalize", statusClass(status))}>
-      {status === "review" ? "Review" : status}
-    </Badge>
-  );
+  return <Badge variant="outline" className={cn("capitalize", statusClass(status))}>{status === "review" ? "Review" : status}</Badge>;
 }
 
 function statusClass(status: WorkflowStatus) {
@@ -665,7 +323,7 @@ function actionTitle(action: null | "review" | "assistant" | "head" | "publish")
 
 function actionDescription(action: null | "review" | "assistant" | "head" | "publish", missingMarks: number) {
   if (action === "publish" && missingMarks > 0) return `Publishing is blocked because ${missingMarks} required marks are missing.`;
-  if (action === "publish") return "Published results will be visible in result workflows.";
+  if (action === "publish") return "Published results will be visible to students and parents.";
   if (action === "review") return "This moves saved marks from Draft to Review.";
   if (action === "assistant") return "This records Assistant Head review approval.";
   if (action === "head") return "This records Head approval and unlocks publishing.";
@@ -691,159 +349,37 @@ function StudentResultsView({ user }: { user: any }) {
   const [subjectOptions, setSubjectOptions] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
 
-  // Fetch children if parent
   useEffect(() => {
     if (user?.role === "parent") {
       setLoading(true);
-      api.parent.portal()
-        .then((res: any) => {
-          const kids = res.portal?.children || [];
-          setChildren(kids);
-          if (kids.length > 0) {
-            setStudentId(kids[0]._id);
-          }
-        })
-        .catch((err: any) => {
-          setError(err?.message || "Failed to load children list");
-        })
-        .finally(() => setLoading(false));
+      api.parent.portal().then((res: any) => {
+        const kids = res.portal?.children || [];
+        setChildren(kids);
+        if (kids.length > 0) setStudentId(kids[0]._id);
+      }).catch((err: any) => setError(err?.message || "Failed to load children list")).finally(() => setLoading(false));
     }
   }, [user]);
 
-  // Load results
   const loadResults = useCallback(async () => {
     if (user?.role === "parent" && !studentId) return;
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     try {
       const params: any = {};
       if (examId) params.examId = examId;
       if (subjectId) params.subjectId = subjectId;
       if (studentId) params.studentId = studentId;
-
       const data = await api.academic.results.getOwn(params) as any;
       setResults(data.results || []);
       setSummary(data.summary);
-      if (data.filters) {
-        setExamOptions(data.filters.exams || []);
-        setSubjectOptions(data.filters.subjects || []);
-      }
+      setExamOptions(data.filters?.exams || []);
+      setSubjectOptions(data.filters?.subjects || []);
     } catch (err: any) {
-      setError(err?.message || "Failed to load results");
-    } finally {
-      setLoading(false);
-    }
+      setResults([]);
+      setError(err?.message || "Failed to load own results");
+    } finally { setLoading(false); }
   }, [user, studentId, examId, subjectId]);
 
-  useEffect(() => {
-    loadResults();
-  }, [loadResults]);
+  useEffect(() => { loadResults(); }, [loadResults]);
 
-  return (
-    <div className="space-y-5">
-      <PageHeader
-        title="আমার ফলাফল (My Results)"
-        description="আপনার পরীক্ষার ফলাফল ও বিষয়ভিত্তিক গ্রেড বিবরণী দেখুন।"
-        icon={ClipboardCheck}
-        actions={[
-          <Button key="refresh" variant="outline" size="sm" onClick={loadResults}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            রিফ্রেশ (Refresh)
-          </Button>
-        ]}
-      />
-
-      {summary && (
-        <section className="grid gap-3 md:grid-cols-4">
-          <MetricCard title="মোট বিষয়" value={summary.totalSubjects} helper="অংশগ্রহণকৃত বিষয়" icon={Users} />
-          <MetricCard title="মোট প্রাপ্ত নম্বর" value={`${summary.totalObtained} / ${summary.totalMarks}`} helper={`গড় শতকরা: ${summary.percentage}%`} icon={Save} />
-          <MetricCard title="জিপিএ (GPA)" value={summary.gpa} helper={summary.passed ? "উত্তীর্ণ (Passed)" : "অনূত্তীর্ণ (Failed)"} icon={CheckCircle2} />
-          <MetricCard title="ফলাফল স্ট্যাটাস" value={summary.passed ? "Passed" : "Failed"} helper="চূড়ান্ত ফলাফল" icon={ClipboardCheck} />
-        </section>
-      )}
-
-      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-3">
-          {user?.role === "parent" && (
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">বাচ্চা নির্বাচন করুন (Select Child)</span>
-              <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={studentId} onChange={(e) => { setStudentId(e.target.value); setExamId(""); setSubjectId(""); }}>
-                {children.map((child) => (
-                  <option key={child._id} value={child._id}>
-                    {child.userId?.name || "Student"} - Roll: {child.rollNumber} ({child.classId?.name})
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">পরীক্ষা (Exam)</span>
-            <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={examId} onChange={(e) => setExamId(e.target.value)}>
-              <option value="">সকল পরীক্ষা (All Exams)</option>
-              {examOptions.map((e) => <option key={e._id} value={e._id}>{e.name}</option>)}
-            </select>
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">বিষয় (Subject)</span>
-            <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
-              <option value="">সকল বিষয় (All Subjects)</option>
-              {subjectOptions.map((s) => <option key={s._id} value={s._id}>{s.name} {s.code ? `(${s.code})` : ""}</option>)}
-            </select>
-          </label>
-        </div>
-      </section>
-
-      {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
-
-      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
-        <h2 className="mb-4 text-base font-semibold text-foreground">ফলাফল বিবরণী (Result Sheet)</h2>
-        <div className="overflow-hidden rounded-lg border border-slate-200">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted hover:bg-muted">
-                <TableHead>পরীক্ষা (Exam)</TableHead>
-                <TableHead>বিষয় (Subject)</TableHead>
-                <TableHead>প্রাপ্ত নম্বর (Marks)</TableHead>
-                <TableHead>গ্রেড (Grade)</TableHead>
-                <TableHead>জিপিএ (GPA)</TableHead>
-                <TableHead>মন্তব্য (Remarks)</TableHead>
-                <TableHead>স্ট্যাটাস (Status)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">ফলাফল লোড হচ্ছে...</TableCell>
-                </TableRow>
-              ) : results.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-slate-500">কোনো ফলাফল পাওয়া যায়নি।</TableCell>
-                </TableRow>
-              ) : (
-                results.map((row) => (
-                  <TableRow key={row._id}>
-                    <TableCell className="font-semibold text-slate-900">{row.examName}</TableCell>
-                    <TableCell>{row.subjectName} {row.subjectCode ? `(${row.subjectCode})` : ""}</TableCell>
-                    <TableCell className="font-medium">{row.marksObtained} / {row.totalMarks}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={cn("font-bold", row.grade === "F" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700")}>
-                        {row.grade}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{row.gradePoint}</TableCell>
-                    <TableCell>{row.remarks || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 font-bold capitalize">
-                        {row.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
-    </div>
-  );
+  return <div className="space-y-5"><PageHeader title="আমার ফলাফল (My Results)" description="নিজের অথবা linked child-এর ফলাফল দেখুন।" icon={ClipboardCheck} actions={[<Button key="refresh" variant="outline" size="sm" onClick={loadResults}><RefreshCw className="mr-2 h-4 w-4" />রিফ্রেশ</Button>]} />{summary && <section className="grid gap-3 md:grid-cols-4"><MetricCard title="মোট বিষয়" value={summary.totalSubjects} helper="অংশগ্রহণকৃত বিষয়" icon={Users} /><MetricCard title="মোট প্রাপ্ত নম্বর" value={`${summary.totalObtained} / ${summary.totalMarks}`} helper={`গড় শতকরা: ${summary.percentage}%`} icon={Save} /><MetricCard title="জিপিএ (GPA)" value={summary.gpa} helper={summary.passed ? "উত্তীর্ণ (Passed)" : "অনূত্তীর্ণ (Failed)"} icon={CheckCircle2} /><MetricCard title="ফলাফল স্ট্যাটাস" value={summary.passed ? "Passed" : "Failed"} helper="চূড়ান্ত ফলাফল" icon={ClipboardCheck} /></section>}<section className="rounded-lg border border-border bg-card p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-3">{user?.role === "parent" && <Filter label="বাচ্চা নির্বাচন করুন" value={studentId} onChange={(value) => { setStudentId(value); setExamId(""); setSubjectId(""); }}>{children.map((child) => <option key={child._id} value={child._id}>{child.userId?.name || "Student"} - Roll: {child.rollNumber}</option>)}</Filter>}<Filter label="পরীক্ষা" value={examId} onChange={setExamId}><option value="">সকল পরীক্ষা</option>{examOptions.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Filter><Filter label="বিষয়" value={subjectId} onChange={setSubjectId}><option value="">সকল বিষয়</option>{subjectOptions.map((item) => <option key={item._id} value={item._id}>{item.name} {item.code ? `(${item.code})` : ""}</option>)}</Filter></div></section>{error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}<section className="rounded-lg border border-border bg-card p-4 shadow-sm"><h2 className="mb-4 text-base font-semibold text-foreground">ফলাফল বিবরণী</h2><div className="overflow-hidden rounded-lg border border-slate-200"><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>পরীক্ষা</TableHead><TableHead>বিষয়</TableHead><TableHead>প্রাপ্ত নম্বর</TableHead><TableHead>গ্রেড</TableHead><TableHead>জিপিএ</TableHead><TableHead>মন্তব্য</TableHead><TableHead>স্ট্যাটাস</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">ফলাফল লোড হচ্ছে...</TableCell></TableRow> : results.length === 0 ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">কোনো ফলাফল পাওয়া যায়নি।</TableCell></TableRow> : results.map((row) => <TableRow key={row._id}><TableCell className="font-semibold text-slate-900">{row.examName}</TableCell><TableCell>{row.subjectName} {row.subjectCode ? `(${row.subjectCode})` : ""}</TableCell><TableCell className="font-medium">{row.marksObtained} / {row.totalMarks}</TableCell><TableCell><Badge variant="outline" className={cn("font-bold", row.grade === "F" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700")}>{row.grade}</Badge></TableCell><TableCell>{row.gradePoint}</TableCell><TableCell>{row.remarks || "-"}</TableCell><TableCell><Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 font-bold capitalize">{row.status}</Badge></TableCell></TableRow>)}</TableBody></Table></div></section></div>;
 }
