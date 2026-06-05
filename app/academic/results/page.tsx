@@ -28,9 +28,25 @@ const emptyAddForm: AddResultForm = { classId: "", sectionId: "", examId: "", su
 const studentRoles = ["student", "parent"];
 
 export default function ResultsPage() {
-  const { user } = useAuth();
-  const normalizedRole = user ? normalizeUserRole(user.role) : undefined;
-  if (normalizedRole && studentRoles.includes(normalizedRole)) return <StudentResultsView user={user} />;
+  const { user, isLoading } = useAuth();
+
+  if (isLoading || !user) {
+    return (
+      <div className="flex h-48 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-slate-700" />
+      </div>
+    );
+  }
+
+  const normalizedRole = normalizeUserRole(user.role);
+  if (normalizedRole && studentRoles.includes(normalizedRole)) {
+    return <StudentResultsView user={user} />;
+  }
+
+  if (user.role === "student" || user.role === "parent") {
+    return <StudentResultsView user={user} />;
+  }
+
   return <ResultManagementView user={user} />;
 }
 
@@ -56,11 +72,14 @@ function ResultManagementView({ user }: { user: any }) {
   const [addStudents, setAddStudents] = useState<StudentOption[]>([]);
   const [addLoading, setAddLoading] = useState(false);
 
-  const canEntry = permissionActions.canResultEntry(user);
-  const canAssistantApprove = permissionActions.canResultApproveAssistant(user);
-  const canHeadApprove = permissionActions.canResultApproveHead(user);
-  const canPublish = permissionActions.canResultPublish(user);
-  const canDelete = hasPermission(user, "result:delete");
+  const normalizedRole = normalizeUserRole(user?.role);
+  const isLearner = normalizedRole === "student" || normalizedRole === "parent" || user?.role === "student" || user?.role === "parent";
+
+  const canEntry = isLearner ? false : permissionActions.canResultEntry(user);
+  const canAssistantApprove = isLearner ? false : permissionActions.canResultApproveAssistant(user);
+  const canHeadApprove = isLearner ? false : permissionActions.canResultApproveHead(user);
+  const canPublish = isLearner ? false : permissionActions.canResultPublish(user);
+  const canDelete = isLearner ? false : hasPermission(user, "result:delete");
 
   const calculateGrade = useCallback((marks: number | string | undefined | null, total: number = 100) => {
     if (marks === undefined || marks === null || marks === "") return "-";
@@ -339,6 +358,7 @@ function actionSuccess(action: "review" | "assistant" | "head" | "publish") {
 }
 
 function StudentResultsView({ user }: { user: any }) {
+  const normalizedRole = normalizeUserRole(user?.role);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [children, setChildren] = useState<any[]>([]);
@@ -351,7 +371,7 @@ function StudentResultsView({ user }: { user: any }) {
   const [summary, setSummary] = useState<any>(null);
 
   useEffect(() => {
-    if (user?.role === "parent") {
+    if (normalizedRole === "parent") {
       setLoading(true);
       api.parent.portal().then((res: any) => {
         const kids = res.portal?.children || [];
@@ -359,10 +379,10 @@ function StudentResultsView({ user }: { user: any }) {
         if (kids.length > 0) setStudentId(kids[0]._id);
       }).catch((err: any) => setError(err?.message || "Failed to load children list")).finally(() => setLoading(false));
     }
-  }, [user]);
+  }, [normalizedRole]);
 
   const loadResults = useCallback(async () => {
-    if (user?.role === "parent" && !studentId) return;
+    if (normalizedRole === "parent" && !studentId) return;
     setLoading(true); setError("");
     try {
       const params: any = {};
@@ -378,9 +398,9 @@ function StudentResultsView({ user }: { user: any }) {
       setResults([]);
       setError(err?.message || "Failed to load own results");
     } finally { setLoading(false); }
-  }, [user, studentId, examId, subjectId]);
+  }, [normalizedRole, studentId, examId, subjectId]);
 
   useEffect(() => { loadResults(); }, [loadResults]);
 
-  return <div className="space-y-5"><PageHeader title="আমার ফলাফল (My Results)" description="নিজের অথবা linked child-এর ফলাফল দেখুন।" icon={ClipboardCheck} actions={[<Button key="refresh" variant="outline" size="sm" onClick={loadResults}><RefreshCw className="mr-2 h-4 w-4" />রিফ্রেশ</Button>]} />{summary && <section className="grid gap-3 md:grid-cols-4"><MetricCard title="মোট বিষয়" value={summary.totalSubjects} helper="অংশগ্রহণকৃত বিষয়" icon={Users} /><MetricCard title="মোট প্রাপ্ত নম্বর" value={`${summary.totalObtained} / ${summary.totalMarks}`} helper={`গড় শতকরা: ${summary.percentage}%`} icon={Save} /><MetricCard title="জিপিএ (GPA)" value={summary.gpa} helper={summary.passed ? "উত্তীর্ণ (Passed)" : "অনূত্তীর্ণ (Failed)"} icon={CheckCircle2} /><MetricCard title="ফলাফল স্ট্যাটাস" value={summary.passed ? "Passed" : "Failed"} helper="চূড়ান্ত ফলাফল" icon={ClipboardCheck} /></section>}<section className="rounded-lg border border-border bg-card p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-3">{user?.role === "parent" && <Filter label="বাচ্চা নির্বাচন করুন" value={studentId} onChange={(value) => { setStudentId(value); setExamId(""); setSubjectId(""); }}>{children.map((child) => <option key={child._id} value={child._id}>{child.userId?.name || "Student"} - Roll: {child.rollNumber}</option>)}</Filter>}<Filter label="পরীক্ষা" value={examId} onChange={setExamId}><option value="">সকল পরীক্ষা</option>{examOptions.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Filter><Filter label="বিষয়" value={subjectId} onChange={setSubjectId}><option value="">সকল বিষয়</option>{subjectOptions.map((item) => <option key={item._id} value={item._id}>{item.name} {item.code ? `(${item.code})` : ""}</option>)}</Filter></div></section>{error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}<section className="rounded-lg border border-border bg-card p-4 shadow-sm"><h2 className="mb-4 text-base font-semibold text-foreground">ফলাফল বিবরণী</h2><div className="overflow-hidden rounded-lg border border-slate-200"><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>পরীক্ষা</TableHead><TableHead>বিষয়</TableHead><TableHead>প্রাপ্ত নম্বর</TableHead><TableHead>গ্রেড</TableHead><TableHead>জিপিএ</TableHead><TableHead>মন্তব্য</TableHead><TableHead>স্ট্যাটাস</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">ফলাফল লোড হচ্ছে...</TableCell></TableRow> : results.length === 0 ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">কোনো ফলাফল পাওয়া যায়নি।</TableCell></TableRow> : results.map((row) => <TableRow key={row._id}><TableCell className="font-semibold text-slate-900">{row.examName}</TableCell><TableCell>{row.subjectName} {row.subjectCode ? `(${row.subjectCode})` : ""}</TableCell><TableCell className="font-medium">{row.marksObtained} / {row.totalMarks}</TableCell><TableCell><Badge variant="outline" className={cn("font-bold", row.grade === "F" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700")}>{row.grade}</Badge></TableCell><TableCell>{row.gradePoint}</TableCell><TableCell>{row.remarks || "-"}</TableCell><TableCell><Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 font-bold capitalize">{row.status}</Badge></TableCell></TableRow>)}</TableBody></Table></div></section></div>;
+  return <div className="space-y-5"><PageHeader title="আমার ফলাফল (My Results)" description="নিজের অথবা linked child-এর ফলাফল দেখুন।" icon={ClipboardCheck} actions={[<Button key="refresh" variant="outline" size="sm" onClick={loadResults}><RefreshCw className="mr-2 h-4 w-4" />রিফ্রেশ</Button>]} />{summary && <section className="grid gap-3 md:grid-cols-4"><MetricCard title="মোট বিষয়" value={summary.totalSubjects} helper="অংশগ্রহণকৃত বিষয়" icon={Users} /><MetricCard title="মোট প্রাপ্ত নম্বর" value={`${summary.totalObtained} / ${summary.totalMarks}`} helper={`গড় শতকরা: ${summary.percentage}%`} icon={Save} /><MetricCard title="জিপিএ (GPA)" value={summary.gpa} helper={summary.passed ? "উত্তীর্ণ (Passed)" : "অনূত্তীর্ণ (Failed)"} icon={CheckCircle2} /><MetricCard title="ফলাফল স্ট্যাটাস" value={summary.passed ? "Passed" : "Failed"} helper="চূড়ান্ত ফলাফল" icon={ClipboardCheck} /></section>}<section className="rounded-lg border border-border bg-card p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-3">{normalizedRole === "parent" && <Filter label="বাচ্চা নির্বাচন করুন" value={studentId} onChange={(value) => { setStudentId(value); setExamId(""); setSubjectId(""); }}>{children.map((child) => <option key={child._id} value={child._id}>{child.userId?.name || "Student"} - Roll: {child.rollNumber}</option>)}</Filter>}<Filter label="পরীক্ষা" value={examId} onChange={setExamId}><option value="">সকল পরীক্ষা</option>{examOptions.map((item) => <option key={item._id} value={item._id}>{item.name}</option>)}</Filter><Filter label="বিষয়" value={subjectId} onChange={setSubjectId}><option value="">সকল বিষয়</option>{subjectOptions.map((item) => <option key={item._id} value={item._id}>{item.name} {item.code ? `(${item.code})` : ""}</option>)}</Filter></div></section>{error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}<section className="rounded-lg border border-border bg-card p-4 shadow-sm"><h2 className="mb-4 text-base font-semibold text-foreground">ফলাফল বিবরণী</h2><div className="overflow-hidden rounded-lg border border-slate-200"><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>পরীক্ষা</TableHead><TableHead>বিষয়</TableHead><TableHead>প্রাপ্ত নম্বর</TableHead><TableHead>গ্রেড</TableHead><TableHead>জিপিএ</TableHead><TableHead>মন্তব্য</TableHead><TableHead>স্ট্যাটাস</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">ফলাফল লোড হচ্ছে...</TableCell></TableRow> : results.length === 0 ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">কোনো ফলাফল পাওয়া যায়নি।</TableCell></TableRow> : results.map((row) => <TableRow key={row._id}><TableCell className="font-semibold text-slate-900">{row.examName}</TableCell><TableCell>{row.subjectName} {row.subjectCode ? `(${row.subjectCode})` : ""}</TableCell><TableCell className="font-medium">{row.marksObtained} / {row.totalMarks}</TableCell><TableCell><Badge variant="outline" className={cn("font-bold", row.grade === "F" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700")}>{row.grade}</Badge></TableCell><TableCell>{row.gradePoint}</TableCell><TableCell>{row.remarks || "-"}</TableCell><TableCell><Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 font-bold capitalize">{row.status}</Badge></TableCell></TableRow>)}</TableBody></Table></div></section></div>;
 }
