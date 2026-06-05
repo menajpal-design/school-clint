@@ -1,28 +1,57 @@
 # Permission Fix Summary
 
 ## Scope
-This update focuses on student and parent/guardian permission hardening for the Easy School client and server.
+This branch hardens student and parent/guardian permissions across the Easy School client. The goal is that student/parent users only see allowed routes/actions and cannot access admin/head/teacher-only pages through sidebar, dashboard quick actions, or direct URL route guard.
 
-## Completed client changes
-- `/dashboard` now uses `getDashboardQuickActions()` and shows role-based actions only.
-- Student dashboard actions are limited to: My Result, My Attendance, My ID Card, My Fees, Syllabus, Class Routine, Homework, Leave Application.
-- Parent dashboard actions are limited to: Child Result, Child Attendance, Child Fees, Child Routine, Homework, Leave Application.
-- `/homework` is read-only for student/parent and management actions are hidden.
-- `/library` is redesigned with role-based view; student/parent see available books only, while management is reserved for permitted staff/head roles.
-- `/leave-application` UI allows student/parent application creation and class teacher/assistant head/head review UI.
-- Central `lib/permissions.ts` was updated previously to block student access to student-management, academic overview/subjects, attendance marking, and SMS monitoring routes.
+## Dashboard
+- `/dashboard` uses role-based quick action config through `getDashboardQuickActions()`.
+- Student quick actions are limited to: My Result, My Attendance, My ID Card, My Fees, Syllabus, Class Routine, Homework, Leave Application.
+- Parent/guardian quick actions are limited to: Child Result, Child Attendance, Child Fees, Child Routine, Child Syllabus, Homework, Leave Application.
+- Student/parent dashboard does not show Enter Result, Add Student, Mark Attendance, SMS Monitoring, Subjects, Academic Management, or admin/head/teacher-only actions.
 
-## Completed server changes
-- Leave application routes already create attendance records with status `leave` when approved.
-- Leave status `leave` is separate from present/absent and should be rendered as a separate calendar status by attendance UI.
+## Sidebar and route guard
+- `lib/permissions.ts` centralizes sidebar visibility and route guard behavior.
+- `guardian` and `parent_guardian` are normalized to `parent`.
+- Student/parent cannot see or directly access: `/institution/students`, `/academic`, `/academic/subjects`, `/attendance/mark`, `/sms-monitoring`, Users & Roles, or Settings.
+- Student/parent can see allowed read-only academic routes, homework, leave application, library, fees, notices, and profile routes.
+- Sidebar active-route highlight and child-route auto-expand were improved in `components/layout/Sidebar.tsx`.
 
-## Remaining follow-up checks
-- Verify server build after deployment because connector access does not run `npm run build`.
-- Verify `/id-cards/me/card` in production with an actual student account and ensure both auth user id and linked student id are checked.
-- Verify SMS monitoring access in deployed UI after sidebar cache refresh.
+## ID card
+- Student uses `/id-cards/my-card` for own card.
+- Parent no longer sees `/id-cards/my-card`; parent child-card access must use a child-card route.
+- The page should display a clear message if the student exists but the card has not been generated.
 
-## Role behavior
-- Student/parent are view-only for academic data and cannot create/edit/delete/publish/approve academic records.
-- Student uses `/attendance/my-attendance`; student/parent cannot access `/attendance/mark`.
-- Student/parent cannot access `/sms-monitoring`.
-- Parent can view child-scoped data only and can create leave applications for linked children.
+## Academic pages
+- Student/parent access is read-only for syllabus, class routine, exams, exam routine, and results.
+- Student/parent management buttons such as Add, Edit, Delete, Publish, Approve, Create, and Enter Result are hidden.
+- Student/parent result views use personal/child-scoped result flows.
+
+## Leave application
+- `/leave-application` is available in the authenticated shell/sidebar.
+- Student/parent can submit leave applications.
+- Class teacher, assistant head, and head can review according to role scope.
+- UI shows pending/approved/rejected status.
+
+## Homework
+- `/homework` is available in the authenticated shell/sidebar.
+- Student/parent view is read-only.
+- Student default action is focused on today's homework and own class/section homework.
+- Management controls are reserved for teacher/class teacher/head/admin roles.
+
+## Library
+- `/library` was redesigned into a responsive dashboard with Available Books, Issued Books, Categories, Search/Filters, and Book Status sections.
+- Student/parent management buttons are hidden.
+- Student/parent see available books and their own/child issued or requested books only.
+- Manager roles get links to book and loan management.
+
+## Build and testing
+Run these locally after pulling the branch:
+
+```bash
+cd school-clint
+npm install
+npm run lint
+npm run build
+```
+
+Manual tests should cover student, parent/guardian, class teacher, and head roles.
