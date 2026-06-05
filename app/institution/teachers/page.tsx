@@ -215,14 +215,14 @@ export default function InstitutionTeachersPage() {
     <div className="space-y-6 p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Teacher Management</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Teacher list, class/subject assignment, salary, account, and ID card setup.</p>
+          <h1 className="text-3xl font-bold tracking-tight">শিক্ষক ব্যবস্থাপনা</h1>
+          <p className="mt-2 text-sm text-muted-foreground">শিক্ষক তালিকা, ক্লাস/বিষয় বরাদ্দ, বেতন, অ্যাকাউন্ট এবং আইডি কার্ড সেটআপ।</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => { setForm(emptyForm); setEditingId(null); }}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Teacher
+              শিক্ষক যুক্ত করুন
             </Button>
           </DialogTrigger>
           <TeacherDialog form={form} update={update} submit={submit} editing={!!editingId} classes={classes} subjects={subjects} />
@@ -231,19 +231,19 @@ export default function InstitutionTeachersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Teachers</CardTitle>
-          <CardDescription>{teachers.length} teacher records loaded for this institution.</CardDescription>
+          <CardTitle>শিক্ষকবৃন্দ</CardTitle>
+          <CardDescription>এই প্রতিষ্ঠানের জন্য {teachers.length} জন শিক্ষকের তথ্য লোড করা হয়েছে।</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Employee ID</TableHead>
-                <TableHead>Class / Subject</TableHead>
-                <TableHead>Salary</TableHead>
-                <TableHead>Joining Date</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead>নাম</TableHead>
+                <TableHead>শিক্ষক আইডি (Employee ID)</TableHead>
+                <TableHead>ক্লাস / বিষয়</TableHead>
+                <TableHead>বেতন</TableHead>
+                <TableHead>যোগদানের তারিখ</TableHead>
+                <TableHead className="text-right">অ্যাকশন</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -261,14 +261,14 @@ export default function InstitutionTeachersPage() {
                     </div>
                   </TableCell>
                   <TableCell>{teacher.employeeId || 'N/A'}</TableCell>
-                  <TableCell>{(teacher.assignedClasses || []).map((item) => item.name).join(', ') || 'Unassigned'} · {(teacher.subjects || []).map((item) => item.name).join(', ') || 'No subject'}</TableCell>
+                  <TableCell>{(teacher.assignedClasses || []).map((item) => item.name).join(', ') || 'বরাদ্দহীন'} · {(teacher.subjects || []).map((item) => item.name).join(', ') || 'কোনো বিষয় নেই'}</TableCell>
                   <TableCell>{Number(teacher.salary || 0).toLocaleString()}</TableCell>
                   <TableCell>{teacher.joiningDate ? new Date(teacher.joiningDate).toLocaleDateString() : 'N/A'}</TableCell>
-                  <TableCell className="text-right"><Button variant="ghost" size="sm" onClick={() => openEdit(teacher)}><Edit className="mr-2 h-4 w-4" />Edit</Button></TableCell>
+                  <TableCell className="text-right"><Button variant="ghost" size="sm" onClick={() => openEdit(teacher)}><Edit className="mr-2 h-4 w-4" />সম্পাদনা করুন</Button></TableCell>
                 </TableRow>
               ))}
               {teachers.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">No teacher records found.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">কোনো শিক্ষকের তথ্য পাওয়া যায়নি।</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -283,29 +283,29 @@ function TeacherDialog({ form, update, submit, editing, classes, subjects }: { f
   const upload = async (file?: File) => { if (file) update('photo', await fileToDataUrl(file)); };
   return (
     <DialogContent className="max-w-3xl">
-      <DialogHeader><DialogTitle>{editing ? 'Edit Teacher' : 'Add Teacher'}</DialogTitle><DialogDescription>Assign class, subject, salary, joining date, account, and ID card settings.</DialogDescription></DialogHeader>
+      <DialogHeader><DialogTitle>{editing ? 'শিক্ষকের তথ্য সম্পাদনা' : 'শিক্ষক যুক্ত করুন'}</DialogTitle><DialogDescription>ক্লাস, বিষয়, বেতন, যোগদানের তারিখ, অ্যাকাউন্ট এবং আইডি কার্ডের সেটিংস নির্ধারণ করুন।</DialogDescription></DialogHeader>
       <div className="grid max-h-[70vh] gap-4 overflow-y-auto pr-1 md:grid-cols-2">
-        <TextInput form={form} update={update} name="name" label="Name" />
-        <TextInput form={form} update={update} name="email" label="Email (Optional)" type="email" placeholder="Leave blank to auto-generate" />
-        <TextInput form={form} update={update} name="phone" label="Phone" />
-        <TextInput form={form} update={update} name="employeeId" label="Employee ID" />
-        <TextInput form={form} update={update} name="designation" label="Designation" />
-        <TextInput form={form} update={update} name="department" label="Department" />
-        <MultiSelectField label="Assigned Classes" options={classes} value={form.assignedClasses} onChange={(value) => update('assignedClasses', value as any)} placeholder="Select existing classes" />
-        <FieldNote>Choose existing classes above, then type any new class names below to create them automatically.</FieldNote>
-        <TextInput form={form} update={update} name="newAssignedClasses" label="New Classes" placeholder="Class 6, Class 7" />
-        <MultiSelectField label="Subjects" options={subjects} value={form.subjects} onChange={(value) => update('subjects', value as any)} placeholder="Select existing subjects" />
-        <FieldNote>Choose existing subjects above, then type any new subject names below to create them automatically.</FieldNote>
-        <TextInput form={form} update={update} name="newSubjects" label="New Subjects" placeholder="Bangla, Math" />
-        <TextInput form={form} update={update} name="salary" label="Salary" type="number" />
-        <TextInput form={form} update={update} name="joiningDate" label="Joining Date" type="date" />
-        <TextInput form={form} update={update} name="qualification" label="Qualification" />
-        <TextInput form={form} update={update} name="experience" label="Experience" type="number" />
-        <div className="space-y-2"><Label>Photo</Label><Input type="file" accept="image/*" onChange={(event) => upload(event.target.files?.[0])} /></div>
-        <label className="flex items-center gap-3 rounded-md border p-3 text-sm"><Checkbox checked={form.autoIdCard} onCheckedChange={(value) => update('autoIdCard', Boolean(value))} /><CreditCard className="h-4 w-4" />Auto generate account and ID card</label>
-        {form.email && <label className="flex items-center gap-3 rounded-md border p-3 text-sm"><Checkbox checked={form.sendAppointmentLetter} onCheckedChange={(value) => update('sendAppointmentLetter', Boolean(value))} /><span>Send appointment letter via email</span></label>}
+        <TextInput form={form} update={update} name="name" label="নাম" />
+        <TextInput form={form} update={update} name="email" label="ইমেইল (ঐচ্ছিক)" type="email" placeholder="স্বয়ংক্রিয়ভাবে তৈরি করতে খালি রাখুন" />
+        <TextInput form={form} update={update} name="phone" label="ফোন নম্বর" />
+        <TextInput form={form} update={update} name="employeeId" label="শিক্ষক আইডি (Employee ID)" />
+        <TextInput form={form} update={update} name="designation" label="পদবী" />
+        <TextInput form={form} update={update} name="department" label="বিভাগ" />
+        <MultiSelectField label="বরাদ্দকৃত ক্লাসসমূহ" options={classes} value={form.assignedClasses} onChange={(value) => update('assignedClasses', value as any)} placeholder="বিদ্যমান ক্লাসগুলো নির্বাচন করুন" />
+        <FieldNote>উপরে বিদ্যমান ক্লাসগুলো নির্বাচন করুন, তারপর নতুন কোনো ক্লাস তৈরি করতে নিচে নাম লিখুন (কমা দিয়ে আলাদা করুন)।</FieldNote>
+        <TextInput form={form} update={update} name="newAssignedClasses" label="নতুন ক্লাস" placeholder="শ্রেণী ৬, শ্রেণী ৭" />
+        <MultiSelectField label="বিষয়সমূহ" options={subjects} value={form.subjects} onChange={(value) => update('subjects', value as any)} placeholder="বিদ্যমান বিষয়গুলো নির্বাচন করুন" />
+        <FieldNote>উপরে বিদ্যমান বিষয়গুলো নির্বাচন করুন, তারপর নতুন কোনো বিষয় তৈরি করতে নিচে নাম লিখুন (কমা দিয়ে আলাদা করুন)।</FieldNote>
+        <TextInput form={form} update={update} name="newSubjects" label="নতুন বিষয়" placeholder="বাংলা, গণিত" />
+        <TextInput form={form} update={update} name="salary" label="বেতন" type="number" />
+        <TextInput form={form} update={update} name="joiningDate" label="যোগদানের তারিখ" type="date" />
+        <TextInput form={form} update={update} name="qualification" label="যোগ্যতা" />
+        <TextInput form={form} update={update} name="experience" label="অভিজ্ঞতা (বছর)" type="number" />
+        <div className="space-y-2"><Label>ছবি</Label><Input type="file" accept="image/*" onChange={(event) => upload(event.target.files?.[0])} /></div>
+        <label className="flex items-center gap-3 rounded-md border p-3 text-sm"><Checkbox checked={form.autoIdCard} onCheckedChange={(value) => update('autoIdCard', Boolean(value))} /><CreditCard className="h-4 w-4" />স্বয়ংক্রিয়ভাবে অ্যাকাউন্ট ও আইডি কার্ড তৈরি করুন</label>
+        {form.email && <label className="flex items-center gap-3 rounded-md border p-3 text-sm"><Checkbox checked={form.sendAppointmentLetter} onCheckedChange={(value) => update('sendAppointmentLetter', Boolean(value))} /><span>ইমেইলের মাধ্যমে নিয়োগপত্র পাঠান</span></label>}
       </div>
-      <DialogFooter><Button onClick={submit}>{editing ? 'Save Changes' : 'Create Teacher'}</Button></DialogFooter>
+      <DialogFooter><Button onClick={submit}>{editing ? 'পরিবর্তন সংরক্ষণ করুন' : 'শিক্ষক তৈরি করুন'}</Button></DialogFooter>
     </DialogContent>
   );
 }

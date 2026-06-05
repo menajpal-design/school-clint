@@ -586,8 +586,8 @@ export default function BillingPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background p-6 text-center">
         <div className="space-y-4">
-          <p className="text-xl font-semibold">Contact the institution head.</p>
-          <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
+          <p className="text-xl font-semibold">প্রতিষ্ঠান প্রধানের সাথে যোগাযোগ করুন।</p>
+          <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />লগআউট</Button>
         </div>
       </main>
     );
@@ -623,10 +623,10 @@ export default function BillingPage() {
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">💳 Billing & SMS</h1>
-            <p className="mt-2 text-sm text-muted-foreground">আপনার subscription এবং SMS ব্যালেন্স এখানে দেখুন ও manage করুন।</p>
+            <h1 className="text-3xl font-bold tracking-tight">💳 বিলিং ও এসএমএস</h1>
+            <p className="mt-2 text-sm text-muted-foreground">আপনার সাবস্ক্রিপশন এবং এসএমএস ব্যালেন্স এখানে দেখুন ও পরিচালনা করুন।</p>
           </div>
-          <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</Button>
+          <Button variant="outline" onClick={logout}><LogOut className="mr-2 h-4 w-4" />লগআউট</Button>
         </div>
 
         {/* ── Active Package Status Card ───────────────────────────────── */}
@@ -675,9 +675,9 @@ export default function BillingPage() {
                   </div>
                 </div>
                 <div className="rounded-xl bg-white/70 p-3 text-center">
-                  <div className="text-xs text-muted-foreground">Billing Cycle</div>
+                  <div className="text-xs text-muted-foreground">বিলিং চক্র</div>
                   <div className="mt-1 font-bold capitalize">
-                    {institution.billing?.billingCycle || 'monthly'}
+                    {institution.billing?.billingCycle === 'yearly' ? 'বার্ষিক' : 'মাসিক'}
                   </div>
                 </div>
                 <div className="rounded-xl bg-white/70 p-3 text-center">
@@ -752,13 +752,13 @@ export default function BillingPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> Pay School Bill</CardTitle>
-            <CardDescription>Registration bill এবং monthly bill শুধু hosted popup payment দিয়ে pay হবে।</CardDescription>
+            <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> স্কুল বিল পরিশোধ</CardTitle>
+            <CardDescription>নিবন্ধন বিল এবং মাসিক বিল শুধুমাত্র পপআপ পেমেন্ট গেটওয়ে দিয়ে পরিশোধ করতে হবে।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="grid gap-4 md:grid-cols-3">
               <label className="space-y-2">
-                <span className="text-sm font-medium">Subscription Plan</span>
+                <span className="text-sm font-medium">সাবস্ক্রিপশন প্ল্যান</span>
                 <Select
                   value={billingInfo.planCode}
                   onValueChange={(value) => setBillingInfo((current) => ({ ...current, planCode: value }))}
@@ -767,7 +767,7 @@ export default function BillingPage() {
                   <SelectContent>
                     {schoolPlans.map((item) => (
                       <SelectItem key={item.code} value={item.code}>
-                        {item.name} - {formatCurrency(item.monthlyPrice)}/mo
+                        {item.name} - {formatCurrency(item.monthlyPrice)}/মাস
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -775,15 +775,15 @@ export default function BillingPage() {
               </label>
 
               <label className="space-y-2">
-                <span className="text-sm font-medium">Billing Cycle</span>
+                <span className="text-sm font-medium">বিলিং চক্র</span>
                 <Select
                   value={billingInfo.billingCycle}
                   onValueChange={(value) => setBillingInfo((current) => ({ ...current, billingCycle: value as 'monthly' | 'yearly' }))}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="monthly">Monthly subscription</SelectItem>
-                    <SelectItem value="yearly">Yearly subscription</SelectItem>
+                    <SelectItem value="monthly">মাসিক সাবস্ক্রিপশন</SelectItem>
+                    <SelectItem value="yearly">বার্ষিক সাবস্ক্রিপশন</SelectItem>
                   </SelectContent>
                 </Select>
               </label>
@@ -794,22 +794,22 @@ export default function BillingPage() {
                   checked={billingInfo.useEasySchoolStorage}
                   onChange={(event) => setBillingInfo((current) => ({ ...current, useEasySchoolStorage: event.target.checked }))}
                 />
-                <span className="text-sm font-medium">Use EASY SCHOOL storage</span>
+                <span className="text-sm font-medium">ইজি স্কুল স্টোরেজ ব্যবহার করুন</span>
               </label>
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-lg border bg-card p-4">
-                <div className="text-sm text-slate-500">Plan</div>
+                <div className="text-sm text-slate-500">প্ল্যান</div>
                 <div className="mt-1 font-semibold">{plan.name}</div>
               </div>
               <div className="rounded-lg border bg-card p-4">
-                <div className="text-sm text-slate-500">Billing Cycle</div>
-                <div className="mt-1 font-semibold capitalize">{billingInfo.billingCycle}</div>
+                <div className="text-sm text-slate-500">বিলিং চক্র</div>
+                <div className="mt-1 font-semibold capitalize">{billingInfo.billingCycle === 'yearly' ? 'বার্ষিক' : 'মাসিক'}</div>
               </div>
               <div className="rounded-lg border bg-card p-4">
-                <div className="text-sm text-slate-500">Storage</div>
-                <div className="mt-1 font-semibold">{billingInfo.useEasySchoolStorage ? `EASY SCHOOL storage - ${formatCurrency(100)}/month` : 'Own MongoDB + ImgBB - no cost'}</div>
+                <div className="text-sm text-slate-500">স্টোরেজ</div>
+                <div className="mt-1 font-semibold">{billingInfo.useEasySchoolStorage ? `ইজি স্কুল স্টোরেজ - ${formatCurrency(100)}/মাস` : 'নিজস্ব MongoDB + ImgBB - কোনো অতিরিক্ত খরচ নেই'}</div>
               </div>
             </div>
 
@@ -827,13 +827,13 @@ export default function BillingPage() {
             </div>
 
             <div className="rounded-lg border bg-slate-50 p-4 text-sm">
-              Due amount: {formatCurrency(due.baseAmount)} + storage {formatCurrency(due.storageAmount)} + SMS {formatCurrency(Number(billingInfo.smsChargeAmount || 0))} = <span className="font-semibold">{formatCurrency(totalWithSms)}</span>
+              বকেয়া পরিমাণ: {formatCurrency(due.baseAmount)} + স্টোরেজ {formatCurrency(due.storageAmount)} + এসএমএস {formatCurrency(Number(billingInfo.smsChargeAmount || 0))} = <span className="font-semibold">{formatCurrency(totalWithSms)}</span>
             </div>
 
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-medium">Choose payment method</p>
-                <p className="text-sm text-slate-600">Use Bkash/Nagad popup or test Stripe card flow.</p>
+                <p className="text-sm font-medium">পেমেন্ট পদ্ধতি বেছে নিন</p>
+                <p className="text-sm text-slate-600">বিকাশ/নগদ পপআপ ব্যবহার করুন অথবা স্ট্রাইপ কার্ড টেস্ট করুন।</p>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <button
@@ -842,10 +842,10 @@ export default function BillingPage() {
                   className={`rounded-lg border p-4 text-left transition ${selectedPaymentMethod === 'bkash' ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">Bkash / Nagad popup</span>
-                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">Connected</span>
+                    <span className="font-semibold">বিকাশ / নগদ পপআপ</span>
+                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">সংযুক্ত</span>
                   </div>
-                  <p className="mt-2 text-sm text-slate-600">Opens the GatewayFlow popup for wallet payment.</p>
+                  <p className="mt-2 text-sm text-slate-600">মোবাইল ওয়ালেট পেমেন্টের জন্য GatewayFlow পপআপ খুলবে।</p>
                 </button>
                 <button
                   type="button"
@@ -853,13 +853,13 @@ export default function BillingPage() {
                   className={`rounded-lg border p-4 text-left transition ${selectedPaymentMethod === 'stripe' ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">Stripe</span>
-                    <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700">{stripeModeEnabled ? 'Configured' : 'Demo'}</span>
+                    <span className="font-semibold">স্ট্রাইপ (Stripe)</span>
+                    <span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-medium text-sky-700">{stripeModeEnabled ? 'কনফিগার করা আছে' : 'ডেমো'}</span>
                   </div>
                   <p className="mt-2 text-sm text-slate-600">
                     {stripeModeEnabled
-                      ? 'Stripe publishable key is present. The UI exposes Stripe mode, and the current demo card flow is available for testing until a real checkout session is connected.'
-                      : 'Demo card entry for testing when no Stripe env key is set.'}
+                      ? 'স্ট্রাইপ পাবলিশেবল কি পাওয়া গেছে। স্ট্রাইপ মোড চালু আছে এবং একটি আসল পেমেন্ট সেশনের পরিবর্তে ডেমো কার্ড দিয়ে পেমেন্ট টেস্ট করা যাবে।'
+                      : 'কোনো স্ট্রাইপ এনভায়রনমেন্ট কি সেট করা না থাকলে টেস্ট করার জন্য ডেমো কার্ড এন্ট্রি।'}
                   </p>
                 </button>
               </div>
@@ -867,7 +867,7 @@ export default function BillingPage() {
               {selectedPaymentMethod === 'stripe' && (
                 <div className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-2">
                   <label className="space-y-2">
-                    <span className="text-sm font-medium">Cardholder name</span>
+                    <span className="text-sm font-medium">কার্ডধারীর নাম</span>
                     <input
                       type="text"
                       value={stripeCardName}
@@ -877,7 +877,7 @@ export default function BillingPage() {
                     />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium">Card number</span>
+                    <span className="text-sm font-medium">কার্ড নম্বর</span>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -888,7 +888,7 @@ export default function BillingPage() {
                     />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium">Expiry</span>
+                    <span className="text-sm font-medium">মেয়াদ উত্তীর্ণের তারিখ (Expiry)</span>
                     <input
                       type="text"
                       value={stripeExpiry}
@@ -898,7 +898,7 @@ export default function BillingPage() {
                     />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium">CVC</span>
+                    <span className="text-sm font-medium">সিভিসি (CVC)</span>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -919,7 +919,7 @@ export default function BillingPage() {
                 disabled={isPaying || (selectedPaymentMethod === 'bkash' && !isWidgetReady)}
                 className="w-full sm:w-auto"
               >
-                {isPaying ? 'Saving...' : selectedPaymentMethod === 'stripe' ? 'Pay with Stripe' : 'Pay with Popup'}
+                {isPaying ? 'সংরক্ষণ করা হচ্ছে...' : selectedPaymentMethod === 'stripe' ? 'স্ট্রাইপ দিয়ে পেমেন্ট করুন' : 'পপআপ দিয়ে পেমেন্ট করুন'}
               </Button>
             </div>
           </CardContent>
@@ -927,28 +927,28 @@ export default function BillingPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{institution?.name || 'School'}</CardTitle>
-            <CardDescription>Current billing status</CardDescription>
+            <CardTitle>{institution?.name || 'বিদ্যালয়'}</CardTitle>
+            <CardDescription>বর্তমান বিলিং অবস্থা</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm md:grid-cols-3">
-            <div className="rounded-md border p-3"><span className="text-slate-500">Status</span><div className="font-semibold">{institution?.isActive ? 'Active' : 'Pending / Inactive'}</div></div>
-            <div className="rounded-md border p-3"><span className="text-slate-500">Billing</span><div className="font-semibold">{institution?.billing?.billingStatus || 'pending'}</div></div>
-            <div className="rounded-md border p-3"><span className="text-slate-500">Paid</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.receivedAmount || 0))}</div></div>
-            <div className="rounded-md border p-3"><span className="text-slate-500">Base bill</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.baseDueAmount || 0))}</div></div>
-            <div className="rounded-md border p-3"><span className="text-slate-500">SMS charge</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.smsChargeAmount || 0))}</div></div>
-            <div className="rounded-md border p-3"><span className="text-slate-500">Monthly total</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.monthlyBillAmount || institution?.billing?.dueAmount || 0))}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">অবস্থা</span><div className="font-semibold">{institution?.isActive ? 'সক্রিয়' : 'পেন্ডিং / নিষ্ক্রিয়'}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">বিলিং</span><div className="font-semibold">{institution?.billing?.billingStatus === 'active' ? 'সক্রিয়' : institution?.billing?.billingStatus || 'pending'}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">পরিশোধিত</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.receivedAmount || 0))}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">মূল বিল</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.baseDueAmount || 0))}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">এসএমএস চার্জ</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.smsChargeAmount || 0))}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">মাসিক মোট</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.monthlyBillAmount || institution?.billing?.dueAmount || 0))}</div></div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Top-up SMS Balance</CardTitle>
+            <CardTitle>এসএমএস ব্যালেন্স রিচার্জ</CardTitle>
             <CardDescription>পপআপ পেমেন্ট দিয়ে SMS balance recharge করুন; অনুমোদিত ব্যবহারকারীরাই এটি করতে পারবেন।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid gap-3 md:grid-cols-3">
               <label className="space-y-2">
-                <span className="text-sm font-medium">Amount</span>
+                <span className="text-sm font-medium">পরিমাণ</span>
                 <input
                   type="number"
                   min="1"
@@ -963,39 +963,39 @@ export default function BillingPage() {
                   onClick={openSmsTopupPopup}
                   disabled={isTopping || !isWidgetReady}
                 >
-                  {isTopping ? 'Processing...' : 'Recharge SMS'}
+                  {isTopping ? 'প্রসেস করা হচ্ছে...' : 'এসএমএস রিচার্জ করুন'}
                 </Button>
               </div>
             </div>
-            <div className="text-sm text-slate-600">Current SMS balance: <span className="font-semibold">{formatCurrency(Number(institution?.billing?.smsBalance || 0))}</span></div>
+            <div className="text-sm text-slate-600">বর্তমান এসএমএস ব্যালেন্স: <span className="font-semibold">{formatCurrency(Number(institution?.billing?.smsBalance || 0))}</span></div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent SMS Top-ups</CardTitle>
-            <CardDescription>Latest recharge transactions for this institution.</CardDescription>
+            <CardTitle>সাম্প্রতিক এসএমএস রিচার্জ</CardTitle>
+            <CardDescription>এই প্রতিষ্ঠানের সাম্প্রতিক রিচার্জ লেনদেনসমূহ।</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingTopups ? (
-              <div className="text-sm text-slate-600">Loading top-up history...</div>
+              <div className="text-sm text-slate-600">রিচার্জ ইতিহাস লোড করা হচ্ছে...</div>
             ) : smsTopupHistory.length ? (
               <div className="space-y-3">
                 {smsTopupHistory.map((item) => (
                   <div key={item._id} className="flex items-center justify-between rounded-md border p-3 text-sm">
                     <div>
                       <div className="font-semibold">{formatCurrency(Number(item.amount || 0))}</div>
-                      <div className="text-slate-600">{item.method || 'manual'} · {item.createdBy?.name || 'System'}</div>
+                      <div className="text-slate-600">{(item.method === 'manual' ? 'ম্যানুয়াল' : item.method) || 'ম্যানুয়াল'} · {item.createdBy?.name || 'সিস্টেম'}</div>
                     </div>
                     <div className="text-right text-slate-600">
-                      <div>{item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}</div>
-                      <div>{item.createdBy?.role || ''}</div>
+                      <div>{item.createdAt ? new Date(item.createdAt).toLocaleString('bn-BD') : ''}</div>
+                      <div>{item.createdBy?.role === 'head' ? 'প্রধান শিক্ষক' : item.createdBy?.role === 'admin' ? 'এডমিন' : item.createdBy?.role || ''}</div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-slate-600">No SMS top-ups yet.</div>
+              <div className="text-sm text-slate-600">এখনো কোনো এসএমএস রিচার্জ করা হয়নি।</div>
             )}
           </CardContent>
         </Card>

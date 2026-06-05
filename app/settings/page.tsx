@@ -23,6 +23,15 @@ import {
 } from "@/lib/utils";
 
 const weekDays = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const weekDaysBn: Record<string, string> = {
+  Saturday: "শনিবার",
+  Sunday: "রবিবার",
+  Monday: "সোমবার",
+  Tuesday: "মঙ্গলবার",
+  Wednesday: "বুধবার",
+  Thursday: "বৃহস্পতিবার",
+  Friday: "শুক্রবার"
+};
 
 const emptySiteConfig = {
   siteName: "Easy School",
@@ -45,9 +54,11 @@ export default function SettingsPage() {
   return (
     <RoleGuard
       roles={["head"]}
-      fallback={<div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Only Head role can access school settings.</div>}
+      fallback={<div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">শুধুমাত্র প্রধান শিক্ষকই স্কুলের সেটিংস পরিবর্তন করতে পারবেন।</div>}
     >
-      <HeadSettings />
+      <div className="space-y-6">
+        <HeadSettings />
+      </div>
     </RoleGuard>
   );
 }
@@ -207,7 +218,7 @@ function HeadSettings() {
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-primary/10 p-3 text-primary"><SettingsIcon className="h-6 w-6" /></div>
           <div>
-            <h1 className="text-2xl font-bold md:text-3xl">Head Settings</h1>
+            <h1 className="text-2xl font-bold md:text-3xl">প্রধান শিক্ষক সেটিংস</h1>
             <p className="text-sm text-muted-foreground">New MongoDB URI add করলে old URI delete হবে না; history list-এ থাকবে। Images এখন MongoDB GridFS-এ store হচ্ছে।</p>
           </div>
         </div>
@@ -220,93 +231,93 @@ function HeadSettings() {
           <CardHeader>
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Storage Connection Status</CardTitle>
-                <CardDescription>MongoDB connected হলে green dot। Images MongoDB GridFS-এ store হচ্ছে — no external API key needed।</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />স্টোরেজ সংযোগের অবস্থা (Storage Connection Status)</CardTitle>
+                <CardDescription>মঙ্গোডিবি (MongoDB) সংযুক্ত হলে সবুজ বিন্দু দেখাবে। ছবিগুলো মঙ্গোডিবি গ্রিডএফএস (GridFS)-এ সংরক্ষিত হচ্ছে — কোনো এক্সটার্নাল এপিআই কি প্রয়োজন নেই।</CardDescription>
               </div>
-              <Button variant="outline" onClick={loadStorageStatus} disabled={checkingStorage}><RefreshCw className={`mr-2 h-4 w-4 ${checkingStorage ? 'animate-spin' : ''}`} />Refresh</Button>
+              <Button variant="outline" onClick={loadStorageStatus} disabled={checkingStorage}><RefreshCw className={`mr-2 h-4 w-4 ${checkingStorage ? 'animate-spin' : ''}`} />রিফ্রেশ করুন</Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 md:grid-cols-3">
-              <StatusBox title="Primary Server MongoDB" item={storageStatus.primaryMongo} />
-              <StatusBox title="Active MongoDB URI" item={storageStatus.configuredMongo} />
+              <StatusBox title="প্রধান সার্ভার মঙ্গোডিবি" item={storageStatus.primaryMongo} />
+              <StatusBox title="সক্রিয় মঙ্গোডিবি ইউআরআই" item={storageStatus.configuredMongo} />
               <GridFSStatusBox item={storageStatus.imageStorage} />
             </div>
             {(mongoWarning || gridfsWarning) && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-                <div className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4" /> Storage warning</div>
-                {mongoWarning && <div className="mt-1">MongoDB data is {storageStatus.configuredMongo.usedMb}MB. Near free limit — add a new MongoDB URI. Old URI will remain listed for old data.</div>}
-                {gridfsWarning && <div className="mt-1">GridFS images are {storageStatus.imageStorage?.totalMb}MB. Consider archiving old images.</div>}
+                <div className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4" /> স্টোরেজ সতর্কতা</div>
+                {mongoWarning && <div className="mt-1">মঙ্গোডিবি ডাটা {storageStatus.configuredMongo.usedMb}MB ব্যবহার করেছে। এটি ফ্রি লিমিটের কাছাকাছি — অনুগ্রহ করে একটি নতুন মঙ্গোডিবি ইউআরআই (MongoDB URI) যোগ করুন। পুরনো ডাটার জন্য পুরনো ইউআরআইটি তালিকায় থেকে যাবে।</div>}
+                {gridfsWarning && <div className="mt-1">গ্রিডএফএস ছবিগুলো {storageStatus.imageStorage?.totalMb}MB ব্যবহার করেছে। পুরনো ছবিগুলো আরকাইভ করার কথা বিবেচনা করুন।</div>}
               </div>
             )}
             <div className="grid gap-4 lg:grid-cols-2">
-              <HistoryList title="MongoDB URI History" items={storageStatus.mongodbUris || siteConfig.mongodbUris || []} type="mongo" warningAt={storageStatus.warningLimits?.mongoMb || 475} />
+              <HistoryList title="মঙ্গোডিবি ইউআরআই-এর ইতিহাস (MongoDB URI History)" items={storageStatus.mongodbUris || siteConfig.mongodbUris || []} type="mongo" warningAt={storageStatus.warningLimits?.mongoMb || 475} />
               <div className="rounded-xl border p-4">
-                <div className="mb-3 font-semibold">Image Storage</div>
+                <div className="mb-3 font-semibold">ইমেজ স্টোরেজ</div>
                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-                  <div className="font-semibold">✅ MongoDB GridFS</div>
-                  <div className="mt-1">Files: {storageStatus.imageStorage?.fileCount ?? 0} images</div>
-                  <div>Used: {storageStatus.imageStorage?.totalMb ?? 0}MB</div>
-                  <div className="mt-2 text-xs">Images serve via <code>/api/images/:id</code></div>
+                  <div className="font-semibold">✅ মঙ্গোডিবি গ্রিডএফএস (GridFS)</div>
+                  <div className="mt-1">মোট ফাইল: {storageStatus.imageStorage?.fileCount ?? 0} টি ছবি</div>
+                  <div>ব্যবহৃত: {storageStatus.imageStorage?.totalMb ?? 0}MB</div>
+                  <div className="mt-2 text-xs">ছবিগুলো <code>/api/images/:id</code> এর মাধ্যমে লোড করা হবে</div>
                 </div>
               </div>
             </div>
-            <div className="text-xs text-muted-foreground">Last checked: {storageStatus.checkedAt ? new Date(storageStatus.checkedAt).toLocaleString() : 'Not checked yet'}</div>
+            <div className="text-xs text-muted-foreground">সর্বশেষ যাচাই করা হয়েছে: {storageStatus.checkedAt ? new Date(storageStatus.checkedAt).toLocaleString('bn-BD') : 'এখনো যাচাই করা হয়নি'}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />Add New Storage Config</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" />নতুন স্টোরেজ কনফিগারেশন যোগ করুন</CardTitle>
             <CardDescription>New URI/key দিলে সেটা active হবে, কিন্তু old URI/key delete হবে না। Old data access history হিসেবে থাকবে।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <TextField label="App Base URL" value={siteConfig.appBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, appBaseUrl: value })} />
-              <TextField label="API Base URL" value={siteConfig.apiBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, apiBaseUrl: value })} />
-              <TextField label={hasMongoUrl ? "Add new MongoDB URI (old URI will stay listed)" : "MongoDB URI"} type="password" value={siteConfig.mongodbUrl} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUrl: value })} placeholder="mongodb+srv://..." />
-              <CheckField label="Allow personal MongoDB fallback when central storage unavailable" checked={Boolean(siteConfig.allowPersonalMongo)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalMongo: checked })} />
-              <CheckField label="Allow personal storage (alternate flag)" checked={Boolean(siteConfig.allowPersonalStorage)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalStorage: checked })} />
-              <TextField label="MongoDB used MB (optional manual update)" type="number" value={String(siteConfig.mongodbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUsedMb: value })} placeholder="475" />
+              <TextField label="অ্যাপ বেস ইউআরএল (App Base URL)" value={siteConfig.appBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, appBaseUrl: value })} />
+              <TextField label="এপিআই বেস ইউআরএল (API Base URL)" value={siteConfig.apiBaseUrl} onChange={(value) => setSiteConfig({ ...siteConfig, apiBaseUrl: value })} />
+              <TextField label={hasMongoUrl ? "নতুন মঙ্গোডিবি ইউআরআই যোগ করুন (পুরনো ইউআরআই তালিকায় থাকবে)" : "মঙ্গোডিবি ইউআরআই (MongoDB URI)"} type="password" value={siteConfig.mongodbUrl} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUrl: value })} placeholder="mongodb+srv://..." />
+              <CheckField label="সেন্ট্রাল স্টোরেজ অনুপলব্ধ হলে ব্যক্তিগত মঙ্গোডিবি ফলব্যাক ব্যবহারের অনুমতি দিন" checked={Boolean(siteConfig.allowPersonalMongo)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalMongo: checked })} />
+              <CheckField label="ব্যক্তিগত স্টোরেজ ব্যবহারের অনুমতি দিন (বিকল্প ফ্ল্যাগ)" checked={Boolean(siteConfig.allowPersonalStorage)} onChange={(checked) => setSiteConfig({ ...siteConfig, allowPersonalStorage: checked })} />
+              <TextField label="ব্যবহৃত মঙ্গোডিবি এমবি (MongoDB Used MB - ঐচ্ছিক ম্যানুয়াল আপডেট)" type="number" value={String(siteConfig.mongodbUsedMb || '')} onChange={(value) => setSiteConfig({ ...siteConfig, mongodbUsedMb: value })} placeholder="475" />
             </div>
-            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">✅ Images are stored in MongoDB GridFS — no ImgBB API key needed.</div>
-            <Button onClick={saveSiteConfig} disabled={saving === "site"}><Save className="mr-2 h-4 w-4" />{saving === "site" ? "Saving..." : "Save / Add storage config"}</Button>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">✅ ছবিগুলো মঙ্গোডিবি গ্রিডএফএস (GridFS)-এ সংরক্ষিত হচ্ছে — কোনো ImgBB API কি প্রয়োজন নেই।</div>
+            <Button onClick={saveSiteConfig} disabled={saving === "site"}><Save className="mr-2 h-4 w-4" />{saving === "site" ? "সংরক্ষণ করা হচ্ছে..." : "সংরক্ষণ করুন / স্টোরেজ কনফিগারেশন যোগ করুন"}</Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>School Holiday & Closure Settings</CardTitle><CardDescription>Set weekly closed days and date range for special closure.</CardDescription></CardHeader>
+          <CardHeader><CardTitle>বিদ্যালয়ের ছুটি ও বন্ধের সেটিংস (School Holiday & Closure Settings)</CardTitle><CardDescription>সাপ্তাহিক ছুটির দিন এবং বিশেষ বন্ধের সময়সীমা নির্ধারণ করুন।</CardDescription></CardHeader>
           <CardContent className="space-y-5">
-            <label className="flex items-center gap-2 rounded-lg border p-3"><input type="checkbox" checked={holiday.enabled} onChange={(e) => setHoliday({ ...holiday, enabled: e.target.checked })} /><span className="text-sm font-medium">Enable holiday/closure rules</span></label>
-            <div><div className="mb-2 flex items-center gap-2 text-sm font-semibold"><CalendarX2 className="h-4 w-4" /> Weekly Closed Days</div><div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">{weekDays.map((day) => <label key={day} className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${holiday.weeklyClosedDays.includes(day) ? "border-primary bg-primary/5" : "border-border"}`}><input type="checkbox" checked={holiday.weeklyClosedDays.includes(day)} onChange={() => toggleWeeklyDay(day)} /><span>{day}</span></label>)}</div></div>
-            <div className="grid gap-4 md:grid-cols-2"><TextField label="Closure Start Date" type="date" value={holiday.closureStartDate} onChange={(value) => setHoliday({ ...holiday, closureStartDate: value })} /><TextField label="Closure End Date" type="date" value={holiday.closureEndDate} onChange={(value) => setHoliday({ ...holiday, closureEndDate: value })} /></div>
-            <label className="block space-y-2"><span className="text-sm font-medium">Closure Reason</span><textarea className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={holiday.closureReason} onChange={(e) => setHoliday({ ...holiday, closureReason: e.target.value })} /></label>
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">Total closure period: <strong>{closureDays}</strong> day(s). Weekly closed days: <strong>{holiday.weeklyClosedDays.join(", ") || "None"}</strong></div>
-            <Button onClick={saveHoliday} disabled={saving === "holiday"}><Save className="mr-2 h-4 w-4" />{saving === "holiday" ? "Saving..." : "Save holiday settings"}</Button>
+            <label className="flex items-center gap-2 rounded-lg border p-3"><input type="checkbox" checked={holiday.enabled} onChange={(e) => setHoliday({ ...holiday, enabled: e.target.checked })} /><span className="text-sm font-medium">ছুটি/বন্ধের নিয়মাবলী চালু করুন</span></label>
+            <div><div className="mb-2 flex items-center gap-2 text-sm font-semibold"><CalendarX2 className="h-4 w-4" /> সাপ্তাহিক ছুটির দিনসমূহ</div><div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">{weekDays.map((day) => <label key={day} className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${holiday.weeklyClosedDays.includes(day) ? "border-primary bg-primary/5" : "border-border"}`}><input type="checkbox" checked={holiday.weeklyClosedDays.includes(day)} onChange={() => toggleWeeklyDay(day)} /><span>{weekDaysBn[day] || day}</span></label>)}</div></div>
+            <div className="grid gap-4 md:grid-cols-2"><TextField label="বন্ধের শুরুর তারিখ (Closure Start Date)" type="date" value={holiday.closureStartDate} onChange={(value) => setHoliday({ ...holiday, closureStartDate: value })} /><TextField label="বন্ধের শেষের তারিখ (Closure End Date)" type="date" value={holiday.closureEndDate} onChange={(value) => setHoliday({ ...holiday, closureEndDate: value })} /></div>
+            <label className="block space-y-2"><span className="text-sm font-medium">বন্ধের কারণ (Closure Reason)</span><textarea className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={holiday.closureReason} onChange={(e) => setHoliday({ ...holiday, closureReason: e.target.value })} /></label>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">মোট বন্ধের মেয়াদ: <strong>{closureDays}</strong> দিন। সাপ্তাহিক ছুটির দিনসমূহ: <strong>{holiday.weeklyClosedDays.map(d => weekDaysBn[d] || d).join(", ") || "কোনোটিই নয়"}</strong></div>
+            <Button onClick={saveHoliday} disabled={saving === "holiday"}><Save className="mr-2 h-4 w-4" />{saving === "holiday" ? "সংরক্ষণ করা হচ্ছে..." : "ছুটির সেটিংস সংরক্ষণ করুন"}</Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" />Approval & Workflow Controls</CardTitle><CardDescription>These controls save to MongoDB and also cache locally.</CardDescription></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" />অনুমোদন ও কাজের ধারা নিয়ন্ত্রণ (Approval & Workflow Controls)</CardTitle><CardDescription>এই নিয়ন্ত্রণগুলো মঙ্গোডিবি-তে সংরক্ষিত হবে এবং লোকাল ক্যাশেও জমা থাকবে।</CardDescription></CardHeader>
           <CardContent className="space-y-5">
             <div className="grid gap-3 md:grid-cols-2">
-              <CheckField label="Auto publish class routine after approval" checked={appControl.routineAutoPublishAfterApproval} onChange={(checked) => setAppControl({ ...appControl, routineAutoPublishAfterApproval: checked })} />
-              <CheckField label="Show teacher name in routine PDF" checked={appControl.routinePdfIncludeTeacherName} onChange={(checked) => setAppControl({ ...appControl, routinePdfIncludeTeacherName: checked })} />
-              <CheckField label="Require assistant review before Head approval" checked={appControl.routineRequireAssistantApproval} onChange={(checked) => setAppControl({ ...appControl, routineRequireAssistantApproval: checked })} />
-              <CheckField label="Approved leave auto marks attendance as Leave" checked={appControl.leaveAutoMarkAttendance} onChange={(checked) => setAppControl({ ...appControl, leaveAutoMarkAttendance: checked })} />
+              <CheckField label="অনুমোদনের পর ক্লাস রুটিন স্বয়ংক্রিয়ভাবে প্রকাশ করুন" checked={appControl.routineAutoPublishAfterApproval} onChange={(checked) => setAppControl({ ...appControl, routineAutoPublishAfterApproval: checked })} />
+              <CheckField label="রুটিন পিডিএফ-এ শিক্ষকের নাম দেখান" checked={appControl.routinePdfIncludeTeacherName} onChange={(checked) => setAppControl({ ...appControl, routinePdfIncludeTeacherName: checked })} />
+              <CheckField label="প্রধান শিক্ষকের অনুমোদনের আগে সহকারী শিক্ষকের পর্যালোচনা আবশ্যক" checked={appControl.routineRequireAssistantApproval} onChange={(checked) => setAppControl({ ...appControl, routineRequireAssistantApproval: checked })} />
+              <CheckField label="অনুমোদিত ছুটি স্বয়ংক্রিয়ভাবে উপস্থিতিতে ছুটি (Leave) হিসেবে চিহ্নিত হবে" checked={appControl.leaveAutoMarkAttendance} onChange={(checked) => setAppControl({ ...appControl, leaveAutoMarkAttendance: checked })} />
             </div>
             <div className="grid gap-4 md:grid-cols-3">
-              <TextField label="SMS log retention days" type="number" value={String(appControl.smsLogRetentionDays)} onChange={(value) => setAppControl({ ...appControl, smsLogRetentionDays: Number(value) || 30 })} />
-              <TextField label="SMS usage warning %" type="number" value={String(appControl.smsWarnAtPercent)} onChange={(value) => setAppControl({ ...appControl, smsWarnAtPercent: Number(value) || 80 })} />
-              <label className="space-y-2"><span className="text-sm font-medium">Mobile print mode</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={appControl.mobilePrintMode} onChange={(e) => setAppControl({ ...appControl, mobilePrintMode: e.target.value as any })}><option value="pdf">PDF download</option><option value="print">System print</option></select></label>
+              <TextField label="এসএমএস লগ সংরক্ষণের মেয়াদ (দিন)" type="number" value={String(appControl.smsLogRetentionDays)} onChange={(value) => setAppControl({ ...appControl, smsLogRetentionDays: Number(value) || 30 })} />
+              <TextField label="এসএমএস ব্যবহারের সতর্কতা সীমা %" type="number" value={String(appControl.smsWarnAtPercent)} onChange={(value) => setAppControl({ ...appControl, smsWarnAtPercent: Number(value) || 80 })} />
+              <label className="space-y-2"><span className="text-sm font-medium">মোবাইল প্রিন্ট মোড</span><select className="h-10 w-full rounded-md border px-3 text-sm" value={appControl.mobilePrintMode} onChange={(e) => setAppControl({ ...appControl, mobilePrintMode: e.target.value as any })}><option value="pdf">পিডিএফ ডাউনলোড</option><option value="print">সিস্টেম প্রিন্ট</option></select></label>
             </div>
-            <Button onClick={saveAppControl} disabled={saving === "controls"}><Save className="mr-2 h-4 w-4" />{saving === "controls" ? "Saving..." : "Save workflow controls"}</Button>
+            <Button onClick={saveAppControl} disabled={saving === "controls"}><Save className="mr-2 h-4 w-4" />{saving === "controls" ? "সংরক্ষণ করা হচ্ছে..." : "অনুমোদন নিয়ন্ত্রণগুলো সংরক্ষণ করুন"}</Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5" />Attendance Calendar Colors</CardTitle><CardDescription>Used by leave list and attendance calendar design.</CardDescription></CardHeader>
-          <CardContent className="space-y-4"><div className="grid gap-3 md:grid-cols-5"><ColorField label="Present" value={appControl.presentColor} onChange={(value) => setAppControl({ ...appControl, presentColor: value })} /><ColorField label="Absent" value={appControl.absentColor} onChange={(value) => setAppControl({ ...appControl, absentColor: value })} /><ColorField label="Leave" value={appControl.leaveColor} onChange={(value) => setAppControl({ ...appControl, leaveColor: value })} /><ColorField label="Weekend" value={appControl.weekendColor} onChange={(value) => setAppControl({ ...appControl, weekendColor: value })} /><ColorField label="Closed" value={appControl.closureColor} onChange={(value) => setAppControl({ ...appControl, closureColor: value })} /></div><Button onClick={saveAppControl} disabled={saving === "controls"}>Save colors</Button></CardContent>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5" />উপস্থিতি ক্যালেন্ডারের রঙসমূহ (Attendance Calendar Colors)</CardTitle><CardDescription>ছুটির তালিকা এবং উপস্থিতি ক্যালেন্ডার ডিজাইনে ব্যবহৃত হবে।</CardDescription></CardHeader>
+          <CardContent className="space-y-4"><div className="grid gap-3 md:grid-cols-5"><ColorField label="উপস্থিত" value={appControl.presentColor} onChange={(value) => setAppControl({ ...appControl, presentColor: value })} /><ColorField label="অনুপস্থিত" value={appControl.absentColor} onChange={(value) => setAppControl({ ...appControl, absentColor: value })} /><ColorField label="ছুটি" value={appControl.leaveColor} onChange={(value) => setAppControl({ ...appControl, leaveColor: value })} /><ColorField label="সাপ্তাহিক ছুটি (Weekend)" value={appControl.weekendColor} onChange={(value) => setAppControl({ ...appControl, weekendColor: value })} /><ColorField label="বিদ্যালয় বন্ধ (Closed)" value={appControl.closureColor} onChange={(value) => setAppControl({ ...appControl, closureColor: value })} /></div><Button onClick={saveAppControl} disabled={saving === "controls"}>রঙসমূহ সংরক্ষণ করুন</Button></CardContent>
         </Card>
 
         <Card className="border-2 border-emerald-200">
@@ -320,24 +331,24 @@ function HeadSettings() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <label className="space-y-2">
-                <span className="text-sm font-medium">Anoncify API Key {smsKeySet && <span className="text-xs text-emerald-600">(already set — enter new to replace)</span>}</span>
+                <span className="text-sm font-medium">Anoncify এপিআই কি {smsKeySet && <span className="text-xs text-emerald-600">(ইতিমধ্যে সেট করা আছে — পরিবর্তন করতে নতুন কি দিন)</span>}</span>
                 <input
                   type="password"
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   value={smsKey}
                   onChange={(e) => setSmsKey(e.target.value)}
-                  placeholder={smsKeySet ? "Enter new key to replace existing" : "Paste your anoncify API key here"}
+                  placeholder={smsKeySet ? "বিদ্যমান কি পরিবর্তনের জন্য নতুন কি দিন" : "আপনার Anoncify এপিআই কি এখানে পেস্ট করুন"}
                 />
               </label>
-              <TextField label="SMS API URL" value={smsApiUrl} onChange={setSmsApiUrl} placeholder="https://anoncify.xyz/api/sms" />
+              <TextField label="এসএমএস এপিআই ইউআরএল (SMS API URL)" value={smsApiUrl} onChange={setSmsApiUrl} placeholder="https://anoncify.xyz/api/sms" />
             </div>
-            <CheckField label="Enable SMS" checked={smsEnabled} onChange={setSmsEnabled} />
+            <CheckField label="এসএমএস চালু করুন" checked={smsEnabled} onChange={setSmsEnabled} />
             <div className="flex flex-wrap gap-3">
               <Button onClick={saveSmsSettings} disabled={saving === "sms"}>
-                <Save className="mr-2 h-4 w-4" />{saving === "sms" ? "Saving..." : "Save SMS Settings"}
+                <Save className="mr-2 h-4 w-4" />{saving === "sms" ? "সংরক্ষণ করা হচ্ছে..." : "এসএমএস সেটিংস সংরক্ষণ করুন"}
               </Button>
               <Button variant="outline" onClick={runSmsDiagnostic}>
-                <ShieldCheck className="mr-2 h-4 w-4" />Run Diagnostic
+                <ShieldCheck className="mr-2 h-4 w-4" />ডায়াগনস্টিক রান করুন
               </Button>
             </div>
             {smsDiagnostic && (
@@ -356,7 +367,7 @@ function HeadSettings() {
               </div>
             )}
             <div className="border-t pt-4">
-              <div className="mb-2 text-sm font-medium">Test SMS (key সেট করার পর test করুন)</div>
+              <div className="mb-2 text-sm font-medium">টেস্ট এসএমএস (কি সেট করার পর টেস্ট করুন)</div>
               <div className="flex gap-3">
                 <input
                   type="tel"
@@ -366,7 +377,7 @@ function HeadSettings() {
                   placeholder="01XXXXXXXXX"
                 />
                 <Button variant="outline" onClick={sendSmsTest} disabled={!testPhone}>
-                  <TestTube2 className="mr-2 h-4 w-4" />Send Test
+                  <TestTube2 className="mr-2 h-4 w-4" />টেস্ট পাঠান
                 </Button>
               </div>
               {smsTestResult && <div className="mt-2 text-sm font-medium">{smsTestResult}</div>}
@@ -375,13 +386,13 @@ function HeadSettings() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Currency</CardTitle><CardDescription>Choose display currency for finance pages.</CardDescription></CardHeader>
-          <CardContent><div className="flex flex-col gap-3 sm:flex-row"><CheckRadio label="BDT (৳)" checked={currency === 'BDT'} onChange={() => setCurrency('BDT')} /><CheckRadio label="USD ($)" checked={currency === 'USD'} onChange={() => setCurrency('USD')} /></div><div className="mt-4"><Button onClick={saveCurrency} disabled={saving === "currency"}>Save preference</Button></div></CardContent>
+          <CardHeader><CardTitle>মুদ্রা (Currency)</CardTitle><CardDescription>অর্থসংক্রান্ত পৃষ্ঠাগুলোর জন্য প্রদর্শিত মুদ্রা নির্বাচন করুন।</CardDescription></CardHeader>
+          <CardContent><div className="flex flex-col gap-3 sm:flex-row"><CheckRadio label="BDT (৳)" checked={currency === 'BDT'} onChange={() => setCurrency('BDT')} /><CheckRadio label="USD ($)" checked={currency === 'USD'} onChange={() => setCurrency('USD')} /></div><div className="mt-4"><Button onClick={saveCurrency} disabled={saving === "currency"}>পছন্দ সংরক্ষণ করুন</Button></div></CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Attendance</CardTitle><CardDescription>Preferences for attendance reports and exports.</CardDescription></CardHeader>
-          <CardContent className="space-y-4"><label className="block text-sm font-medium">Default Type<select className="mt-1 w-full rounded border p-2 md:w-auto" value={attendance.defaultType} onChange={(e) => setAttendance({ ...attendance, defaultType: e.target.value as any })}><option value="student">Student</option><option value="teacher">Teacher</option><option value="staff">Staff</option><option value="all">All</option></select></label><CheckField label="Treat Head/Assistant as Teacher in reports" checked={attendance.includeHeadAsTeacher} onChange={(checked) => setAttendance({ ...attendance, includeHeadAsTeacher: checked })} /><Button onClick={saveAttendance} disabled={saving === "attendance"}>Save attendance settings</Button></CardContent>
+          <CardHeader><CardTitle>উপস্থিতি (Attendance)</CardTitle><CardDescription>উপস্থিতি রিপোর্ট এবং ডাউনলোডের জন্য পছন্দসমূহ।</CardDescription></CardHeader>
+          <CardContent className="space-y-4"><label className="block text-sm font-medium">ডিফল্ট ধরণ<select className="mt-1 w-full rounded border p-2 md:w-auto" value={attendance.defaultType} onChange={(e) => setAttendance({ ...attendance, defaultType: e.target.value as any })}><option value="student">শিক্ষার্থী</option><option value="teacher">শিক্ষক</option><option value="staff">কর্মচারী</option><option value="all">সবাই</option></select></label><CheckField label="রিপোর্টে প্রধান শিক্ষক/সহকারী শিক্ষককে শিক্ষক হিসেবে গণ্য করুন" checked={attendance.includeHeadAsTeacher} onChange={(checked) => setAttendance({ ...attendance, includeHeadAsTeacher: checked })} /><Button onClick={saveAttendance} disabled={saving === "attendance"}>উপস্থিতি সেটিংস সংরক্ষণ করুন</Button></CardContent>
         </Card>
       </div>
     </div>
@@ -397,8 +408,8 @@ function StatusBox({ title, item }: { title: string; item: any }) {
         <span className={`h-3 w-3 rounded-full ${warning ? 'bg-amber-500' : ok ? 'bg-emerald-500' : 'bg-red-500'}`} />
         <div className={`font-semibold ${warning ? 'text-amber-800' : ok ? 'text-emerald-800' : 'text-red-800'}`}>{title}</div>
       </div>
-      <div className={`mt-2 text-xs ${warning ? 'text-amber-700' : ok ? 'text-emerald-700' : 'text-red-700'}`}>{item?.message || (ok ? 'Connected' : 'Not connected')}</div>
-      {item?.usedMb !== undefined && <div className="mt-1 text-xs text-muted-foreground">Used: {item.usedMb}MB / warning at {item.warningAtMb || '-'}MB</div>}
+      <div className={`mt-2 text-xs ${warning ? 'text-amber-700' : ok ? 'text-emerald-700' : 'text-red-700'}`}>{item?.message || (ok ? 'সংযুক্ত (Connected)' : 'সংযুক্ত নয় (Not connected)')}</div>
+      {item?.usedMb !== undefined && <div className="mt-1 text-xs text-muted-foreground">ব্যবহৃত: {item.usedMb}MB / সতর্কতা সীমা {item.warningAtMb || '-'}MB</div>}
       <div className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">{item?.status || 'unknown'}</div>
     </div>
   );
@@ -410,11 +421,11 @@ function GridFSStatusBox({ item }: { item: any }) {
     <div className={`rounded-xl border p-4 ${warning ? 'border-amber-300 bg-amber-50' : 'border-blue-200 bg-blue-50'}`}>
       <div className="flex items-center gap-2">
         <span className={`h-3 w-3 rounded-full ${warning ? 'bg-amber-500' : 'bg-blue-500'}`} />
-        <div className={`font-semibold ${warning ? 'text-amber-800' : 'text-blue-800'}`}>Image Storage (GridFS)</div>
+        <div className={`font-semibold ${warning ? 'text-amber-800' : 'text-blue-800'}`}>ইমেজ স্টোরেজ (GridFS)</div>
       </div>
-      <div className={`mt-2 text-xs ${warning ? 'text-amber-700' : 'text-blue-700'}`}>{item?.message || 'MongoDB GridFS active'}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{item?.fileCount ?? 0} files · {item?.totalMb ?? 0}MB used</div>
-      <div className="mt-1 text-[11px] uppercase tracking-wide text-blue-600">self-hosted · no api key</div>
+      <div className={`mt-2 text-xs ${warning ? 'text-amber-700' : 'text-blue-700'}`}>{item?.message || 'মঙ্গোডিবি গ্রিডএফএস সক্রিয় আছে'}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{item?.fileCount ?? 0} টি ফাইল · {item?.totalMb ?? 0}MB ব্যবহৃত</div>
+      <div className="mt-1 text-[11px] uppercase tracking-wide text-blue-600">সেলফ-হোস্টেড · কোনো এপিআই কি লাগবে না</div>
     </div>
   );
 }
@@ -431,22 +442,22 @@ function HistoryList({ title, items, type, warningAt }: { title: string; items: 
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="font-medium">{item.label || item.id}</div>
               <div className="flex gap-2">
-                {item.isActive && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Active</span>}
-                {item.warning && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Warning</span>}
+                {item.isActive && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">সক্রিয় (Active)</span>}
+                {item.warning && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">সতর্কতা (Warning)</span>}
               </div>
             </div>
             <div className="mt-1 break-all text-xs text-muted-foreground">{type === 'mongo' ? item.uri : item.apiKey}</div>
-            <div className="mt-1 text-xs text-muted-foreground">Used: {Number(item.usedMb || 0)}MB / warning at {warningAt}MB</div>
-            <div className="mt-1 text-xs text-muted-foreground">Added: {item.addedAt ? new Date(item.addedAt).toLocaleString() : 'N/A'}</div>
+            <div className="mt-1 text-xs text-muted-foreground">ব্যবহৃত: {Number(item.usedMb || 0)}MB / সতর্কতা সীমা {warningAt}MB</div>
+            <div className="mt-1 text-xs text-muted-foreground">যোগ করা হয়েছে: {item.addedAt ? new Date(item.addedAt).toLocaleString('bn-BD') : 'N/A'}</div>
             {item.note && <div className="mt-1 text-xs text-muted-foreground">{item.note}</div>}
             {!item.isActive && type === 'mongo' && (
               <div className="mt-2">
-                <button className="rounded bg-primary px-3 py-1 text-xs text-white" onClick={() => window.dispatchEvent(new CustomEvent('make-active-mongo', { detail: { id: item.id } }))}>Make active</button>
+                <button className="rounded bg-primary px-3 py-1 text-xs text-white" onClick={() => window.dispatchEvent(new CustomEvent('make-active-mongo', { detail: { id: item.id } }))}>সক্রিয় করুন</button>
               </div>
             )}
           </div>
         ))}
-        {!items?.length && <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">No history yet.</div>}
+        {!items?.length && <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">এখনো কোনো ইতিহাস নেই।</div>}
       </div>
     </div>
   );

@@ -169,9 +169,9 @@ export default function InstitutionProfilePage() {
   );
   const assets = useMemo(
     () => [
-      { name: 'logo' as const, label: 'Logo', value: values.logo },
-      { name: 'seal' as const, label: 'Seal', value: values.seal },
-      { name: 'headSignature' as const, label: 'Head Signature', value: values.headSignature },
+      { name: 'logo' as const, label: 'লোগো (Logo)', value: values.logo },
+      { name: 'seal' as const, label: 'সিল (Seal)', value: values.seal },
+      { name: 'headSignature' as const, label: 'প্রধান শিক্ষকের স্বাক্ষর', value: values.headSignature },
     ],
     [values.logo, values.seal, values.headSignature]
   );
@@ -264,15 +264,15 @@ export default function InstitutionProfilePage() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Institution Profile</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Edit identity, contact details, and official assets.</p>
+        <h1 className="text-3xl font-bold tracking-tight">প্রতিষ্ঠান প্রোফাইল</h1>
+        <p className="mt-2 text-sm text-muted-foreground">পরিচয়, যোগাযোগের বিবরণ এবং অফিশিয়াল অ্যাসেট সম্পাদনা করুন।</p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <Card>
           <CardHeader>
-            <CardTitle>Profile Details</CardTitle>
-            <CardDescription>These details are used across admission, reports, cards, and certificates.</CardDescription>
+            <CardTitle>প্রোফাইলের বিবরণ</CardTitle>
+            <CardDescription>এই বিবরণগুলো ভর্তি, রিপোর্ট, কার্ড এবং সার্টিফিকেটে ব্যবহৃত হয়।</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -280,7 +280,7 @@ export default function InstitutionProfilePage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Institution Name</FormLabel>
+                      <FormLabel>প্রতিষ্ঠানের নাম</FormLabel>
                       <FormControl><Input {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -294,12 +294,12 @@ export default function InstitutionProfilePage() {
                   )} />
                   <FormField control={form.control} name="type" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Type</FormLabel>
+                      <FormLabel>ধরণ</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="school">School</SelectItem>
-                          <SelectItem value="madrasah">Madrasah</SelectItem>
+                          <SelectItem value="school">বিদ্যালয় (School)</SelectItem>
+                          <SelectItem value="madrasah">মাদ্রাসা (Madrasah)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -307,28 +307,28 @@ export default function InstitutionProfilePage() {
                   )} />
                   <FormField control={form.control} name="phone" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone</FormLabel>
+                      <FormLabel>ফোন নম্বর</FormLabel>
                       <FormControl><Input {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="email" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>ইমেইল</FormLabel>
                       <FormControl><Input type="email" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="website" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Website</FormLabel>
+                      <FormLabel>ওয়েবসাইট</FormLabel>
                       <FormControl><Input placeholder="https://www.easyschool.live" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="subdomain" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Subdomain</FormLabel>
+                      <FormLabel>সাবডোমেন (Subdomain)</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="my-school"
@@ -338,8 +338,8 @@ export default function InstitutionProfilePage() {
                       </FormControl>
                       <FormDescription>
                         {savedSubdomain
-                          ? 'Your subdomain is locked and cannot be changed.'
-                          : 'Enter a short lowercase identifier (letters, numbers, hyphens). This becomes subdomain.MAIN_DOMAIN.'}
+                          ? 'আপনার সাবডোমেনটি লক করা আছে এবং পরিবর্তন করা যাবে না।'
+                          : 'একটি ছোট ছোট হাতের অক্ষরের নাম দিন (অক্ষর, সংখ্যা, হাইফেন)। এটি subdomain.MAIN_DOMAIN হিসেবে সেট হবে।'}
                       </FormDescription>
                       <div className="mt-2 flex items-center gap-2">
                         <Button
@@ -354,7 +354,7 @@ export default function InstitutionProfilePage() {
                             setSubdomainAvailability(null);
                           }}
                         >
-                          Generate
+                          তৈরি করুন (Generate)
                         </Button>
                         <Button
                           type="button"
@@ -363,22 +363,22 @@ export default function InstitutionProfilePage() {
                           onClick={async () => {
                             const value = String(form.getValues('subdomain') || field.value || '').trim();
                             if (!value) { setSubdomainAvailability('Enter a subdomain first'); return; }
-                            setSubdomainAvailability('Checking...');
+                            setSubdomainAvailability('যাচাই করা হচ্ছে...');
                             try {
                               const res: any = await api.institution.checkSubdomain(value);
-                              setSubdomainAvailability(res?.available ? 'Available' : 'Not available');
+                              setSubdomainAvailability(res?.available ? 'উপলব্ধ (Available)' : 'উপলব্ধ নয় (Not available)');
                             } catch (err) {
-                              setSubdomainAvailability('Check failed');
+                              setSubdomainAvailability('যাচাইকরণ ব্যর্থ হয়েছে');
                             }
                           }}
                         >
-                          Check
+                          যাচাই করুন (Check)
                         </Button>
                         {subdomainAvailability ? <div className="text-sm text-muted-foreground">{subdomainAvailability}</div> : null}
                       </div>
                       {field.value && (
                         <div className="mt-2 text-xs">
-                          <span className="text-muted-foreground font-medium">Your Site Link: </span>
+                          <span className="text-muted-foreground font-medium">আপনার সাইটের লিঙ্ক: </span>
                           <a
                             href={getMainDomainLink(field.value)}
                             target="_blank"
@@ -397,7 +397,7 @@ export default function InstitutionProfilePage() {
                   )} />
                   <FormField control={form.control} name="address" render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>ঠিকানা</FormLabel>
                       <FormControl><Textarea {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -407,8 +407,8 @@ export default function InstitutionProfilePage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base"><Globe2 className="h-4 w-4" /> Domains</CardTitle>
-                      <CardDescription>One domain per line. Public result lookup can resolve school data from these domains.</CardDescription>
+                      <CardTitle className="flex items-center gap-2 text-base"><Globe2 className="h-4 w-4" /> ডোমেনসমূহ</CardTitle>
+                      <CardDescription>প্রতি লাইনে একটি করে ডোমেন দিন। পাবলিক রেজাল্ট দেখার পেজটি এই ডোমেনগুলো থেকে ডাটা খুঁজে বের করতে পারবে।</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <FormField control={form.control} name="domainsText" render={({ field }) => (
@@ -421,15 +421,15 @@ export default function InstitutionProfilePage() {
                   </Card>
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base"><Server className="h-4 w-4" /> Storage</CardTitle>
-                      <CardDescription>Images are stored in MongoDB GridFS. Set a per-school MongoDB URI for isolated tenant storage.</CardDescription>
+                      <CardTitle className="flex items-center gap-2 text-base"><Server className="h-4 w-4" /> স্টোরেজ</CardTitle>
+                      <CardDescription>ছবিগুলো মঙ্গোডিবি গ্রিডএফএস (GridFS)-এ সংরক্ষিত হয়। আলাদা স্টোরেজের জন্য স্কুল প্রতি একটি মঙ্গোডিবি ইউআরআই সেট করুন।</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <FormField control={form.control} name="mongodbUri" render={({ field }) => (
-                        <FormItem><FormLabel>MongoDB URI (optional)</FormLabel><FormControl><Input type="password" placeholder="mongodb+srv://..." {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>MongoDB URI (ঐচ্ছিক)</FormLabel><FormControl><Input type="password" placeholder="mongodb+srv://..." {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
                       <div className="rounded-md border bg-blue-50 border-blue-200 p-3 text-xs text-blue-800">
-                        ✅ Images are now stored in <strong>MongoDB GridFS</strong> — no external API key needed.
+                        ✅ ছবিগুলো এখন <strong>MongoDB GridFS</strong> — কোনো এক্সটার্নাল এপিআই কি প্রয়োজন নেই।
                       </div>
                     </CardContent>
                   </Card>
@@ -438,17 +438,17 @@ export default function InstitutionProfilePage() {
                 <RoleGuard roles={["head"]}>
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base"><Globe2 className="h-4 w-4" /> SMS Settings</CardTitle>
-                      <CardDescription>Configure SMS provider and API keys. Visible only to school head.</CardDescription>
+                      <CardTitle className="flex items-center gap-2 text-base"><Globe2 className="h-4 w-4" /> এসএমএস সেটিংস</CardTitle>
+                      <CardDescription>এসএমএস প্রোভাইডার এবং এপিআই কি কনফিগার করুন। শুধুমাত্র প্রধান শিক্ষকের জন্য দৃশ্যমান।</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <FormField control={form.control} name="smsEnabled" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Enable SMS</FormLabel>
+                          <FormLabel>এসএমএস চালু করুন</FormLabel>
                           <FormControl>
                             <div className="flex items-center gap-3">
                               <Switch checked={Boolean(field.value)} onCheckedChange={(v) => field.onChange(v)} />
-                              <div className="text-sm text-muted-foreground">Turn SMS notifications on/off for this institution.</div>
+                              <div className="text-sm text-muted-foreground">এই প্রতিষ্ঠানের জন্য এসএমএস নোটিফিকেশন চালু/বন্ধ করুন।</div>
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -456,21 +456,21 @@ export default function InstitutionProfilePage() {
                       )} />
                       <FormField control={form.control} name="smsProvider" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Provider</FormLabel>
+                          <FormLabel>প্রোভাইডার</FormLabel>
                           <FormControl><Input {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="smsApiUrl" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>API URL</FormLabel>
+                          <FormLabel>এপিআই ইউআরএল</FormLabel>
                           <FormControl><Input placeholder="https://anoncify.xyz/api/sms" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="smsApiKey" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>API Key</FormLabel>
+                          <FormLabel>এপিআই কি</FormLabel>
                           <FormControl><Input type="password" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
@@ -482,15 +482,15 @@ export default function InstitutionProfilePage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Year Settings</CardTitle>
-                      <CardDescription>Use one line per year: year | mongodb uri | imgbb api key</CardDescription>
+                      <CardTitle className="text-base">শিক্ষাবর্ষের সেটিংস</CardTitle>
+                      <CardDescription>প্রতি বছরের জন্য একটি করে লাইন ব্যবহার করুন: শিক্ষাবর্ষ | মঙ্গোডিবি ইউআরআই | ইমজবিবি এপিআই কি</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <FormField control={form.control} name="activeAcademicYear" render={({ field }) => (
-                        <FormItem><FormLabel>Active Academic Year</FormLabel><FormControl><Input placeholder="2026" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>সক্রিয় শিক্ষাবর্ষ</FormLabel><FormControl><Input placeholder="2026" {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
                       <FormField control={form.control} name="academicYearsText" render={({ field }) => (
-                        <FormItem><FormLabel>Year-wise Storage</FormLabel><FormControl><Textarea rows={4} placeholder={'2026 | mongodb+srv://...\n2027 | mongodb+srv://...'} {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>বছর-ভিত্তিক স্টোরেজ</FormLabel><FormControl><Textarea rows={4} placeholder={'2026 | mongodb+srv://...\n2027 | mongodb+srv://...'} {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
                     </CardContent>
                   </Card>
@@ -498,18 +498,18 @@ export default function InstitutionProfilePage() {
 
                 <Card className="border-dashed">
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base"><CreditCard className="h-4 w-4" /> Billing and Activation</CardTitle>
-                    <CardDescription>Activate the school after received payment is recorded.</CardDescription>
+                    <CardTitle className="flex items-center gap-2 text-base"><CreditCard className="h-4 w-4" /> বিলিং এবং অ্যাক্টিভেশন</CardTitle>
+                    <CardDescription>প্রাপ্ত পেমেন্ট রেকর্ড করার পর স্কুলটি সক্রিয় করুন।</CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-4 md:grid-cols-2">
                     <FormField control={form.control} name="planCode" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Plan</FormLabel>
+                        <FormLabel>প্ল্যান</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
                             {schoolPlans.map((plan) => (
-                              <SelectItem key={plan.code} value={plan.code}>{plan.name} - {formatCurrency(plan.monthlyPrice)}/mo</SelectItem>
+                              <SelectItem key={plan.code} value={plan.code}>{plan.name} - {formatCurrency(plan.monthlyPrice)}/মাস</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -518,12 +518,12 @@ export default function InstitutionProfilePage() {
                     )} />
                     <FormField control={form.control} name="billingCycle" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Billing Cycle</FormLabel>
+                        <FormLabel>বিলিং চক্র</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
-                            <SelectItem value="monthly">Monthly</SelectItem>
-                            <SelectItem value="yearly">Yearly</SelectItem>
+                            <SelectItem value="monthly">মাসিক</SelectItem>
+                            <SelectItem value="yearly">বার্ষিক</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -531,45 +531,45 @@ export default function InstitutionProfilePage() {
                     )} />
                     <FormField control={form.control} name="useEasySchoolStorage" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Storage</FormLabel>
+                        <FormLabel>স্টোরেজ</FormLabel>
                         <Select onValueChange={(value) => field.onChange(value === 'true')} value={String(field.value)}>
                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
-                            <SelectItem value="true">EASY SCHOOL storage - {formatCurrency(100)}/month</SelectItem>
-                            <SelectItem value="false">Own MongoDB URI and ImgBB API - no extra cost</SelectItem>
+                            <SelectItem value="true">EASY SCHOOL storage - {formatCurrency(100)}/মাস</SelectItem>
+                            <SelectItem value="false">নিজস্ব মঙ্গোডিবি ইউআরআই এবং ইমজবিবি এপিআই - কোনো অতিরিক্ত খরচ নেই</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <div className="rounded-md border bg-muted/40 p-4 text-sm">
-                      <div className="font-medium">School Status</div>
-                      <p className="mt-1 text-muted-foreground">Only platform admin can activate or suspend a school.</p>
+                      <div className="font-medium">স্কুলের অবস্থা</div>
+                      <p className="mt-1 text-muted-foreground">শুধুমাত্র প্ল্যাটফর্ম এডমিন কোনো স্কুল সক্রিয় বা স্থগিত করতে পারেন।</p>
                     </div>
                     <FormField control={form.control} name="isPaymentReceived" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Received Money</FormLabel>
+                        <FormLabel>প্রাপ্ত পেমেন্ট</FormLabel>
                         <Select onValueChange={(value) => field.onChange(value === 'true')} value={String(field.value)}>
                           <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
-                            <SelectItem value="true">Received</SelectItem>
-                            <SelectItem value="false">Not received</SelectItem>
+                            <SelectItem value="true">প্রাপ্ত হয়েছে</SelectItem>
+                            <SelectItem value="false">প্রাপ্ত হয়নি</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="receivedAmount" render={({ field }) => (
-                      <FormItem><FormLabel>Received Amount</FormLabel><FormControl><Input type="number" placeholder={String(billingDue.total)} {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>প্রাপ্ত পরিমাণ</FormLabel><FormControl><Input type="number" placeholder={String(billingDue.total)} {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="paymentGateway" render={({ field }) => (
-                      <FormItem><FormLabel>Gateway</FormLabel><FormControl><Input placeholder="bkash" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>গেটওয়ে</FormLabel><FormControl><Input placeholder="bkash" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="paymentTrxId" render={({ field }) => (
-                      <FormItem><FormLabel>TrxID</FormLabel><FormControl><Input placeholder="Payment transaction ID" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>TrxID</FormLabel><FormControl><Input placeholder="পেমেন্ট ট্রানজেকশন আইডি" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <div className="md:col-span-2 rounded-md border bg-muted/40 p-4 text-sm">
-                      Plan due: {formatCurrency(billingDue.baseAmount)} + storage {formatCurrency(billingDue.storageAmount)} = <span className="font-semibold">{formatCurrency(billingDue.total)}</span>. Yearly discount: {billingDue.plan.yearlyDiscountPercent}%.
+                      প্ল্যান বকেয়া: {formatCurrency(billingDue.baseAmount)} + স্টোরেজ {formatCurrency(billingDue.storageAmount)} = <span className="font-semibold">{formatCurrency(billingDue.total)}</span>. বার্ষিক ছাড়: {billingDue.plan.yearlyDiscountPercent}%.
                     </div>
                   </CardContent>
                 </Card>
@@ -577,13 +577,13 @@ export default function InstitutionProfilePage() {
                 <RoleGuard roles={["head", "assistant_head"]}>
                   <Card className="border-dashed">
                     <CardHeader className="pb-3">
-                      <CardTitle>Subscription</CardTitle>
-                      <CardDescription>Manage subscription and view active package.</CardDescription>
+                      <CardTitle>সাবস্ক্রিপশন</CardTitle>
+                      <CardDescription>সাবস্ক্রিপশন পরিচালনা করুন এবং সক্রিয় প্যাকেজ দেখুন।</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="flex gap-2">
-                        <Button onClick={() => window.location.assign('/institution/subscription')}>Manage Subscription</Button>
-                        <Button onClick={() => window.location.assign('/institution/billing')}>Billing Dashboard</Button>
+                        <Button onClick={() => window.location.assign('/institution/subscription')}>সাবস্ক্রিপশন পরিচালনা করুন</Button>
+                        <Button onClick={() => window.location.assign('/institution/billing')}>বিলিং ড্যাশবোর্ড</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -609,14 +609,14 @@ export default function InstitutionProfilePage() {
                         {uploadingAsset === asset.name ? (
                           <div className="flex flex-col items-center gap-2 text-muted-foreground">
                             <Loader2 className="h-6 w-6 animate-spin" />
-                            <span className="text-xs">Uploading...</span>
+                            <span className="text-xs">আপলোড হচ্ছে...</span>
                           </div>
                         ) : asset.value ? (
                           <img src={resolveImageUrl(asset.value)} alt="" className="h-full w-full rounded-md object-contain p-2" />
                         ) : (
                           <div className="flex flex-col items-center gap-1 text-muted-foreground">
                             <ImagePlus className="h-7 w-7" />
-                            <span className="text-xs">Click to upload</span>
+                            <span className="text-xs">আপলোড করতে ক্লিক করুন</span>
                           </div>
                         )}
                         <input
@@ -627,7 +627,7 @@ export default function InstitutionProfilePage() {
                           onChange={(event) => onUpload(asset.name, event.target.files?.[0])}
                         />
                       </label>
-                      <p className="mt-1 text-center text-xs text-muted-foreground">Max 5MB · JPG, PNG, WebP</p>
+                      <p className="mt-1 text-center text-xs text-muted-foreground">সর্বোচ্চ ৫এমবি · JPG, PNG, WebP</p>
                     </div>
                   ))}
                 </div>
@@ -636,7 +636,7 @@ export default function InstitutionProfilePage() {
                   <p className="text-sm text-muted-foreground">{status}</p>
                   <Button type="submit">
                     <Save className="mr-2 h-4 w-4" />
-                    Save Profile
+                    প্রোফাইল সংরক্ষণ করুন
                   </Button>
                 </div>
               </form>
@@ -646,24 +646,24 @@ export default function InstitutionProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Preview Card</CardTitle>
-            <CardDescription>How official headers and cards can identify the institution.</CardDescription>
+            <CardTitle>কার্ড প্রিভিউ</CardTitle>
+            <CardDescription>অফিশিয়াল হেডার ও আইডি কার্ডে কীভাবে প্রতিষ্ঠানের তথ্য দেখাবে তার প্রিভিউ।</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="rounded-lg border border-border bg-card p-5 text-center shadow-sm">
               <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border bg-muted">
                 {values.logo ? <img src={values.logo} alt="" className="h-full w-full object-contain" /> : <Building2 className="h-8 w-8 text-primary" />}
               </div>
-              <h2 className="mt-4 text-xl font-bold">{values.name || 'Institution Name'}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">EIIN {values.eiin || 'Not set'} · {values.type}</p>
-              <p className="mt-3 text-sm">{values.address || 'Institution address'}</p>
-              <p className="mt-2 text-sm text-muted-foreground">{values.phone || 'Phone'} · {values.email || 'Email'}</p>
+              <h2 className="mt-4 text-xl font-bold">{values.name || 'প্রতিষ্ঠানের নাম'}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">EIIN {values.eiin || 'Not set'} · {values.type === 'school' ? 'বিদ্যালয়' : values.type === 'madrasah' ? 'মাদ্রাসা' : values.type}</p>
+              <p className="mt-3 text-sm">{values.address || 'ঠিকানা'}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{values.phone || 'ফোন নম্বর'} · {values.email || 'ইমেইল'}</p>
               <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-muted-foreground">
                 <div className="rounded-md border p-3">
-                  {values.seal ? <img src={values.seal} alt="" className="mx-auto h-12 object-contain" /> : 'Official Seal'}
+                  {values.seal ? <img src={values.seal} alt="" className="mx-auto h-12 object-contain" /> : 'অফিশিয়াল সিল'}
                 </div>
                 <div className="rounded-md border p-3">
-                  {values.headSignature ? <img src={values.headSignature} alt="" className="mx-auto h-12 object-contain" /> : 'Head Signature'}
+                  {values.headSignature ? <img src={values.headSignature} alt="" className="mx-auto h-12 object-contain" /> : 'প্রধান শিক্ষকের স্বাক্ষর'}
                 </div>
               </div>
             </div>

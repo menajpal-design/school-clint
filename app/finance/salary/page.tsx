@@ -34,7 +34,7 @@ export default function SalaryPage() {
       setEmployees(data.employees || []);
       setSalaries(data.salaries || []);
     } catch (err: any) {
-      setError(err?.message || "Failed to load salary information.");
+      setError(err?.message || "বেতনের তথ্য লোড করতে ব্যর্থ হয়েছে।");
     } finally {
       setLoading(false);
     }
@@ -48,7 +48,7 @@ export default function SalaryPage() {
 
   const previewSalary = async (employee: any) => {
     const key = rowKey(employee);
-    if (Number(value(employee, "basicSalary")) <= 0) return setError("Basic salary must be greater than zero.");
+    if (Number(value(employee, "basicSalary")) <= 0) return setError("মূল বেতন অবশ্যই শূন্য থেকে বেশি হতে হবে।");
     setLoadingId(key);
     setError("");
     setMessage("");
@@ -63,9 +63,9 @@ export default function SalaryPage() {
         bonus: String(value(employee, "bonus")),
       }) as any;
       setPreviews((prev) => ({ ...prev, [key]: data }));
-      setMessage(`Preview ready for ${employee.userId?.name || "employee"}.`);
+      setMessage(`${employee.userId?.name || "শিক্ষক/কর্মচারী"}-এর বেতনের প্রিভিউ প্রস্তুত।`);
     } catch (err: any) {
-      setError(err?.message || "Failed to preview salary.");
+      setError(err?.message || "বেতনের প্রিভিউ তৈরি করতে ব্যর্থ হয়েছে।");
     } finally {
       setLoadingId(null);
     }
@@ -73,7 +73,7 @@ export default function SalaryPage() {
 
   const process = async (employee: any) => {
     const key = rowKey(employee);
-    if (Number(value(employee, "basicSalary")) <= 0) return setError("Basic salary must be greater than zero.");
+    if (Number(value(employee, "basicSalary")) <= 0) return setError("মূল বেতন অবশ্যই শূন্য থেকে বেশি হতে হবে।");
     setLoadingId(key);
     setError("");
     setMessage("");
@@ -88,10 +88,10 @@ export default function SalaryPage() {
         bonus: value(employee, "bonus"),
       }) as any;
       setPreviews((prev) => ({ ...prev, [key]: data.preview || data }));
-      setMessage(`Salary processed for ${employee.userId?.name || "employee"}.`);
+      setMessage(`${employee.userId?.name || "শিক্ষক/কর্মচারী"}-এর বেতন প্রসেস করা সম্পন্ন হয়েছে।`);
       await load();
     } catch (err: any) {
-      setError(err?.message || "Failed to process salary.");
+      setError(err?.message || "বেতন প্রসেস করতে ব্যর্থ হয়েছে।");
     } finally {
       setLoadingId(null);
     }
@@ -132,36 +132,36 @@ export default function SalaryPage() {
   };
 
   return (
-    <RoleGuard roles={["head"]} fallback={<div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Salary information is visible to the Head only.</div>}>
+    <RoleGuard roles={["head"]} fallback={<div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">বেতনের তথ্য শুধুমাত্র প্রধান শিক্ষকের জন্য দৃশ্যমান।</div>}>
       <div className="space-y-5">
-        <PageHeader title="Salary Processing" description="Head can set salary and process teacher/staff payroll using attendance deduction." icon={Landmark} />
+        <PageHeader title="বেতন প্রসেসিং (Salary Processing)" description="প্রধান শিক্ষক শিক্ষক ও কর্মচারীদের বেতন নির্ধারণ এবং উপস্থিতিজনিত কর্তন হিসাব করে পে-রোল প্রসেস করতে পারেন।" icon={Landmark} />
         {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
         {message && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
         <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="grid gap-3 md:grid-cols-3">
-            <label className="space-y-2"><span className="text-sm font-medium">Month</span><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={(e) => setMonth(e.target.value)} placeholder="Month, e.g. May" /></label>
-            <label className="space-y-2"><span className="text-sm font-medium">Year</span><Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} /></label>
-            <div className="flex items-end"><Button variant="outline" onClick={() => load().catch(() => undefined)} disabled={loading} className="w-full"><RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />{loading ? "Loading..." : "Reload Employees"}</Button></div>
+            <label className="space-y-2"><span className="text-sm font-medium">মাস</span><input className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={(e) => setMonth(e.target.value)} placeholder="মাস, যেমন: May" /></label>
+            <label className="space-y-2"><span className="text-sm font-medium">বছর</span><Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} /></label>
+            <div className="flex items-end"><Button variant="outline" onClick={() => load().catch(() => undefined)} disabled={loading} className="w-full"><RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />{loading ? "লোড হচ্ছে..." : "কর্মচারী তালিকা রিলোড"}</Button></div>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">Rule: absent days are deducted by per-day salary. Late and leave days are shown for review but not deducted automatically.</p>
+          <p className="mt-3 text-sm text-muted-foreground">নিয়ম: অনুপস্থিত দিনগুলোর জন্য প্রতিদিনের হিসেবে বেতন কর্তন করা হবে। বিলম্ব এবং ছুটির দিনগুলো পর্যালোচনার জন্য দেখানো হয়েছে, তবে স্বয়ংক্রিয়ভাবে কর্তন করা হবে না।</p>
         </section>
 
         <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted hover:bg-muted">
-                <TableHead>Employee</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Basic</TableHead>
-                <TableHead>Manual Deduction</TableHead>
-                <TableHead>Bonus</TableHead>
-                <TableHead>Attendance</TableHead>
-                <TableHead>Net</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>শিক্ষক/কর্মচারী</TableHead>
+                <TableHead>ধরণ</TableHead>
+                <TableHead>মূল বেতন</TableHead>
+                <TableHead>ম্যানুয়াল কর্তন</TableHead>
+                <TableHead>বোনাস</TableHead>
+                <TableHead>উপস্থিতি</TableHead>
+                <TableHead>নেট বেতন</TableHead>
+                <TableHead>অ্যাকশন</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={8} className="h-28 text-center text-slate-500">Loading employees...</TableCell></TableRow> : employees.length === 0 ? <TableRow><TableCell colSpan={8} className="h-28 text-center text-slate-500">No teacher or staff employee found.</TableCell></TableRow> : employees.map((e) => {
+              {loading ? <TableRow><TableCell colSpan={8} className="h-28 text-center text-slate-500">কর্মচারী তালিকা লোড করা হচ্ছে...</TableCell></TableRow> : employees.length === 0 ? <TableRow><TableCell colSpan={8} className="h-28 text-center text-slate-500">কোনো শিক্ষক বা কর্মচারী পাওয়া যায়নি।</TableCell></TableRow> : employees.map((e) => {
                 const key = rowKey(e);
                 const preview = previews[key];
                 const attendanceDeduction = Number(preview?.attendanceSummary?.attendanceDeduction || 0);
@@ -172,23 +172,23 @@ export default function SalaryPage() {
                     <div className="font-medium">{e.userId?.name || "-"}</div>
                     <div className="text-xs text-muted-foreground">{e.employeeId || e.userId?.email || "-"}</div>
                   </TableCell>
-                  <TableCell className="capitalize">{e.employeeType}</TableCell>
+                  <TableCell className="capitalize">{e.employeeType === 'teacher' ? 'শিক্ষক' : e.employeeType === 'staff' ? 'কর্মচারী' : e.employeeType}</TableCell>
                   <TableCell><Input className="w-full min-w-[7rem] md:w-28" min={0} type="number" value={value(e,"basicSalary")} onChange={(ev) => setValue(e._id,"basicSalary",Number(ev.target.value))} /></TableCell>
                   <TableCell><Input className="w-full min-w-[7rem] md:w-28" min={0} type="number" value={value(e,"deduction")} onChange={(ev) => setValue(e._id,"deduction",Number(ev.target.value))} /></TableCell>
                   <TableCell><Input className="w-full min-w-[7rem] md:w-28" min={0} type="number" value={value(e,"bonus")} onChange={(ev) => setValue(e._id,"bonus",Number(ev.target.value))} /></TableCell>
                   <TableCell>
                     {preview ? <div className="space-y-1 text-xs">
-                      <div className="flex flex-wrap gap-1"><Badge variant="outline">P {preview.attendanceSummary?.presentDays || 0}</Badge><Badge variant="outline">A {preview.attendanceSummary?.absentDays || 0}</Badge></div>
-                      <div>Late: {preview.attendanceSummary?.lateDays || 0} | Leave: {preview.attendanceSummary?.leaveDays || 0}</div>
-                      <div className="font-medium text-red-600">Deduct: {formatCurrency(attendanceDeduction)}</div>
-                    </div> : <span className="text-xs text-muted-foreground">Click Preview</span>}
+                      <div className="flex flex-wrap gap-1"><Badge variant="outline">উপস্থিত {preview.attendanceSummary?.presentDays || 0}</Badge><Badge variant="outline">অনুপস্থিত {preview.attendanceSummary?.absentDays || 0}</Badge></div>
+                      <div>বিলম্ব: {preview.attendanceSummary?.lateDays || 0} | ছুটি: {preview.attendanceSummary?.leaveDays || 0}</div>
+                      <div className="font-medium text-red-600">কর্তন: {formatCurrency(attendanceDeduction)}</div>
+                    </div> : <span className="text-xs text-muted-foreground">প্রিভিউ ক্লিক করুন</span>}
                   </TableCell>
                   <TableCell className="font-semibold">{formatCurrency(net)}</TableCell>
                   <TableCell>
                     <div className="grid gap-2 sm:flex sm:flex-wrap">
-                      <Button size="sm" variant="outline" disabled={isLoading} onClick={() => previewSalary(e)}><Calculator className="mr-2 h-4 w-4" />{isLoading ? "Wait" : "Preview"}</Button>
-                      <Button size="sm" disabled={isLoading} onClick={() => process(e)}>Process</Button>
-                      <Button size="sm" variant="outline" onClick={() => printSlip(e)}><FileText className="mr-2 h-4 w-4" />Slip</Button>
+                      <Button size="sm" variant="outline" disabled={isLoading} onClick={() => previewSalary(e)}><Calculator className="mr-2 h-4 w-4" />{isLoading ? "অপেক্ষা করুন" : "প্রিভিউ"}</Button>
+                      <Button size="sm" disabled={isLoading} onClick={() => process(e)}>প্রসেস</Button>
+                      <Button size="sm" variant="outline" onClick={() => printSlip(e)}><FileText className="mr-2 h-4 w-4" />স্লিপ</Button>
                     </div>
                   </TableCell>
                 </TableRow>;
@@ -199,20 +199,20 @@ export default function SalaryPage() {
 
         <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
           <div className="border-b p-4">
-            <h2 className="text-lg font-semibold">Processed Salary History</h2>
-            <p className="text-sm text-muted-foreground">Latest salary records including attendance-linked payroll.</p>
+            <h2 className="text-lg font-semibold">প্রসেসকৃত বেতনের ইতিহাস (Processed Salary History)</h2>
+            <p className="text-sm text-muted-foreground">উপস্থিতি সংযুক্ত পে-রোল সহ বেতনের সর্বশেষ তথ্য।</p>
           </div>
           <Table>
-            <TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>Month</TableHead><TableHead>Type</TableHead><TableHead>Gross</TableHead><TableHead>Attendance Deduction</TableHead><TableHead>Net</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>মাস</TableHead><TableHead>ধরণ</TableHead><TableHead>মোট বেতন (Gross)</TableHead><TableHead>উপস্থিতিজনিত কর্তন</TableHead><TableHead>নেট বেতন (Net)</TableHead><TableHead>অবস্থা (Status)</TableHead></TableRow></TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-slate-500">Loading salary history...</TableCell></TableRow> : salaries.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-slate-500">No processed salary yet.</TableCell></TableRow> : salaries.slice(0, 12).map((salary: any) => (
+              {loading ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-slate-500">বেতনের ইতিহাস লোড করা হচ্ছে...</TableCell></TableRow> : salaries.length === 0 ? <TableRow><TableCell colSpan={6} className="h-24 text-center text-slate-500">এখনো কোনো বেতন প্রসেস করা হয়নি।</TableCell></TableRow> : salaries.slice(0, 12).map((salary: any) => (
                 <TableRow key={salary._id}>
                   <TableCell>{salary.month} {salary.year}</TableCell>
-                  <TableCell className="capitalize">{salary.employeeType}</TableCell>
+                  <TableCell className="capitalize">{salary.employeeType === 'teacher' ? 'শিক্ষক' : salary.employeeType === 'staff' ? 'কর্মচারী' : salary.employeeType}</TableCell>
                   <TableCell>{formatCurrency(salary.grossSalary || 0)}</TableCell>
                   <TableCell>{formatCurrency(salary.deductions?.attendance || 0)}</TableCell>
                   <TableCell className="font-semibold">{formatCurrency(salary.netSalary || 0)}</TableCell>
-                  <TableCell><Badge variant={salary.status === "paid" ? "default" : "outline"}>{salary.status}</Badge></TableCell>
+                  <TableCell><Badge variant={salary.status === "paid" ? "default" : "outline"}>{salary.status === 'paid' ? 'পরিশোধিত' : salary.status}</Badge></TableCell>
                 </TableRow>
               ))}
             </TableBody>
