@@ -21,7 +21,8 @@ export type UserRole =
   | 'class_teacher' 
   | 'subject_teacher' 
   | 'teacher'
-  | 'finance_officer' 
+  | 'finance_officer'
+  | 'librarian'
   | 'staff' 
   | 'student' 
   | 'parent' 
@@ -76,11 +77,15 @@ export interface Teacher {
 // Attendance
 export interface Attendance {
   id: string;
-  studentId: string;
-  classId: string;
-  sectionId: string;
+  studentId?: string;
+  userId?: string;
+  employeeId?: string;
+  userType?: 'student' | 'teacher' | 'staff';
+  employeeType?: 'teacher' | 'staff';
+  classId?: string;
+  sectionId?: string;
   date: Date;
-  status: 'present' | 'absent' | 'late';
+  status: 'present' | 'absent' | 'late' | 'leave' | 'holiday';
   markedBy: string;
   notes?: string;
 }
