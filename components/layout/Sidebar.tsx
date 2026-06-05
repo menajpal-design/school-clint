@@ -8,6 +8,7 @@ import * as Icons from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { getMenuForUser } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n';
 
 const iconMap: { [key: string]: any } = {
   LayoutGrid: Icons.LayoutGrid,
@@ -38,6 +39,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, isLoading } = useAuth();
+  const { t } = useLanguage();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
@@ -108,7 +110,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {hasChildren ? (
                   <button
                     onClick={() => toggleExpanded(item.href)}
-                    title={item.label}
+                    title={t(item.label)}
                     className={cn(
                       'w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       active
@@ -118,7 +120,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   >
                     <div className="flex items-center gap-3">
                       <Icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.label}</span>}
+                      {!collapsed && <span>{t(item.label)}</span>}
                     </div>
                     <ChevronDown
                       className={cn(
@@ -139,7 +141,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     )}
                   >
                     <Icon className="h-4 w-4" />
-                    {!collapsed && <span>{item.label}</span>}
+                    {!collapsed && <span>{t(item.label)}</span>}
                   </Link>
                 )}
 
@@ -157,7 +159,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                             : 'text-muted-foreground hover:bg-popover'
                         )}
                       >
-                        {!collapsed && child.label}
+                        {!collapsed && t(child.label)}
                       </Link>
                     ))}
                   </div>
@@ -171,7 +173,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={() => { setCollapsed(!collapsed); try { localStorage.setItem('sidebarCollapsed', !collapsed ? '1' : '0'); } catch (e) {} }}
               className="rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-muted"
             >
-              {collapsed ? 'বড় করুন' : 'ছোট করুন'}
+              {collapsed ? t('Expand') : t('Collapse')}
             </button>
           </div>
         </div>
