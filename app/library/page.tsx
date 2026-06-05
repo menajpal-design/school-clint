@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { normalizeUserRole } from '@/lib/permissions';
 
 const libraryManageRoles = ['head', 'assistant_head', 'admin', 'super_admin', 'librarian', 'staff'];
 const teacherRoles = ['class_teacher', 'subject_teacher', 'teacher'];
@@ -35,7 +36,7 @@ export default function LibraryPage() {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ search: '', category: '', status: 'available' });
 
-  const role = user?.role || '';
+  const role = normalizeUserRole(user?.role) || user?.role || '';
   const canManageLibrary = libraryManageRoles.includes(role);
   const isLearner = role === 'student' || role === 'parent';
   const isTeacher = teacherRoles.includes(role);

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import ResponsiveTable from '@/components/shared/ResponsiveTable';
+import { normalizeUserRole } from '@/lib/permissions';
 
 function currentMonth() {
   const date = new Date();
@@ -28,7 +29,8 @@ export default function SmsMonitoringPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const isDenied = user?.role === 'student' || user?.role === 'parent';
+  const normalizedRole = normalizeUserRole(user?.role) || user?.role;
+  const isDenied = normalizedRole === 'student' || normalizedRole === 'parent';
 
   const loadData = async () => {
     if (isDenied) return;

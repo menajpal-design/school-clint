@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { hasPermission, hasRole } from '@/lib/permissions'
+import { hasPermission, hasRole, normalizeUserRole } from '@/lib/permissions'
 
 type Props = {
   roles?: string[]
@@ -16,8 +16,10 @@ export function RoleGuard({ roles, permissions, fallback = null, children }: Pro
 
   if (!user) return null
 
-  // School head and platform admins bypass permission checks.
-  if (['admin', 'super_admin', 'head'].includes(user.role)) return <>{children}</>
+  const canonicalRole = normalizeUserRole(user.role) || user.role
+
+  // School leaders and platform admins bypass permission checks.
+  if (['admin', 'super_admin', 'head', 'assistant_head'].includes(canonicalRole)) return <>{children}</>
 
   if (roles && roles.length > 0 && hasRole(user, roles as any)) return <>{children}</>
 

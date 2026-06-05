@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { api, apiClient } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { printHtml } from "@/lib/export-utils";
+import { normalizeUserRole } from "@/lib/permissions";
 
 const manageRoles = ["head", "assistant_head", "admin", "super_admin", "subject_teacher", "class_teacher"];
 const SYLLABUS_CACHE_KEY = "easy-school-syllabus-cache-v2";
@@ -78,7 +79,8 @@ const normalizeItem = (item: any, classes: any[], subjects: any[]) => {
 
 export default function AcademicSyllabusPage() {
   const { user } = useAuth();
-  const canManage = manageRoles.includes(user?.role || "");
+  const normalizedRole = normalizeUserRole(user?.role);
+  const canManage = normalizedRole ? manageRoles.includes(normalizedRole) : false;
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [syllabus, setSyllabus] = useState<any[]>([]);

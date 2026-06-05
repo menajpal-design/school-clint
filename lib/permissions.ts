@@ -41,8 +41,12 @@ const LEAVE_APPLY: UserRole[] = ['student', 'parent', 'teacher', 'subject_teache
 
 export function normalizeUserRole(role?: string | null): UserRole | undefined {
   if (!role) return undefined;
-  const normalized = String(role).toLowerCase().replace(/[\s-]+/g, '_');
-  if (normalized === 'guardian' || normalized === 'parent_guardian') return 'parent';
+  const normalized = String(role).toLowerCase().trim().replace(/[\s-]+/g, '_');
+
+  if (normalized === 'guardian' || normalized === 'parent_guardian' || normalized === 'parent_guardian_role') return 'parent';
+  if (normalized === 'headmaster' || normalized === 'principal') return 'head';
+  if (normalized === 'assistant_head' || normalized === 'assistanthead') return 'assistant_head';
+
   if ((ALL_ROLES as string[]).includes(normalized)) return normalized as UserRole;
   if (normalized === 'librarian') return 'staff' as UserRole;
   return undefined;
@@ -100,7 +104,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Syllabus', href: '/academic/syllabus', roles: ACADEMIC_VIEW },
       { label: 'Class Routine', href: '/academic/class-routine', roles: ACADEMIC_VIEW },
       { label: 'Exam Routine', href: '/academic/exam-routine', roles: ACADEMIC_VIEW },
-      { label: 'Exams', href: '/academic/exams', roles: ACADEMIC_VIEW },
+      { label: 'Exams', href: '/academic/exams', roles: [...SCHOOL_LEADERS, ...TEACHERS] },
       { label: 'Results', href: '/academic/results', roles: [...RESULT_ENTRY, ...STUDENT_PARENT] },
       { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
       { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
@@ -198,9 +202,10 @@ export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
   if (!user) return false;
   if (!roles) return true;
   const role = normalizeUserRole(user.role) || user.role;
+  const normalizedRoles = (Array.isArray(roles) ? roles : [roles]).map((candidate) => normalizeUserRole(candidate) || candidate);
   if (['admin', 'super_admin', 'head'].includes(role)) return true;
-  if (Array.isArray(roles)) return roles.includes(role);
-  return role === roles;
+  if (Array.isArray(roles)) return normalizedRoles.includes(role);
+  return normalizedRoles.includes(role);
 }
 
 export function hasPermission(user?: User | null, permission?: string) {

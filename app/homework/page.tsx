@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { normalizeUserRole } from "@/lib/permissions";
 
-const canManageHomework = (role?: string) => ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'].includes(role || '');
+const canManageHomework = (role?: string) => ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'].includes(normalizeUserRole(role) || '');
 
 export default function HomeworkPage() {
   const { user } = useAuth();
@@ -26,11 +27,12 @@ export default function HomeworkPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', description: '', subject: '', classId: '', dueDate: '' });
 
+  const normalizedRole = normalizeUserRole(user?.role) || user?.role;
   const canManage = useMemo(() => canManageHomework(user?.role), [user?.role]);
-  const isLearnerView = user?.role === 'student' || user?.role === 'parent';
+  const isLearnerView = normalizedRole === 'student' || normalizedRole === 'parent';
 
   const loadParentPortal = async () => {
-    if (user?.role !== "parent") return;
+    if (normalizedRole !== "parent") return;
     try {
       const res = await api.parent.portal() as any;
       const childList = res?.portal?.children || [];
@@ -42,10 +44,10 @@ export default function HomeworkPage() {
   };
 
   useEffect(() => {
-    if (user?.role === "parent") {
+    if (normalizedRole === "parent") {
       loadParentPortal().catch(() => undefined);
     }
-  }, [user]);
+  }, [normalizedRole]);
 
   const loadData = async () => {
     setLoading(true);
@@ -75,11 +77,11 @@ export default function HomeworkPage() {
     return homework.filter((item) => String(item.createdAt || item.assignedDate || '').slice(0, 10) === today || String(item.dueDate || '').slice(0, 10) === today);
   }, [homework]);
 
-  const selectedChild = useMemo(() => user?.role === "parent" ? children.find((c) => c._id === selectedChildId) || children[0] : null, [user, children, selectedChildId]);
+  const selectedChild = useMemo(() => normalizedRole === "parent" ? children.find((c) => c._id === selectedChildId) || children[0] : null, [normalizedRole, children, selectedChildId]);
 
   const displayHomework = useMemo(() => {
     let list = isLearnerView && todaysHomework.length ? todaysHomework : homework;
-    if (user?.role === "parent" && selectedChild) {
+    if (normalizedRole === "parent" && selectedChild) {
       const childClassId = String(selectedChild.classId?._id || selectedChild.classId || "");
       list = list.filter((item) => String(item.classId?._id || item.classId || "") === childClassId);
     }
@@ -132,7 +134,7 @@ export default function HomeworkPage() {
         actions={canManage ? [{ label: 'Create Homework', icon: Plus, onClick: () => setOpen(true) }] : []}
       />
 
-      {user?.role === "parent" && children.length > 0 && (
+      {normalizedRole === "parent" && children.length > 0 && (
         <section className="rounded-lg border bg-card p-4 shadow-sm">
           <div className="max-w-xs">
             <label className="space-y-2">

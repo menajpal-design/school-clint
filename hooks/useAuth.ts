@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { User } from '@/types';
 import { authManager } from '@/lib/auth';
 import { api, apiClient } from '@/lib/api';
+import { normalizeUserRole } from '@/lib/permissions';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -71,17 +72,19 @@ export function useAuth() {
 export function useHasRole(role: string | string[]) {
   const { user } = useAuth();
   if (!user) return false;
+  const canonicalRole = normalizeUserRole(user.role) || user.role;
   if (Array.isArray(role)) {
-    return role.includes(user.role);
+    return role.some((candidate) => canonicalRole === normalizeUserRole(candidate) || candidate === canonicalRole);
   }
-  return user.role === role;
+  return canonicalRole === (normalizeUserRole(role) || role);
 }
 
 export function useHasPermission(permission: string | string[]) {
   const { user } = useAuth();
   if (!user) return false;
+  const normalizedPermissions = (user.permissions || []).flatMap((item) => [item, item.replace(/\./g, ':')]);
   if (Array.isArray(permission)) {
-    return permission.some((p) => user.permissions.includes(p));
+    return permission.some((p) => normalizedPermissions.includes(p));
   }
-  return user.permissions.includes(permission);
+  return normalizedPermissions.includes(permission);
 }

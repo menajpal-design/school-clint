@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { api, apiClient } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { downloadElementPdf } from "@/lib/export-utils";
+import { normalizeUserRole } from "@/lib/permissions";
 
 type Row = { subjectId: string; subjectName: string; subjectCode?: string; date: string; duration: number; totalMarks: number; passingMarks: number };
 type Exam = { _id?: string; id?: string; name: string; type?: string; classId?: any; className?: string; startDate?: string; endDate?: string; isPublished?: boolean; subjectMarks?: any[]; instructions?: string; syllabus?: string; updatedAt?: string; status?: string };
@@ -31,7 +32,8 @@ const toast = (msg: string, type: "success" | "error" | "info" = "success") => w
 
 export default function ExamRoutinePage() {
   const { user } = useAuth();
-  const canManage = ROLES.includes(user?.role || "");
+  const normalizedRole = normalizeUserRole(user?.role);
+  const canManage = normalizedRole ? ROLES.includes(normalizedRole) : false;
   const printRef = useRef<HTMLDivElement | null>(null);
   const [exams, setExams] = useState<Exam[]>([]);
   const [classes, setClasses] = useState<any[]>([]);

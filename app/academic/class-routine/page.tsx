@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { api, apiClient } from "@/lib/api";
 import { downloadElementPdf } from "@/lib/export-utils";
 import { useAuth } from "@/hooks/useAuth";
+import { normalizeUserRole } from "@/lib/permissions";
 
 const days = ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"];
 const periods = ["1", "2", "3", "4", "Break", "5", "6", "7"];
@@ -76,7 +77,8 @@ const getSubjectName = (routine: any, subjects: any[]) => {
 
 export default function ClassRoutinePage() {
   const { user } = useAuth();
-  const role = user?.role || "";
+  const normalizedRole = normalizeUserRole(user?.role);
+  const role = normalizedRole || user?.role || "";
   const canApprove = headRoles.includes(role);
   const canPropose = proposalRoles.includes(role) || canApprove;
   const isViewOnly = viewOnlyRoles.includes(role);
