@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
-import { Download, FileBarChart } from "lucide-react";
+import { Calendar, Download, FileBarChart } from "lucide-react";
 
 import { BarChartCard } from "@/components/charts/BarChartCard";
 import { LineChartCard } from "@/components/charts/LineChartCard";
@@ -19,10 +19,11 @@ import { downloadFile, formatDate, getAttendanceSettings } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { normalizeUserRole } from "@/lib/permissions";
+import { AttendanceCalendarDialog } from "@/components/attendance/AttendanceCalendarDialog";
 
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
 type Person = { _id: string; rollNumber?: string; userId?: { name: string } };
-type RecordItem = { _id: string; date: string; status: string; userType?: string; userId?: { name?: string; role?: string }; studentId?: { rollNumber?: string; userId?: { name: string } }; classId?: { name: string }; sectionId?: { name: string } };
+type RecordItem = { _id: string; date: string; status: string; userType?: string; userId?: { _id?: string; name?: string; role?: string }; studentId?: { _id?: string; rollNumber?: string; userId?: { _id?: string; name: string } }; classId?: { _id?: string; name: string }; sectionId?: { _id?: string; name: string } };
 
 const firstDay = () => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
 const today = () => new Date().toISOString().slice(0, 10);
@@ -70,6 +71,7 @@ export default function AttendanceReportsPage() {
   const [message, setMessage] = useState("");
   const [detailPersonId, setDetailPersonId] = useState<string | null>(null);
   const [detailPersonName, setDetailPersonName] = useState("");
+  const [selectedCalendarPerson, setSelectedCalendarPerson] = useState<any | null>(null);
 
   const selectedClass = classes.find((item) => item._id === classId);
   const sections = selectedClass?.sections?.filter((item) => item.isActive !== false) || [];
@@ -257,9 +259,8 @@ export default function AttendanceReportsPage() {
 
   // Group reports by person to show per-person summary and allow per-person exports
   const personIdOf = (item: RecordItem) => {
-    if (item.studentId?.rollNumber) return `student:${item.studentId.rollNumber}`;
-    if (item.studentId?.userId?.name) return `student:${item.studentId.userId.name}`;
-    if (item.userId?.name) return `user:${item.userId.name}`;
+    if (item.studentId?._id) return `student:${item.studentId._id}`;
+    if (item.userId?._id) return `user:${item.userId._id}`;
     return `record:${item._id}`;
   };
 
@@ -277,6 +278,11 @@ export default function AttendanceReportsPage() {
         absent: 0,
         late: 0,
         leave: 0,
+        dbStudentId: item.studentId?._id || (item.studentId && typeof item.studentId === 'string' ? item.studentId : undefined),
+        dbUserId: item.userId?._id || (item.userId && typeof item.userId === 'string' ? item.userId : undefined),
+        dbClassId: item.classId?._id || (item.classId && typeof item.classId === 'string' ? item.classId : undefined),
+        dbSectionId: item.sectionId?._id || (item.sectionId && typeof item.sectionId === 'string' ? item.sectionId : undefined),
+        userType: item.userType || (item.studentId ? 'student' : 'staff'),
       };
     }
     acc[pid].total += 1;
@@ -377,8 +383,28 @@ export default function AttendanceReportsPage() {
                 <TableCell>{p.className}</TableCell>
                 <TableCell>{p.section}</TableCell>
                 <TableCell className="text-center"><span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-sm">{p.present}</span></TableCell>
-                <TableCell>
+                <TableCell className="flex items-center gap-2">
                   <Button size="sm" onClick={() => { setDetailPersonId(p.id); setDetailPersonName(p.name); }}>View Report</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedCalendarPerson({
+                      id: p.dbStudentId || p.dbUserId || p.id,
+                      name: p.name,
+                      roll: p.roll,
+                      className: p.className,
+                      section: p.section,
+                      userType: p.userType,
+                      dbStudentId: p.dbStudentId,
+                      dbUserId: p.dbUserId,
+                      dbClassId: p.dbClassId,
+                      dbSectionId: p.dbSectionId,
+                    })}
+                    className="flex items-center gap-1.5 bg-white hover:bg-slate-50 border-slate-200"
+                  >
+                    <Calendar className="h-4 w-4 text-indigo-600" />
+                    Calendar
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -437,6 +463,12 @@ export default function AttendanceReportsPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <AttendanceCalendarDialog
+        isOpen={selectedCalendarPerson !== null}
+        onClose={() => setSelectedCalendarPerson(null)}
+        person={selectedCalendarPerson}
+        onAttendanceUpdated={loadReports}
+      />
       </div>
 
       {/* Print-only full summary table */}
