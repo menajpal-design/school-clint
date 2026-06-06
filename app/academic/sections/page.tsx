@@ -551,7 +551,7 @@ export default function SectionsPage() {
           <DialogHeader>
             <DialogTitle>Delete Section?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete section "{deleteTarget?.name}"? This will detach the section from its class, and this action cannot be undone.
+              Are you sure you want to delete section &quot;{deleteTarget?.name}&quot;? This will detach the section from its class, and this action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
