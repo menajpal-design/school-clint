@@ -56,8 +56,8 @@ export function installAttendanceApiCompat() {
     peopleInflight.set(key, promise);
     return promise;
   };
-  if (!api.attendance.getStudentAttendance) api.attendance.getStudentAttendance = (studentId: string) => apiClient.get(`/attendance/student/${String(studentId).replace(/^user-/, '')}`);
-  if (!api.attendance.getPersonAttendance) api.attendance.getPersonAttendance = (type: 'teacher' | 'staff', id: string) => apiClient.get(`/attendance/person/${type}/${String(id).replace(/^user-/, '')}`);
+  if (!api.attendance.getStudentAttendance) api.attendance.getStudentAttendance = (studentId: string) => apiClient.get(`/attendance/student/${String(studentId).replace(/^(student:|user:|teacher:|staff:|user-|student-)/g, '')}`);
+  if (!api.attendance.getPersonAttendance) api.attendance.getPersonAttendance = (type: 'teacher' | 'staff', id: string) => apiClient.get(`/attendance/person/${type}/${String(id).replace(/^(student:|user:|teacher:|staff:|user-|student-)/g, '')}`);
   if (!api.attendance.scanIdCard) api.attendance.scanIdCard = (data: any) => apiClient.post('/attendance/scan-id-card', data);
   if (!api.attendance.scanPresent) api.attendance.scanPresent = (data: any) => apiClient.post('/attendance/scan-present', data);
 }

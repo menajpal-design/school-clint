@@ -33,6 +33,8 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December"
 ];
 
+const cleanId = (id: string) => String(id || '').replace(/^(student:|user:|teacher:|staff:|user-|student-)/g, '');
+
 export function AttendanceCalendarDialog({ isOpen, onClose, person, onAttendanceUpdated }: AttendanceCalendarDialogProps) {
   const { user } = useAuth();
   const { addToast } = useToast();
@@ -62,10 +64,10 @@ export function AttendanceCalendarDialog({ isOpen, onClose, person, onAttendance
     try {
       let data: any;
       if (person.userType === 'student') {
-        const studentId = person.dbStudentId || person.id;
+        const studentId = cleanId(person.dbStudentId || person.id);
         data = await api.attendance.getStudentAttendance(studentId);
       } else {
-        const userId = person.dbUserId || person.id;
+        const userId = cleanId(person.dbUserId || person.id);
         data = await api.attendance.getPersonAttendance(person.userType, userId);
       }
       setRecords(data?.attendance || []);
@@ -133,7 +135,7 @@ export function AttendanceCalendarDialog({ isOpen, onClose, person, onAttendance
         records: [
           person.userType === 'student'
             ? {
-                studentId: person.dbStudentId || person.id,
+                studentId: cleanId(person.dbStudentId || person.id),
                 userType: 'student',
                 classId: person.dbClassId,
                 sectionId: person.dbSectionId,
@@ -141,7 +143,7 @@ export function AttendanceCalendarDialog({ isOpen, onClose, person, onAttendance
                 status
               }
             : {
-                userId: person.dbUserId || person.id,
+                userId: cleanId(person.dbUserId || person.id),
                 userType: person.userType,
                 date: dateStr,
                 status
