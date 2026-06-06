@@ -56,6 +56,13 @@ const quickLinks = [
     tone: "bg-blue-50 text-blue-700",
   },
   {
+    title: "Sections",
+    description: "Manage class sections, capacity, student limits, and teachers.",
+    href: "/academic/sections",
+    icon: LayoutList,
+    tone: "bg-teal-50 text-teal-700",
+  },
+  {
     title: "Subjects",
     description: "Assign subjects to classes and teachers.",
     href: "/academic/subjects",

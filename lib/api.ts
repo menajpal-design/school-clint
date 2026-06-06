@@ -364,16 +364,19 @@ export const api: any = {
   institutionSmsTopupHistory: (p?: any) => apiClient.get('/institution/sms/topup/history', { params: p }),
   institutionSmsPackages: () => apiClient.get('/institution/sms/packages'),
   institutionSmsPurchasePackage: (d: any) => apiClient.post('/institution/sms/package/purchase', d),
-  institutionSmsDiagnostic: () => apiClient.get('/institution/sms-diagnostic'),
-  institutionSmsSettings: () => apiClient.get('/institution/sms-settings'),
-  institutionSmsSaveSettings: (d: any) => apiClient.post('/institution/sms-settings', d),
-  institutionSmsTest: (d: any) => apiClient.post('/institution/sms-test', d),
+  institutionSmsDiagnostic: () => apiClient.get('/sms-monitoring/sms-diagnostic'),
+  institutionSmsSettings: () => apiClient.get('/sms-monitoring/sms-settings'),
+  institutionSmsSaveSettings: (d: any) => apiClient.post('/sms-monitoring/sms-settings', d),
+  institutionSmsTest: (d: any) => apiClient.post('/sms-monitoring/sms-test', d),
   admin: { schools: (p?: any) => apiClient.get('/admin/schools', { params: p }), accounting: (p?: any) => apiClient.get('/admin/accounting', { params: p }), updateSchool: (id: string, d: any) => apiClient.patch(`/admin/schools/${id}`, d), verifyPayment: (id: string) => apiClient.post(`/admin/schools/${id}/verify-payment`), selectSchool: (id: string) => apiClient.get(`/admin/schools/${id}/select`), users: (p?: any) => apiClient.get('/admin/users', { params: p }), createUser: (d: any) => apiClient.post('/admin/users', d), backupExportAll: () => apiClient.get('/admin/backup/export-all'), backupImportAll: (data: any) => apiClient.post('/admin/backup/import-all', data) },
   academic: {
     classes: crud('/academic/classes'),
     sections: {
       getAll: (params?: any) => apiClient.get('/academic/sections', { params }),
       getById: (id: string) => apiClient.get(`/academic/sections/${id}`),
+      create: (data: any) => apiClient.post('/academic/sections', data),
+      update: (id: string, data: any) => apiClient.put(`/academic/sections/${id}`, data),
+      delete: (id: string) => apiClient.delete(`/academic/sections/${id}`)
     },
     subjects: crud('/academic/subjects'),
     exams: crud('/academic/exams'),
