@@ -39,6 +39,15 @@ export default function PublicResultPage() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const isDedicatedPortal = useMemo(() => {
+    if (isSubdomain) return true;
+    if (typeof window === 'undefined') return false;
+    const hostname = window.location.hostname;
+    const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+    const isMainDomain = hostname === mainDomain || hostname === `www.${mainDomain}` || hostname === 'localhost' || hostname === '127.0.0.1';
+    return !isMainDomain && selectedSchool && schools.length === 1;
+  }, [isSubdomain, selectedSchool, schools]);
+
   // Generate dynamic captcha code and image using Canvas
   const handleRefreshCaptcha = () => {
     const code = Math.floor(1000 + Math.random() * 9000).toString();
@@ -165,21 +174,11 @@ export default function PublicResultPage() {
   }, [selectedSchool]);
 
   const examOptions = useMemo(() => {
-    const list = [];
-    if (appControlSettings?.disableHalfTerminalExam !== true) {
-      list.push({ id: 'half_yearly', name: 'Half Yearly / Half Terminal' });
-    }
-    if (appControlSettings?.disableFinalExam !== true) {
-      list.push({ id: 'final', name: 'Final Examination' });
-    }
-    exams.forEach((ex) => {
-      const id = ex._id || ex.id;
-      if (id !== 'half_yearly' && id !== 'final') {
-        list.push({ id, name: ex.name });
-      }
-    });
-    return list;
-  }, [exams, appControlSettings]);
+    return exams.map((ex) => ({
+      id: ex._id || ex.id,
+      name: ex.name,
+    }));
+  }, [exams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -317,24 +316,21 @@ export default function PublicResultPage() {
       `}</style>
 
       <div className="w-full max-w-3xl main-container space-y-6">
-        {/* Official Board Branding */}
+        {/* Institution / Portal Branding */}
         <div className="flex flex-col sm:flex-row items-center justify-between border-b border-slate-200/80 pb-5 print-hidden gap-4">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-br from-indigo-650 to-indigo-900 text-white rounded-2xl h-12 w-12 flex items-center justify-center font-extrabold text-lg shadow-lg">
-              BD
+              {selectedSchool ? selectedSchool.name.slice(0, 2).toUpperCase() : 'ES'}
             </div>
             <div>
-              <h1 className="text-lg md:text-xl font-black text-indigo-950 tracking-tight leading-tight">Education Board Bangladesh</h1>
-              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Official Results Publication Portal</p>
+              <h1 className="text-lg md:text-xl font-black text-indigo-950 tracking-tight leading-tight">
+                {selectedSchool ? selectedSchool.name : 'Select Institution'}
+              </h1>
+              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
+                {selectedSchool?.eiin ? `EIIN: ${selectedSchool.eiin} • ` : ''}Public Results Publication Portal
+              </p>
             </div>
           </div>
-          {selectedSchool && (
-            <div className="text-center sm:text-right border-l-0 sm:border-l sm:pl-4 border-slate-200/85">
-              <span className="text-[9px] font-black text-indigo-650 uppercase tracking-widest block mb-0.5">INSTITUTION PORTAL</span>
-              <p className="text-xs font-black text-slate-900 uppercase">{selectedSchool.name}</p>
-              {selectedSchool.eiin && <p className="text-[10px] text-slate-500 font-semibold">EIIN: {selectedSchool.eiin}</p>}
-            </div>
-          )}
         </div>
 
         {/* Back Link */}
@@ -381,7 +377,7 @@ export default function PublicResultPage() {
                     Select Institution
                   </label>
                   <div className="md:col-span-7 relative">
-                    {isSubdomain ? (
+                    {isDedicatedPortal ? (
                       <input
                         type="text"
                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-100 text-sm font-bold text-slate-500 cursor-not-allowed"
@@ -474,7 +470,12 @@ export default function PublicResultPage() {
                       required
                     >
                       <option value="">
-                        {!selectedSchool ? 'Select institution first' : 'Select One'}
+                        {!selectedSchool 
+                          ? 'Select institution first' 
+                          : examOptions.length === 0 
+                            ? 'No exams published yet' 
+                            : 'Select One'
+                        }
                       </option>
                       {examOptions.map((opt) => (
                         <option key={opt.id} value={opt.id}>
