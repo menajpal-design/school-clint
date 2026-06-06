@@ -36,16 +36,30 @@ jobs:
             fi
 
             echo "Deploying to $(pwd)..."
+            git remote -v
 
-            # Pull the latest changes
-            git reset --hard
-            git pull origin main
+            # Force the server working copy to exactly match origin/main
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
+            git clean -fd
+
+            echo "Current deployed commit:"
+            git rev-parse HEAD
+            echo "Checking public result page labels in deployed source:"
+            grep -n "Class Name\|Exam Name\|Name of Board\|Education Board Bangladesh" app/result/page.tsx || true
 
             # Install dependencies
             npm install
 
-            # Build Next.js frontend
+            # Force clean Next.js build so old static assets cannot remain
+            rm -rf .next out
             npm run build
 
-            # Restart using PM2 (checks school-client and school-clint first, then fallback to restart all, then starts)
-            pm2 restart school-client || pm2 restart school-clint || pm2 restart all || pm2 start npm --name "school-client" -- start
+            echo "PM2 process details before restart:"
+            pm2 describe school-client || true
+            pm2 describe school-clint || true
+
+            # Restart using PM2 with updated environment
+            pm2 restart school-client --update-env || pm2 restart school-clint --update-env || pm2 restart all --update-env || pm2 start npm --name "school-client" -- start
+            pm2 save || true
