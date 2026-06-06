@@ -24,8 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/types";
-
-type DashboardRole = UserRole | "guardian" | "parent_guardian";
+import { normalizeUserRole } from "@/lib/permissions";
 
 type QuickAction = {
   label: string;
@@ -33,13 +32,6 @@ type QuickAction = {
   icon: typeof UserRound;
   description: string;
 };
-
-function normalizeDashboardRole(role?: string): DashboardRole | undefined {
-  if (!role) return undefined;
-  const normalized = role.toLowerCase().replace(/[-\s]+/g, "_") as DashboardRole;
-  if (normalized === "guardian" || normalized === "parent_guardian") return "parent";
-  return normalized;
-}
 
 function roleLabel(role?: string) {
   if (!role) return "Guest";
@@ -68,7 +60,7 @@ const PARENT_QUICK_ACTIONS: QuickAction[] = [
 ];
 
 function getDashboardQuickActions(role?: UserRole | string): QuickAction[] {
-  const normalizedRole = normalizeDashboardRole(role);
+  const normalizedRole = normalizeUserRole(role);
 
   if (normalizedRole === "student") return STUDENT_QUICK_ACTIONS;
   if (normalizedRole === "parent") return PARENT_QUICK_ACTIONS;
@@ -130,7 +122,7 @@ function getDashboardQuickActions(role?: UserRole | string): QuickAction[] {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const normalizedRole = normalizeDashboardRole(user?.role);
+  const normalizedRole = normalizeUserRole(user?.role);
   const quickActions = getDashboardQuickActions(user?.role);
 
   return (

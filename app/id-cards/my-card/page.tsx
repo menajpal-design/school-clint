@@ -10,8 +10,10 @@ import { ProfessionalIDCard } from "@/components/id-cards/ProfessionalIDCard";
 import ReturnInstructionNotice from "@/components/id-cards/ReturnInstructionNotice";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@/lib/api";
+import { api, apiClient } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { normalizeUserRole } from "@/lib/permissions";
 
 function cleanRole(role?: string) {
   const value = String(role || "user").toLowerCase().replace(/\s+/g, "_");
@@ -42,29 +44,91 @@ function isGenericServerError(message?: string) {
 }
 
 export default function MyCardPage() {
+  const { user } = useAuth();
+  const normalizedRole = useMemo(() => normalizeUserRole(user?.role), [user?.role]);
+
   const previewRef = useRef<HTMLDivElement | null>(null);
   const [card, setCard] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [institution, setInstitution] = useState<any>(null);
+  const [children, setChildren] = useState<any[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState("");
   const [error, setError] = useState("");
   const [cardLookupFailed, setCardLookupFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // Load parent portal children
   useEffect(() => {
-    api.idCards.getMine({ skipToast: true })
-      .then((data: any) => {
-        setCard(data);
-        setCardLookupFailed(false);
-        setError("");
-      })
-      .catch((err: any) => {
+    if (normalizedRole === "parent") {
+      apiClient.get("/parent/portal")
+        .then((res: any) => {
+          const kids = res.portal?.children || [];
+          setChildren(kids);
+          if (kids.length > 0) {
+            setSelectedChildId(kids[0]._id || kids[0].id || "");
+          }
+        })
+        .catch((err) => {
+          setError(err?.message || "Failed to load parent children");
+        });
+    }
+  }, [normalizedRole]);
+
+  // Load institution profile
+  useEffect(() => {
+    api.institution.profile().then((data: any) => setInstitution(data?.institution || null)).catch(() => undefined);
+  }, []);
+
+  // Load card and profile based on selected child or own profile
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    setError("");
+
+    const loadCardAndProfile = async () => {
+      try {
+        if (normalizedRole === "parent") {
+          if (!selectedChildId) {
+            setLoading(false);
+            return;
+          }
+          const cardData: any = await apiClient.get(`/id-cards/child/${selectedChildId}/card`);
+          setCard(cardData);
+          setCardLookupFailed(false);
+
+          if (cardData.student?.userId) {
+            setProfile({
+              ...cardData.student.userId,
+              student: cardData.student,
+              role: "student"
+            });
+          } else {
+            setProfile({
+              name: cardData.student?.name || "Student",
+              student: cardData.student,
+              role: "student"
+            });
+          }
+        } else {
+          const cardData: any = await api.idCards.getMine({ skipToast: true });
+          setCard(cardData);
+          setCardLookupFailed(false);
+
+          const profileData: any = await api.auth.profile();
+          setProfile(profileData.user || profileData);
+        }
+      } catch (err: any) {
         setCard(null);
         setCardLookupFailed(true);
         const message = err?.message || "";
         setError(isGenericServerError(message) ? "" : message);
-      });
-    api.auth.profile().then((data: any) => setProfile(data.user || data)).catch(() => undefined);
-    api.institution.profile().then((data: any) => setInstitution(data?.institution || null)).catch(() => undefined);
-  }, []);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCardAndProfile();
+  }, [user, normalizedRole, selectedChildId]);
 
   const cardRecord = card?.card || card;
   const cardOwner = cardRecord?.ownerId;
@@ -136,44 +200,71 @@ export default function MyCardPage() {
   return (
     <div className="space-y-5">
       <PageHeader title="My ID Card" description="Preview, download, print or email your current ID card." icon={BadgeCheck} status={<Badge variant="outline" className="capitalize">{status}</Badge>} />
+      
+      {normalizedRole === "parent" && children.length > 0 && (
+        <section className="rounded-lg border bg-card p-4 shadow-sm">
+          <div className="max-w-xs">
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-slate-800">Select Child</span>
+              <select
+                className="h-10 w-full rounded-md border px-3 text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                value={selectedChildId}
+                onChange={(e) => setSelectedChildId(e.target.value)}
+              >
+                {children.map((item) => (
+                  <option key={item._id} value={item._id}>
+                    {item.userId?.name || `Roll: ${item.rollNumber}`} ({item.classId?.name || "N/A"})
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+      )}
+
       {error && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">{error}</div>}
       {cardLookupFailed && !error && profile && <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">No saved personal ID card was found. A downloadable role-based preview is shown instead.</div>}
       {cardRecord?._id && !isOwnCard && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">The card returned by the server did not match this account or linked profile. Showing role-based preview.</div>}
-      <section className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-6">
-        <div ref={previewRef} className="relative flex justify-start overflow-x-auto md:justify-center">
-          <ProfessionalIDCard
-            role={cardData.role}
-            name={owner.name || "Your Name"}
-            idNumber={cardData.idNumber}
-            rollNumber={cardData.rollNumber}
-            institutionName={institutionData?.name || "Educational Institution"}
-            institutionLogo={institutionData?.logo || institutionData?.logoUrl}
-            institutionAddress={institutionData?.address}
-            institutionPhone={institutionData?.phone}
-            institutionEmail={institutionData?.email}
-            institutionWebsite={institutionData?.website}
-            institutionSeal={institutionData?.seal}
-            headSignature={institutionData?.headSignature}
-            headName={headName}
-            stream={cardData.stream}
-            designation={cardData.designation}
-            department={cardData.department}
-            validityDate={personalCard?.validityEnd || undefined}
-            photoUrl={owner?.avatar || profile?.avatar}
-            dateOfBirth={cardData.dateOfBirth}
-            fatherName={cardData.fatherName}
-            motherName={cardData.motherName}
-            admissionNumber={cardData.admissionNumber}
-            registrationNumber={cardData.registrationNumber}
-          />
-          <ReturnInstructionNotice address={institutionData?.address} phone={institutionData?.phone} email={institutionData?.email} website={institutionData?.website} />
-        </div>
-        <div className="mt-4 flex flex-col gap-3">
-          <div className="text-sm text-slate-600">Role: {roleLabel(cardData.role)} · {cardData.role === "student" ? `Roll: ${cardData.rollNumber || "-"}` : `ID: ${cardData.idNumber || "-"}`}</div>
-          <div className="text-sm text-slate-600">Valid: {personalCard?.validityStart ? formatDate(personalCard.validityStart) : "-"} to {personalCard?.validityEnd ? formatDate(personalCard.validityEnd) : "-"}</div>
-          <DownloadButtons targetRef={previewRef} filename={personalCard?.cardNumber || `id-${profile?._id || profile?.id || 'me'}`} cardId={personalCard?._id} />
-        </div>
-      </section>
+      
+      {loading ? (
+        <div className="rounded-lg border border-border bg-card p-10 text-sm text-muted-foreground">Loading ID Card...</div>
+      ) : (
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm md:p-6">
+          <div ref={previewRef} className="relative flex justify-start overflow-x-auto md:justify-center">
+            <ProfessionalIDCard
+              role={cardData.role}
+              name={owner.name || "Your Name"}
+              idNumber={cardData.idNumber}
+              rollNumber={cardData.rollNumber}
+              institutionName={institutionData?.name || "Educational Institution"}
+              institutionLogo={institutionData?.logo || institutionData?.logoUrl}
+              institutionAddress={institutionData?.address}
+              institutionPhone={institutionData?.phone}
+              institutionEmail={institutionData?.email}
+              institutionWebsite={institutionData?.website}
+              institutionSeal={institutionData?.seal}
+              headSignature={institutionData?.headSignature}
+              headName={headName}
+              stream={cardData.stream}
+              designation={cardData.designation}
+              department={cardData.department}
+              validityDate={personalCard?.validityEnd || undefined}
+              photoUrl={owner?.avatar || profile?.avatar}
+              dateOfBirth={cardData.dateOfBirth}
+              fatherName={cardData.fatherName}
+              motherName={cardData.motherName}
+              admissionNumber={cardData.admissionNumber}
+              registrationNumber={cardData.registrationNumber}
+            />
+            <ReturnInstructionNotice address={institutionData?.address} phone={institutionData?.phone} email={institutionData?.email} website={institutionData?.website} />
+          </div>
+          <div className="mt-4 flex flex-col gap-3">
+            <div className="text-sm text-slate-600">Role: {roleLabel(cardData.role)} · {cardData.role === "student" ? `Roll: ${cardData.rollNumber || "-"}` : `ID: ${cardData.idNumber || "-"}`}</div>
+            <div className="text-sm text-slate-600">Valid: {personalCard?.validityStart ? formatDate(personalCard.validityStart) : "-"} to {personalCard?.validityEnd ? formatDate(personalCard.validityEnd) : "-"}</div>
+            <DownloadButtons targetRef={previewRef} filename={personalCard?.cardNumber || `id-${profile?._id || profile?.id || 'me'}`} cardId={personalCard?._id} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }

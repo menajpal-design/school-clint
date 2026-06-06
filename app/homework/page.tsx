@@ -85,8 +85,13 @@ export default function HomeworkPage() {
       const childClassId = String(selectedChild.classId?._id || selectedChild.classId || "");
       list = list.filter((item) => String(item.classId?._id || item.classId || "") === childClassId);
     }
+    if (normalizedRole === "student") {
+      const student = user?.student || user?.studentId || {};
+      const studentClassId = String(student.classId?._id || student.classId || "");
+      list = list.filter((item) => String(item.classId?._id || item.classId || "") === studentClassId);
+    }
     return list;
-  }, [homework, isLearnerView, todaysHomework, user, selectedChild]);
+  }, [homework, isLearnerView, todaysHomework, normalizedRole, selectedChild, user]);
 
   const submit = async () => {
     if (!canManage) return;

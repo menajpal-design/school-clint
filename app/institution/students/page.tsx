@@ -17,10 +17,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { downloadFile } from '@/lib/utils';
+import { normalizeUserRole } from '@/lib/permissions';
 
 type Option = { _id: string; name: string; sections?: Array<{ _id: string; name: string }> };
 type StudentRecord = { _id?: string; userId?: any; parentId?: any; rollNumber?: string; classId?: any; sectionId?: any; admissionDate?: string; dateOfBirth?: string; bloodGroup?: string; address?: string; fatherName?: string; motherName?: string; guardianName?: string; guardianPhone?: string; guardianEmail?: string; isActive?: boolean };
-type StudentForm = { name: string; email: string; phone: string; photo: string; rollNumber: string; className: string; sectionName: string; admissionDate: string; dateOfBirth: string; bloodGroup: string; address: string; fatherName: string; motherName: string; guardianName: string; guardianPhone: string; guardianEmail: string; feeAmount: string; feeType: string; feeMonth: string; feeYear: string; feeWaiverType: string; feeWaiverAmount: string; feeWaiverReason: string; autoParentAccount: boolean; autoIdCard: boolean };
+type StudentForm = { name: string; email: string; phone: string; photo: string; rollNumber: string; className: string; sectionName: string; admissionDate: string; dateOfBirth: string; bloodGroup: string; address: string; fatherName: string; motherName: string; guardianName: string; guardianPhone: string; guardianEmail: string; feeAmount: string; feeType: string; feeMonth: string; feeYear: String; feeWaiverType: string; feeWaiverAmount: string; feeWaiverReason: string; autoParentAccount: boolean; autoIdCard: boolean };
 
 const today = new Date().toISOString().slice(0, 10);
 const emptyForm: StudentForm = { name: '', email: '', phone: '', photo: '', rollNumber: '', className: '', sectionName: 'A', admissionDate: today, dateOfBirth: '', bloodGroup: '', address: '', fatherName: '', motherName: '', guardianName: '', guardianPhone: '', guardianEmail: '', feeAmount: '', feeType: 'monthly', feeMonth: new Date().toLocaleString('en-US', { month: 'long' }), feeYear: String(new Date().getFullYear()), feeWaiverType: 'none', feeWaiverAmount: '', feeWaiverReason: '', autoParentAccount: true, autoIdCard: true };
@@ -44,9 +45,11 @@ export default function StudentsPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
-  const canView = !user || teacherRoles.includes(user.role);
-  const canManage = !!user && managerRoles.includes(user.role);
-  const canGenerateStudentCards = !!user && studentCardRoles.includes(user.role);
+  
+  const normalizedRole = normalizeUserRole(user?.role) || '';
+  const canView = !user || teacherRoles.includes(normalizedRole);
+  const canManage = !!user && managerRoles.includes(normalizedRole);
+  const canGenerateStudentCards = !!user && studentCardRoles.includes(normalizedRole);
   const loadStudents = () => { setLoading(true); api.students.getAll().then((data: any) => setStudents(data.students || [])).catch((error: any) => { setStatus(error?.message || 'Student list load failed.'); setStudents([]); }).finally(() => setLoading(false)); };
   const loadClasses = () => { api.academic.classes.getAll().then((data: any) => setClasses(data.classes || [])).catch(() => setClasses([])); };
   useEffect(() => { loadStudents(); loadClasses(); }, []);

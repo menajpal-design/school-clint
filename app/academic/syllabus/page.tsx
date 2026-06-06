@@ -117,9 +117,15 @@ export default function AcademicSyllabusPage() {
   const selectedChild = useMemo(() => user?.role === "parent" ? children.find((c) => c._id === selectedChildId) || children[0] : null, [user, children, selectedChildId]);
 
   const displaySyllabus = useMemo(() => {
-    if (user?.role === "parent" && selectedChild) {
+    const role = normalizeUserRole(user?.role);
+    if (role === "parent" && selectedChild) {
       const childClassId = String(selectedChild.classId?._id || selectedChild.classId || "");
       return syllabus.filter((item) => String(item.classId?._id || item.classId || "") === childClassId);
+    }
+    if (role === "student") {
+      const student = user?.student || user?.studentId || {};
+      const studentClassId = String(student.classId?._id || student.classId || "");
+      return syllabus.filter((item) => String(item.classId?._id || item.classId || "") === studentClassId);
     }
     return syllabus;
   }, [syllabus, user, selectedChild]);

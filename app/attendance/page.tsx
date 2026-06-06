@@ -11,6 +11,10 @@ import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { normalizeUserRole } from "@/lib/permissions";
+
 type Overview = {
   today?: { total: number; present: number; absent: number; late: number; leave: number };
   classWise?: Array<{ className: string; present: number; absent: number; late: number; total: number; percentage: number }>;
@@ -18,10 +22,18 @@ type Overview = {
 };
 
 export default function AttendancePage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [data, setData] = useState<Overview>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const role = normalizeUserRole(user?.role);
+    if (!authLoading && user && (role === 'student' || role === 'parent')) {
+      router.replace('/attendance/my-attendance');
+      return;
+    }
+
     const load = async () => {
       setLoading(true);
       try {

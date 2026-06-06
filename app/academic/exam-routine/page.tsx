@@ -70,9 +70,15 @@ export default function ExamRoutinePage() {
   const selectedChild = useMemo(() => user?.role === "parent" ? children.find((c) => c._id === selectedChildId) || children[0] : null, [user, children, selectedChildId]);
 
   const displayExams = useMemo(() => {
-    if (user?.role === "parent" && selectedChild) {
+    const role = normalizeUserRole(user?.role);
+    if (role === "parent" && selectedChild) {
       const childClassId = String(selectedChild.classId?._id || selectedChild.classId || "");
       return exams.filter((exam) => String(exam.classId?._id || exam.classId || "") === childClassId);
+    }
+    if (role === "student") {
+      const student = user?.student || user?.studentId || {};
+      const studentClassId = String(student.classId?._id || student.classId || "");
+      return exams.filter((exam) => String(exam.classId?._id || exam.classId || "") === studentClassId);
     }
     return exams;
   }, [exams, user, selectedChild]);

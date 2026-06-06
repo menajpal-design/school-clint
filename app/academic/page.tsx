@@ -19,8 +19,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { LineChartCard } from "@/components/charts/LineChartCard";
 import { BarChartCard } from "@/components/charts/BarChartCard";
+import { normalizeUserRole } from "@/lib/permissions";
 
 type AcademicSummary = {
   classes: any[];
@@ -138,6 +140,7 @@ function getStatusCount(items: any[], status: string) {
 }
 
 export default function AcademicPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const [summary, setSummary] = useState<AcademicSummary>(emptyAcademic);
   const [loading, setLoading] = useState(true);
   const [dataSource, setDataSource] = useState<'loading' | 'live' | 'empty'>('loading');
@@ -228,6 +231,20 @@ export default function AcademicPage() {
       status: result.status || "draft",
     })),
   ].slice(0, 5);
+
+  const normalizedRole = normalizeUserRole(user?.role);
+  if (!authLoading && normalizedRole && (normalizedRole === "student" || normalizedRole === "parent")) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Academic Overview</CardTitle>
+            <CardDescription>You do not have permission to view the academic overview page.</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-4 md:p-6">

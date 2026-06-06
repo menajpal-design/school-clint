@@ -104,7 +104,7 @@ export const menuConfig: MenuItemConfig[] = [
       { label: 'Syllabus', href: '/academic/syllabus', roles: ACADEMIC_VIEW },
       { label: 'Class Routine', href: '/academic/class-routine', roles: ACADEMIC_VIEW },
       { label: 'Exam Routine', href: '/academic/exam-routine', roles: ACADEMIC_VIEW },
-      { label: 'Exams', href: '/academic/exams', roles: [...SCHOOL_LEADERS, ...TEACHERS] },
+      { label: 'Exams', href: '/academic/exams', roles: ACADEMIC_VIEW },
       { label: 'Results', href: '/academic/results', roles: [...RESULT_ENTRY, ...STUDENT_PARENT] },
       { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
       { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
@@ -159,7 +159,7 @@ export const menuConfig: MenuItemConfig[] = [
   {
     label: 'Library', href: '/library', roles: LIBRARY_VIEW, icon: 'BookMarked',
     children: [
-      { label: 'Books', href: '/library/books', roles: LIBRARY_VIEW },
+      { label: 'Books', href: '/library/books', roles: LIBRARY_MANAGE },
       { label: 'Loans', href: '/library/loans', roles: LIBRARY_MANAGE },
     ],
   },
@@ -263,6 +263,8 @@ const routeAliases: Record<string, string> = {
   '/leave-application': '/leave-application',
   '/leave-list': '/leave-list',
   '/sms-monitoring': '/sms-monitoring',
+  '/documents/sms-monitoring': '/sms-monitoring',
+  '/attendance/sms-monitoring': '/sms-monitoring',
   '/class-routine': '/academic/class-routine',
   '/my-result': '/academic/results',
   '/academic/my-results': '/academic/results',

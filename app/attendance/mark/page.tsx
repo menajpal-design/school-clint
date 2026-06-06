@@ -19,6 +19,10 @@ import { authManager } from "@/lib/auth";
 import { getPrintInstitution } from "@/lib/export-utils";
 import { cn, downloadFile } from "@/lib/utils";
 
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { normalizeUserRole } from "@/lib/permissions";
+
 type Status = "present" | "absent" | "late" | "leave";
 type PersonType = "student" | "teacher" | "staff";
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
@@ -44,6 +48,16 @@ const sectionName = (person: Person) => typeof person.sectionId === "object" ? p
 const classNameOf = (person: Person, selectedClass?: ClassItem) => typeof person.classId === "object" ? person.classId?.name || selectedClass?.name || "-" : selectedClass?.name || "-";
 
 export default function AttendanceMarkPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  
+  useEffect(() => {
+    const role = normalizeUserRole(user?.role);
+    if (!authLoading && user && (role === 'student' || role === 'parent')) {
+      router.replace('/attendance/my-attendance');
+    }
+  }, [user, authLoading, router]);
+
   const { addToast } = useToast();
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [people, setPeople] = useState<Person[]>([]);

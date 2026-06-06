@@ -11,8 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, apiClient } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SUBJECT_PRESETS } from "@/lib/academic-presets";
 import { cn } from "@/lib/utils";
+
+import { normalizeUserRole } from "@/lib/permissions";
 
 type ClassOption = { _id: string; name: string; grade?: string; academicYear?: string; isActive?: boolean };
 type TeacherOption = { _id: string; userId?: { _id: string; name: string; email?: string } };
@@ -51,6 +55,7 @@ const normalizeSubject = (subject: any, classes: ClassOption[], teachers: Teache
 };
 
 export default function SubjectsPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const [subjects, setSubjects] = useState<SubjectItem[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [teachers, setTeachers] = useState<TeacherOption[]>([]);
@@ -113,6 +118,20 @@ export default function SubjectsPage() {
   };
 
   const confirmDelete = async () => { if (!deleteTarget) return; setSaving(true); setError(""); setNotice(null); try { await api.academic.subjects.delete(deleteTarget._id); const next = subjects.filter((subject) => subject._id !== deleteTarget._id); setSubjects(next); writeCachedSubjects(next); showNotice("success", `✅ Subject delete হয়েছে: ${deleteTarget.name}.`, "Subject deleted"); setDeleteTarget(null); } catch (err: any) { showNotice("error", `❌ Subject delete হয়নি। কারণ: ${err?.message || "Failed to delete subject"}`, "Subject Delete Failed"); } finally { setSaving(false); } };
+
+  const normalizedRole = normalizeUserRole(user?.role);
+  if (!authLoading && normalizedRole && (normalizedRole === "student" || normalizedRole === "parent")) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Subjects</CardTitle>
+            <CardDescription>You do not have permission to view subject records.</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return <div className="space-y-5"><PageHeader title="Subject Management" description="Subject list protected: empty API response will not erase existing saved subjects." icon={BookOpen} status={<Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">{activeSubjects} active</Badge>} actions={[<Button key="refresh" variant="outline" size="sm" onClick={loadData}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>, <Button key="add-subject" size="sm" onClick={openAddModal}><Plus className="mr-2 h-4 w-4" />Add Subject</Button>]} />{notice && <div className={cn("rounded-lg border px-4 py-3 text-sm font-medium", notice.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : notice.type === "error" ? "border-red-200 bg-red-50 text-red-700" : "border-blue-200 bg-blue-50 text-blue-700")}>{notice.message}</div>}<section className="rounded-lg border border-border bg-card p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-[1fr_220px_180px]"><div><div className="text-xs font-medium uppercase text-slate-500">Visible subjects</div><div className="mt-1 text-2xl font-semibold text-slate-950">{filteredSubjects.length}</div></div><label className="space-y-2"><span className="text-sm font-medium text-slate-700">Class</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={classFilter} onChange={(event) => setClassFilter(event.target.value)}><option value="all">All classes</option>{classes.map((classItem) => <option key={classItem._id} value={classItem._id}>{classItem.name}</option>)}</select></label><label className="space-y-2"><span className="text-sm font-medium text-slate-700">Type</span><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="all">All types</option><option value="core">Core</option><option value="elective">Elective</option><option value="optional">Optional</option></select></label></div></section>{error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}<section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm"><Table><TableHeader><TableRow className="bg-muted hover:bg-muted"><TableHead>Subject name</TableHead><TableHead>Code</TableHead><TableHead>Class</TableHead><TableHead>Teacher</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader><TableBody>{loading ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">Loading subjects...</TableCell></TableRow> : filteredSubjects.length === 0 ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-slate-500">No subjects found. Click Add Subject to create one.</TableCell></TableRow> : filteredSubjects.map((subject) => <TableRow key={subject._id}><TableCell><div className="font-medium text-slate-950">{subject.name}</div>{subject.description && <div className="text-xs text-slate-500">{subject.description}</div>}</TableCell><TableCell><Badge variant="outline" className="border-border bg-muted">{subject.code}</Badge></TableCell><TableCell>{getName(subject.classId, "Unassigned")}</TableCell><TableCell>{getName(subject.teacherId, "Not assigned")}</TableCell><TableCell><Badge variant="outline" className="capitalize">{subject.type}</Badge></TableCell><TableCell><Badge variant="outline" className={cn(subject.isActive !== false ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-500")}>{subject.isActive !== false ? "Active" : "Inactive"}</Badge></TableCell><TableCell><div className="flex justify-end gap-2"><Button type="button" variant="outline" size="icon" title="Edit subject" onClick={() => openEditModal(subject)}><Edit2 className="h-4 w-4" /></Button><Button type="button" variant="destructive" size="icon" title="Delete subject" onClick={() => setDeleteTarget(subject)}><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>)}</TableBody></Table></section><SubjectFormDialog open={formOpen} editing={Boolean(editingSubject)} form={form} classes={classes} teachers={teachers} saving={saving} bulkLines={bulkLines} setBulkLines={setBulkLines} onOpenChange={setFormOpen} onSubmit={submitForm} onFormChange={setForm} /><Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}><DialogContent><DialogHeader><DialogTitle>Delete subject?</DialogTitle><DialogDescription>This will remove {deleteTarget?.name} from its class and teacher assignment.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button><Button type="button" variant="destructive" disabled={saving} onClick={confirmDelete}>{saving ? "Deleting..." : "Delete"}</Button></DialogFooter></DialogContent></Dialog></div>;
 }

@@ -11,6 +11,8 @@ export interface User {
   institutionId: string;
   institution?: Institution;
   lastLogin?: Date;
+  student?: any;
+  studentId?: any;
 }
 
 export type UserRole = 

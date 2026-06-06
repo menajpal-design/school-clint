@@ -16,6 +16,10 @@ import { api } from "@/lib/api";
 import { getPrintInstitution, makeQrDataUrl } from "@/lib/export-utils";
 import { downloadFile, formatDate, getAttendanceSettings } from "@/lib/utils";
 
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { normalizeUserRole } from "@/lib/permissions";
+
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
 type Person = { _id: string; rollNumber?: string; userId?: { name: string } };
 type RecordItem = { _id: string; date: string; status: string; userType?: string; userId?: { name?: string; role?: string }; studentId?: { rollNumber?: string; userId?: { name: string } }; classId?: { name: string }; sectionId?: { name: string } };
@@ -31,6 +35,16 @@ const dateKey = (value?: string | Date) => {
 };
 
 export default function AttendanceReportsPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    const role = normalizeUserRole(user?.role);
+    if (!authLoading && user && (role === 'student' || role === 'parent')) {
+      router.replace('/attendance/my-attendance');
+    }
+  }, [user, authLoading, router]);
+
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
   const [classId, setClassId] = useState("");
