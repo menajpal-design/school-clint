@@ -2,6 +2,10 @@ import { api, apiClient } from './api';
 
 const digits = (value: any) => String(value || '').replace(/\D/g, '');
 const serialRoll = (index: number) => String(index + 1).padStart(2, '0');
+const peopleCache = new Map<string, { at: number; data: any }>();
+const peopleInflight = new Map<string, Promise<any>>();
+const peopleCacheMs = 10000;
+const keyOf = (params?: any) => JSON.stringify({ personType: params?.personType || 'student', classId: params?.classId || '', sectionId: params?.sectionId || '' });
 
 const getUsers = async () => {
   const data: any = await apiClient.get('/users');
@@ -62,29 +66,34 @@ export function installAttendanceApiCompat() {
       return data?.overview || data || {};
     };
   }
-  if (!api.attendance.getPeople) {
-    api.attendance.getPeople = async (params?: any) => {
-      const personType = params?.personType || 'student';
+  api.attendance.getPeople = async (params?: any) => {
+    const personType = params?.personType || 'student';
+    const key = keyOf(params);
+    const cached = peopleCache.get(key);
+    if (cached && Date.now() - cached.at < peopleCacheMs) return cached.data;
+    if (peopleInflight.has(key)) return peopleInflight.get(key);
+    const promise = (async () => {
       try {
         const data: any = await apiClient.get('/attendance/people', { params });
         const people = Array.isArray(data?.people) ? data.people : [];
-        if (people.length) return { people };
-      } catch {}
-      return fallbackPeople(personType, params);
-    };
-  }
-  if (!api.attendance.getStudentAttendance) {
-    api.attendance.getStudentAttendance = (studentId: string) => apiClient.get(`/attendance/student/${String(studentId).replace(/^user-/, '')}`);
-  }
-  if (!api.attendance.getPersonAttendance) {
-    api.attendance.getPersonAttendance = (type: 'teacher' | 'staff', id: string) => apiClient.get(`/attendance/person/${type}/${String(id).replace(/^user-/, '')}`);
-  }
-  if (!api.attendance.scanIdCard) {
-    api.attendance.scanIdCard = (data: any) => apiClient.post('/attendance/scan-id-card', data);
-  }
-  if (!api.attendance.scanPresent) {
-    api.attendance.scanPresent = (data: any) => apiClient.post('/attendance/scan-present', data);
-  }
+        const result = people.length ? { people } : await fallbackPeople(personType, params);
+        peopleCache.set(key, { at: Date.now(), data: result });
+        return result;
+      } catch {
+        const result = await fallbackPeople(personType, params);
+        peopleCache.set(key, { at: Date.now(), data: result });
+        return result;
+      } finally {
+        peopleInflight.delete(key);
+      }
+    })();
+    peopleInflight.set(key, promise);
+    return promise;
+  };
+  if (!api.attendance.getStudentAttendance) api.attendance.getStudentAttendance = (studentId: string) => apiClient.get(`/attendance/student/${String(studentId).replace(/^user-/, '')}`);
+  if (!api.attendance.getPersonAttendance) api.attendance.getPersonAttendance = (type: 'teacher' | 'staff', id: string) => apiClient.get(`/attendance/person/${type}/${String(id).replace(/^user-/, '')}`);
+  if (!api.attendance.scanIdCard) api.attendance.scanIdCard = (data: any) => apiClient.post('/attendance/scan-id-card', data);
+  if (!api.attendance.scanPresent) api.attendance.scanPresent = (data: any) => apiClient.post('/attendance/scan-present', data);
 }
 
 installAttendanceApiCompat();
