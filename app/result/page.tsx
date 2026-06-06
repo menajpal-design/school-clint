@@ -17,7 +17,6 @@ export default function PublicResultPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   
   // Form states
-  const [exam, setExam] = useState('');
   const [year, setYear] = useState('');
   const [resultType, setResultType] = useState('');
   const [roll, setRoll] = useState('');
@@ -28,6 +27,13 @@ export default function PublicResultPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [exams, setExams] = useState<any[]>([]);
   const [appControlSettings, setAppControlSettings] = useState<any>({});
+
+  // Class and Section states
+  const [classes, setClasses] = useState<any[]>([]);
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSection, setSelectedSection] = useState('');
+  const [availableSections, setAvailableSections] = useState<any[]>([]);
+  const [activeExamIndex, setActiveExamIndex] = useState(0);
   
   // Captcha states
   const [captchaText, setCaptchaText] = useState('');
@@ -154,39 +160,67 @@ export default function PublicResultPage() {
     return () => clearTimeout(delayDebounce);
   }, [schoolSearchQuery, isSubdomain, selectedSchool]);
 
-  // Fetch exams and app control settings for selected school
+  // Fetch exams, classes and app control settings for selected school
   useEffect(() => {
     if (!selectedSchool) {
       setExams([]);
+      setClasses([]);
+      setSelectedClass('');
+      setSelectedSection('');
+      setAvailableSections([]);
       setAppControlSettings({});
       return;
     }
     setSchoolSearchQuery(selectedSchool.name || '');
+    setSelectedClass('');
+    setSelectedSection('');
+    setAvailableSections([]);
     api.publicResults.options({ institutionId: selectedSchool._id })
       .then((res: any) => {
         setExams(res.exams || []);
+        setClasses(res.classes || []);
         setAppControlSettings(res.appControlSettings || {});
       })
       .catch(() => {
         setExams([]);
+        setClasses([]);
         setAppControlSettings({});
       });
   }, [selectedSchool]);
 
-  const examOptions = useMemo(() => {
-    return exams.map((ex) => ({
-      id: ex._id || ex.id,
-      name: ex.name,
-    }));
-  }, [exams]);
+  // Update available sections when selected class changes
+  useEffect(() => {
+    if (!selectedClass) {
+      setAvailableSections([]);
+      setSelectedSection('');
+      return;
+    }
+    const matchedClass = classes.find((c) => c._id === selectedClass);
+    if (matchedClass && Array.isArray(matchedClass.sections)) {
+      // Show only active sections
+      const activeSections = matchedClass.sections.filter((s: any) => s.isActive !== false);
+      setAvailableSections(activeSections);
+    } else {
+      setAvailableSections([]);
+    }
+    setSelectedSection('');
+  }, [selectedClass, classes]);
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('');
     setResult(null);
+    setActiveExamIndex(0);
 
     if (!selectedSchool) {
       setStatus('Institution information is not selected or still loading.');
+      return;
+    }
+
+    if (!selectedClass) {
+      setStatus('Please select a Class.');
       return;
     }
 
@@ -206,20 +240,16 @@ export default function PublicResultPage() {
       return;
     }
 
-    const isObjectId = /^[0-9a-fA-F]{24}$/.test(exam);
     const lookupParams: any = {
       institutionId: selectedSchool._id,
+      classId: selectedClass,
+      sectionId: selectedSection || undefined,
       rollNumber: roll.trim(),
       regNumber: reg.trim(),
       year,
       subdomain: subdomainName || undefined,
       domain: typeof window !== 'undefined' ? window.location.hostname : undefined
     };
-    if (isObjectId) {
-      lookupParams.examId = exam;
-    } else {
-      lookupParams.exam = exam;
-    }
 
     setLoading(true);
     try {
@@ -227,7 +257,7 @@ export default function PublicResultPage() {
       setResult(data);
       setStatus('');
     } catch (error: any) {
-      setStatus(error?.message || 'Published result not found for this candidate. Verify your Roll/Reg and exam details.');
+      setStatus(error?.message || 'Published result not found for this candidate. Verify your Roll/Reg and class details.');
       handleRefreshCaptcha();
     } finally {
       setLoading(false);
@@ -241,27 +271,39 @@ export default function PublicResultPage() {
     handleRefreshCaptcha();
   };
 
-  // Group core vs continuous assessment subjects for the tables
-  const getSubjectGroups = () => {
-    if (!result || !result.results) return { core: [], continuous: [] };
+  const activeExam = useMemo(() => {
+    if (!result) return null;
+    if (result.exams && result.exams.length > 0) {
+      return result.exams[activeExamIndex] || result.exams[0];
+    }
+    // Fallback if backend does not return exams array
+    return {
+      examName: result.summary?.examName || 'Examination',
+      examYear: result.summary?.examYear || '',
+      summary: result.summary,
+      results: result.results || []
+    };
+  }, [result, activeExamIndex]);
+
+  // Group core vs continuous assessment subjects for the active exam
+  const { core, continuous } = useMemo(() => {
+    if (!activeExam || !activeExam.results) return { core: [], continuous: [] };
     
-    const resultsList = result.results || [];
-    const continuous = resultsList.filter((r: any) => {
+    const resultsList = activeExam.results || [];
+    const continuousList = resultsList.filter((r: any) => {
       const name = String(r.subjectName || '').toLowerCase();
       const code = String(r.subjectCode || '');
       return name.includes('physical') || name.includes('career') || name.includes('arts') || name.includes('craft') || name.includes('work') || code === '147' || code === '156';
     });
 
-    const core = resultsList.filter((r: any) => {
+    const coreList = resultsList.filter((r: any) => {
       const name = String(r.subjectName || '').toLowerCase();
       const code = String(r.subjectCode || '');
       return !(name.includes('physical') || name.includes('career') || name.includes('arts') || name.includes('craft') || name.includes('work') || code === '147' || code === '156');
     });
 
-    return { core, continuous };
-  };
-
-  const { core, continuous } = getSubjectGroups();
+    return { core: coreList, continuous: continuousList };
+  }, [activeExam]);
 
   if (!initialLoading && isSubdomain && !isValidSubdomain) {
     return <SchoolNotFound subdomain={subdomainName} />;
@@ -327,7 +369,7 @@ export default function PublicResultPage() {
                 {selectedSchool ? selectedSchool.name : 'Select Institution'}
               </h1>
               <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
-                {selectedSchool?.eiin ? `EIIN: ${selectedSchool.eiin} • ` : ''}Public Results Publication Portal
+                {selectedSchool?.eiin ? `EIIN: ${selectedSchool.eiin} • ` : ''}EasySchool Results Publication Portal
               </p>
             </div>
           </div>
@@ -364,7 +406,7 @@ export default function PublicResultPage() {
               <div className="inline-flex p-2.5 bg-white/10 rounded-xl mb-2.5 shadow-inner">
                 <GraduationCap className="h-7 w-7 text-indigo-200" />
               </div>
-              <h2 className="font-extrabold text-lg tracking-tight">Search Public Result</h2>
+              <h2 className="font-extrabold text-lg tracking-tight">Search EasySchool Result</h2>
               <p className="text-[10px] text-indigo-200/80 uppercase font-semibold tracking-wider mt-0.5">Please provide correct examinee details</p>
             </div>
 
@@ -455,31 +497,61 @@ export default function PublicResultPage() {
                   </div>
                 </div>
 
-                {/* 2. Name of Examination */}
+                {/* 2. Class */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
-                  <label htmlFor="exam" className="md:col-span-5 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Name of Examination
+                  <label htmlFor="classId" className="md:col-span-5 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Class
                   </label>
                   <div className="md:col-span-7">
                     <select
-                      id="exam"
-                      name="exam"
+                      id="classId"
+                      name="classId"
                       className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-semibold transition"
-                      value={exam}
-                      onChange={(e) => setExam(e.target.value)}
+                      value={selectedClass}
+                      onChange={(e) => setSelectedClass(e.target.value)}
                       required
                     >
                       <option value="">
                         {!selectedSchool 
                           ? 'Select institution first' 
-                          : examOptions.length === 0 
-                            ? 'No exams published yet' 
+                          : classes.length === 0 
+                            ? 'No classes available' 
                             : 'Select One'
                         }
                       </option>
-                      {examOptions.map((opt) => (
-                        <option key={opt.id} value={opt.id}>
-                          {opt.name}
+                      {classes.map((cls) => (
+                        <option key={cls._id} value={cls._id}>
+                          {cls.name} {cls.academicYear ? `(${cls.academicYear})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 3. Section */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
+                  <label htmlFor="section" className="md:col-span-5 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Section
+                  </label>
+                  <div className="md:col-span-7">
+                    <select
+                      id="section"
+                      name="section"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-semibold transition"
+                      value={selectedSection}
+                      onChange={(e) => setSelectedSection(e.target.value)}
+                    >
+                      <option value="">
+                        {!selectedClass 
+                          ? 'Select class first' 
+                          : availableSections.length === 0 
+                            ? 'No sections available' 
+                            : 'Select One (Optional)'
+                        }
+                      </option>
+                      {availableSections.map((sec) => (
+                        <option key={sec._id} value={sec._id}>
+                          {sec.name}
                         </option>
                       ))}
                     </select>
@@ -648,10 +720,31 @@ export default function PublicResultPage() {
             {/* Header Title */}
             <div className="text-center pb-4 border-b border-slate-200">
               <h3 className="text-xl md:text-2xl font-black text-indigo-950 uppercase tracking-tight">
-                {result.summary?.examName || (exam ? exam.toUpperCase() : 'SSC')} or Equivalent Examination {result.summary?.examYear ? `- ${result.summary.examYear}` : (year ? `- ${year}` : '')}
+                {activeExam?.examName || 'Examination'} {activeExam?.examYear ? `- ${activeExam.examYear}` : ''}
               </h3>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Official Result Transcript</p>
             </div>
+
+            {/* Exam Tab Selector (only visible if multiple exams are returned) */}
+            {result.exams && result.exams.length > 1 && (
+              <div className="flex flex-wrap gap-2 justify-center border-b border-slate-200 pb-4 no-print">
+                {result.exams.map((ex: any, idx: number) => (
+                  <button
+                    key={ex.examId}
+                    type="button"
+                    onClick={() => setActiveExamIndex(idx)}
+                    className={cn(
+                      "px-4 py-2 text-xs font-bold rounded-xl border transition-all duration-200 active:scale-95 shadow-sm",
+                      activeExamIndex === idx
+                        ? "bg-indigo-650 border-indigo-650 text-white shadow-indigo-100"
+                        : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                    )}
+                  >
+                    {ex.examName} ({ex.examYear})
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="row buttons flex justify-center gap-3 print-hidden" id="buttons_up">
@@ -720,28 +813,32 @@ export default function PublicResultPage() {
                       </tr>
                     )}
                     <tr>
-                      <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Board</td>
-                      <td className="px-5 py-3 font-extrabold text-slate-800 uppercase">{result.summary?.board || 'DHAKA'}</td>
-                      <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Session</td>
-                      <td className="px-5 py-3 font-bold text-slate-700">{result.student?.session || '-'}</td>
+                      <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Class</td>
+                      <td className="px-5 py-3 font-extrabold text-slate-800 uppercase">{result.student?.className || '-'}</td>
+                      <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Section</td>
+                      <td className="px-5 py-3 font-bold text-slate-700">{result.student?.sectionName || '-'}</td>
                     </tr>
                     <tr>
                       <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Group</td>
                       <td className="px-5 py-3 font-extrabold text-slate-800 uppercase">{result.student?.group || '-'}</td>
+                      <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Session</td>
+                      <td className="px-5 py-3 font-bold text-slate-700">{result.student?.session || '-'}</td>
+                    </tr>
+                    <tr>
                       <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Gender</td>
                       <td className="px-5 py-3 font-semibold text-slate-700 uppercase">{result.student?.gender || '-'}</td>
+                      <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Date of Birth</td>
+                      <td className="px-5 py-3 font-semibold text-slate-700">{result.student?.dateOfBirth || '-'}</td>
                     </tr>
                     <tr>
                       <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Result</td>
-                      <td className="px-5 py-3 font-black">
+                      <td colSpan={3} className="px-5 py-3 font-black">
                         <span className={`border px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm ${
-                          result.summary?.passed ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'
+                          activeExam?.summary?.passed ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'
                         }`}>
-                          {result.summary?.gpa || 'PASSED'}
+                          {activeExam?.summary?.gpa || 'PASSED'}
                         </span>
                       </td>
-                      <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Date of Birth</td>
-                      <td className="px-5 py-3 font-semibold text-slate-700">{result.student?.dateOfBirth || '-'}</td>
                     </tr>
                     <tr>
                       <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Name of Institute</td>
