@@ -134,13 +134,6 @@ export default function Dashboard() {
         status={<Badge variant="outline">{roleLabel(normalizedRole)}</Badge>}
       />
 
-      {(normalizedRole === "student" || normalizedRole === "parent") && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-4 text-sm text-blue-800">
-            Student/Parent accounts are view-only for academic data. They cannot add students, enter or publish results, mark attendance, or access SMS monitoring.
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardHeader>

@@ -162,11 +162,7 @@ export default function HomeworkPage() {
 
       {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
 
-      {isLearnerView && (
-        <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 shadow-sm">
-          <strong>Read only:</strong> You can see homework only. Add, edit, and delete actions are hidden for student/parent accounts.
-        </section>
-      )}
+
 
       {loading ? (
         <div className="rounded-lg border border-border bg-card p-10 text-sm text-muted-foreground">Loading homework…</div>
