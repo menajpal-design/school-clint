@@ -305,6 +305,8 @@ function HeadSettings() {
               <CheckField label="রুটিন পিডিএফ-এ শিক্ষকের নাম দেখান" checked={appControl.routinePdfIncludeTeacherName} onChange={(checked) => setAppControl({ ...appControl, routinePdfIncludeTeacherName: checked })} />
               <CheckField label="প্রধান শিক্ষকের অনুমোদনের আগে সহকারী শিক্ষকের পর্যালোচনা আবশ্যক" checked={appControl.routineRequireAssistantApproval} onChange={(checked) => setAppControl({ ...appControl, routineRequireAssistantApproval: checked })} />
               <CheckField label="অনুমোদিত ছুটি স্বয়ংক্রিয়ভাবে উপস্থিতিতে ছুটি (Leave) হিসেবে চিহ্নিত হবে" checked={appControl.leaveAutoMarkAttendance} onChange={(checked) => setAppControl({ ...appControl, leaveAutoMarkAttendance: checked })} />
+              <CheckField label="ফলাফল খোঁজার পৃষ্ঠায় 'Half Yearly/Half Terminal' পরীক্ষা নিষ্ক্রিয় করুন (Disable Half Yearly Exam)" checked={appControl.disableHalfTerminalExam} onChange={(checked) => setAppControl({ ...appControl, disableHalfTerminalExam: checked })} />
+              <CheckField label="ফলাফল খোঁজার পৃষ্ঠায় 'Final Exam' পরীক্ষা নিষ্ক্রিয় করুন (Disable Final Exam)" checked={appControl.disableFinalExam} onChange={(checked) => setAppControl({ ...appControl, disableFinalExam: checked })} />
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               <TextField label="এসএমএস লগ সংরক্ষণের মেয়াদ (দিন)" type="number" value={String(appControl.smsLogRetentionDays)} onChange={(value) => setAppControl({ ...appControl, smsLogRetentionDays: Number(value) || 30 })} />

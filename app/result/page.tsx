@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Loader2, RefreshCw, Printer, AlertTriangle, ArrowLeft, GraduationCap, Award, BookOpen, Building2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { getSubdomain } from '@/lib/utils';
 import SchoolNotFound from '@/components/SchoolNotFound';
@@ -16,12 +17,17 @@ export default function PublicResultPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   
   // Form states
-  const [board, setBoard] = useState('');
   const [exam, setExam] = useState('');
   const [year, setYear] = useState('');
   const [resultType, setResultType] = useState('');
   const [roll, setRoll] = useState('');
   const [reg, setReg] = useState('');
+  
+  // Searchable School states
+  const [schoolSearchQuery, setSchoolSearchQuery] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [exams, setExams] = useState<any[]>([]);
+  const [appControlSettings, setAppControlSettings] = useState<any>({});
   
   // Captcha states
   const [captchaText, setCaptchaText] = useState('');
@@ -122,6 +128,59 @@ export default function PublicResultPage() {
     }
   }, []);
 
+  // Dynamic school search when query changes (with debounce)
+  useEffect(() => {
+    if (isSubdomain) return;
+    if (selectedSchool && selectedSchool.name === schoolSearchQuery) return;
+
+    const delayDebounce = setTimeout(() => {
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      api.publicResults.schools({ search: schoolSearchQuery, domain: hostname })
+        .then((res: any) => {
+          setSchools(res.schools || []);
+        })
+        .catch(() => {});
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [schoolSearchQuery, isSubdomain, selectedSchool]);
+
+  // Fetch exams and app control settings for selected school
+  useEffect(() => {
+    if (!selectedSchool) {
+      setExams([]);
+      setAppControlSettings({});
+      return;
+    }
+    setSchoolSearchQuery(selectedSchool.name || '');
+    api.publicResults.options({ institutionId: selectedSchool._id })
+      .then((res: any) => {
+        setExams(res.exams || []);
+        setAppControlSettings(res.appControlSettings || {});
+      })
+      .catch(() => {
+        setExams([]);
+        setAppControlSettings({});
+      });
+  }, [selectedSchool]);
+
+  const examOptions = useMemo(() => {
+    const list = [];
+    if (appControlSettings?.disableHalfTerminalExam !== true) {
+      list.push({ id: 'half_yearly', name: 'Half Yearly / Half Terminal' });
+    }
+    if (appControlSettings?.disableFinalExam !== true) {
+      list.push({ id: 'final', name: 'Final Examination' });
+    }
+    exams.forEach((ex) => {
+      const id = ex._id || ex.id;
+      if (id !== 'half_yearly' && id !== 'final') {
+        list.push({ id, name: ex.name });
+      }
+    });
+    return list;
+  }, [exams, appControlSettings]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('');
@@ -148,19 +207,24 @@ export default function PublicResultPage() {
       return;
     }
 
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(exam);
+    const lookupParams: any = {
+      institutionId: selectedSchool._id,
+      rollNumber: roll.trim(),
+      regNumber: reg.trim(),
+      year,
+      subdomain: subdomainName || undefined,
+      domain: typeof window !== 'undefined' ? window.location.hostname : undefined
+    };
+    if (isObjectId) {
+      lookupParams.examId = exam;
+    } else {
+      lookupParams.exam = exam;
+    }
+
     setLoading(true);
     try {
-      const data = await api.publicResults.lookup({
-        institutionId: selectedSchool._id,
-        rollNumber: roll.trim(),
-        regNumber: reg.trim(),
-        exam,
-        year,
-        board,
-        subdomain: subdomainName || undefined,
-        domain: typeof window !== 'undefined' ? window.location.hostname : undefined
-      }) as any;
-      
+      const data = await api.publicResults.lookup(lookupParams) as any;
       setResult(data);
       setStatus('');
     } catch (error: any) {
@@ -297,33 +361,6 @@ export default function PublicResultPage() {
           </div>
         )}
 
-        {/* School Selection: ONLY displayed on main domain when multiple schools exist (no subdomain resolved) */}
-        {!isSubdomain && schools.length > 1 && !result && !initialLoading && (
-          <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200/80 p-5 print-hidden">
-            <label htmlFor="school-select" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
-              Select Institution
-            </label>
-            <div className="relative">
-              <select
-                id="school-select"
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-semibold transition duration-200"
-                value={selectedSchool?._id || ''}
-                onChange={(e) => {
-                  const s = schools.find((x) => x._id === e.target.value);
-                  setSelectedSchool(s || null);
-                }}
-              >
-                <option value="">Select a school to query results</option>
-                {schools.map((s) => (
-                  <option key={s._id} value={s._id}>
-                    {s.name} {s.eiin ? `(EIIN: ${s.eiin})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-
         {/* Form Panel */}
         {!result && !initialLoading && (
           <div className="page-gradient-card rounded-3xl overflow-hidden print-hidden transition-all duration-300">
@@ -338,33 +375,87 @@ export default function PublicResultPage() {
             <div className="p-6 md:p-8">
               <form onSubmit={handleSubmit} className="space-y-4">
                 
-                {/* 1. Name of Board */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
-                  <label htmlFor="board" className="md:col-span-5 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Name of Board
+                {/* 1. Select Institution */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center relative">
+                  <label htmlFor="institution-search" className="md:col-span-5 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Select Institution
                   </label>
-                  <div className="md:col-span-7">
-                    <select
-                      id="board"
-                      name="board"
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm transition"
-                      value={board}
-                      onChange={(e) => setBoard(e.target.value)}
-                      required
-                    >
-                      <option value="">Select One</option>
-                      <option value="barisal">Barisal</option>
-                      <option value="chittagong">Chittagong</option>
-                      <option value="comilla">Comilla</option>
-                      <option value="dhaka">Dhaka</option>
-                      <option value="dinajpur">Dinajpur</option>
-                      <option value="jessore">Jessore</option>
-                      <option value="madrasah">Madrasah</option>
-                      <option value="mymensingh">Mymensingh</option>
-                      <option value="rajshahi">Rajshahi</option>
-                      <option value="sylhet">Sylhet</option>
-                      <option value="tec">Technical</option>
-                    </select>
+                  <div className="md:col-span-7 relative">
+                    {isSubdomain ? (
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-100 text-sm font-bold text-slate-500 cursor-not-allowed"
+                        value={selectedSchool?.name || ''}
+                        disabled
+                        readOnly
+                      />
+                    ) : (
+                      <>
+                        <div className="relative">
+                          <input
+                            id="institution-search"
+                            type="text"
+                            className="w-full px-4 py-2.5 pr-10 border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-semibold transition"
+                            placeholder="Type EIIN or Institution name..."
+                            value={schoolSearchQuery}
+                            onChange={(e) => {
+                              setSchoolSearchQuery(e.target.value);
+                              setDropdownOpen(true);
+                              if (selectedSchool && selectedSchool.name !== e.target.value) {
+                                setSelectedSchool(null);
+                              }
+                            }}
+                            onFocus={() => setDropdownOpen(true)}
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                            <Building2 className="h-4 w-4" />
+                          </div>
+                        </div>
+
+                        {dropdownOpen && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => {
+                                setDropdownOpen(false);
+                                if (selectedSchool) {
+                                  setSchoolSearchQuery(selectedSchool.name || '');
+                                }
+                              }} 
+                            />
+                            
+                            <div className="absolute left-0 right-0 mt-1.5 max-h-60 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl z-20 divide-y divide-slate-50 animate-fadeIn">
+                              {schools.length > 0 ? (
+                                schools.map((s) => (
+                                  <button
+                                    key={s._id}
+                                    type="button"
+                                    className={cn(
+                                      "w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-indigo-50 transition duration-150 flex flex-col gap-0.5",
+                                      selectedSchool?._id === s._id ? "bg-indigo-50/50 text-indigo-900" : "text-slate-700"
+                                    )}
+                                    onClick={() => {
+                                      setSelectedSchool(s);
+                                      setSchoolSearchQuery(s.name || '');
+                                      setDropdownOpen(false);
+                                    }}
+                                  >
+                                    <span className="font-bold text-slate-900">{s.name}</span>
+                                    <span className="text-[10px] text-slate-500">
+                                      {s.eiin ? `EIIN: ${s.eiin}` : ''} {s.address ? `• ${s.address}` : ''}
+                                    </span>
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="px-4 py-3 text-xs text-slate-500 text-center font-bold">
+                                  No institutions found
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -377,16 +468,19 @@ export default function PublicResultPage() {
                     <select
                       id="exam"
                       name="exam"
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm transition"
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-sm font-semibold transition"
                       value={exam}
                       onChange={(e) => setExam(e.target.value)}
                       required
                     >
-                      <option value="">Select One</option>
-                      <option value="jsc">JSC/JDC</option>
-                      <option value="ssc">SSC/Dakhil/Equivalent</option>
-                      <option value="hsc">HSC/Alim/Equivalent</option>
-                      <option value="dibs">DIBS (Diploma in Business Studies)</option>
+                      <option value="">
+                        {!selectedSchool ? 'Select institution first' : 'Select One'}
+                      </option>
+                      {examOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -626,7 +720,7 @@ export default function PublicResultPage() {
                     )}
                     <tr>
                       <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Board</td>
-                      <td className="px-5 py-3 font-extrabold text-slate-800 uppercase">{result.summary?.board || board || 'DHAKA'}</td>
+                      <td className="px-5 py-3 font-extrabold text-slate-800 uppercase">{result.summary?.board || 'DHAKA'}</td>
                       <td className="font-extrabold text-slate-700 bg-slate-50/70 px-5 py-3">Session</td>
                       <td className="px-5 py-3 font-bold text-slate-700">{result.student?.session || '-'}</td>
                     </tr>

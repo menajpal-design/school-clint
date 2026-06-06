@@ -200,6 +200,8 @@ export type AppControlSettings = {
   idCardDefaultFormat: 'pdf' | 'png';
   mobileTableMode: 'scroll' | 'card';
   mobilePrintMode: 'pdf' | 'print';
+  disableHalfTerminalExam: boolean;
+  disableFinalExam: boolean;
 };
 
 const DEFAULT_APP_CONTROL_SETTINGS: AppControlSettings = {
@@ -217,6 +219,8 @@ const DEFAULT_APP_CONTROL_SETTINGS: AppControlSettings = {
   idCardDefaultFormat: 'pdf',
   mobileTableMode: 'card',
   mobilePrintMode: 'pdf',
+  disableHalfTerminalExam: false,
+  disableFinalExam: false,
 };
 
 export function getAppControlSettings(): AppControlSettings {
