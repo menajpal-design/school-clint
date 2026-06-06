@@ -90,28 +90,22 @@ export default function AllPresentScannerPage() {
         return;
       }
 
-      const data: any = await apiClient.get('/users/all');
-      const roles = personKind === 'all_staff'
-        ? staffRoles
-        : personKind === 'teacher'
-          ? teacherRoles
-          : [personKind];
-      setPeople((data.users || [])
-        .filter((user: any) => roles.includes(user.role) && user.isActive !== false)
-        .map((user: any) => {
-          const baseCode = user.username || user.email || user.phone || user._id;
-          return {
-            _id: user._id,
-            userId: user._id,
-            name: user.name || user.email || user.username || 'User',
-            role: user.role,
-            code: baseCode,
-            fingerprintCode: user.fingerprintId || user.biometricId || fingerprintFor('USER', baseCode),
-            className: user.role,
-            sectionName: '-',
-            userType: toUserType(user.role),
-          };
-        }));
+      const data: any = await apiClient.get('/attendance/people', { params: { personType: personKind } });
+      setPeople((data.people || []).map((p: any) => {
+        const user = p.userId || p;
+        const baseCode = user.username || user.email || user.phone || user._id;
+        return {
+          _id: user._id,
+          userId: user._id,
+          name: user.name || user.email || user.username || 'User',
+          role: user.role,
+          code: baseCode,
+          fingerprintCode: user.fingerprintId || user.biometricId || p.fingerprintId || p.biometricId || fingerprintFor('USER', baseCode),
+          className: user.role || p.designation || '-',
+          sectionName: '-',
+          userType: toUserType(user.role),
+        };
+      }));
     } catch (error: any) {
       addToast({ title: 'Load failed', message: error?.message || 'Failed to load people list.', type: 'error', duration: 3500 });
     } finally {
