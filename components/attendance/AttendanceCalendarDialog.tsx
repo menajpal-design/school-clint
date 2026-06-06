@@ -1,1 +1,1 @@
-export { AttendanceCalendarDialogV2 as AttendanceCalendarDialog } from './AttendanceCalendarDialogV2';
+export { AttendanceCalendarDialogV3 as AttendanceCalendarDialog } from './AttendanceCalendarDialogV3';
