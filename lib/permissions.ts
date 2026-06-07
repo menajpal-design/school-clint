@@ -1,5 +1,4 @@
 import { UserRole, User } from '@/types';
-import { getDemoMode } from './demo-store';
 
 interface MenuItemConfig {
   label: string;
@@ -19,11 +18,6 @@ const SCHOOL_USERS: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'su
 const STUDENT_PARENT: UserRole[] = ['student', 'parent'];
 const ACADEMIC_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, ...STUDENT_PARENT];
 const RESULT_ENTRY: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'];
-const RESULT_APPROVE: UserRole[] = ['head', 'assistant_head', 'admin', 'super_admin'];
-const RESULT_PUBLISH: UserRole[] = ['head', 'assistant_head', 'admin', 'super_admin'];
-const EXAM_WRITE: UserRole[] = SCHOOL_LEADER_ADMIN;
-const SUBJECT_MANAGE: UserRole[] = SCHOOL_LEADER_ADMIN;
-const CLASS_MANAGE: UserRole[] = SCHOOL_LEADER_ADMIN;
 const ATTENDANCE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT];
 const ATTENDANCE_MARK: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
 const SMS_MONITORING: UserRole[] = ['admin', 'super_admin', 'head'];
@@ -42,13 +36,11 @@ const LEAVE_APPLY: UserRole[] = ['student', 'parent', 'teacher', 'subject_teache
 export function normalizeUserRole(role?: string | null): UserRole | undefined {
   if (!role) return undefined;
   const normalized = String(role).toLowerCase().trim().replace(/[\s-]+/g, '_');
-
   if (normalized === 'guardian' || normalized === 'parent_guardian' || normalized === 'parent_guardian_role') return 'parent';
   if (normalized === 'headmaster' || normalized === 'principal') return 'head';
-  if (normalized === 'assistant_head' || normalized === 'assistanthead') return 'assistant_head';
-
+  if (normalized === 'assistanthead') return 'assistant_head';
+  if (normalized === 'librarian') return 'staff';
   if ((ALL_ROLES as string[]).includes(normalized)) return normalized as UserRole;
-  if (normalized === 'librarian') return 'staff' as UserRole;
   return undefined;
 }
 
@@ -99,9 +91,9 @@ export const menuConfig: MenuItemConfig[] = [
     label: 'Academic', href: '/academic-menu', roles: ACADEMIC_VIEW, icon: 'BookOpen',
     children: [
       { label: 'Overview', href: '/academic', roles: SCHOOL_LEADER_ADMIN },
-      { label: 'Classes', href: '/academic/classes', roles: CLASS_MANAGE },
-      { label: 'Sections', href: '/academic/sections', roles: CLASS_MANAGE },
-      { label: 'Subjects', href: '/academic/subjects', roles: SUBJECT_MANAGE },
+      { label: 'Classes', href: '/academic/classes', roles: SCHOOL_LEADER_ADMIN },
+      { label: 'Sections', href: '/academic/sections', roles: SCHOOL_LEADER_ADMIN },
+      { label: 'Subjects', href: '/academic/subjects', roles: SCHOOL_LEADER_ADMIN },
       { label: 'Syllabus', href: '/academic/syllabus', roles: ACADEMIC_VIEW },
       { label: 'Class Routine', href: '/academic/class-routine', roles: ACADEMIC_VIEW },
       { label: 'Exam Routine', href: '/academic/exam-routine', roles: ACADEMIC_VIEW },
@@ -178,17 +170,12 @@ export const menuConfig: MenuItemConfig[] = [
   { label: 'Settings', href: '/settings', roles: SETTINGS, icon: 'Settings' },
 ];
 
-export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
-  const role = normalizeUserRole(userRole) || userRole;
-  return filterMenuByRole(role);
-}
-
-export const rolePermissions: Record<UserRole, string[]> = {
+export const rolePermissions: Record<string, string[]> = {
   admin: ['*'],
   super_admin: ['*'],
   head: ['*'],
-  assistant_head: ['result:approve_assistant', 'result:approve_head', 'result:publish', 'exam:publish', 'idcard:generate', 'idcard:manage', 'attendance:mark', 'leave:approve', 'library:manage'],
-  class_teacher: ['result:create', 'result:update', 'attendance:mark', 'leave:approve', 'manage:homework'],
+  assistant_head: ['result:create', 'result:update', 'result:approve_assistant', 'result:approve_head', 'result:publish', 'exam:publish', 'idcard:generate', 'idcard:manage', 'attendance:mark', 'leave:approve', 'library:manage'],
+  class_teacher: ['result:create', 'result:update', 'result:request_publish', 'attendance:mark', 'leave:approve', 'manage:homework'],
   subject_teacher: ['result:create', 'result:update', 'manage:homework'],
   teacher: ['result:create', 'result:update', 'manage:homework'],
   finance_officer: ['manage:finance', 'view:payments', 'view:own_attendance', 'leave:create'],
@@ -206,6 +193,30 @@ export function hasRole(user?: User | null, roles?: UserRole[] | UserRole) {
   const normalizedRoles = (Array.isArray(roles) ? roles : [roles]).map((candidate) => normalizeUserRole(candidate) || candidate);
   if (['admin', 'super_admin', 'head'].includes(role)) return true;
   return normalizedRoles.includes(role as UserRole);
+}
+
+export function hasPermission(user?: User | null | any, permission?: string) {
+  if (!user || !permission) return false;
+  const role = normalizeUserRole(user.role) || user.role;
+  if (['admin', 'super_admin', 'head'].includes(role)) return true;
+  const permissions = rolePermissions[String(role)] || [];
+  return permissions.includes('*') || permissions.includes(permission);
+}
+
+export const permissionActions = {
+  canResultEntry: (user?: User | null | any) => hasPermission(user, 'result:create') || hasPermission(user, 'result:update'),
+  canResultApproveAssistant: (user?: User | null | any) => hasPermission(user, 'result:approve_assistant'),
+  canResultApproveHead: (user?: User | null | any) => hasPermission(user, 'result:approve_head'),
+  canResultPublish: (user?: User | null | any) => hasPermission(user, 'result:publish'),
+  canResultDelete: (user?: User | null | any) => hasPermission(user, 'result:delete'),
+  canExamPublish: (user?: User | null | any) => hasPermission(user, 'exam:publish'),
+  canMarkAttendance: (user?: User | null | any) => hasPermission(user, 'attendance:mark'),
+  canApproveLeave: (user?: User | null | any) => hasPermission(user, 'leave:approve'),
+};
+
+export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
+  const role = normalizeUserRole(userRole) || userRole;
+  return filterMenuByRole(role);
 }
 
 export function filterMenuByRole(role: UserRole) {
