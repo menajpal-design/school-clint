@@ -1,5 +1,5 @@
 "use client";
 
-import SettingsFullClient from "./SettingsFullClient";
+import SettingsPageWithPayments from "./SettingsPageWithPayments";
 
-export default SettingsFullClient;
+export default SettingsPageWithPayments;
