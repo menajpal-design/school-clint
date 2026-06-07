@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CreditCard, Landmark, RefreshCw, WalletCards } from "lucide-react";
 
 import { LineChartCard } from "@/components/charts/LineChartCard";
+import { FinancePeriodFilter, defaultFinancePeriod, isWithinFinancePeriod } from "@/components/finance/FinancePeriodFilter";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function FinancePage() {
   const [summary, setSummary] = useState<any>({});
+  const [period, setPeriod] = useState(defaultFinancePeriod());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,7 +35,8 @@ export default function FinancePage() {
 
   useEffect(() => { load().catch(() => undefined); }, []);
 
-  const payments = summary.recentPayments || [];
+  const payments = useMemo(() => (summary.recentPayments || []).filter((p: any) => isWithinFinancePeriod(p.paymentDate || p.createdAt, period)), [summary.recentPayments, period]);
+  const filteredCollection = payments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
 
   return (
     <div className="space-y-5">
@@ -47,8 +50,9 @@ export default function FinancePage() {
         ]}
       />
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      <FinancePeriodFilter period={period} onChange={setPeriod} onApply={load} />
       <div className="grid gap-4 md:grid-cols-5">
-        <StatCard label="Total Collection" value={formatCurrency(summary.totalCollection || 0)} icon={WalletCards} tone="emerald" />
+        <StatCard label="Filtered Collection" value={formatCurrency(filteredCollection || 0)} icon={WalletCards} tone="emerald" />
         <StatCard label="Total Due" value={formatCurrency(summary.totalDue || 0)} icon={CreditCard} tone="rose" />
         <StatCard label="Today Collection" value={formatCurrency(summary.todayCollection || 0)} icon={WalletCards} tone="blue" />
         <StatCard label="Monthly Salary" value={formatCurrency(summary.monthlySalary || 0)} icon={Landmark} tone="amber" />
@@ -57,7 +61,7 @@ export default function FinancePage() {
       <LineChartCard title="Monthly collection trend" data={summary.monthlyTrend || []} />
       <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table><TableHeader><TableRow className="bg-slate-50 hover:bg-slate-50"><TableHead>Receipt</TableHead><TableHead>Student</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Date</TableHead></TableRow></TableHeader><TableBody>
-          {loading ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">Loading recent payments...</TableCell></TableRow> : payments.length === 0 ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">No recent payments.</TableCell></TableRow> : payments.map((p: any) => <TableRow key={p._id}><TableCell>{p.receiptNumber || "-"}</TableCell><TableCell>{p.studentId?.userId?.name || p.studentId?.rollNumber || "-"}</TableCell><TableCell>{formatCurrency(p.amount || 0)}</TableCell><TableCell className="capitalize">{p.paymentMethod || "-"}</TableCell><TableCell>{formatDate(p.paymentDate)}</TableCell></TableRow>)}
+          {loading ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">Loading recent payments...</TableCell></TableRow> : payments.length === 0 ? <TableRow><TableCell colSpan={5} className="h-28 text-center text-slate-500">No payments found for selected period.</TableCell></TableRow> : payments.map((p: any) => <TableRow key={p._id}><TableCell>{p.receiptNumber || "-"}</TableCell><TableCell>{p.studentId?.userId?.name || p.studentId?.rollNumber || "-"}</TableCell><TableCell>{formatCurrency(p.amount || 0)}</TableCell><TableCell className="capitalize">{p.paymentMethod || "-"}</TableCell><TableCell>{formatDate(p.paymentDate)}</TableCell></TableRow>)}
         </TableBody></Table>
       </section>
     </div>
