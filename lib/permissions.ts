@@ -46,129 +46,96 @@ export function normalizeUserRole(role?: string | null): UserRole | undefined {
 }
 
 export const menuConfig: MenuItemConfig[] = [
-  {
-    label: 'Admin', href: '/admin', roles: PLATFORM_ADMIN, icon: 'ShieldCheck',
-    children: [
-      { label: 'Overview', href: '/admin', roles: PLATFORM_ADMIN },
-      { label: 'School Management', href: '/admin/schools', roles: PLATFORM_ADMIN },
-      { label: 'Subscriptions', href: '/admin/subscriptions', roles: PLATFORM_ADMIN },
-      { label: 'Accounting', href: '/admin/accounting', roles: PLATFORM_ADMIN },
-      { label: 'SMS Usage', href: '/admin/sms-usage', roles: PLATFORM_ADMIN },
-      { label: 'Select School', href: '/admin/select-school', roles: PLATFORM_ADMIN },
-      { label: 'User Management', href: '/admin/users', roles: PLATFORM_ADMIN },
-      { label: 'Backup & Restore', href: '/admin/backup', roles: ['super_admin'] },
-    ],
-  },
+  { label: 'Admin', href: '/admin', roles: PLATFORM_ADMIN, icon: 'ShieldCheck', children: [
+    { label: 'Overview', href: '/admin', roles: PLATFORM_ADMIN },
+    { label: 'School Management', href: '/admin/schools', roles: PLATFORM_ADMIN },
+    { label: 'Subscriptions', href: '/admin/subscriptions', roles: PLATFORM_ADMIN },
+    { label: 'Accounting', href: '/admin/accounting', roles: PLATFORM_ADMIN },
+    { label: 'SMS Usage', href: '/admin/sms-usage', roles: PLATFORM_ADMIN },
+    { label: 'Select School', href: '/admin/select-school', roles: PLATFORM_ADMIN },
+    { label: 'User Management', href: '/admin/users', roles: PLATFORM_ADMIN },
+    { label: 'Backup & Restore', href: '/admin/backup', roles: ['super_admin'] },
+  ] },
   { label: 'Dashboard', href: '/dashboard', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS], icon: 'LayoutGrid' },
   { label: 'Notice Board', href: '/notices', roles: NOTICE_VIEW, icon: 'Bell' },
   { label: 'Holidays', href: '/holidays', roles: HOLIDAY_VIEW, icon: 'CalendarDays' },
-  {
-    label: 'ID Card', href: '/id-cards', roles: ID_CARD_OWN, icon: 'CreditCard',
-    children: [
-      { label: 'My ID Card', href: '/id-cards/my-card', roles: ID_CARD_OWN },
-      { label: 'Generate Card', href: '/id-cards/generate', roles: ID_CARD_GENERATE },
-      { label: 'Admit Card', href: '/id-cards/admit-card', roles: SCHOOL_LEADER_ADMIN },
-      { label: 'Bulk Generate', href: '/id-cards/bulk-generate', roles: ID_CARD_GENERATE },
-      { label: 'Templates', href: '/id-cards/templates', roles: SCHOOL_LEADER_ADMIN },
-      { label: 'Reports', href: '/id-cards/reports', roles: SCHOOL_LEADER_ADMIN },
-    ],
-  },
-  {
-    label: 'Institution', href: '/institution', roles: [...SCHOOL_LEADERS, 'class_teacher'], icon: 'Building2',
-    children: [
-      { label: 'Profile', href: '/institution/profile', roles: SCHOOL_LEADERS },
-      { label: 'Billing & Subscription', href: '/institution/billing', roles: SCHOOL_LEADERS },
-      { label: 'SMS Balance', href: '/billing', roles: SCHOOL_LEADERS },
-      { label: 'Finance Audit', href: '/institution/finance-audit', roles: SCHOOL_LEADERS },
-      { label: 'Students', href: '/institution/students', roles: [...SCHOOL_LEADERS, 'class_teacher'] },
-      { label: 'Pending Admissions', href: '/institution/pending-admissions', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'] },
-      { label: 'Teachers', href: '/institution/teachers', roles: SCHOOL_LEADERS },
-      { label: 'Staff', href: '/institution/staff', roles: SCHOOL_LEADERS },
-      { label: 'Admission', href: '/institution/admission', roles: SCHOOL_LEADERS },
-      { label: 'Backup', href: '/institution/backup', roles: ['head'] },
-    ],
-  },
-  {
-    label: 'Academic', href: '/academic-menu', roles: ACADEMIC_VIEW, icon: 'BookOpen',
-    children: [
-      { label: 'Overview', href: '/academic', roles: SCHOOL_LEADER_ADMIN },
-      { label: 'Classes', href: '/academic/classes', roles: SCHOOL_LEADER_ADMIN },
-      { label: 'Sections', href: '/academic/sections', roles: SCHOOL_LEADER_ADMIN },
-      { label: 'Subjects', href: '/academic/subjects', roles: SCHOOL_LEADER_ADMIN },
-      { label: 'Syllabus', href: '/academic/syllabus', roles: ACADEMIC_VIEW },
-      { label: 'Class Routine', href: '/academic/class-routine', roles: ACADEMIC_VIEW },
-      { label: 'Exam Routine', href: '/academic/exam-routine', roles: ACADEMIC_VIEW },
-      { label: 'Exams', href: '/academic/exams', roles: ACADEMIC_VIEW },
-      { label: 'Results', href: '/academic/results', roles: [...RESULT_ENTRY, ...STUDENT_PARENT] },
-      { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
-      { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
-    ],
-  },
-  {
-    label: 'Attendance', href: '/attendance', roles: ATTENDANCE_VIEW, icon: 'CheckCircle2',
-    children: [
-      { label: 'Overview', href: '/attendance', roles: ATTENDANCE_MARK },
-      { label: 'Mark Attendance', href: '/attendance/mark', roles: ATTENDANCE_MARK },
-      { label: 'All Present Scanner', href: '/attendance/all-present', roles: ATTENDANCE_MARK },
-      { label: 'Reports', href: '/attendance/reports', roles: ATTENDANCE_MARK },
-      { label: 'My Attendance', href: '/attendance/my-attendance', roles: ATTENDANCE_VIEW },
-    ],
-  },
-  {
-    label: 'Leave Application', href: '/leave-application-menu', roles: [...LEAVE_REVIEW, ...LEAVE_APPLY], icon: 'CalendarDays',
-    children: [
-      { label: 'Apply for Leave', href: '/leave-application', roles: [...LEAVE_REVIEW, ...LEAVE_APPLY] },
-      { label: 'Leave List', href: '/leave-list', roles: LEAVE_REVIEW },
-    ],
-  },
-  {
-    label: 'Finance', href: '/finance-menu', roles: [...FEE_COLLECT_ROLES, 'student', 'parent'], icon: 'DollarSign',
-    children: [
-      { label: 'Overview', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer'] },
-      { label: 'Fees', href: '/finance/fees', roles: ['head', 'assistant_head', 'finance_officer'] },
-      { label: 'Fees Collect', href: '/finance/fee-collect', roles: FEE_COLLECT_ROLES },
-      { label: 'Collections', href: '/finance/collections', roles: FEE_COLLECT_ROLES },
-      { label: 'Salary', href: '/finance/salary', roles: ['head'] },
-      { label: 'Reports', href: '/finance/reports', roles: ['head', 'assistant_head', 'finance_officer'] },
-      { label: 'My Fees', href: '/finance/my-fees', roles: ['student', 'parent'] },
-    ],
-  },
-  {
-    label: 'Documents', href: '/documents', roles: DOCUMENT_VIEW, icon: 'FileText',
-    children: [
-      { label: 'Overview', href: '/documents', roles: DOCUMENT_VIEW },
-      { label: 'Memo', href: '/documents/memo', roles: ['head', 'assistant_head', 'finance_officer', 'staff'] },
-      { label: 'Upload', href: '/documents/upload', roles: ['head', 'assistant_head', 'staff'] },
-      { label: 'Management', href: '/documents/manage', roles: SCHOOL_LEADERS },
-    ],
-  },
-  {
-    label: 'Users & Roles', href: '/users-roles', roles: ['admin', 'super_admin', 'head'], icon: 'Users',
-    children: [
-      { label: 'Overview', href: '/users-roles', roles: ['admin', 'super_admin', 'head'] },
-      { label: 'All Users', href: '/users-roles/all', roles: ['admin', 'super_admin', 'head'] },
-      { label: 'Roles & Permissions', href: '/users-roles/permissions', roles: ['admin', 'super_admin', 'head'] },
-    ],
-  },
+  { label: 'ID Card', href: '/id-cards', roles: ID_CARD_OWN, icon: 'CreditCard', children: [
+    { label: 'My ID Card', href: '/id-cards/my-card', roles: ID_CARD_OWN },
+    { label: 'Generate Card', href: '/id-cards/generate', roles: ID_CARD_GENERATE },
+    { label: 'Admit Card', href: '/id-cards/admit-card', roles: SCHOOL_LEADER_ADMIN },
+    { label: 'Bulk Generate', href: '/id-cards/bulk-generate', roles: ID_CARD_GENERATE },
+    { label: 'Templates', href: '/id-cards/templates', roles: SCHOOL_LEADER_ADMIN },
+    { label: 'Reports', href: '/id-cards/reports', roles: SCHOOL_LEADER_ADMIN },
+  ] },
+  { label: 'Institution', href: '/institution', roles: [...SCHOOL_LEADERS, 'class_teacher'], icon: 'Building2', children: [
+    { label: 'Profile', href: '/institution/profile', roles: SCHOOL_LEADERS },
+    { label: 'Billing & Subscription', href: '/institution/billing', roles: SCHOOL_LEADERS },
+    { label: 'SMS Balance', href: '/billing', roles: SCHOOL_LEADERS },
+    { label: 'Finance Audit', href: '/institution/finance-audit', roles: SCHOOL_LEADERS },
+    { label: 'Students', href: '/institution/students', roles: [...SCHOOL_LEADERS, 'class_teacher'] },
+    { label: 'Pending Admissions', href: '/institution/pending-admissions', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'] },
+    { label: 'Teachers', href: '/institution/teachers', roles: SCHOOL_LEADERS },
+    { label: 'Staff', href: '/institution/staff', roles: SCHOOL_LEADERS },
+    { label: 'Admission', href: '/institution/admission', roles: SCHOOL_LEADERS },
+    { label: 'Backup', href: '/institution/backup', roles: ['head'] },
+  ] },
+  { label: 'Academic', href: '/academic-menu', roles: ACADEMIC_VIEW, icon: 'BookOpen', children: [
+    { label: 'Overview', href: '/academic', roles: SCHOOL_LEADER_ADMIN },
+    { label: 'Classes', href: '/academic/classes', roles: SCHOOL_LEADER_ADMIN },
+    { label: 'Sections', href: '/academic/sections', roles: SCHOOL_LEADER_ADMIN },
+    { label: 'Subjects', href: '/academic/subjects', roles: SCHOOL_LEADER_ADMIN },
+    { label: 'Syllabus', href: '/academic/syllabus', roles: ACADEMIC_VIEW },
+    { label: 'Class Routine', href: '/academic/class-routine', roles: ACADEMIC_VIEW },
+    { label: 'Exam Routine', href: '/academic/exam-routine', roles: ACADEMIC_VIEW },
+    { label: 'Exams', href: '/academic/exams', roles: ACADEMIC_VIEW },
+    { label: 'Results', href: '/academic/results', roles: [...RESULT_ENTRY, ...STUDENT_PARENT] },
+    { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
+    { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
+  ] },
+  { label: 'Attendance', href: '/attendance', roles: ATTENDANCE_VIEW, icon: 'CheckCircle2', children: [
+    { label: 'Overview', href: '/attendance', roles: ATTENDANCE_MARK },
+    { label: 'Mark Attendance', href: '/attendance/mark', roles: ATTENDANCE_MARK },
+    { label: 'All Present Scanner', href: '/attendance/all-present', roles: ATTENDANCE_MARK },
+    { label: 'Reports', href: '/attendance/reports', roles: ATTENDANCE_MARK },
+    { label: 'My Attendance', href: '/attendance/my-attendance', roles: ATTENDANCE_VIEW },
+  ] },
+  { label: 'Leave Application', href: '/leave-application-menu', roles: [...LEAVE_REVIEW, ...LEAVE_APPLY], icon: 'CalendarDays', children: [
+    { label: 'Apply for Leave', href: '/leave-application', roles: [...LEAVE_REVIEW, ...LEAVE_APPLY] },
+    { label: 'Leave List', href: '/leave-list', roles: LEAVE_REVIEW },
+  ] },
+  { label: 'Finance', href: '/finance-menu', roles: [...FEE_COLLECT_ROLES, 'student', 'parent'], icon: 'DollarSign', children: [
+    { label: 'Overview', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer'] },
+    { label: 'Fees', href: '/finance/fees', roles: ['head', 'assistant_head', 'finance_officer'] },
+    { label: 'Fees Collect', href: '/finance/fee-collect', roles: FEE_COLLECT_ROLES },
+    { label: 'Collections', href: '/finance/collections', roles: FEE_COLLECT_ROLES },
+    { label: 'Salary', href: '/finance/salary', roles: ['head'] },
+    { label: 'Reports', href: '/finance/reports', roles: ['head', 'assistant_head', 'finance_officer'] },
+    { label: 'My Fees', href: '/finance/my-fees', roles: ['student', 'parent'] },
+  ] },
+  { label: 'Documents', href: '/documents', roles: DOCUMENT_VIEW, icon: 'FileText', children: [
+    { label: 'Overview', href: '/documents', roles: DOCUMENT_VIEW },
+    { label: 'Memo', href: '/documents/memo', roles: ['head', 'assistant_head', 'finance_officer', 'staff'] },
+    { label: 'Upload', href: '/documents/upload', roles: ['head', 'assistant_head', 'staff'] },
+    { label: 'Management', href: '/documents/manage', roles: SCHOOL_LEADERS },
+  ] },
+  { label: 'Users & Roles', href: '/users-roles', roles: ['admin', 'super_admin', 'head'], icon: 'Users', children: [
+    { label: 'Overview', href: '/users-roles', roles: ['admin', 'super_admin', 'head'] },
+    { label: 'All Users', href: '/users-roles/all', roles: ['admin', 'super_admin', 'head'] },
+    { label: 'Roles & Permissions', href: '/users-roles/permissions', roles: ['admin', 'super_admin', 'head'] },
+  ] },
   { label: 'Committee', href: '/committee', roles: ['head', 'assistant_head', 'committee_member'], icon: 'Users2' },
-  {
-    label: 'Library', href: '/library', roles: LIBRARY_VIEW, icon: 'BookMarked',
-    children: [
-      { label: 'Books', href: '/library/books', roles: LIBRARY_MANAGE },
-      { label: 'Loans', href: '/library/loans', roles: LIBRARY_MANAGE },
-    ],
-  },
+  { label: 'Library', href: '/library', roles: LIBRARY_VIEW, icon: 'BookMarked', children: [
+    { label: 'Books', href: '/library/books', roles: LIBRARY_MANAGE },
+    { label: 'Loans', href: '/library/loans', roles: LIBRARY_MANAGE },
+  ] },
   { label: 'Parent Portal', href: '/parent-portal', roles: ['parent'], icon: 'Home' },
   { label: 'Homework', href: '/homework', roles: HOMEWORK_VIEW, icon: 'BookOpen' },
   { label: 'SMS Monitoring', href: '/sms-monitoring', roles: SMS_MONITORING, icon: 'MessageSquare' },
-  {
-    label: 'Profile', href: '/profile', roles: ALL_ROLES, icon: 'User',
-    children: [
-      { label: 'My Profile', href: '/profile', roles: ALL_ROLES },
-      { label: 'Change Password', href: '/profile/change-password', roles: ALL_ROLES },
-      { label: 'My ID Card', href: '/id-cards/my-card', roles: ID_CARD_OWN },
-    ],
-  },
+  { label: 'Profile', href: '/profile', roles: ALL_ROLES, icon: 'User', children: [
+    { label: 'My Profile', href: '/profile', roles: ALL_ROLES },
+    { label: 'Change Password', href: '/profile/change-password', roles: ALL_ROLES },
+    { label: 'My ID Card', href: '/id-cards/my-card', roles: ID_CARD_OWN },
+  ] },
   { label: 'Settings', href: '/settings', roles: SETTINGS, icon: 'Settings' },
 ];
 
@@ -241,7 +208,10 @@ export function canAccessRoute(user: User | null | undefined, path: string) {
   const role = normalizeUserRole(user.role) || user.role;
   if (role === 'super_admin') return true;
   const items = flattenMenu(menuConfig);
-  const match = items.find((item) => path === item.href || path.startsWith(item.href + '/'));
+  const matches = items
+    .filter((item) => path === item.href || path.startsWith(item.href + '/'))
+    .sort((a, b) => b.href.length - a.href.length);
+  const match = matches[0];
   if (!match) return true;
   return hasRole({ role } as User, match.roles);
 }
