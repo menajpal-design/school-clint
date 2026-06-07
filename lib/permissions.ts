@@ -32,6 +32,7 @@ const LIBRARY_MANAGE: UserRole[] = [...SCHOOL_LEADER_ADMIN, 'staff'];
 const HOMEWORK_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, 'student', 'parent'];
 const LEAVE_REVIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
 const LEAVE_APPLY: UserRole[] = ['student', 'parent', 'teacher', 'subject_teacher', 'class_teacher', 'staff', 'finance_officer'];
+const FEE_COLLECT_ROLES: UserRole[] = ['head', 'assistant_head', 'finance_officer', 'class_teacher'];
 
 export function normalizeUserRole(role?: string | null): UserRole | undefined {
   if (!role) return undefined;
@@ -121,11 +122,12 @@ export const menuConfig: MenuItemConfig[] = [
     ],
   },
   {
-    label: 'Finance', href: '/finance-menu', roles: ['head', 'assistant_head', 'finance_officer', 'student', 'parent'], icon: 'DollarSign',
+    label: 'Finance', href: '/finance-menu', roles: [...FEE_COLLECT_ROLES, 'student', 'parent'], icon: 'DollarSign',
     children: [
       { label: 'Overview', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'Fees', href: '/finance/fees', roles: ['head', 'assistant_head', 'finance_officer'] },
-      { label: 'Collections', href: '/finance/collections', roles: ['head', 'assistant_head', 'finance_officer'] },
+      { label: 'Fees Collect', href: '/finance/fee-collect', roles: FEE_COLLECT_ROLES },
+      { label: 'Collections', href: '/finance/collections', roles: FEE_COLLECT_ROLES },
       { label: 'Salary', href: '/finance/salary', roles: ['head'] },
       { label: 'Reports', href: '/finance/reports', roles: ['head', 'assistant_head', 'finance_officer'] },
       { label: 'My Fees', href: '/finance/my-fees', roles: ['student', 'parent'] },
@@ -174,11 +176,11 @@ export const rolePermissions: Record<string, string[]> = {
   admin: ['admin:view', 'admin:manage', 'admin:billing', 'admin:sms'],
   super_admin: ['*'],
   head: ['*'],
-  assistant_head: ['result:create', 'result:update', 'result:approve_assistant', 'result:approve_head', 'result:publish', 'exam:publish', 'idcard:generate', 'idcard:manage', 'attendance:mark', 'leave:approve', 'library:manage'],
-  class_teacher: ['result:create', 'result:update', 'result:request_publish', 'attendance:mark', 'leave:approve', 'manage:homework'],
+  assistant_head: ['result:create', 'result:update', 'result:approve_assistant', 'result:approve_head', 'result:publish', 'exam:publish', 'idcard:generate', 'idcard:manage', 'attendance:mark', 'leave:approve', 'library:manage', 'fee:collect'],
+  class_teacher: ['result:create', 'result:update', 'result:request_publish', 'attendance:mark', 'leave:approve', 'manage:homework', 'fee:collect'],
   subject_teacher: ['result:create', 'result:update', 'manage:homework'],
   teacher: ['result:create', 'result:update', 'manage:homework'],
-  finance_officer: ['manage:finance', 'view:payments', 'view:own_attendance', 'leave:create'],
+  finance_officer: ['manage:finance', 'fee:collect', 'view:payments', 'view:own_attendance', 'leave:create'],
   librarian: ['view:documents', 'view:own_attendance', 'leave:create', 'library:manage'],
   staff: ['view:documents', 'view:own_attendance', 'leave:create', 'library:manage'],
   student: ['view:own', 'leave:create', 'view:syllabus', 'view:routine', 'view:homework', 'view:library'],
