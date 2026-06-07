@@ -15,7 +15,9 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
+          command_timeout: 25m
           script: |
+            set -e
             # Detect client directory
             if [ -d "$HOME/projects/school/school-clint" ]; then
               cd "$HOME/projects/school/school-clint"
@@ -37,8 +39,6 @@ jobs:
 
             echo "Deploying to $(pwd)..."
             git remote -v
-
-            # Force the server working copy to exactly match origin/main
             git fetch origin main
             git checkout main
             git reset --hard origin/main
@@ -46,13 +46,15 @@ jobs:
 
             echo "Current deployed commit:"
             git rev-parse HEAD
-            echo "Checking public result page labels in deployed source:"
-            grep -n "Class Name\|Exam Name\|Name of Board\|Education Board Bangladesh" app/result/page.tsx || true
 
-            # Install dependencies
-            npm install
+            echo "Installing dependencies..."
+            if [ -f package-lock.json ]; then
+              npm ci --prefer-offline --no-audit --no-fund
+            else
+              npm install --prefer-offline --no-audit --no-fund
+            fi
 
-            # Force clean Next.js build so old static assets cannot remain
+            echo "Building Next.js app..."
             rm -rf .next out
             npm run build
 
@@ -60,6 +62,5 @@ jobs:
             pm2 describe school-client || true
             pm2 describe school-clint || true
 
-            # Restart using PM2 with updated environment
             pm2 restart school-client --update-env || pm2 restart school-clint --update-env || pm2 restart all --update-env || pm2 start npm --name "school-client" -- start
             pm2 save || true
