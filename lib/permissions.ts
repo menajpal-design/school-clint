@@ -219,6 +219,12 @@ export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
   return filterMenuByRole(role);
 }
 
+export function getMenuForUser(userOrRole?: User | UserRole | string | null): MenuItemConfig[] {
+  const role = typeof userOrRole === 'string' ? userOrRole : userOrRole?.role;
+  const normalized = normalizeUserRole(role || '') || (role as UserRole);
+  return normalized ? filterMenuByRole(normalized) : [];
+}
+
 export function filterMenuByRole(role: UserRole) {
   const normalizedRole = normalizeUserRole(role) || role;
   if (!normalizedRole) return [];
@@ -236,6 +242,10 @@ export function canAccessRoute(user: User | null | undefined, path: string) {
   const match = items.find((item) => path === item.href || path.startsWith(item.href + '/'));
   if (!match) return true;
   return hasRole({ role } as User, match.roles);
+}
+
+export function isRouteAllowed(user: User | null | undefined, path: string) {
+  return canAccessRoute(user, path);
 }
 
 function flattenMenu(items: MenuItemConfig[]): MenuItemConfig[] {
