@@ -6,13 +6,18 @@ import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { ShellProvider } from './ShellContext';
 import { useAuth } from '@/hooks/useAuth';
-import { isRouteAllowed } from '@/lib/permissions';
+import { isRouteAllowed, normalizeUserRole } from '@/lib/permissions';
 
 const publicPrefixes = ['/login', '/register', '/forgot-password', '/reset-password', '/pricing', '/result', '/admission', '/public'];
+const financeCollectionRoles = ['head', 'assistant_head', 'finance_officer', 'class_teacher'];
 
 function isPublicRoute(pathname: string) {
   if (pathname === '/') return true;
   return publicPrefixes.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+function isFinanceCollectionPage(pathname: string) {
+  return pathname === '/finance/fee-collect' || pathname.startsWith('/finance/fee-collect/') || pathname === '/finance/collections' || pathname.startsWith('/finance/collections/');
 }
 
 export function RootAppShell({ children }: { children: React.ReactNode }) {
@@ -28,7 +33,9 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
 
   if (!user) return <>{children}</>;
 
-  const allowed = isRouteAllowed(user, pathname);
+  const role = normalizeUserRole(user.role) || user.role;
+  const financeCollectionAllowed = isFinanceCollectionPage(pathname) && financeCollectionRoles.includes(String(role));
+  const allowed = financeCollectionAllowed || isRouteAllowed(user, pathname);
 
   return (
     <ShellProvider>
