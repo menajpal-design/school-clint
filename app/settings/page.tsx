@@ -10,6 +10,7 @@ import { getAppControlSettings, getClosureDaysCount, getHolidaySettings, setAppC
 
 const weekDays = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 const weekDaysBn: Record<string, string> = { Saturday: "শনিবার", Sunday: "রবিবার", Monday: "সোমবার", Tuesday: "মঙ্গলবার", Wednesday: "বুধবার", Thursday: "বৃহস্পতিবার", Friday: "শুক্রবার" };
+const defaultHoliday = { enabled: true, weeklyClosedDays: [] as string[], closureStartDate: "", closureEndDate: "", closureReason: "" };
 const defaultColors = { presentColor: "#bbf7d0", absentColor: "#fecaca", leaveColor: "#bae6fd", weekendColor: "#ddd6fe", closureColor: "#fed7aa", lateColor: "#fef3c7" };
 
 export default function SettingsPage() {
@@ -17,7 +18,7 @@ export default function SettingsPage() {
 }
 
 function HeadSettings() {
-  const [holiday, setHoliday] = useState<any>({ enabled: true, weeklyClosedDays: [], closureStartDate: "", closureEndDate: "", closureReason: "" });
+  const [holiday, setHoliday] = useState<any>(defaultHoliday);
   const [colors, setColors] = useState<any>(defaultColors);
   const [smsKey, setSmsKey] = useState("");
   const [smsEnabled, setSmsEnabled] = useState(true);
@@ -31,7 +32,18 @@ function HeadSettings() {
   const closureDays = useMemo(() => getClosureDaysCount(holiday.closureStartDate, holiday.closureEndDate), [holiday.closureStartDate, holiday.closureEndDate]);
 
   useEffect(() => {
-    try { setHoliday({ enabled: true, weeklyClosedDays: [], closureStartDate: "", closureEndDate: "", closureReason: "", ...getHolidaySettings() }); } catch {}
+    try {
+      const savedHoliday: any = getHolidaySettings() || {};
+      setHoliday({
+        ...defaultHoliday,
+        ...savedHoliday,
+        enabled: savedHoliday.enabled ?? true,
+        weeklyClosedDays: Array.isArray(savedHoliday.weeklyClosedDays) ? savedHoliday.weeklyClosedDays : [],
+        closureStartDate: savedHoliday.closureStartDate || "",
+        closureEndDate: savedHoliday.closureEndDate || "",
+        closureReason: savedHoliday.closureReason || "",
+      });
+    } catch {}
     try { setColors({ ...defaultColors, ...getAppControlSettings() }); } catch {}
     apiClient.get("/site-settings/app-controls", { skipToast: true }).then((data: any) => {
       if (data?.settings) {
