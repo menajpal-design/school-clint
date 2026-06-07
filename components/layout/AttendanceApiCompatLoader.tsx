@@ -4,6 +4,7 @@ import "@/lib/attendance-api-compat";
 import { useEffect } from "react";
 import { StudentFormExtraFields } from "@/components/layout/StudentFormExtraFields";
 import { StoragePlanVisibilityFix } from "@/components/layout/StoragePlanVisibilityFix";
+import { FinanceGlobalPeriodFilter } from "@/components/layout/FinanceGlobalPeriodFilter";
 
 function hideStudentFeeField() {
   if (!window.location.pathname.includes("/institution/students") && !window.location.pathname.includes("/institution/admission")) return;
@@ -39,5 +40,5 @@ export function AttendanceApiCompatLoader() {
     const id = window.setInterval(run, 500);
     return () => window.clearInterval(id);
   }, []);
-  return <><StudentFormExtraFields /><StoragePlanVisibilityFix /></>;
+  return <><StudentFormExtraFields /><StoragePlanVisibilityFix /><FinanceGlobalPeriodFilter /></>;
 }
