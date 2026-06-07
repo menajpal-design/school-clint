@@ -28,7 +28,7 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
 
   if (!user) return <>{children}</>;
 
-  const allowed = isRouteAllowed(pathname, user.role);
+  const allowed = isRouteAllowed(user, pathname);
 
   return (
     <ShellProvider>
@@ -47,16 +47,10 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
                       </svg>
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900">Access Denied</h1>
-                    <p className="text-slate-600 text-sm">
-                      আপনি এই পেজটি দেখার জন্য অনুমোদিত নন।
-                    </p>
-                    <p className="text-slate-400 text-xs">
-                      (You do not have permission to access this page.)
-                    </p>
+                    <p className="text-slate-600 text-sm">আপনি এই পেজটি দেখার জন্য অনুমোদিত নন।</p>
+                    <p className="text-slate-400 text-xs">(You do not have permission to access this page.)</p>
                     <div className="pt-2">
-                      <a href="/dashboard" className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
-                        Back to Dashboard
-                      </a>
+                      <a href="/dashboard" className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">Back to Dashboard</a>
                     </div>
                   </div>
                 </div>
