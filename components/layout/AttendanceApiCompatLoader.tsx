@@ -16,10 +16,26 @@ function hideStudentFeeField() {
   });
 }
 
+function fixPublicButtonColors() {
+  if (!["/admission", "/"].includes(window.location.pathname)) return;
+  document.querySelectorAll("button, a").forEach((el) => {
+    const text = (el.textContent || "").trim().toLowerCase();
+    if (text.includes("submit application") || text.includes("learn more")) {
+      const node = el as HTMLElement;
+      node.style.color = "#ffffff";
+      node.style.backgroundColor = "#4338ca";
+      node.style.borderColor = "#4338ca";
+      node.style.opacity = "1";
+      node.style.textShadow = "none";
+    }
+  });
+}
+
 export function AttendanceApiCompatLoader() {
   useEffect(() => {
-    hideStudentFeeField();
-    const id = window.setInterval(hideStudentFeeField, 500);
+    const run = () => { hideStudentFeeField(); fixPublicButtonColors(); };
+    run();
+    const id = window.setInterval(run, 500);
     return () => window.clearInterval(id);
   }, []);
   return <StudentFormExtraFields />;
