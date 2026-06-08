@@ -1,14 +1,18 @@
 const GATEWAYFLOW_ORIGIN = "https://payment-gateway-server-ten.vercel.app";
 const GATEWAYFLOW_SCRIPT = `${GATEWAYFLOW_ORIGIN}/widget.js`;
 
-type GatewayFlowOpenOptions = {
-  apiKey: string;
-  domain: string;
+export type GatewayFlowOpenOptions = {
+  apiKey?: string;
+  domain?: string;
   amount: number;
-  orderId: string;
+  callback?: string;
+  orderId?: string;
+  customerName?: string;
+  customerPhone?: string;
   receiverNumber?: string;
   paymentMethods?: string[];
-  callback?: string;
+  preferredMethods?: string[];
+  onComplete?: (result: any) => void;
 };
 
 declare global {
