@@ -2,17 +2,23 @@
 
 import { getPrintInstitution, makeQrDataUrl, printHtml } from "@/lib/export-utils";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { normalizeStudent } from "@/lib/student-normalizer";
 
 const safe = (value: unknown) => String(value ?? "-").replace(/[&<>'\"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char] || char));
 const receiptNoOf = (payment: any) => payment?.receiptNumber || payment?.receiptNo || `RCPT-${String(payment?._id || Date.now()).slice(-8).toUpperCase()}`;
-const nameOf = (payment: any, student: any) => payment?.studentId?.userId?.name || payment?.studentId?.name || student?.userId?.name || student?.name || "Student";
-const metaOf = (payment: any, student: any) => ({
-  roll: payment?.studentId?.rollNumber || student?.rollNumber || student?.roll || "-",
-  className: payment?.studentId?.classId?.name || student?.classId?.name || student?.className || student?.class || "-",
-  section: payment?.studentId?.sectionId?.name || student?.sectionId?.name || student?.sectionName || student?.section || "-",
-  guardian: payment?.studentId?.guardianName || student?.guardianName || student?.parentName || "-",
-  phone: payment?.studentId?.guardianPhone || student?.guardianPhone || student?.userId?.phone || "-",
-});
+const first = (...values: any[]) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "" && !["-", "Student", "Unnamed student"].includes(String(value).trim())) || "";
+const studentInfoOf = (payment: any, student: any) => {
+  const normalized = normalizeStudent(student || payment?.student || payment?.studentId || {});
+  const nested = payment?.studentId || {};
+  return {
+    name: first(normalized.name, payment?.studentName, nested?.userId?.name, nested?.name, "Student"),
+    roll: first(normalized.roll, payment?.rollNumber, payment?.roll, nested?.rollNumber, nested?.roll, "-"),
+    className: first(normalized.className, payment?.className, nested?.className, nested?.classId?.name, payment?.classId?.name, "-"),
+    section: first(normalized.section, payment?.sectionName, payment?.section, nested?.sectionName, nested?.sectionId?.name, "-"),
+    guardian: first(normalized.guardianName, payment?.guardianName, nested?.guardianName, student?.parentName, "-"),
+    phone: first(normalized.guardianPhone, payment?.guardianPhone, nested?.guardianPhone, normalized.phone, nested?.userId?.phone, "-"),
+  };
+};
 function amountInWords(value: number) {
   const n = Math.round(Number(value || 0));
   if (!Number.isFinite(n)) return "Zero taka only";
@@ -33,11 +39,10 @@ function encodeVerifyData(payload: any) {
 }
 export function buildFeeReceiptVerifyUrl(payment: any, student: any, institutionName?: string) {
   const receiptNo = receiptNoOf(payment);
-  const studentName = nameOf(payment, student);
-  const meta = metaOf(payment, student);
+  const info = studentInfoOf(payment, student);
   const amount = Number(payment?.amount || 0);
   const paymentDate = payment?.paymentDate || payment?.paidAt || payment?.createdAt || new Date();
-  const payload = { type: "premium_fee_receipt", receiptNumber: receiptNo, institution: institutionName || "EASY SCHOOL", student: studentName, roll: meta.roll, className: meta.className, section: meta.section, amount, paymentDate, method: payment?.paymentMethod || "Cash", generatedAt: new Date().toISOString() };
+  const payload = { type: "premium_fee_receipt", receiptNumber: receiptNo, institution: institutionName || "EASY SCHOOL", student: info.name, roll: info.roll, className: info.className, section: info.section, amount, paymentDate, method: payment?.paymentMethod || payment?.method || "Cash", generatedAt: new Date().toISOString() };
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   return `${origin}/verify/fee-receipt?data=${encodeURIComponent(encodeVerifyData(payload))}`;
 }
@@ -45,8 +50,7 @@ export function buildFeeReceiptVerifyUrl(payment: any, student: any, institution
 export async function printPremiumFeeReceipt(payment: any, student: any, institutionProfile?: any) {
   const printInstitution = getPrintInstitution();
   const institution = { name: institutionProfile?.name || printInstitution.name || "EASY SCHOOL", address: institutionProfile?.address || printInstitution.address || "", phone: institutionProfile?.phone || printInstitution.phone || "", email: institutionProfile?.email || printInstitution.email || "", logo: institutionProfile?.logo || printInstitution.logo || "", eiin: institutionProfile?.eiin || institutionProfile?.EIIN || "", website: institutionProfile?.website || "" };
-  const studentName = nameOf(payment, student);
-  const meta = metaOf(payment, student);
+  const info = studentInfoOf(payment, student);
   const receiptNo = receiptNoOf(payment);
   const paymentDate = payment?.paymentDate || payment?.paidAt || payment?.createdAt || new Date();
   const amount = Number(payment?.amount || 0);
@@ -58,9 +62,9 @@ export async function printPremiumFeeReceipt(payment: any, student: any, institu
   const body = `<main class="premium-receipt">
     <section class="hero"><div class="brand-left"><div class="logo">${institution.logo ? `<img src="${safe(institution.logo)}"/>` : "ES"}</div><div><p class="eyebrow">Official School Money Receipt</p><h1>${safe(institution.name)}</h1><p>${safe(institution.address || "")}</p><p>${[institution.phone, institution.email].filter(Boolean).map(safe).join(" | ")}</p>${institution.eiin || institution.website ? `<p>${institution.eiin ? `EIIN: ${safe(institution.eiin)}` : ""}${institution.eiin && institution.website ? " | " : ""}${institution.website ? safe(institution.website) : ""}</p>` : ""}</div></div><div class="qr"><img src="${qrDataUrl}"/><span>Scan to Verify</span></div></section>
     <section class="invoice-row"><div><p class="eyebrow dark">Premium Receipt</p><h2>Fee Payment Receipt</h2><p class="muted">This receipt includes QR verification. Scan QR to verify receipt details.</p></div><div class="stamp">PAID</div></section>
-    <section class="summary"><div><span>Receipt No</span><b>${safe(receiptNo)}</b></div><div><span>Date</span><b>${safe(formatDate(paymentDate))}</b></div><div><span>Method</span><b>${safe(payment?.paymentMethod || "Cash")}</b></div><div><span>Status</span><b>${safe(payment?.status || "Paid")}</b></div></section>
-    <section class="cards"><div class="card"><h3>Student Information</h3><p><b>Name</b><span>${safe(studentName)}</span></p><p><b>Roll</b><span>${safe(meta.roll)}</span></p><p><b>Class</b><span>${safe(meta.className)}</span></p><p><b>Section</b><span>${safe(meta.section)}</span></p><p><b>Guardian</b><span>${safe(meta.guardian)}</span></p><p><b>Phone</b><span>${safe(meta.phone)}</span></p></div><div class="card amount-card"><h3>Amount Received</h3><div class="amount">${safe(formatCurrency(amount))}</div><p class="words">${safe(amountInWords(amount))}</p><p><b>Fee Type</b><span>${safe(feeType)}</span></p><p><b>Month/Year</b><span>${safe(monthYear)}</span></p></div></section>
-    <section class="table-wrap"><table><thead><tr><th>SL</th><th>Description</th><th>Month/Year</th><th>Method</th><th>Date</th><th class="right">Amount</th></tr></thead><tbody><tr><td>01</td><td>${safe(feeType)}</td><td>${safe(monthYear)}</td><td>${safe(payment?.paymentMethod || "Cash")}</td><td>${safe(formatDate(paymentDate))}</td><td class="right">${safe(formatCurrency(amount))}</td></tr></tbody><tfoot><tr><td colspan="5" class="right">Total Paid</td><td class="right">${safe(formatCurrency(amount))}</td></tr></tfoot></table></section>
+    <section class="summary"><div><span>Receipt No</span><b>${safe(receiptNo)}</b></div><div><span>Date</span><b>${safe(formatDate(paymentDate))}</b></div><div><span>Method</span><b>${safe(payment?.paymentMethod || payment?.method || "Cash")}</b></div><div><span>Status</span><b>${safe(payment?.status || "Paid")}</b></div></section>
+    <section class="cards"><div class="card"><h3>Student Information</h3><p><b>Name</b><span>${safe(info.name)}</span></p><p><b>Roll</b><span>${safe(info.roll)}</span></p><p><b>Class</b><span>${safe(info.className)}</span></p><p><b>Section</b><span>${safe(info.section)}</span></p><p><b>Guardian</b><span>${safe(info.guardian)}</span></p><p><b>Phone</b><span>${safe(info.phone)}</span></p></div><div class="card amount-card"><h3>Amount Received</h3><div class="amount">${safe(formatCurrency(amount))}</div><p class="words">${safe(amountInWords(amount))}</p><p><b>Fee Type</b><span>${safe(feeType)}</span></p><p><b>Month/Year</b><span>${safe(monthYear)}</span></p></div></section>
+    <section class="table-wrap"><table><thead><tr><th>SL</th><th>Description</th><th>Month/Year</th><th>Method</th><th>Date</th><th class="right">Amount</th></tr></thead><tbody><tr><td>01</td><td>${safe(feeType)}</td><td>${safe(monthYear)}</td><td>${safe(payment?.paymentMethod || payment?.method || "Cash")}</td><td>${safe(formatDate(paymentDate))}</td><td class="right">${safe(formatCurrency(amount))}</td></tr></tbody><tfoot><tr><td colspan="5" class="right">Total Paid</td><td class="right">${safe(formatCurrency(amount))}</td></tr></tfoot></table></section>
     <section class="note"><b>Verify:</b> Scan the QR code to open the receipt verification page. Receipt No: ${safe(receiptNo)}</section>
     <section class="signatures"><div><i></i><b>Accounts Officer</b><small>${safe(collectedBy)}</small></div><div><i></i><b>Student / Guardian</b><small>Received copy</small></div><div><em>SEAL</em><b>Institution Seal</b><small>Verified receipt</small></div></section><footer><span>${safe(institution.name)}</span><span>Generated: ${safe(new Date().toLocaleString())}</span></footer>
   </main>`;
