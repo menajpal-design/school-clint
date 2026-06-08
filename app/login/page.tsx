@@ -36,8 +36,8 @@ const roleRedirects: Partial<Record<UserRole, string>> = {
   class_teacher: "/attendance/mark",
   subject_teacher: "/academic/results",
   finance_officer: "/finance",
-  student: "/attendance/my-attendance",
-  parent: "/parent-portal",
+  student: "/dashboard",
+  parent: "/dashboard",
   staff: "/profile",
   teacher: "/academic/results",
   committee_member: "/committee",
@@ -62,15 +62,12 @@ function getLoginFailureMessage(error: any): string {
   if (error?.message === 'Network Error' || error?.code === 'ERR_NETWORK') return 'সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না। ইন্টারনেট বা সার্ভার চেক করুন।';
 
   if (Array.isArray(validationErrors) && validationErrors.length) {
-    const message = validationErrors
-      .map((item: any) => {
-        if (typeof item === 'string') return item;
-        if (item?.message) return item.message;
-        if (item?.field) return `${item.field}: ${item.message || 'ভুল ইনপুট'}`;
-        return 'ভুল ইনপুট';
-      })
-      .filter(Boolean)
-      .join(', ');
+    const message = validationErrors.map((item: any) => {
+      if (typeof item === 'string') return item;
+      if (item?.message) return item.message;
+      if (item?.field) return `${item.field}: ${item.message || 'ভুল ইনপুট'}`;
+      return 'ভুল ইনপুট';
+    }).filter(Boolean).join(', ');
     return message || 'ইউজারনেম/ইমেইল/মোবাইল এবং পাসওয়ার্ড সঠিক দিন।';
   }
 
@@ -96,11 +93,7 @@ function showToast(addToast: ReturnType<typeof useToast>['addToast'], toast: { t
 async function readJsonOrText(response: Response) {
   const text = await response.text();
   if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { message: text };
-  }
+  try { return JSON.parse(text); } catch { return { message: text }; }
 }
 
 async function fetchCsrfToken() {
@@ -109,9 +102,7 @@ async function fetchCsrfToken() {
     if (!response.ok) return '';
     const data = await readJsonOrText(response);
     return data?.csrfToken || '';
-  } catch {
-    return '';
-  }
+  } catch { return ''; }
 }
 
 async function loginSafely(payload: { identifier: string; password: string }) {
@@ -119,22 +110,9 @@ async function loginSafely(payload: { identifier: string; password: string }) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (csrfToken) headers[process.env.NEXT_PUBLIC_CSRF_HEADER_NAME || 'x-csrf-token'] = csrfToken;
 
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers,
-    credentials: 'include',
-    body: JSON.stringify(payload),
-  });
-
+  const response = await fetch(`${API_URL}/auth/login`, { method: 'POST', headers, credentials: 'include', body: JSON.stringify(payload) });
   const data = await readJsonOrText(response);
-  if (!response.ok) {
-    throw {
-      message: data?.message || response.statusText || 'Login failed',
-      status: response.status,
-      error: { ...(typeof data === 'object' && data ? data : {}), status: response.status },
-    };
-  }
-
+  if (!response.ok) throw { message: data?.message || response.statusText || 'Login failed', status: response.status, error: { ...(typeof data === 'object' && data ? data : {}), status: response.status } };
   return data as { token: string; user: User };
 }
 
@@ -158,38 +136,16 @@ export default function LoginPage() {
       if (sub) {
         setIsSubdomain(true);
         setSubdomainName(sub);
-
-        // Fetch public schools passing subdomain and domain to verify existence
-        api.admissions.schools({ subdomain: sub, domain: hostname })
-          .then((res: any) => {
-            const list = res.schools || [];
-            if (list.length > 0) {
-              setIsValidSubdomain(true);
-            } else {
-              setIsValidSubdomain(false);
-            }
-            setIsChecking(false);
-          })
-          .catch(() => {
-            setIsValidSubdomain(false);
-            setIsChecking(false);
-          });
+        api.admissions.schools({ subdomain: sub, domain: hostname }).then((res: any) => { const list = res.schools || []; setIsValidSubdomain(list.length > 0); setIsChecking(false); }).catch(() => { setIsValidSubdomain(false); setIsChecking(false); });
         return;
       }
     }
-
     const user = authManager.getUser();
-    if (authManager.isAuthenticated()) {
-      router.replace(getLoginRedirect(user));
-      return;
-    }
+    if (authManager.isAuthenticated()) { router.replace(getLoginRedirect(user)); return; }
     setIsChecking(false);
   }, [router]);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { identifier: "", password: "", rememberMe: true },
-  });
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { identifier: "", password: "", rememberMe: true } });
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
@@ -197,15 +153,12 @@ export default function LoginPage() {
     try {
       const payload = { identifier: data.identifier.trim(), password: data.password };
       const response = await loginSafely(payload);
-
       apiClient.setToken(response.token, data.rememberMe);
       authManager.setUser(response.user, data.rememberMe);
-
       if (typeof window !== "undefined") {
         if (response.user.institutionId) localStorage.setItem("selectedInstitutionId", String(response.user.institutionId));
         if (response.user.institution?.name) localStorage.setItem("selectedInstitutionName", response.user.institution.name);
       }
-
       showToast(addToast, { title: "Login successful", message: "Redirecting to your workspace.", type: "success", duration: 1800 });
       router.replace(getLoginRedirect(response.user));
     } catch (error: any) {
@@ -214,165 +167,11 @@ export default function LoginPage() {
       const detailMessage = getLoginFailureMessage(error);
       setLoginError(detailMessage);
       showToast(addToast, { title: "লগইন ব্যর্থ", message: detailMessage, type: "error", duration: 6000 });
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   };
 
-  const startDemoSession = () => {
-    if (demoRole === 'admin' || demoRole === 'super_admin') {
-      setDemoRole('head');
-      showToast(addToast, { title: 'Demo role not available', message: 'Admin and Super Admin are not available in demo mode.', type: 'warning', duration: 2500 });
-      return;
-    }
+  if (isChecking) return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>;
+  if (isSubdomain && !isValidSubdomain) return <SchoolNotFound subdomain={subdomainName} />;
 
-    const user: User = {
-      id: `demo-${demoRole}`,
-      name: `${demoRole.replace(/_/g, ' ')} Demo`,
-      email: `${demoRole}@demo.local`,
-      role: demoRole,
-      isActive: true,
-      permissions: ['*'],
-      institutionId: 'demo-institution',
-    };
-
-    authManager.setDemoUser(user);
-    showToast(addToast, { title: 'Demo mode enabled', message: 'All data will stay in your browser only.', type: 'success', duration: 1800 });
-    router.replace(getLoginRedirect(user));
-  };
-
-  if (isChecking) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-7 w-7 animate-spin text-slate-700" />
-      </main>
-    );
-  }
-
-  if (isSubdomain && !isValidSubdomain) {
-    return <SchoolNotFound subdomain={subdomainName} />;
-  }
-
-  return (
-    <main className="grid min-h-screen bg-background lg:grid-cols-[0.95fr_1.05fr]">
-      <section className="hidden border-r border-border bg-background px-10 py-12 lg:flex lg:flex-col lg:justify-between">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">E</div>
-          <div>
-            <p className="font-semibold leading-none text-slate-950">EASY SCHOOL</p>
-            <p className="mt-1 text-xs text-slate-500">School/Madrasah Management</p>
-          </div>
-        </Link>
-
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-            Secure role-based access
-          </div>
-          <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-foreground">Run every school operation from one professional dashboard.</h1>
-          <p className="mt-4 max-w-lg text-sm leading-7 text-slate-600">Manage academics, attendance, finance, ID cards, notices, documents and parent communication with clean permissions for every role.</p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3 text-sm">
-          {["Academic", "Finance", "ID Cards"].map((item) => (
-            <div key={item} className="rounded-lg border border-border p-3 font-medium text-muted-foreground">{item}</div>
-          ))}
-        </div>
-      </section>
-
-      <section className="flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md border-border bg-card shadow-sm">
-          <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl">Login to EASY SCHOOL</CardTitle>
-            <CardDescription>Use your username, email or mobile number and password to continue.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <label className="space-y-1 text-sm font-medium text-slate-700">
-                <span>Username, email or mobile</span>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input {...register("identifier")} type="text" autoComplete="username" placeholder="username, you@example.com or 01XXXXXXXXX" className="pl-9" />
-                </div>
-                {errors.identifier && <span className="text-xs font-medium text-red-600">{errors.identifier.message}</span>}
-              </label>
-
-              <label className="space-y-1 text-sm font-medium text-slate-700">
-                <span>Password</span>
-                <div className="relative">
-                  <LockKeyhole className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                  <Input {...register("password")} type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" className="pl-9 pr-10" />
-                  <button type="button" className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:bg-muted" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? "Hide password" : "Show password"}>
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {errors.password && <span className="text-xs font-medium text-red-600">{errors.password.message}</span>}
-              </label>
-
-              {loginError && (
-                <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />
-                  <span>{loginError}</span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <label className="flex items-center gap-2 text-slate-600">
-                  <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-slate-900" {...register("rememberMe")} />
-                  Remember me
-                </label>
-                <Link href="/forgot-password" className="font-medium text-foreground hover:underline">Forgot password?</Link>
-              </div>
-
-              <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Logging in</>) : (<>Login<ArrowRight className="ml-2 h-4 w-4" /></>)}
-              </Button>
-            </form>
-
-            {!isSubdomain && (
-              <div className="mt-6 rounded-lg bg-popover p-4 text-sm text-muted-foreground">
-                New institution or account?{" "}
-                <Link href="/register" className="font-semibold text-slate-950 hover:underline">Register here</Link>
-              </div>
-            )}
-
-            {!isSubdomain && (
-              <>
-                <div className="mt-4 rounded-lg border border-red-200 bg-red-50/80 p-4">
-                  <div className="flex gap-2 text-sm text-blue-900">
-                    <span className="font-semibold">💡 Tip:</span>
-                    <p>{loginError ? "Login failed? Try the demo mode below to explore the system as a student or teacher, or contact your administrator." : "Students and teachers can use the demo mode below to explore the system without credentials."}</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-2 rounded-lg border border-border bg-popover p-4">
-                  <p className="text-sm font-semibold text-foreground">Test Credentials (Development)</p>
-                  <div className="space-y-2 text-xs text-muted-foreground">
-                    <div><p className="font-medium">📚 Student:</p><code className="font-mono bg-green-100 px-1">student@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code></div>
-                    <div><p className="font-medium">👨‍🏫 Teacher:</p><code className="font-mono bg-green-100 px-1">teacher@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code></div>
-                    <div><p className="font-medium">🏫 Head:</p><code className="font-mono bg-green-100 px-1">head@demoschool.edu</code> / <code className="font-mono bg-green-100 px-1">admin123</code></div>
-                    <p className="text-xs italic text-green-700 pt-1">All demo credentials use password: <code className="font-mono bg-green-100 px-1">admin123</code>. Platform admin and super admin are not included in demo login.</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-lg border border-dashed border-border bg-popover p-4">
-                  <div className="mb-3">
-                    <p className="text-sm font-semibold text-foreground">Demo login</p>
-                    <p className="text-xs text-muted-foreground">No server, no SMS, no mail, all data stays local.</p>
-                  </div>
-                  <label className="space-y-1 text-sm font-medium text-slate-700">
-                    <span>Demo role</span>
-                    <select value={demoRole} onChange={(event) => setDemoRole(event.target.value as UserRole)} className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
-                      {demoRoles.map((role) => (<option key={role} value={role}>{role.replace(/_/g, ' ')}</option>))}
-                    </select>
-                  </label>
-                  <Button type="button" onClick={startDemoSession} className="mt-3 w-full" variant="secondary">Enter demo mode</Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </section>
-    </main>
-  );
+  return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4"><div className="w-full max-w-md"><div className="mb-8 text-center"><Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-indigo-600"><div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center"><span className="text-white font-bold">E</span></div>EasySchool</Link><p className="mt-2 text-sm text-gray-600">Multi-tenant School Management Platform</p></div><Card className="shadow-xl border-0"><CardHeader className="space-y-1 text-center"><CardTitle className="text-2xl font-bold">Welcome back</CardTitle><CardDescription>Enter your credentials to access your dashboard</CardDescription></CardHeader><CardContent><form onSubmit={handleSubmit(onSubmit)} className="space-y-4">{loginError && <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" /><span>{loginError}</span></div>}<div className="space-y-2"><label className="text-sm font-medium text-gray-700">Username, Email or Mobile</label><div className="relative"><Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><Input {...register("identifier")} placeholder="Enter username, email or mobile" className="pl-10" disabled={isLoading} /></div>{errors.identifier && <p className="text-sm text-red-600">{errors.identifier.message}</p>}</div><div className="space-y-2"><label className="text-sm font-medium text-gray-700">Password</label><div className="relative"><LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><Input {...register("password")} type={showPassword ? "text" : "password"} placeholder="Enter password" className="pl-10 pr-10" disabled={isLoading} /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" disabled={isLoading}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>{errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}</div><Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : <>Sign in<ArrowRight className="ml-2 h-4 w-4" /></>}</Button></form><div className="mt-6 space-y-4"><div className="relative"><div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-500">Demo Access</span></div></div><div className="grid grid-cols-2 gap-2"><select value={demoRole} onChange={(e) => setDemoRole(e.target.value as UserRole)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">{demoRoles.map((role) => <option key={role} value={role}>{role.replace('_', ' ')}</option>)}</select><Button variant="outline" type="button" onClick={() => {}} disabled={isLoading}><ShieldCheck className="mr-2 h-4 w-4" />Demo</Button></div></div></CardContent></Card><p className="mt-6 text-center text-sm text-gray-600">Don't have an account? <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">Register your school</Link></p></div></div>;
 }
