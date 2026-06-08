@@ -12,6 +12,7 @@ const ALL_ROLES: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head',
 const PLATFORM_ADMIN: UserRole[] = ['admin', 'super_admin'];
 const SCHOOL_LEADERS: UserRole[] = ['head', 'assistant_head'];
 const SCHOOL_LEADER_ADMIN: UserRole[] = [...SCHOOL_LEADERS];
+const BILLING_ROLES: UserRole[] = ['admin', 'super_admin', 'head'];
 const TEACHERS: UserRole[] = ['class_teacher', 'subject_teacher', 'teacher'];
 const EMPLOYEES: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff'];
 const SCHOOL_USERS: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'];
@@ -57,6 +58,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Backup & Restore', href: '/admin/backup', roles: ['super_admin'] },
   ] },
   { label: 'Dashboard', href: '/dashboard', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS], icon: 'LayoutGrid' },
+  { label: 'Billing & Subscription', href: '/billing', roles: BILLING_ROLES, icon: 'CreditCard' },
   { label: 'Notice Board', href: '/notices', roles: NOTICE_VIEW, icon: 'Bell' },
   { label: 'Holidays', href: '/holidays', roles: HOLIDAY_VIEW, icon: 'CalendarDays' },
   { label: 'ID Card', href: '/id-cards', roles: ID_CARD_OWN, icon: 'CreditCard', children: [
@@ -69,8 +71,7 @@ export const menuConfig: MenuItemConfig[] = [
   ] },
   { label: 'Institution', href: '/institution', roles: [...SCHOOL_LEADERS, 'class_teacher'], icon: 'Building2', children: [
     { label: 'Profile', href: '/institution/profile', roles: SCHOOL_LEADERS },
-    { label: 'Billing & Subscription', href: '/institution/billing', roles: SCHOOL_LEADERS },
-    { label: 'SMS Balance', href: '/billing', roles: SCHOOL_LEADERS },
+    { label: 'Billing & Subscription', href: '/billing', roles: ['head'] },
     { label: 'Finance Audit', href: '/institution/finance-audit', roles: SCHOOL_LEADERS },
     { label: 'Students', href: '/institution/students', roles: [...SCHOOL_LEADERS, 'class_teacher'] },
     { label: 'Pending Admissions', href: '/institution/pending-admissions', roles: ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'] },
