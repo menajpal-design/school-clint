@@ -32,10 +32,12 @@ export default function BillingValidityPanel() {
     const expiry = getDateValue(billing);
     const remainingDays = daysBetween(expiry);
     const cycle = billing.billingCycle === "yearly" ? "yearly" : "monthly";
-    const due = calculatePlanDue(billing.planCode || "students_100", cycle, billing.useEasySchoolStorage !== false, Number(billing.smsChargeAmount || 0));
+    const due = calculatePlanDue(billing.planCode || "students_100", cycle, billing.useEasySchoolStorage !== false);
+    const smsChargeAmount = Number(billing.smsChargeAmount || 0);
     const paid = Number(billing.receivedAmount || 0);
-    const paidDays = cycle === "yearly" ? 365 : 30;
-    return { billing, plan, expiry, remainingDays, cycle, due, paid, paidDays };
+    const paidDays = Number(billing.paidDays || (cycle === "yearly" ? 365 : 30));
+    const total = Number(billing.monthlyBillAmount || billing.dueAmount || 0) || Number(due.total || 0) + smsChargeAmount;
+    return { billing, plan, expiry, remainingDays, cycle, due, paid, paidDays, total };
   }, [institution]);
 
   if (failed || !institution) return null;
@@ -49,7 +51,7 @@ export default function BillingValidityPanel() {
       </div>
       <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-semibold text-blue-800"><CreditCard className="h-4 w-4" /> এই পেমেন্টে</div>
-        <div className="mt-2 text-2xl font-bold text-blue-900">{formatCurrency(info.paid || info.due.total || 0)}</div>
+        <div className="mt-2 text-2xl font-bold text-blue-900">{formatCurrency(info.paid || info.total || 0)}</div>
         <div className="mt-1 text-xs text-blue-700">{info.cycle === "yearly" ? "বার্ষিক" : "মাসিক"} · প্রায় {info.paidDays} দিন · {info.plan?.name}</div>
       </div>
       <div className="rounded-2xl border border-purple-200 bg-purple-50 p-4 shadow-sm">
