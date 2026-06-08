@@ -3,29 +3,21 @@
 import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 import { Button } from '@/components/ui/button'
 import { Download, FileText, Printer, Mail } from 'lucide-react'
 import { api } from '@/lib/api'
 import { downloadBlob } from '@/lib/utils'
-import { downloadElementPdf, printElement } from '@/lib/export-utils'
 
 export function DownloadButtons({ targetRef, formData, filename = 'id-card', cardId, printTitle = 'Print ID Card', emailSubject = 'ID Card' }: { targetRef: React.RefObject<HTMLElement> | null; formData?: any; filename?: string; cardId?: string; printTitle?: string; emailSubject?: string }) {
   const hasPreviewTarget = Boolean(targetRef?.current)
   const hasFormData = Boolean(formData)
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
 
-  const copyComputedStyles = (clone: HTMLElement, source: Element) => {
-    const computed = window.getComputedStyle(source)
-    for (let index = 0; index < computed.length; index += 1) {
-      const property = computed.item(index)
-      clone.style.setProperty(property, computed.getPropertyValue(property), computed.getPropertyPriority(property))
-    }
-
-    const cloneChildren = Array.from(clone.children) as HTMLElement[]
-    const sourceChildren = Array.from(source.children) as Element[]
-    cloneChildren.forEach((child, index) => {
-      if (sourceChildren[index]) copyComputedStyles(child, sourceChildren[index])
-    })
+  const findCardElement = () => {
+    const root = targetRef?.current
+    if (!root) return null
+    return (root.querySelector('.professional-id-card, .teacher-staff-landscape-id-card, .teacher-staff-id-card, .student-id-card, #student-card, .admit-card') as HTMLElement) || root
   }
 
   const inlineImages = async (root: HTMLElement) => {
@@ -34,7 +26,7 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
       try {
         const src = img.getAttribute('src') || ''
         if (!src || src.startsWith('data:') || src.startsWith('blob:')) return
-        const res = await fetch(src)
+        const res = await fetch(src, { mode: 'cors', credentials: 'omit' })
         if (!res.ok) return
         const blob = await res.blob()
         const reader = new FileReader()
@@ -44,128 +36,89 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
           reader.readAsDataURL(blob)
         })
         img.setAttribute('src', dataUrl)
-      } catch (e) {
-        // Leave the original source if the browser cannot fetch it.
-      }
+      } catch {}
     }))
   }
 
+  const forcePrintColor = (root: HTMLElement) => {
+    const all = [root, ...Array.from(root.querySelectorAll('*'))] as HTMLElement[]
+    all.forEach((el) => {
+      el.style.setProperty('-webkit-print-color-adjust', 'exact')
+      el.style.setProperty('print-color-adjust', 'exact')
+      el.style.setProperty('color-adjust', 'exact')
+      el.style.boxSizing = 'border-box'
+      if (el.style.transform && el !== root) el.style.transform = el.style.transform
+    })
+  }
+
   const captureElement = async () => {
-    if (!targetRef?.current) return null
+    const card = findCardElement()
+    if (!card) return null
     await document.fonts?.ready?.catch(() => undefined)
-    // Use fixed dimensions to ensure consistent output across devices
-    const isAdmitCard = targetRef.current.classList.contains('admit-card')
-    // Convert desired mm sizes to pixels using 96 DPI assumption: 1in = 25.4mm, 96px = 1in
-    const mmToPx = (mm: number) => Math.round((mm / 25.4) * 96)
-    // A4 content width = 210mm - 2*12mm margins = 186mm
-    const captureWidth = isAdmitCard ? mmToPx(186) : mmToPx(186)
-    // Use a fixed aspect ratio matching our admit card pixel dimensions (850x600 -> height from width)
-    const captureHeight = Math.round(captureWidth * (600 / 850))
+    const rect = card.getBoundingClientRect()
+    const width = Math.ceil(rect.width || card.offsetWidth || 800)
+    const height = Math.ceil(rect.height || card.offsetHeight || 500)
+    const wrapper = document.createElement('div')
+    wrapper.style.position = 'fixed'
+    wrapper.style.left = '-10000px'
+    wrapper.style.top = '0'
+    wrapper.style.width = `${width}px`
+    wrapper.style.height = `${height}px`
+    wrapper.style.overflow = 'hidden'
+    wrapper.style.margin = '0'
+    wrapper.style.padding = '0'
+    wrapper.style.background = '#ffffff'
+    wrapper.style.display = 'block'
+    wrapper.style.boxSizing = 'border-box'
+    wrapper.style.setProperty('-webkit-print-color-adjust', 'exact')
+    wrapper.style.setProperty('print-color-adjust', 'exact')
 
-    const currentZoom = window.devicePixelRatio || 1
+    const cloned = card.cloneNode(true) as HTMLElement
+    cloned.style.margin = '0'
+    cloned.style.left = '0'
+    cloned.style.top = '0'
+    cloned.style.transform = 'none'
+    cloned.style.zoom = '1'
+    cloned.style.maxWidth = `${width}px`
+    cloned.style.minWidth = `${width}px`
+    cloned.style.width = `${width}px`
+    cloned.style.height = `${height}px`
+    cloned.style.background = cloned.style.background || '#ffffff'
+    cloned.style.overflow = 'hidden'
+    forcePrintColor(cloned)
+    await inlineImages(cloned)
+    wrapper.appendChild(cloned)
+    document.body.appendChild(wrapper)
 
-    // Try capturing inside an off-screen iframe to avoid page zoom/layout influence
     try {
-      const iframe = document.createElement('iframe')
-      iframe.style.position = 'fixed'
-      iframe.style.left = '-9999px'
-      iframe.style.top = '0'
-      iframe.style.width = `${captureWidth}px`
-      iframe.style.height = `${captureHeight}px`
-      iframe.style.border = '0'
-      document.body.appendChild(iframe)
-
-      const idoc = iframe.contentDocument || iframe.contentWindow?.document
-      if (!idoc) throw new Error('No iframe document')
-      idoc.open()
-      idoc.write('<!doctype html><html><head></head><body></body></html>')
-      idoc.close()
-
-      const cloned = targetRef.current.cloneNode(true) as HTMLElement
-      // Reset transforms/zoom on cloned tree
-      const resetStyles = (el: Element) => {
-        if (el instanceof HTMLElement) {
-          el.style.zoom = '1'
-          el.style.transform = 'none'
-        }
-        Array.from(el.children).forEach(resetStyles)
-      }
-      resetStyles(cloned)
-
-      copyComputedStyles(cloned as HTMLElement, targetRef.current)
-      await inlineImages(cloned)
-
-      // Append cloned node into iframe body
-      idoc.body.style.margin = '0'
-      idoc.body.style.background = '#ffffff'
-      idoc.body.appendChild(cloned)
-
-      const scale = Math.max(0.5, 1 / currentZoom)
-      const canvas = await html2canvas(idoc.body as any, {
-        scale: scale,
+      const canvas = await html2canvas(cloned, {
+        scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
         backgroundColor: '#ffffff',
         useCORS: true,
         allowTaint: true,
         foreignObjectRendering: false,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: captureWidth,
-        windowHeight: captureHeight,
+        width,
+        height,
+        windowWidth: width,
+        windowHeight: height,
+        onclone: (doc) => {
+          const style = doc.createElement('style')
+          style.textContent = '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;box-sizing:border-box!important} body{margin:0!important;background:#fff!important}'
+          doc.head.appendChild(style)
+        },
       })
-
-      // Cleanup
-      try { document.body.removeChild(iframe) } catch (e) {}
-      return canvas
-    } catch (err) {
-      // Fallback to original off-screen wrapper method if iframe fails
-      const wrapper = document.createElement('div')
-      wrapper.style.position = 'fixed'
-      wrapper.style.left = '-9999px'
-      wrapper.style.top = '0'
-      wrapper.style.background = 'white'
-      wrapper.style.padding = '0'
-      wrapper.style.width = `${captureWidth}px`
-      wrapper.style.height = `${captureHeight}px`
-      wrapper.style.overflow = 'hidden'
-
-      const cloned = targetRef.current.cloneNode(true) as HTMLElement
-      const forceReset = (el: Element) => {
-        if (el instanceof HTMLElement) {
-          el.style.zoom = '1'
-          el.style.transform = 'none'
-        }
-        Array.from(el.children).forEach(forceReset)
-      }
-      forceReset(cloned)
-
-      copyComputedStyles(cloned, targetRef.current)
-      await inlineImages(cloned)
-      wrapper.appendChild(cloned)
-      document.body.appendChild(wrapper)
-
-      const scale = Math.max(0.5, 1 / currentZoom)
-      const canvas = await html2canvas(wrapper, {
-        scale: scale,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        allowTaint: true,
-        foreignObjectRendering: false,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: captureWidth,
-        windowHeight: captureHeight,
-      })
-
-      document.body.removeChild(wrapper)
-      return canvas
+      return { canvas, width, height }
+    } finally {
+      try { document.body.removeChild(wrapper) } catch {}
     }
   }
 
   const downloadPNG = async () => {
-    const canvas = await captureElement()
-    if (!canvas) return
-
-    const dataUrl = canvas.toDataURL('image/png')
+    const captured = await captureElement()
+    if (!captured) return
+    const dataUrl = captured.canvas.toDataURL('image/png')
     const response = await fetch(dataUrl)
     downloadBlob(await response.blob(), `${filename}.png`)
   }
@@ -176,103 +129,77 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
       downloadBlob(blob, `${filename}.pdf`)
       return
     }
-    await downloadElementPdf(targetRef?.current || null, `${filename}.pdf`)
+    const captured = await captureElement()
+    if (!captured) return
+    const orientation = captured.width >= captured.height ? 'landscape' : 'portrait'
+    const pdf = new jsPDF({ orientation, unit: 'px', format: [captured.width, captured.height], compress: true })
+    pdf.addImage(captured.canvas.toDataURL('image/png'), 'PNG', 0, 0, captured.width, captured.height, undefined, 'FAST')
+    pdf.save(`${filename}.pdf`)
   }
 
-  const print = () => {
+  const print = async () => {
     if (hasFormData) {
       api.idCards.renderPdf(formData).then((blob: Blob) => {
         const url = URL.createObjectURL(blob)
         const popup = window.open(url, '_blank')
         if (popup) {
           popup.focus()
-          setTimeout(() => {
-            try {
-              popup.print()
-            } catch (e) {
-              // ignore
-            }
-          }, 1200)
+          setTimeout(() => { try { popup.print() } catch {} }, 1200)
         }
         setTimeout(() => URL.revokeObjectURL(url), 30000)
       }).catch(() => undefined)
       return
     }
-    printElement(targetRef?.current || null, printTitle)
+    const captured = await captureElement()
+    if (!captured) return
+    const dataUrl = captured.canvas.toDataURL('image/png')
+    const popup = window.open('', '_blank')
+    if (!popup) return
+    popup.document.write(`<!doctype html><html><head><title>${printTitle}</title><style>@page{size:auto;margin:0}html,body{margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0}.wrap img{width:${captured.width}px;height:${captured.height}px;max-width:100vw;max-height:100vh;object-fit:contain}</style></head><body><div class="wrap"><img src="${dataUrl}" /></div></body></html>`)
+    popup.document.close()
+    setTimeout(() => { popup.focus(); popup.print() }, 500)
   }
 
   const email = async () => {
-    if (!targetRef?.current) return
     try {
-      const canvas = await html2canvas(targetRef.current, { scale: 2 })
-      const dataUrl = canvas.toDataURL('image/png')
-      // Try server endpoint first
+      const captured = await captureElement()
+      if (!captured) return
+      const dataUrl = captured.canvas.toDataURL('image/png')
       if (api?.idCards?.email && cardId) {
         await api.idCards.email(cardId, { image: dataUrl, filename: `${filename}.png` })
-        alert('Email sent (server)')
+        alert('Email sent')
         return
       }
-      // Fallback: open mailto (attachments not supported) — instruct user
-      const subject = encodeURIComponent(emailSubject)
-      const body = encodeURIComponent('Please find the attached file. (Attach the generated PNG from the download option)')
-      window.location.href = `mailto:?subject=${subject}&body=${body}`
-    } catch (err) {
-      // fallback
-      const subject = encodeURIComponent(emailSubject)
-      const body = encodeURIComponent('Please find the attached file. (Attach the generated PNG from the download option)')
-      window.location.href = `mailto:?subject=${subject}&body=${body}`
+      window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent('Please attach the generated ID card file from the download option.')}`
+    } catch {
+      window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent('Please attach the generated ID card file from the download option.')}`
     }
   }
+
   const buttons = (
-    <div className="flex items-center space-x-2" style={{ marginTop: 8 }}>
-      {hasPreviewTarget && (
-        <Button onClick={downloadPNG} size="sm">
-          <Download className="mr-2 h-4 w-4" /> PNG
-        </Button>
-      )}
-      <Button onClick={downloadPDF} size="sm">
-        <FileText className="mr-2 h-4 w-4" /> PDF
-      </Button>
-      <Button onClick={print} size="sm">
-        <Printer className="mr-2 h-4 w-4" /> Print
-      </Button>
-      {hasPreviewTarget && cardId && (
-        <Button onClick={email} size="sm">
-          <Mail className="mr-2 h-4 w-4" /> Email
-        </Button>
-      )}
+    <div className="flex flex-wrap items-center gap-2" style={{ marginTop: 8 }}>
+      {hasPreviewTarget && <Button onClick={downloadPNG} size="sm"><Download className="mr-2 h-4 w-4" /> PNG</Button>}
+      <Button onClick={downloadPDF} size="sm"><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+      <Button onClick={print} size="sm"><Printer className="mr-2 h-4 w-4" /> Print</Button>
+      {hasPreviewTarget && cardId && <Button onClick={email} size="sm"><Mail className="mr-2 h-4 w-4" /> Email</Button>}
     </div>
   )
 
   useEffect(() => {
-    if (!targetRef?.current) {
-      setPortalRoot(null)
-      return
-    }
-
-    // Create a container element and insert it immediately after the target element
+    const target = targetRef?.current
+    if (!target) { setPortalRoot(null); return }
     const el = document.createElement('div')
     el.className = 'download-buttons-portal'
     el.style.width = '100%'
     el.style.boxSizing = 'border-box'
     el.style.marginTop = '8px'
-
-    const target = targetRef.current
-    if (target) {
-      const containerParent = (target.closest && (target.closest('section') as HTMLElement)) || target.parentElement
-      if (containerParent) {
-        // append at the end of the container so buttons sit below the preview area
-        containerParent.appendChild(el)
-        setPortalRoot(el)
-      }
+    const containerParent = (target.closest && (target.closest('section') as HTMLElement)) || target.parentElement
+    if (containerParent) {
+      containerParent.appendChild(el)
+      setPortalRoot(el)
     }
-
-    return () => {
-      try {
-        if (el.parentElement) el.parentElement.removeChild(el)
-      } catch (e) {}
-    }
-  }, [targetRef?.current])
+    return () => { try { if (el.parentElement) el.parentElement.removeChild(el) } catch {} }
+  }, [targetRef])
 
   if (portalRoot) return createPortal(buttons, portalRoot)
   return buttons
