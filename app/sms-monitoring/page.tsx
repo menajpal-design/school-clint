@@ -13,7 +13,6 @@ import { useAuth } from "@/hooks/useAuth";
 import ResponsiveTable from '@/components/shared/ResponsiveTable';
 import { normalizeUserRole } from '@/lib/permissions';
 
-declare global { interface Window { GATEWAY_WIDGET_URL?: string; GatewayWidget?: { open: (options: any) => void } } }
 const gatewayOrigin = 'https://payment-gateway-server-ten.vercel.app';
 const paymentWidgetUrl = `${gatewayOrigin}/widget.js`;
 const gatewayApiKey = process.env.NEXT_PUBLIC_GATEWAY_API_KEY || '';
