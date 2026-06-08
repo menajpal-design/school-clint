@@ -88,9 +88,19 @@ async function readJsonOrText(response: Response) {
   try { return JSON.parse(text); } catch { return { message: text }; }
 }
 
+function currentSubdomain() {
+  if (typeof window === "undefined") return "";
+  const hostname = window.location.hostname;
+  const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "easyschool.live";
+  return getSubdomain(hostname, mainDomain) || "";
+}
+
 async function fetchCsrfToken() {
   try {
-    const response = await fetch(`${API_URL}/csrf/token`, { method: "GET", credentials: "include" });
+    const subdomain = currentSubdomain();
+    const headers: Record<string, string> = {};
+    if (subdomain) headers["x-school-subdomain"] = subdomain;
+    const response = await fetch(`${API_URL}/csrf/token`, { method: "GET", credentials: "include", headers });
     if (!response.ok) return "";
     const data = await readJsonOrText(response);
     return data?.csrfToken || "";
@@ -101,6 +111,8 @@ async function loginSafely(payload: { identifier: string; password: string }) {
   const csrfToken = await fetchCsrfToken();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (csrfToken) headers[process.env.NEXT_PUBLIC_CSRF_HEADER_NAME || "x-csrf-token"] = csrfToken;
+  const subdomain = currentSubdomain();
+  if (subdomain) headers["x-school-subdomain"] = subdomain;
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers,
@@ -174,57 +186,17 @@ export default function LoginPage() {
       const detailMessage = getLoginFailureMessage(error);
       setLoginError(detailMessage);
       showToast(addToast, { title: "লগইন ব্যর্থ", message: detailMessage, type: "error", duration: 6000 });
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   };
 
-  if (isChecking) {
-    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>;
-  }
+  if (isChecking) return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>;
   if (isSubdomain && !isValidSubdomain) return <SchoolNotFound subdomain={subdomainName} />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-indigo-600">
-            <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center"><span className="text-white font-bold">E</span></div>
-            EasySchool
-          </Link>
-          <p className="mt-2 text-sm text-gray-600">Multi-tenant School Management Platform</p>
-        </div>
-        <Card className="shadow-xl border-0">
-          <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-            <CardDescription>Enter your credentials to access your dashboard</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {loginError && <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" /><span>{loginError}</span></div>}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Username, Email or Mobile</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input {...register("identifier")} placeholder="Enter username, email or mobile" className="pl-10" disabled={isLoading} />
-                </div>
-                {errors.identifier && <p className="text-sm text-red-600">{errors.identifier.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Password</label>
-                <div className="relative">
-                  <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input {...register("password")} type={showPassword ? "text" : "password"} placeholder="Enter password" className="pl-10 pr-10" disabled={isLoading} />
-                  <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" disabled={isLoading}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
-                </div>
-                {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : <>Sign in<ArrowRight className="ml-2 h-4 w-4" /></>}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <div className="mb-8 text-center"><Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-indigo-600"><div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center"><span className="text-white font-bold">E</span></div>EasySchool</Link><p className="mt-2 text-sm text-gray-600">Multi-tenant School Management Platform</p></div>
+        <Card className="shadow-xl border-0"><CardHeader className="space-y-1 text-center"><CardTitle className="text-2xl font-bold">Welcome back</CardTitle><CardDescription>Enter your credentials to access your dashboard</CardDescription></CardHeader><CardContent><form onSubmit={handleSubmit(onSubmit)} className="space-y-4">{loginError && <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" /><span>{loginError}</span></div>}<div className="space-y-2"><label className="text-sm font-medium text-gray-700">Username, Email or Mobile</label><div className="relative"><Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><Input {...register("identifier")} placeholder="Enter username, email or mobile" className="pl-10" disabled={isLoading} /></div>{errors.identifier && <p className="text-sm text-red-600">{errors.identifier.message}</p>}</div><div className="space-y-2"><label className="text-sm font-medium text-gray-700">Password</label><div className="relative"><LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><Input {...register("password")} type={showPassword ? "text" : "password"} placeholder="Enter password" className="pl-10 pr-10" disabled={isLoading} /><button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" disabled={isLoading}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>{errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}</div><Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : <>Sign in<ArrowRight className="ml-2 h-4 w-4" /></>}</Button></form></CardContent></Card>
         <p className="mt-6 text-center text-sm text-gray-600">Don&apos;t have an account? <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">Register your school</Link></p>
       </div>
     </div>
