@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, apiClient } from "@/lib/api";
+import { openGatewayFlow } from "@/lib/gatewayflow";
 import { printPremiumFeeReceipt } from "@/lib/premium-fee-receipt";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -55,6 +56,11 @@ export default function MyFeesPage() {
     setPayingId(id); setError("");
     try {
       const res: any = await apiClient.post("/finance/my-fees/pay", { feeId: fee._id, invoiceId: fee.invoiceId, studentId: fee.studentId?._id || fee.studentId || childId, amount: Number(fee.amount || 0) });
+      if (res?.provider === "recommended_gateway" && res?.gatewayFlow?.apiKey) {
+        const domain = typeof window !== "undefined" ? window.location.hostname : res.gatewayFlow.domain;
+        await openGatewayFlow({ apiKey: res.gatewayFlow.apiKey, domain: res.gatewayFlow.domain || domain, amount: Number(res.amount || fee.amount || 0), orderId: res.orderId, receiverNumber: res.gatewayFlow.receiverNumber, paymentMethods: res.gatewayFlow.paymentMethods || ["bkash", "nagad"], callback: res.gatewayFlow.callback || `${window.location.origin}/finance/my-fees` });
+        return;
+      }
       if (res?.redirectUrl) window.location.href = res.redirectUrl;
       else setError("Payment gateway redirect URL পাওয়া যায়নি।");
     } catch (err: any) { setError(err?.message || "Online payment start failed."); }
