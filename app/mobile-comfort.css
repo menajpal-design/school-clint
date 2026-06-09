@@ -1,0 +1,356 @@
+/* App-wide mobile comfort layer
+   Scope: normal app UI only. PDF/download/print canvases are excluded. */
+
+:root {
+  --mobile-safe-x: clamp(0.75rem, 3.6vw, 1rem);
+  --mobile-touch: 44px;
+}
+
+html,
+body {
+  max-width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role="button"],
+a[href] {
+  touch-action: manipulation;
+}
+
+/* Keep generated PDF / print / ID-card / receipt layouts untouched. */
+#exam-routine-print,
+#exam-routine-print *,
+.pdf-safe-page,
+.pdf-safe-page *,
+.pdf-fixed-shell,
+.pdf-fixed-shell *,
+.premium-receipt,
+.premium-receipt *,
+.professional-id-card,
+.professional-id-card *,
+.teacher-staff-landscape-id-card,
+.teacher-staff-landscape-id-card *,
+.teacher-staff-id-card,
+.teacher-staff-id-card *,
+.student-id-card,
+.student-id-card *,
+.admit-card,
+.admit-card * {
+  max-width: none;
+}
+
+@media (max-width: 1024px) {
+  .app-shell,
+  .page-shell,
+  main,
+  main > div,
+  [class*="min-h-screen"],
+  [class*="max-w-7xl"],
+  [class*="max-w-6xl"],
+  [class*="max-w-5xl"],
+  [class*="max-w-4xl"] {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  section,
+  article,
+  .card,
+  [class*="bg-card"],
+  [class*="rounded-lg"],
+  [class*="rounded-xl"],
+  [class*="rounded-2xl"] {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  main,
+  .mobile-main-content,
+  .mobile-content-shell,
+  .page-shell,
+  [class*="min-h-screen"] {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  main,
+  .mobile-main-content {
+    padding-left: var(--mobile-safe-x) !important;
+    padding-right: var(--mobile-safe-x) !important;
+  }
+
+  /* Page header and top action bars */
+  [class*="PageHeader"],
+  [class*="page-header"],
+  header:not(.institution-header),
+  main > div > div:first-child,
+  main > div > section:first-child {
+    min-width: 0;
+  }
+
+  h1,
+  .text-3xl,
+  .text-4xl {
+    font-size: clamp(1.35rem, 6vw, 1.75rem) !important;
+    line-height: 1.25 !important;
+  }
+
+  h2,
+  .text-2xl {
+    font-size: clamp(1.1rem, 4.8vw, 1.35rem) !important;
+    line-height: 1.3 !important;
+  }
+
+  p,
+  label,
+  span,
+  div {
+    min-width: 0;
+  }
+
+  .space-y-5 > :not([hidden]) ~ :not([hidden]),
+  .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1rem !important;
+  }
+
+  /* Cards and sections */
+  section:not(.no-mobile-comfort),
+  article:not(.no-mobile-comfort),
+  .card:not(.no-mobile-comfort),
+  [class*="bg-card"]:not(.no-mobile-comfort) {
+    border-radius: 1rem !important;
+  }
+
+  [class*=" p-6"],
+  [class*=" md:p-6"],
+  [class*=" lg:p-6"],
+  [class*=" xl:p-6"] {
+    padding: 1rem !important;
+  }
+
+  [class*=" p-5"],
+  [class*=" md:p-5"],
+  [class*=" lg:p-5"] {
+    padding: 0.9rem !important;
+  }
+
+  /* Grids become single column unless explicitly designed for tiny repeated cells. */
+  [class*="grid-cols-2"]:not([class*="grid-cols-7"]),
+  [class*="grid-cols-3"]:not([class*="grid-cols-7"]),
+  [class*="grid-cols-4"]:not([class*="grid-cols-7"]),
+  [class*="grid-cols-5"]:not([class*="grid-cols-7"]),
+  [class*="grid-cols-6"]:not([class*="grid-cols-7"]),
+  [class*="md:grid-cols"],
+  [class*="lg:grid-cols"],
+  [class*="xl:grid-cols"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [class*="md:flex-row"],
+  [class*="lg:flex-row"],
+  [class*="xl:flex-row"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  [class*="items-center"][class*="justify-between"] {
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  [class*="justify-end"],
+  [class*="justify-between"] {
+    gap: 0.65rem;
+  }
+
+  /* Forms */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  .select-trigger,
+  [role="combobox"] {
+    width: 100%;
+    max-width: 100%;
+    min-height: var(--mobile-touch);
+    font-size: 16px !important;
+  }
+
+  textarea {
+    min-height: 96px;
+  }
+
+  label {
+    display: block;
+  }
+
+  form,
+  form > div,
+  fieldset {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Buttons */
+  button,
+  .btn,
+  a[role="button"] {
+    min-height: 40px;
+  }
+
+  .flex.flex-wrap button,
+  .flex.flex-wrap a,
+  [class*="gap-2"] > button,
+  [class*="gap-2"] > a[role="button"] {
+    max-width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    .flex.flex-wrap button,
+    .flex.flex-wrap a[role="button"],
+    [class*="sm:w-auto"] {
+      width: 100% !important;
+    }
+  }
+
+  /* Tables: horizontal swipe by default. Existing ResponsiveTable card mode remains supported. */
+  .overflow-x-auto,
+  .mobile-table-scroll {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  table:not(.mobile-card-table) {
+    min-width: 680px;
+  }
+
+  th,
+  td {
+    padding: 0.62rem 0.7rem !important;
+  }
+
+  td,
+  th {
+    max-width: 240px;
+    overflow-wrap: anywhere;
+  }
+
+  table input,
+  table select,
+  table button {
+    min-height: 36px;
+  }
+
+  /* Dialogs, sheets, popovers */
+  [role="dialog"]:not(.no-mobile-comfort),
+  [data-radix-dialog-content] {
+    width: calc(100vw - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100dvh - 1rem) !important;
+    overflow-y: auto !important;
+    padding: 1rem !important;
+    border-radius: 1rem !important;
+  }
+
+  [data-radix-popper-content-wrapper] {
+    max-width: calc(100vw - 1rem) !important;
+  }
+
+  /* Navigation/search comfort */
+  nav,
+  aside {
+    max-width: 100vw;
+  }
+
+  nav input,
+  header input {
+    min-width: 0;
+  }
+
+  /* Charts and dashboard widgets */
+  .recharts-wrapper,
+  .recharts-surface {
+    max-width: 100% !important;
+  }
+
+  /* Long text and identifiers */
+  .break-words,
+  [class*="break-words"],
+  [class*="truncate"] {
+    overflow-wrap: anywhere !important;
+  }
+
+  [class*="truncate"] {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --mobile-safe-x: 0.65rem;
+  }
+
+  body {
+    font-size: 13.5px;
+  }
+
+  [class*="gap-4"] {
+    gap: 0.75rem !important;
+  }
+
+  [class*="gap-3"] {
+    gap: 0.65rem !important;
+  }
+
+  [class*="px-4"] {
+    padding-left: 0.8rem !important;
+    padding-right: 0.8rem !important;
+  }
+
+  [class*="py-4"] {
+    padding-top: 0.8rem !important;
+    padding-bottom: 0.8rem !important;
+  }
+}
+
+@media (min-width: 769px) {
+  main,
+  .mobile-main-content {
+    overflow-x: clip;
+  }
+
+  [class*="max-w-7xl"],
+  [class*="max-w-6xl"],
+  [class*="max-w-5xl"] {
+    min-width: 0;
+  }
+}
