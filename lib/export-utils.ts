@@ -46,14 +46,21 @@ const waitForImageReady = async (img: HTMLImageElement) => {
   } catch {}
 };
 
+const loadImage = async (src: string) => {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = src;
+  await waitForImageReady(img);
+  return img;
+};
+
 const renderPrintSafeQrs = async (root: HTMLElement) => {
   const nodes = Array.from(root.querySelectorAll('[data-print-safe-qr="true"]')) as HTMLElement[];
   if (!nodes.length) return;
-  const QRCode = await import("qrcode");
   await Promise.all(nodes.map(async (node) => {
     const value = node.getAttribute("data-qr-value") || "-";
     const size = Math.max(32, Number(node.getAttribute("data-qr-size") || 56));
-    const url = await QRCode.toDataURL(value, { width: size * 6, margin: 1, errorCorrectionLevel: "M", color: { dark: "#0f172a", light: "#ffffff" } });
+    const url = await makeQrDataUrl(value, size * 6);
     node.innerHTML = "";
     const img = document.createElement("img");
     img.src = url;
@@ -114,6 +121,32 @@ const inlineImages = async (root: HTMLElement) => {
       await waitForImageReady(img);
     } catch { await waitForImageReady(img); }
   }));
+};
+
+const stampQrsOnCanvas = async (canvas: HTMLCanvasElement, root: HTMLElement, scale = 2) => {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const rootRect = root.getBoundingClientRect();
+  const markers = Array.from(root.querySelectorAll('[data-print-safe-qr="true"]')) as HTMLElement[];
+  const jobs = markers.map((node) => {
+    const rect = node.getBoundingClientRect();
+    return { value: node.getAttribute("data-qr-value") || window.location.href || "-", x: rect.left - rootRect.left, y: rect.top - rootRect.top, size: Math.max(32, rect.width || Number(node.getAttribute("data-qr-size") || 56)) };
+  });
+  if (!jobs.length && root.querySelector(".admit-card")) {
+    jobs.push({ value: window.location.href || "EasySchool Admit Card", x: 1000, y: 50, size: 56 });
+  }
+  for (const job of jobs) {
+    try {
+      const url = await makeQrDataUrl(job.value, Math.ceil(job.size * 8));
+      const img = await loadImage(url);
+      const x = Math.max(0, Math.round(job.x * scale));
+      const y = Math.max(0, Math.round(job.y * scale));
+      const s = Math.max(40, Math.round(job.size * scale));
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x - 2, y - 2, s + 4, s + 4);
+      ctx.drawImage(img, x, y, s, s);
+    } catch {}
+  }
 };
 
 const printCss = `@page{size:A4;margin:10mm}*{box-sizing:border-box}html,body{margin:0;color:#0f172a;font-family:Arial,Helvetica,sans-serif;background:#fff;print-color-adjust:exact;-webkit-print-color-adjust:exact}body{width:100%;overflow:visible}main,.print-card,.pdf-safe-page{max-width:100%;overflow:visible}table{width:100%;border-collapse:collapse;table-layout:auto;page-break-inside:auto}thead{display:table-header-group}tr{page-break-inside:avoid;break-inside:avoid}th,td{border:1px solid #cbd5e1;padding:7px;font-size:11px;text-align:left;white-space:normal;word-break:break-word;overflow-wrap:anywhere}th{background:#e2e8f0;font-weight:700;color:#0f172a}.institution-header{display:flex;align-items:center;justify-content:space-between;gap:14px;border-radius:16px;background:linear-gradient(135deg,#0f172a 0%,#0f766e 100%);color:#fff;padding:14px 16px;margin-bottom:14px;box-shadow:0 10px 24px rgba(15,23,42,.18);break-inside:avoid}.institution-logo{width:58px;height:58px;border:1px solid rgba(255,255,255,.25);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;overflow:hidden;background:rgba(255,255,255,.08);flex:0 0 auto}.institution-logo img{width:100%;height:100%;object-fit:contain;padding:4px;background:#fff}.institution-info{flex:1;min-width:0}.institution-info h1{margin:0;font-size:21px;line-height:1.15;color:#fff}.institution-info p{margin:3px 0 0;font-size:12px;color:rgba(255,255,255,.84)}.print-card{border:1px solid #cbd5e1;border-radius:16px;padding:16px;background:#fff}.print-title{font-size:22px;font-weight:700;margin:0 0 4px}.print-muted{color:#64748b;font-size:12px}.print-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.print-row{border-bottom:1px solid #e2e8f0;padding:6px 0;font-size:13px;overflow-wrap:anywhere}.print-row strong{display:inline-block;min-width:120px}.signature{margin-top:42px;display:flex;justify-content:space-between;gap:40px;font-size:12px;break-inside:avoid}.signature div{flex:1;border-top:1px solid #334155;padding-top:6px;text-align:center}.print-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px;break-inside:avoid}.print-qr{display:inline-flex;flex-direction:column;align-items:center;gap:4px;color:#475569;font-size:10px;font-weight:700;text-transform:uppercase}.print-qr img{width:82px;height:82px;border:1px solid #cbd5e1;border-radius:6px;padding:4px;background:#fff}.print-footer{margin-top:16px;padding-top:10px;border-top:1px dashed #cbd5e1;color:#64748b;font-size:11px;display:flex;justify-content:space-between;gap:12px}`;
@@ -224,6 +257,7 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
       await inlineImages(wrapper);
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: true, foreignObjectRendering: false, scrollX: 0, scrollY: 0, width: A4_WIDTH_PX, height: A4_MIN_HEIGHT_PX, windowWidth: A4_WIDTH_PX, windowHeight: A4_MIN_HEIGHT_PX });
+      await stampQrsOnCanvas(canvas, wrapper, 2);
       await saveCanvasAsPdf(canvas, filename, true, true);
     } finally { document.body.removeChild(wrapper); }
     return;
