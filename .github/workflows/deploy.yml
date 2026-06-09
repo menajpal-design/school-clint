@@ -18,7 +18,6 @@ jobs:
           command_timeout: 35m
           script: |
             set -e
-            # Detect client directory
             if [ -d "$HOME/projects/school/school-clint" ]; then
               cd "$HOME/projects/school/school-clint"
             elif [ -d "$HOME/projects/school/school-client" ]; then
@@ -36,6 +35,10 @@ jobs:
               git clone https://github.com/menajpal-design/school-clint.git "$HOME/school-clint"
               cd "$HOME/school-clint"
             fi
+
+            pm2_has() { pm2 jlist | grep -q "\"name\":\"$1\""; }
+            pm2_stop_if_exists() { if pm2_has "$1"; then pm2 stop "$1"; else echo "PM2 process $1 not found; skip stop."; fi; }
+            pm2_restart_if_exists() { if pm2_has "$1"; then pm2 restart "$1" --update-env; return 0; fi; return 1; }
 
             echo "Deploying to $(pwd)..."
             git remote -v
@@ -60,8 +63,8 @@ jobs:
             npm -v
 
             echo "Stopping running client before cleaning build cache..."
-            pm2 stop school-client || true
-            pm2 stop school-clint || true
+            pm2_stop_if_exists school-client
+            pm2_stop_if_exists school-clint
 
             echo "Cleaning stale folders before install/build..."
             rm -rf .next/export .next/cache out node_modules/.cache || true
@@ -96,28 +99,30 @@ jobs:
             python3 - <<'PY'
             from pathlib import Path
             p = Path('app/billing/page.tsx')
-            text = p.read_text()
-            text = text.replace("disabled={isPurchasingSms || !isWidgetReady}", "disabled={isPurchasingSms}")
-            text = text.replace("disabled={isTopping || !isWidgetReady}", "disabled={isTopping}")
-            text = text.replace("disabled={isPaying || (selectedPaymentMethod === 'bkash' && !isWidgetReady)}", "disabled={isPaying}")
-            p.write_text(text)
+            if p.exists():
+                text = p.read_text()
+                text = text.replace("disabled={isPurchasingSms || !isWidgetReady}", "disabled={isPurchasingSms}")
+                text = text.replace("disabled={isTopping || !isWidgetReady}", "disabled={isTopping}")
+                text = text.replace("disabled={isPaying || (selectedPaymentMethod === 'bkash' && !isWidgetReady)}", "disabled={isPaying}")
+                p.write_text(text)
             PY
 
             echo "Patching exam routine page to use hidden A4 PDF paper..."
             python3 - <<'PY'
             from pathlib import Path
             p = Path('app/academic/exam-routine/page.tsx')
-            text = p.read_text()
-            marker = 'import { normalizeUserRole } from "@/lib/permissions";'
-            extra = marker + '\nimport { ExamRoutinePaper } from "@/components/academic/ExamRoutinePaper";'
-            if marker in text and 'ExamRoutinePaper' not in text:
-                text = text.replace(marker, extra)
-            text = text.replace('<Paper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper hidden refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
-            text = text.replace('<ExamRoutinePaper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper hidden refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
-            text = text.replace('<Paper exam={preview} rows={rowsFrom(preview)} />', '<ExamRoutinePaper exam={preview} rows={rowsFrom(preview)} />')
-            text = text.replace('min-width:1050px!important', 'min-width:1123px!important')
-            text = text.replace('min-width:1120px!important', 'min-width:1123px!important')
-            p.write_text(text)
+            if p.exists():
+                text = p.read_text()
+                marker = 'import { normalizeUserRole } from "@/lib/permissions";'
+                extra = marker + '\nimport { ExamRoutinePaper } from "@/components/academic/ExamRoutinePaper";'
+                if marker in text and 'ExamRoutinePaper' not in text:
+                    text = text.replace(marker, extra)
+                text = text.replace('<Paper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper hidden refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
+                text = text.replace('<ExamRoutinePaper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper hidden refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
+                text = text.replace('<Paper exam={preview} rows={rowsFrom(preview)} />', '<ExamRoutinePaper exam={preview} rows={rowsFrom(preview)} />')
+                text = text.replace('min-width:1050px!important', 'min-width:1123px!important')
+                text = text.replace('min-width:1120px!important', 'min-width:1123px!important')
+                p.write_text(text)
             PY
 
             echo "Building Next.js app..."
@@ -128,5 +133,12 @@ jobs:
             pm2 describe school-client || true
             pm2 describe school-clint || true
 
-            pm2 restart school-client --update-env || pm2 restart school-clint --update-env || pm2 restart all --update-env || pm2 start npm --name "school-client" -- start
+            if pm2_restart_if_exists school-client; then
+              echo "Restarted school-client"
+            elif pm2_restart_if_exists school-clint; then
+              echo "Restarted school-clint"
+            else
+              echo "No existing client PM2 process found; starting school-client"
+              pm2 start npm --name "school-client" -- start
+            fi
             pm2 save || true
