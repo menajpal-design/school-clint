@@ -176,6 +176,23 @@ function preparePdfNode(root: HTMLElement, widthPx: number, preserveTables = fal
   walk(root);
 }
 
+const expandAdmitCardForCapture = (card: HTMLElement) => {
+  card.style.width = `${A4_WIDTH_PX}px`;
+  card.style.minWidth = `${A4_WIDTH_PX}px`;
+  card.style.maxWidth = `${A4_WIDTH_PX}px`;
+  card.style.height = "auto";
+  card.style.minHeight = `${A4_MIN_HEIGHT_PX}px`;
+  card.style.maxHeight = "none";
+  card.style.overflow = "visible";
+  const inner = card.firstElementChild as HTMLElement | null;
+  if (inner) {
+    inner.style.height = "auto";
+    inner.style.minHeight = `${A4_MIN_HEIGHT_PX - 36}px`;
+    inner.style.maxHeight = "none";
+    inner.style.overflow = "visible";
+  }
+};
+
 async function saveCanvasAsPdf(canvas: HTMLCanvasElement, filename: string, landscape: boolean, fitSinglePage = false) {
   const jsPDF = (await import("jspdf")).default;
   const pdf = new jsPDF(landscape ? "l" : "p", "mm", "a4");
@@ -241,22 +258,19 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   if (admitTarget) {
     const cloned = admitTarget.cloneNode(true) as HTMLElement;
     copyComputedStyles(cloned, admitTarget);
-    cloned.style.width = "1123px";
-    cloned.style.height = "794px";
-    cloned.style.minWidth = "1123px";
-    cloned.style.maxWidth = "1123px";
-    cloned.style.minHeight = "794px";
-    cloned.style.maxHeight = "794px";
-    cloned.style.overflow = "hidden";
+    expandAdmitCardForCapture(cloned);
     preparePdfNode(cloned, A4_WIDTH_PX, true);
     const wrapper = document.createElement("div");
-    wrapper.style.cssText = `position:fixed;left:0;top:0;width:${A4_WIDTH_PX}px;height:${A4_MIN_HEIGHT_PX}px;min-width:${A4_WIDTH_PX}px;min-height:${A4_MIN_HEIGHT_PX}px;background:#fff;padding:0;margin:0;overflow:hidden;pointer-events:none;z-index:2147483647;visibility:visible;box-sizing:border-box;`;
+    wrapper.style.cssText = `position:fixed;left:0;top:0;width:${A4_WIDTH_PX}px;min-width:${A4_WIDTH_PX}px;min-height:${A4_MIN_HEIGHT_PX}px;background:#fff;padding:0;margin:0;overflow:visible;pointer-events:none;z-index:2147483647;visibility:visible;box-sizing:border-box;`;
     wrapper.appendChild(cloned);
     document.body.appendChild(wrapper);
     try {
       await inlineImages(wrapper);
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: true, foreignObjectRendering: false, scrollX: 0, scrollY: 0, width: A4_WIDTH_PX, height: A4_MIN_HEIGHT_PX, windowWidth: A4_WIDTH_PX, windowHeight: A4_MIN_HEIGHT_PX });
+      const captureHeight = Math.ceil(Math.max(wrapper.scrollHeight, wrapper.offsetHeight, cloned.scrollHeight, cloned.offsetHeight, A4_MIN_HEIGHT_PX));
+      wrapper.style.height = `${captureHeight}px`;
+      wrapper.style.minHeight = `${captureHeight}px`;
+      const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: true, foreignObjectRendering: false, scrollX: 0, scrollY: 0, width: A4_WIDTH_PX, height: captureHeight, windowWidth: A4_WIDTH_PX, windowHeight: captureHeight });
       await stampQrsOnCanvas(canvas, wrapper, 2);
       await saveCanvasAsPdf(canvas, filename, true, true);
     } finally { document.body.removeChild(wrapper); }
