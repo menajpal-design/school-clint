@@ -22,6 +22,7 @@ const RESULT_ENTRY: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'su
 const QUESTION_MANAGE: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'];
 const MCQ_PRACTICE: UserRole[] = [...QUESTION_MANAGE, 'student', 'parent'];
 const QUESTION_BANK_VIEW: UserRole[] = [...QUESTION_MANAGE, 'student', 'parent'];
+const ONLINE_CLASS_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, ...STUDENT_PARENT];
 const ATTENDANCE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT];
 const ATTENDANCE_MARK: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
 const ATTENDANCE_BIOMETRIC: UserRole[] = ['head', 'assistant_head'];
@@ -76,6 +77,13 @@ export const menuConfig: MenuItemConfig[] = [
   { label: 'Messages', href: '/messages', roles: ALL_ROLES, icon: 'MessageSquare' },
   { label: 'Holidays', href: '/holidays', roles: HOLIDAY_VIEW, icon: 'CalendarDays' },
   { label: 'Downloads', href: '/downloads', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS], icon: 'FileText' },
+  { label: 'Online Classes', href: '/online-classes', roles: ONLINE_CLASS_VIEW, icon: 'BookOpenCheck', children: [
+    { label: 'Overview', href: '/online-classes', roles: ONLINE_CLASS_VIEW },
+    { label: 'Online Routine', href: '/online-classes/routine', roles: ONLINE_CLASS_VIEW },
+    { label: 'Recorded Classes', href: '/online-classes/recorded', roles: ONLINE_CLASS_VIEW },
+    { label: 'Class Schedule', href: '/online-classes/schedule', roles: ONLINE_CLASS_VIEW },
+    { label: 'PDF Books', href: '/online-classes/books', roles: ONLINE_CLASS_VIEW },
+  ] },
   { label: 'ID Card', href: '/id-cards', roles: ID_CARD_OWN, icon: 'CreditCard', children: [
     { label: 'Overview', href: '/id-cards', roles: ID_CARD_OWN },
     { label: 'My ID Card', href: '/id-cards/my-card', roles: ID_CARD_OWN },
