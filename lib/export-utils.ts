@@ -53,7 +53,7 @@ const renderPrintSafeQrs = async (root: HTMLElement) => {
   await Promise.all(nodes.map(async (node) => {
     const value = node.getAttribute("data-qr-value") || "-";
     const size = Math.max(32, Number(node.getAttribute("data-qr-size") || 56));
-    const url = await QRCode.toDataURL(value, { width: size * 4, margin: 1, errorCorrectionLevel: "M", color: { dark: "#0f172a", light: "#ffffff" } });
+    const url = await QRCode.toDataURL(value, { width: size * 6, margin: 1, errorCorrectionLevel: "M", color: { dark: "#0f172a", light: "#ffffff" } });
     node.innerHTML = "";
     const img = document.createElement("img");
     img.src = url;
@@ -62,13 +62,42 @@ const renderPrintSafeQrs = async (root: HTMLElement) => {
     img.style.height = `${size}px`;
     img.style.objectFit = "contain";
     img.style.display = "block";
+    img.style.background = "#fff";
     node.appendChild(img);
     await waitForImageReady(img);
   }));
 };
 
+const convertSvgsToImages = async (root: HTMLElement) => {
+  const svgs = Array.from(root.querySelectorAll("svg")) as SVGSVGElement[];
+  await Promise.all(svgs.map(async (svg) => {
+    try {
+      const rect = svg.getBoundingClientRect();
+      const width = Math.ceil(Number(svg.getAttribute("width")) || rect.width || 80);
+      const height = Math.ceil(Number(svg.getAttribute("height")) || rect.height || 80);
+      const clone = svg.cloneNode(true) as SVGSVGElement;
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clone.setAttribute("width", String(width));
+      clone.setAttribute("height", String(height));
+      const svgText = new XMLSerializer().serializeToString(clone);
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgText)}`;
+      const img = document.createElement("img");
+      img.src = svgUrl;
+      img.alt = svg.getAttribute("aria-label") || "SVG image";
+      img.style.width = `${width}px`;
+      img.style.height = `${height}px`;
+      img.style.objectFit = "contain";
+      img.style.display = "block";
+      img.style.background = "transparent";
+      svg.replaceWith(img);
+      await waitForImageReady(img);
+    } catch {}
+  }));
+};
+
 const inlineImages = async (root: HTMLElement) => {
   await renderPrintSafeQrs(root);
+  await convertSvgsToImages(root);
   const imgs = Array.from(root.querySelectorAll("img")) as HTMLImageElement[];
   await Promise.all(imgs.map(async (img) => {
     try {
