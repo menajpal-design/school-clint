@@ -22,7 +22,7 @@ const isHttpsReady = () => {
 const getCameraErrorMessage = (err: any) => {
   const name = String(err?.name || err?.originalError?.name || "");
   const message = String(err?.message || err?.originalError?.message || "");
-  if (name === "NotAllowedError" || name === "PermissionDeniedError" || /permission|denied/i.test(message)) return "Camera permission denied. Click the lock icon beside the address bar, set Camera to Allow, then reload or press Retry Camera.";
+  if (name === "NotAllowedError" || name === "PermissionDeniedError" || /permission|denied/i.test(message)) return "Camera permission denied by browser or Windows privacy settings. Make sure browser site Camera is Allow and Windows Settings > Privacy & security > Camera allows desktop apps.";
   if (name === "NotFoundError" || name === "DevicesNotFoundError") return "No camera found on this device.";
   if (name === "NotReadableError" || name === "TrackStartError") return "Camera is busy or blocked by another app. Close other camera apps and try again.";
   if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") return "Requested camera is not available. Try Front/Back camera switch.";
@@ -36,11 +36,22 @@ const getZxingText = (result: any) => {
   return String(result.text || result.rawValue || "");
 };
 
+const makeCameraConstraints = (mode: FacingMode): MediaStreamConstraints => ({
+  audio: false,
+  video: {
+    facingMode: { ideal: mode },
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+  },
+});
+
 export function WebcamScanner({ onScan, enabled = true, autoStart = false }: WebcamScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const manualInputRef = useRef<HTMLInputElement>(null);
   const codeReaderRef = useRef<any>(null);
   const controlsRef = useRef<any>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const decodeTimerRef = useRef<number | null>(null);
   const lastDetectionRef = useRef<{ value: string; time: number }>({ value: "", time: 0 });
 
   const [isActive, setIsActive] = useState(false);
@@ -62,14 +73,14 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
   }, [onScan]);
 
   const stopCamera = useCallback(() => {
+    if (decodeTimerRef.current) window.clearInterval(decodeTimerRef.current);
+    decodeTimerRef.current = null;
     try { controlsRef.current?.stop?.(); } catch {}
     controlsRef.current = null;
     try { codeReaderRef.current?.reset?.(); } catch {}
-    if (videoRef.current) {
-      const stream = videoRef.current.srcObject as MediaStream | null;
-      stream?.getTracks?.().forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
+    streamRef.current?.getTracks?.().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
     setIsActive(false);
     setStarting(false);
     setInfo("Camera stopped. Press Start Camera to scan again.");
@@ -86,38 +97,49 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     }
   }, []);
 
-  const startZxing = async (mode: FacingMode) => {
+  const openBrowserCamera = async (mode: FacingMode) => {
+    try {
+      return await navigator.mediaDevices.getUserMedia(makeCameraConstraints(mode));
+    } catch (primaryError: any) {
+      if (primaryError?.name === "OverconstrainedError" || primaryError?.name === "ConstraintNotSatisfiedError") {
+        return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+      throw primaryError;
+    }
+  };
+
+  const startZxingOnOpenVideo = async () => {
     const zxing = await import("@zxing/browser");
     const Reader = (zxing as any).BrowserMultiFormatReader || (zxing as any).BrowserQRCodeReader;
     if (!Reader) throw new Error("ZXing scanner package is not available after build.");
     const reader = new Reader();
     codeReaderRef.current = reader;
-
     const video = videoRef.current;
     if (!video) throw new Error("Camera video element is not ready.");
 
-    const onResult = (result: any) => {
+    const handleResult = (result: any) => {
       const scanned = getZxingText(result);
       if (scanned) emitScan(scanned);
     };
 
-    const constraints: MediaStreamConstraints = {
-      audio: false,
-      video: {
-        facingMode: { ideal: mode },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-      },
-    };
-
-    try {
-      return await reader.decodeFromConstraints(constraints, video, onResult);
-    } catch (primaryError: any) {
-      if (primaryError?.name === "OverconstrainedError" || primaryError?.name === "ConstraintNotSatisfiedError") {
-        return await reader.decodeFromConstraints({ video: true, audio: false }, video, onResult);
-      }
-      throw primaryError;
+    if (typeof reader.decodeFromVideoElementContinuously === "function") {
+      reader.decodeFromVideoElementContinuously(video, handleResult);
+      return;
     }
+
+    if (typeof reader.decodeFromVideoElement === "function") {
+      decodeTimerRef.current = window.setInterval(async () => {
+        try {
+          const result = await reader.decodeFromVideoElement(video);
+          handleResult(result);
+        } catch {
+          // No code in this frame.
+        }
+      }, 450);
+      return;
+    }
+
+    throw new Error("ZXing video decoder method not found.");
   };
 
   const startCamera = useCallback(async (mode: FacingMode = facingMode) => {
@@ -125,7 +147,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     try {
       setStarting(true);
       setError("");
-      setInfo("Loading QR scanner package...");
+      setInfo("Opening browser camera...");
 
       if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
         setPermission("unsupported");
@@ -146,13 +168,20 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
       stopCamera();
       setStarting(true);
       setFacingMode(mode);
-      setInfo("Requesting camera access...");
 
-      const controls = await startZxing(mode);
-      controlsRef.current = controls;
-      setZxingReady(true);
+      const stream = await openBrowserCamera(mode);
+      streamRef.current = stream;
+      const video = videoRef.current;
+      if (!video) throw new Error("Camera video element is not ready.");
+      video.srcObject = stream;
+      await video.play().catch(() => undefined);
+
       setIsActive(true);
       setPermission("granted");
+      setInfo("Camera opened. Loading ZXing QR scanner...");
+
+      await startZxingOnOpenVideo();
+      setZxingReady(true);
       setInfo("Camera ready. Point QR/barcode inside the box and keep it steady.");
     } catch (err: any) {
       const message = getCameraErrorMessage(err);
@@ -165,7 +194,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     } finally {
       setStarting(false);
     }
-  }, [enabled, facingMode, permission, starting, stopCamera]);
+  }, [enabled, emitScan, facingMode, permission, starting, stopCamera]);
 
   const switchCamera = () => {
     const next = facingMode === "environment" ? "user" : "environment";
@@ -245,9 +274,9 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
               <p className="text-xs">{error}</p>
               <div className="rounded-md border border-white/20 bg-white/10 p-3 text-left text-xs text-slate-100">
                 <p className="font-semibold">Fix permission:</p>
-                <p>Chrome/Android: tap lock icon beside address bar → Site settings → Camera → Allow.</p>
-                <p>Desktop Chrome: address bar lock icon → Camera → Allow → reload.</p>
-                <p>If it still says denied, clear site settings for easyschool.live and open the page again.</p>
+                <p>Browser: lock icon → Site settings → Camera → Allow → reload.</p>
+                <p>Windows: Settings → Privacy & security → Camera → allow browser/desktop apps.</p>
+                <p>If it still says denied, reset site permissions for easyschool.live and open again.</p>
               </div>
             </div>
           </div>
@@ -273,9 +302,8 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
         <p className="font-medium text-blue-900">Scanner Tips:</p>
         <ul className="mt-1 list-inside list-disc space-y-1">
           <li>Camera popup শুধু Start Camera চাপার পর আসবে।</li>
-          <li>ZXing package দিয়ে QR/Barcode auto scan হবে।</li>
-          <li>Allow camera permission from browser site settings.</li>
-          <li>Use HTTPS and avoid opening inside unsupported in-app browsers.</li>
+          <li>Camera first open হবে, তারপর ZXing package দিয়ে QR/Barcode scan হবে।</li>
+          <li>Windows camera privacy setting-এ browser access Allow থাকতে হবে।</li>
           <li>Manual entry works with barcode scanner devices and pasted QR data.</li>
         </ul>
       </div>
