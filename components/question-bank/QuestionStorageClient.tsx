@@ -1,0 +1,90 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Eye, Loader2, Printer, RefreshCw, Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import ResponsiveTable from '@/components/shared/ResponsiveTable';
+import { apiClient } from '@/lib/api';
+
+type QuestionSet = {
+  _id?: string;
+  title?: string;
+  mode?: 'question' | 'mcq';
+  className?: string;
+  subjectName?: string;
+  syllabus?: string;
+  duration?: string;
+  totalMarks?: number;
+  isPublished?: boolean;
+  questions?: Array<{ question?: string; options?: string[]; answer?: string; marks?: number; type?: string }>;
+  createdAt?: string;
+};
+
+export default function QuestionStorageClient({ title, description, mode }: { title: string; description: string; mode?: 'question' | 'mcq' }) {
+  const [sets, setSets] = useState<QuestionSet[]>([]);
+  const [selected, setSelected] = useState<QuestionSet | null>(null);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const loadSets = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data: any = await apiClient.get('/question-bank/sets', { params: mode ? { mode } : {} });
+      setSets(Array.isArray(data?.sets) ? data.sets : []);
+    } catch {
+      setSets([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [mode]);
+
+  useEffect(() => { loadSets(); }, [loadSets]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sets;
+    return sets.filter((set) => [set.title, set.mode, set.className, set.subjectName, set.syllabus].join(' ').toLowerCase().includes(q));
+  }, [sets, search]);
+
+  const rows = filtered.map((set) => [
+    <div key="title"><p className="font-medium">{set.title || 'Untitled'}</p><p className="text-xs text-muted-foreground">{set.className || '-'} · {set.subjectName || '-'}</p></div>,
+    <Badge key="mode" variant={set.mode === 'mcq' ? 'default' : 'secondary'}>{set.mode || '-'}</Badge>,
+    String(set.questions?.length || 0),
+    String(set.totalMarks || 0),
+    set.isPublished ? <Badge key="published">Published</Badge> : <Badge key="draft" variant="secondary">Draft</Badge>,
+    set.createdAt ? new Date(set.createdAt).toLocaleDateString() : '-',
+    <Button key="view" size="sm" variant="outline" onClick={() => setSelected(set)}><Eye className="mr-1 h-3 w-3" />View</Button>,
+  ]);
+
+  return (
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="rounded-2xl border bg-gradient-to-r from-slate-50 via-white to-blue-50 p-5 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div><h1 className="text-3xl font-bold tracking-tight">{title}</h1><p className="text-sm text-muted-foreground">{description}</p></div>
+          <div className="flex flex-wrap gap-2"><Badge>Total: {sets.length}</Badge><Badge variant="secondary">Storage / Verification</Badge><Button variant="outline" onClick={loadSets} disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Refresh</Button></div>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle>Saved Question Sets</CardTitle><CardDescription>Server storage থেকে saved/generated question set verify করুন।</CardDescription></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search title, class, subject, syllabus..." className="pl-9" /></div>
+          <ResponsiveTable columns={['Title', 'Mode', 'Questions', 'Marks', 'Status', 'Date', 'Action']} rows={rows} empty={loading ? 'Loading...' : 'No saved questions found.'} />
+        </CardContent>
+      </Card>
+
+      {selected && <Card className="print:shadow-none print:border-0">
+        <CardHeader><div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"><div><CardTitle>{selected.title}</CardTitle><CardDescription>{selected.className || '-'} · {selected.subjectName || '-'} · {selected.duration || '-'}</CardDescription></div><Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" />Print Verify Copy</Button></div></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="rounded-lg border p-3 text-sm"><b>Syllabus:</b> {selected.syllabus || '-'}</div>
+          {(selected.questions || []).map((item, index) => <div key={index} className="break-inside-avoid rounded-lg border p-3"><p className="font-semibold">{index + 1}. {item.question}</p>{Boolean(item.options?.length) && <div className="mt-2 grid gap-1 text-sm sm:grid-cols-2">{item.options?.map((op, i) => <span key={`${index}-${i}`}>{String.fromCharCode(65 + i)}) {String(op).replace(/^[A-D][).:-]\s*/i, '')}</span>)}</div>}<div className="mt-2 flex gap-2 text-xs"><Badge variant="outline">Marks {item.marks || 1}</Badge>{item.answer && <Badge>Answer {item.answer}</Badge>}</div></div>)}
+        </CardContent>
+      </Card>}
+
+      <style jsx global>{`@media print{.sidebar,.navbar,button,input{display:none!important}@page{size:A4;margin:12mm}}`}</style>
+    </div>
+  );
+}
