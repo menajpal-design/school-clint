@@ -96,6 +96,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
     { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
   ] },
+  { label: 'Question Generate', href: '/question-generate', roles: QUESTION_MANAGE, icon: 'BookOpenCheck' },
   { label: 'AI Question Manage', href: '/ai-manage', roles: QUESTION_MANAGE, icon: 'BookOpenCheck' },
   { label: 'MCQ Manage', href: '/mcq-manage', roles: QUESTION_MANAGE, icon: 'BookOpenCheck' },
   { label: 'MCQ Practice', href: '/mcq-practice', roles: MCQ_PRACTICE, icon: 'BookOpenCheck' },
