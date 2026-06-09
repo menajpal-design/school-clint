@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
-import { CalendarClock, Edit3, FileText, Megaphone, Paperclip, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, Download, Edit3, FileText, Megaphone, Paperclip, Plus, Trash2 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/useToast";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
+import { downloadHtmlAsPdf } from "@/lib/export-utils";
 import { formatDate } from "@/lib/utils";
 
 const categories = ["general", "academic", "finance", "event", "urgent"];
@@ -31,6 +32,9 @@ const initialForm = {
   expiryDate: "",
   idCardRenewal: false,
 };
+
+const safe = (value: any) => String(value ?? "").replace(/[&<>\"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch] || ch));
+const fileName = (value: any) => String(value || "notice").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "notice";
 
 export default function NoticesPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -104,6 +108,25 @@ export default function NoticesPage() {
     setOpen(true);
   };
 
+  const downloadNoticePdf = async (notice: any) => {
+    const publishedText = notice.publishedAt ? formatDate(notice.publishedAt) : "Scheduled";
+    const attachmentText = Array.isArray(notice.attachments) && notice.attachments.length ? notice.attachments.map((item: any, i: number) => `<li>${i + 1}. ${safe(item.originalName || item.filename || item.name || 'Attachment')}</li>`).join('') : '';
+    const body = `
+      <section class="notice-pdf">
+        <div class="notice-topline">${safe(notice.category || 'general')} notice • ${safe(notice.priority || 'medium')} priority</div>
+        <h2>${safe(notice.title || 'Notice')}</h2>
+        <div class="notice-meta">
+          <span><b>Status:</b> ${notice.isPublished ? 'Published' : 'Scheduled'}</span>
+          <span><b>Published:</b> ${safe(publishedText)}</span>
+          <span><b>Audience:</b> ${safe(notice.targetAudience || 'all')}</span>
+        </div>
+        <div class="notice-content">${safe(notice.content || '').replace(/\n/g, '<br/>')}</div>
+        ${attachmentText ? `<div class="notice-attachments"><b>Attachments</b><ul>${attachmentText}</ul></div>` : ''}
+      </section>`;
+    const styles = `.notice-pdf{padding:6px 4px 10px}.notice-topline{display:inline-block;margin-bottom:12px;border-radius:999px;background:#e0f2fe;color:#075985;padding:6px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}.notice-pdf h2{font-size:28px;line-height:1.2;margin:0 0 12px;color:#0f172a}.notice-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0 18px}.notice-meta span{border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;padding:10px;font-size:12px}.notice-content{border:1px solid #cbd5e1;border-radius:16px;background:#fff;padding:18px;font-size:15px;line-height:1.75;color:#1e293b;white-space:normal;word-break:break-word}.notice-attachments{margin-top:16px;border:1px dashed #94a3b8;border-radius:14px;background:#f8fafc;padding:12px}.notice-attachments ul{margin:8px 0 0 18px;padding:0}`;
+    await downloadHtmlAsPdf(notice.title || 'Notice', body, styles, `${fileName(notice.title)}-notice.pdf`);
+  };
+
   const handleDelete = async (notice: any) => {
     if (!canManageNotices) return;
     if (!window.confirm(`Delete notice "${notice.title}"?`)) return;
@@ -160,7 +183,7 @@ export default function NoticesPage() {
     <div className="space-y-5">
       <PageHeader
         title="Notice Board"
-        description="Publish announcements, scheduled notices, and school updates in one place."
+        description="Publish announcements, scheduled notices, and school updates in one place. Published notice can be downloaded as PDF."
         icon={Megaphone}
         actions={canManageNotices ? [{ label: "Create Notice", icon: Plus, onClick: openCreateDialog }] : []}
       />
@@ -194,7 +217,7 @@ export default function NoticesPage() {
                   <Badge variant="outline" className="capitalize">{notice.category}</Badge>
                   {(notice.priority === "high" || notice.category === "urgent") && <Badge className="bg-rose-600 text-white">Urgent</Badge>}
                 </div>
-                <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">{notice.content}</p>
+                <p className="mt-2 max-w-4xl whitespace-pre-line text-sm leading-6 text-slate-600">{notice.content}</p>
               </div>
               <div className="text-sm text-slate-500">{notice.publishedAt ? formatDate(notice.publishedAt) : "Scheduled"}</div>
             </div>
@@ -205,16 +228,23 @@ export default function NoticesPage() {
               {Array.isArray(notice.targetRoles) && notice.targetRoles.includes("id_card_renewal") && <span className="inline-flex items-center gap-1"><FileText className="h-3.5 w-3.5" />ID card renewal</span>}
             </div>
 
-            {canManageNotices && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => openEditDialog(notice)}>
-                  <Edit3 className="mr-2 h-4 w-4" />Edit
+            <div className="mt-4 flex flex-wrap gap-2">
+              {notice.isPublished && (
+                <Button type="button" variant="outline" size="sm" onClick={() => downloadNoticePdf(notice)}>
+                  <Download className="mr-2 h-4 w-4" />Download PDF
                 </Button>
-                <Button type="button" variant="destructive" size="sm" onClick={() => handleDelete(notice)}>
-                  <Trash2 className="mr-2 h-4 w-4" />Delete
-                </Button>
-              </div>
-            )}
+              )}
+              {canManageNotices && (
+                <>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openEditDialog(notice)}>
+                    <Edit3 className="mr-2 h-4 w-4" />Edit
+                  </Button>
+                  <Button type="button" variant="destructive" size="sm" onClick={() => handleDelete(notice)}>
+                    <Trash2 className="mr-2 h-4 w-4" />Delete
+                  </Button>
+                </>
+              )}
+            </div>
           </article>
         ))}
       </section>
