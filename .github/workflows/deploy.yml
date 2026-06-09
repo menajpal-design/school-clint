@@ -65,7 +65,7 @@ jobs:
             p.write_text(text)
             PY
 
-            echo "Patching exam routine page to use polished PDF paper..."
+            echo "Patching exam routine page to use hidden A4 PDF paper..."
             python3 - <<'PY'
             from pathlib import Path
             p = Path('app/academic/exam-routine/page.tsx')
@@ -74,9 +74,11 @@ jobs:
             extra = marker + '\nimport { ExamRoutinePaper } from "@/components/academic/ExamRoutinePaper";'
             if marker in text and 'ExamRoutinePaper' not in text:
                 text = text.replace(marker, extra)
-            text = text.replace('<Paper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
+            text = text.replace('<Paper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper hidden refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
+            text = text.replace('<ExamRoutinePaper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper hidden refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
             text = text.replace('<Paper exam={preview} rows={rowsFrom(preview)} />', '<ExamRoutinePaper exam={preview} rows={rowsFrom(preview)} />')
-            text = text.replace('min-width:1050px!important', 'min-width:1120px!important')
+            text = text.replace('min-width:1050px!important', 'min-width:1123px!important')
+            text = text.replace('min-width:1120px!important', 'min-width:1123px!important')
             p.write_text(text)
             PY
 
