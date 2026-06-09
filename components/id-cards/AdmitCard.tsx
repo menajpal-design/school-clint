@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
 
 export interface AdmitCardExamItem {
   courseCode?: string
@@ -57,15 +56,48 @@ const shortText = (value: any, max = 52) => {
 
 function PrintSafeQr({ value, size = 56 }: { value: string; size?: number }) {
   const [dataUrl, setDataUrl] = useState('')
+  const [failed, setFailed] = useState(false)
+
   useEffect(() => {
     let cancelled = false
+    setDataUrl('')
+    setFailed(false)
     import('qrcode')
-      .then((QRCode) => QRCode.toDataURL(value || '-', { width: size * 4, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#0f172a', light: '#ffffff' } }))
+      .then((QRCode) => QRCode.toDataURL(value || '-', {
+        width: Math.max(180, size * 4),
+        margin: 1,
+        errorCorrectionLevel: 'M',
+        color: { dark: '#0f172a', light: '#ffffff' },
+      }))
       .then((url) => { if (!cancelled) setDataUrl(url) })
-      .catch(() => { if (!cancelled) setDataUrl('') })
+      .catch(() => { if (!cancelled) setFailed(true) })
     return () => { cancelled = true }
   }, [value, size])
-  return <div data-print-safe-qr="true" data-qr-value={value || '-'} data-qr-size={size} style={{ width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>{dataUrl ? <img data-qr-img="true" src={dataUrl} alt="Verification QR" style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} /> : <QRCodeSVG value={value || '-'} size={size} level="M" includeMargin={false} />}</div>
+
+  return (
+    <div
+      className="admit-card-qr-wrap"
+      data-print-safe-qr="true"
+      data-qr-value={value || '-'}
+      data-qr-size={size}
+      style={{ width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}
+    >
+      {dataUrl ? (
+        <img
+          data-qr-img="true"
+          src={dataUrl}
+          alt="Verification QR"
+          className="admit-card-qr"
+          crossOrigin="anonymous"
+          style={{ width: size, height: size, objectFit: 'contain', display: 'block', background: '#fff' }}
+        />
+      ) : (
+        <span style={{ color: failed ? '#b91c1c' : '#64748b', fontSize: 7, fontWeight: 800, textAlign: 'center', lineHeight: 1.1 }}>
+          {failed ? 'QR unavailable' : 'Loading QR'}
+        </span>
+      )}
+    </div>
+  )
 }
 
 function AdmitLogo({ logoUrl }: { logoUrl?: string }) {
@@ -125,7 +157,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
     const displayExamDate = formatDisplayDate(examDate)
     const displayDateOfBirth = formatDisplayDate(dateOfBirth)
     const resolvedRoll = rollNumber || roll || ''
-    const resolvedQrData = qrData || JSON.stringify({ name, rollNumber: resolvedRoll, examName, examDate: displayExamDate || examDate, examCenter, centerCode, institutionName })
+    const resolvedQrData = qrData || JSON.stringify({ type: 'admit-card', name, rollNumber: resolvedRoll, examName, examDate: displayExamDate || examDate, examCenter, centerCode, institutionName })
     const rows = Array.isArray(examData) && examData.length > 0 ? examData.slice(0, 6) : [{ courseCode: '', examDate: displayExamDate || '', examTime: '', examCentre: examCenter || '', centreCode: centerCode || '' }]
     const contact = [institutionPhone, institutionEmail].filter(Boolean).join(' | ')
     const center = examCenter || institutionAddress || '-'
