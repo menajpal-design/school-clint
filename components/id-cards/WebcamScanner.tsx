@@ -13,36 +13,6 @@ interface WebcamScannerProps {
 
 type FacingMode = "environment" | "user";
 
-type NativeBarcodeDetector = {
-  detect: (source: CanvasImageSource) => Promise<Array<{ rawValue?: string; format?: string }>>;
-};
-
-const BARCODE_FORMATS = [
-  "qr_code",
-  "code_128",
-  "code_39",
-  "code_93",
-  "codabar",
-  "ean_13",
-  "ean_8",
-  "itf",
-  "upc_a",
-  "upc_e",
-  "pdf417",
-  "data_matrix",
-];
-
-const detectBarcodePattern = (imageData: Uint8ClampedArray): string | null => {
-  let darkCount = 0;
-  const totalPixels = imageData.length / 4;
-  for (let i = 0; i < imageData.length; i += 4) {
-    const brightness = (imageData[i] + imageData[i + 1] + imageData[i + 2]) / 3;
-    if (brightness < 128) darkCount += 1;
-  }
-  const darkPercentage = darkCount / totalPixels;
-  return darkPercentage > 0.35 && darkPercentage < 0.65 ? "QR_DETECTED" : null;
-};
-
 const isHttpsReady = () => {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
@@ -50,56 +20,36 @@ const isHttpsReady = () => {
 };
 
 const getCameraErrorMessage = (err: any) => {
-  const name = String(err?.name || "");
-  if (name === "NotAllowedError" || name === "PermissionDeniedError") return "Camera permission denied. Click the lock icon beside the address bar, set Camera to Allow, then reload or press Retry Camera.";
+  const name = String(err?.name || err?.originalError?.name || "");
+  const message = String(err?.message || err?.originalError?.message || "");
+  if (name === "NotAllowedError" || name === "PermissionDeniedError" || /permission|denied/i.test(message)) return "Camera permission denied. Click the lock icon beside the address bar, set Camera to Allow, then reload or press Retry Camera.";
   if (name === "NotFoundError" || name === "DevicesNotFoundError") return "No camera found on this device.";
   if (name === "NotReadableError" || name === "TrackStartError") return "Camera is busy or blocked by another app. Close other camera apps and try again.";
-  if (name === "OverconstrainedError") return "Requested back camera is not available. Trying normal camera may work.";
+  if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") return "Requested camera is not available. Try Front/Back camera switch.";
   if (!isHttpsReady()) return "Camera needs HTTPS secure connection. Open the site with https://";
-  return err?.message || "Failed to access camera.";
+  return message || "Failed to access camera.";
 };
 
-const getDetector = (): NativeBarcodeDetector | null => {
-  try {
-    const Detector = typeof window !== "undefined" ? (window as any).BarcodeDetector : null;
-    if (!Detector) return null;
-    return new Detector({ formats: BARCODE_FORMATS });
-  } catch {
-    try {
-      const Detector = typeof window !== "undefined" ? (window as any).BarcodeDetector : null;
-      return Detector ? new Detector() : null;
-    } catch {
-      return null;
-    }
-  }
+const getZxingText = (result: any) => {
+  if (!result) return "";
+  if (typeof result.getText === "function") return String(result.getText() || "");
+  return String(result.text || result.rawValue || "");
 };
 
 export function WebcamScanner({ onScan, enabled = true, autoStart = false }: WebcamScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const manualInputRef = useRef<HTMLInputElement>(null);
+  const codeReaderRef = useRef<any>(null);
+  const controlsRef = useRef<any>(null);
+  const lastDetectionRef = useRef<{ value: string; time: number }>({ value: "", time: 0 });
+
   const [isActive, setIsActive] = useState(false);
   const [starting, setStarting] = useState(false);
   const [permission, setPermission] = useState<"granted" | "denied" | "prompt" | "unsupported" | null>(null);
   const [error, setError] = useState<string>("");
   const [info, setInfo] = useState<string>(autoStart ? "Camera is ready to start..." : "Press Start Camera to allow camera access.");
   const [facingMode, setFacingMode] = useState<FacingMode>("environment");
-  const [decoderReady, setDecoderReady] = useState(false);
-  const streamRef = useRef<MediaStream | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const detectorRef = useRef<NativeBarcodeDetector | null>(null);
-  const lastDetectionRef = useRef<{ value: string; time: number }>({ value: "", time: 0 });
-
-  const stopCamera = useCallback(() => {
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    animationFrameRef.current = null;
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
-    setIsActive(false);
-    setStarting(false);
-    setInfo("Camera stopped. Press Start Camera to scan again.");
-  }, []);
+  const [zxingReady, setZxingReady] = useState(false);
 
   const emitScan = useCallback((value: string) => {
     const clean = String(value || "").trim();
@@ -111,68 +61,19 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     onScan(clean);
   }, [onScan]);
 
-  const scanWithNativeDetector = useCallback(async (video: HTMLVideoElement, canvas: HTMLCanvasElement) => {
-    const detector = detectorRef.current;
-    if (!detector) return false;
-    try {
-      let results = await detector.detect(video as unknown as CanvasImageSource);
-      if (!results.length) {
-        const context = canvas.getContext("2d", { willReadFrequently: true });
-        if (!context || !video.videoWidth) return false;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        results = await detector.detect(canvas);
-      }
-      const rawValue = results.find((item) => item.rawValue)?.rawValue || "";
-      if (rawValue) {
-        emitScan(rawValue);
-        return true;
-      }
-    } catch {
-      return false;
+  const stopCamera = useCallback(() => {
+    try { controlsRef.current?.stop?.(); } catch {}
+    controlsRef.current = null;
+    try { codeReaderRef.current?.reset?.(); } catch {}
+    if (videoRef.current) {
+      const stream = videoRef.current.srcObject as MediaStream | null;
+      stream?.getTracks?.().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
     }
-    return false;
-  }, [emitScan]);
-
-  const startScanning = useCallback(() => {
-    const scan = async () => {
-      if (!videoRef.current || !canvasRef.current || !streamRef.current) {
-        animationFrameRef.current = requestAnimationFrame(scan);
-        return;
-      }
-      try {
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        if (!video.videoWidth || video.readyState < 2) {
-          animationFrameRef.current = requestAnimationFrame(scan);
-          return;
-        }
-
-        const decoded = await scanWithNativeDetector(video, canvas);
-        if (!decoded) {
-          const context = canvas.getContext("2d", { willReadFrequently: true });
-          if (context) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const detected = detectBarcodePattern(imageData.data);
-            const now = Date.now();
-            if (detected && now - lastDetectionRef.current.time > 1200) {
-              lastDetectionRef.current = { value: detected, time: now };
-              setInfo(decoderReady ? "QR/Barcode detected, keep it steady..." : "QR/Barcode detected, but this browser cannot decode it. Paste/type the code below and press Enter.");
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Scan error:", err);
-      }
-      animationFrameRef.current = requestAnimationFrame(scan);
-    };
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    animationFrameRef.current = requestAnimationFrame(scan);
-  }, [decoderReady, scanWithNativeDetector]);
+    setIsActive(false);
+    setStarting(false);
+    setInfo("Camera stopped. Press Start Camera to scan again.");
+  }, []);
 
   const checkPermissionState = useCallback(async () => {
     if (typeof navigator === "undefined" || !(navigator as any).permissions?.query) return;
@@ -185,16 +86,35 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     }
   }, []);
 
-  const requestStream = async (mode: FacingMode) => {
-    const constraints: MediaStreamConstraints = {
-      video: { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: false,
+  const startZxing = async (mode: FacingMode) => {
+    const zxing = await import("@zxing/browser");
+    const Reader = (zxing as any).BrowserMultiFormatReader || (zxing as any).BrowserQRCodeReader;
+    if (!Reader) throw new Error("ZXing scanner package is not available after build.");
+    const reader = new Reader();
+    codeReaderRef.current = reader;
+
+    const video = videoRef.current;
+    if (!video) throw new Error("Camera video element is not ready.");
+
+    const onResult = (result: any) => {
+      const scanned = getZxingText(result);
+      if (scanned) emitScan(scanned);
     };
+
+    const constraints: MediaStreamConstraints = {
+      audio: false,
+      video: {
+        facingMode: { ideal: mode },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    };
+
     try {
-      return await navigator.mediaDevices.getUserMedia(constraints);
+      return await reader.decodeFromConstraints(constraints, video, onResult);
     } catch (primaryError: any) {
       if (primaryError?.name === "OverconstrainedError" || primaryError?.name === "ConstraintNotSatisfiedError") {
-        return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        return await reader.decodeFromConstraints({ video: true, audio: false }, video, onResult);
       }
       throw primaryError;
     }
@@ -205,7 +125,8 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     try {
       setStarting(true);
       setError("");
-      setInfo("Requesting camera access...");
+      setInfo("Loading QR scanner package...");
+
       if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
         setPermission("unsupported");
         setError("This browser does not support camera access. Use manual entry below.");
@@ -213,6 +134,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
         manualInputRef.current?.focus();
         return;
       }
+
       if (!isHttpsReady()) {
         setPermission("unsupported");
         setError("Camera needs HTTPS secure connection. Open the site with https:// and try again.");
@@ -220,39 +142,35 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
         manualInputRef.current?.focus();
         return;
       }
+
       stopCamera();
       setStarting(true);
       setFacingMode(mode);
-      setInfo("Opening camera...");
-      const stream = await requestStream(mode);
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => undefined);
-        const detector = getDetector();
-        detectorRef.current = detector;
-        setDecoderReady(Boolean(detector));
-        setInfo(detector ? "Camera ready. Point at QR or barcode." : "Camera ready, but this browser has no built-in QR decoder. Use manual/barcode input if scan does not capture.");
-        setIsActive(true);
-        setPermission("granted");
-        startScanning();
-      }
+      setInfo("Requesting camera access...");
+
+      const controls = await startZxing(mode);
+      controlsRef.current = controls;
+      setZxingReady(true);
+      setIsActive(true);
+      setPermission("granted");
+      setInfo("Camera ready. Point QR/barcode inside the box and keep it steady.");
     } catch (err: any) {
       const message = getCameraErrorMessage(err);
       setError(message);
       setInfo("");
+      setZxingReady(false);
       setPermission(err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError" ? "denied" : permission || "prompt");
       stopCamera();
       setTimeout(() => manualInputRef.current?.focus(), 100);
     } finally {
       setStarting(false);
     }
-  }, [enabled, facingMode, permission, startScanning, starting, stopCamera]);
+  }, [enabled, facingMode, permission, starting, stopCamera]);
 
   const switchCamera = () => {
     const next = facingMode === "environment" ? "user" : "environment";
     stopCamera();
-    setTimeout(() => startCamera(next), 50);
+    setTimeout(() => startCamera(next), 100);
   };
 
   const handleManualSubmit = () => {
@@ -269,8 +187,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
 
   useEffect(() => {
     checkPermissionState();
-    detectorRef.current = getDetector();
-    setDecoderReady(Boolean(detectorRef.current));
+    import("@zxing/browser").then(() => setZxingReady(true)).catch(() => setZxingReady(false));
   }, [checkPermissionState]);
 
   useEffect(() => {
@@ -283,15 +200,14 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     <div className="space-y-4">
       <div className="relative overflow-hidden rounded-lg border border-slate-300 bg-black aspect-video">
         <video ref={videoRef} className="h-full w-full object-cover" playsInline muted autoPlay />
-        <canvas ref={canvasRef} className="hidden" />
 
         {!isActive && !error && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/75 p-4 text-white">
             <div className="max-w-sm space-y-3 text-center">
               <CameraIcon className="mx-auto h-10 w-10 text-emerald-300" />
-              <p className="font-semibold">Camera permission required</p>
+              <p className="font-semibold">ZXing QR/Barcode Scanner</p>
               <p className="text-xs text-slate-200">Press Start Camera, then choose Allow from the browser permission popup.</p>
-              {!decoderReady && <p className="rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-100">Your browser may not decode QR automatically. Manual/barcode input will still work.</p>}
+              {!zxingReady && <p className="rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-100">Scanner package is loading. If it fails, run npm install after deploy.</p>}
               <Button type="button" onClick={() => startCamera()} disabled={starting || !enabled} className="w-full">
                 {starting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <CameraIcon className="mr-2 h-4 w-4" />}
                 {starting ? "Opening Camera..." : "Start Camera"}
@@ -302,7 +218,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
 
         {isActive && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="relative h-40 w-56 rounded-lg border-2 border-blue-400 opacity-80 shadow-lg">
+            <div className="relative h-40 w-56 rounded-lg border-2 border-blue-400 opacity-90 shadow-lg">
               <div className="absolute -top-1 -left-1 h-4 w-4 border-l-2 border-t-2 border-blue-500" />
               <div className="absolute -top-1 -right-1 h-4 w-4 border-r-2 border-t-2 border-blue-500" />
               <div className="absolute -bottom-1 -left-1 h-4 w-4 border-b-2 border-l-2 border-blue-500" />
@@ -316,7 +232,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
 
         <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full bg-black/60 px-3 py-2 text-xs font-medium text-white backdrop-blur-sm">
           <div className={cn("h-2 w-2 rounded-full", isActive ? "animate-pulse bg-green-500" : permission === "denied" ? "bg-red-500" : "bg-slate-500")} />
-          {isActive ? (decoderReady ? "Scanning QR" : "Camera only") : permission === "denied" ? "Permission denied" : starting ? "Opening" : "Offline"}
+          {isActive ? "ZXing scanning" : permission === "denied" ? "Permission denied" : starting ? "Opening" : "Offline"}
         </div>
 
         {info && <div className="absolute bottom-3 left-3 right-3 rounded bg-black/60 px-3 py-2 text-center text-xs text-white backdrop-blur-sm">{info}</div>}
@@ -357,7 +273,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
         <p className="font-medium text-blue-900">Scanner Tips:</p>
         <ul className="mt-1 list-inside list-disc space-y-1">
           <li>Camera popup শুধু Start Camera চাপার পর আসবে।</li>
-          <li>QR/Barcode auto scan browser support থাকলে সরাসরি present mark করবে।</li>
+          <li>ZXing package দিয়ে QR/Barcode auto scan হবে।</li>
           <li>Allow camera permission from browser site settings.</li>
           <li>Use HTTPS and avoid opening inside unsupported in-app browsers.</li>
           <li>Manual entry works with barcode scanner devices and pasted QR data.</li>
