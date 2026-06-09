@@ -22,6 +22,7 @@ type StudentOption = {
   fatherName?: string;
   motherName?: string;
   guardianName?: string;
+  guardianPhone?: string;
   userId?: { name?: string; avatar?: string; dateOfBirth?: string };
   classId?: { _id?: string; name?: string; grade?: string };
   sectionId?: { name?: string };
@@ -42,6 +43,7 @@ const getStudentDob = (student?: StudentOption) => student?.dateOfBirth || stude
 const getClassId = (value: ExamItem["classId"]) => !value ? "" : typeof value === "string" ? value : value._id || "";
 const formatDate = (value?: string) => { if (!value) return ""; const date = new Date(value); if (Number.isNaN(date.getTime())) return value; return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); };
 const formatDuration = (minutes?: number) => { const value = Number(minutes || 0); if (!value) return ""; const hours = Math.floor(value / 60); const remaining = value % 60; return remaining ? `${hours}h ${remaining}m` : `${hours}h`; };
+const saveBlob = (blob: Blob, filename: string) => { const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); };
 
 export function AdmitCardDownload() {
   const previewRef = useRef<HTMLDivElement | null>(null);
@@ -93,7 +95,60 @@ export function AdmitCardDownload() {
     return [{ courseCode: previewClassName || "Exam", examDate: formatDate(selectedExam.date || selectedExam.startDate), examTime: formatDuration(selectedExam.duration), examCentre: institution?.address || institution?.name || "" }];
   }, [selectedExam, previewClassName, institution?.address, institution?.name]);
 
-  const handleDownload = async () => { if (!selectedStudent) return; setDownloading(true); try { const rollNumber = selectedStudent.rollNumber || selectedStudent.admissionNumber || selectedStudent.registrationNumber || selectedStudent._id; await downloadElementPdf(previewRef.current, `admit-card-${rollNumber}.pdf`); } finally { setDownloading(false); } };
+  const buildServerPayload = () => ({
+    student: {
+      _id: selectedStudent?._id,
+      name: getStudentName(selectedStudent),
+      rollNumber: previewRollNumber,
+      className: [previewClassName, previewSectionName].filter(Boolean).join(" • "),
+      stream: [previewClassName, previewSectionName].filter(Boolean).join(" • "),
+      dateOfBirth: previewDateOfBirth,
+      fatherName: selectedStudent?.fatherName || "",
+      motherName: selectedStudent?.motherName || "",
+      guardianName: selectedStudent?.guardianName || "",
+      guardianPhone: selectedStudent?.guardianPhone || "",
+      photoUrl: selectedStudent?.userId?.avatar || "",
+    },
+    institution: {
+      name: institution?.name || "Institution",
+      logo: institution?.logo || institution?.logoUrl || "",
+      address: institution?.address || "",
+      phone: institution?.phone || "",
+      email: institution?.email || "",
+      seal: institution?.seal || "",
+      headSignature: institution?.headSignature || "",
+      headName: institution?.headId?.name || institution?.headName || "",
+      code: institution?.eiin || institution?.code || "",
+    },
+    exam: {
+      name: selectedExam?.name || "Admit Card",
+      date: selectedExam?.date || selectedExam?.startDate || "",
+      startDate: selectedExam?.startDate || selectedExam?.date || "",
+      duration: selectedExam?.duration || "",
+      center: institution?.address || "",
+      centerCode: institution?.eiin || institution?.code || "",
+    },
+    examRows: previewExamRows,
+    qrData: JSON.stringify({ type: "admit-card", studentId: selectedStudent?._id, roll: previewRollNumber, examId: selectedExam?._id, institution: institution?.name || "Institution" }),
+  });
+
+  const handleDownload = async () => {
+    if (!selectedStudent) return;
+    setDownloading(true);
+    const rollNumber = selectedStudent.rollNumber || selectedStudent.admissionNumber || selectedStudent.registrationNumber || selectedStudent._id;
+    try {
+      const blob = await api.idCards.admitCardPdf(buildServerPayload());
+      if (blob && blob.size > 0) {
+        saveBlob(blob, `admit-card-${rollNumber}.pdf`);
+        return;
+      }
+      throw new Error("Empty server PDF");
+    } catch (_) {
+      await downloadElementPdf(previewRef.current, `admit-card-${rollNumber}.pdf`);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <Card className="overflow-hidden border-slate-200 shadow-sm">
@@ -115,7 +170,7 @@ export function AdmitCardDownload() {
             </Select>
           </div>
           <Button onClick={handleDownload} disabled={!selectedStudent || downloading} className="w-full lg:w-auto">
-            {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Download PDF
+            {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Server PDF
           </Button>
         </div>
 
@@ -132,7 +187,7 @@ export function AdmitCardDownload() {
           <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="text-base font-bold text-slate-950">Preview admit card</div>
-              <p className="text-sm text-slate-500">This preview uses the same fixed layout for PDF and print.</p>
+              <p className="text-sm text-slate-500">Top download uses server-rendered PDF. Preview buttons remain available as fallback.</p>
             </div>
             <DownloadButtons targetRef={previewRef} filename={`admit-card-${previewRollNumber || "student"}`} printTitle="Print Admit Card" emailSubject={`Admit Card - ${getStudentName(selectedStudent)}`} />
           </div>
