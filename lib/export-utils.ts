@@ -46,7 +46,29 @@ const waitForImageReady = async (img: HTMLImageElement) => {
   } catch {}
 };
 
+const renderPrintSafeQrs = async (root: HTMLElement) => {
+  const nodes = Array.from(root.querySelectorAll('[data-print-safe-qr="true"]')) as HTMLElement[];
+  if (!nodes.length) return;
+  const QRCode = await import("qrcode");
+  await Promise.all(nodes.map(async (node) => {
+    const value = node.getAttribute("data-qr-value") || "-";
+    const size = Math.max(32, Number(node.getAttribute("data-qr-size") || 56));
+    const url = await QRCode.toDataURL(value, { width: size * 4, margin: 1, errorCorrectionLevel: "M", color: { dark: "#0f172a", light: "#ffffff" } });
+    node.innerHTML = "";
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "Verification QR";
+    img.style.width = `${size}px`;
+    img.style.height = `${size}px`;
+    img.style.objectFit = "contain";
+    img.style.display = "block";
+    node.appendChild(img);
+    await waitForImageReady(img);
+  }));
+};
+
 const inlineImages = async (root: HTMLElement) => {
+  await renderPrintSafeQrs(root);
   const imgs = Array.from(root.querySelectorAll("img")) as HTMLImageElement[];
   await Promise.all(imgs.map(async (img) => {
     try {
