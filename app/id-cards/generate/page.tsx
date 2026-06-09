@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BadgeCheck, Download, Search } from "lucide-react";
+import { BadgeCheck, Search } from "lucide-react";
 
 import DownloadButtons from "@/components/id-cards/DownloadButtons";
 import { ProfessionalIDCard } from "@/components/id-cards/ProfessionalIDCard";
@@ -16,6 +16,14 @@ type OwnerType = "student" | "teacher" | "staff";
 
 const ownerDisplayName = (person: any) => person?.userId?.name || person?.name || person?.fullName || person?.studentName || person?.teacherName || person?.staffName || "";
 const ownerDisplayId = (person: any) => person?.rollNumber || person?.studentId || person?.employeeId || person?.staffId || person?.userId?.username || person?.username || "ID";
+const normalizeRole = (value: any, fallback: OwnerType) => {
+  const role = String(value || fallback || "staff").toLowerCase().replace(/[\s-]+/g, "_");
+  if (role === "principal") return "head";
+  if (role === "assistanthead") return "assistant_head";
+  if (role === "class_teacher" || role === "subject_teacher") return "teacher";
+  if (["head", "assistant_head", "teacher", "student", "staff"].includes(role)) return role;
+  return fallback;
+};
 
 export default function GeneratePage() {
   const { user } = useAuth();
@@ -29,9 +37,7 @@ export default function GeneratePage() {
   const [institution, setInstitution] = useState<any>(null);
   const [options, setOptions] = useState({ logo: true, watermark: true });
   const [requestedOwnerId, setRequestedOwnerId] = useState("");
-  useEffect(() => {
-    setSessionUser(user || authManager.getUser());
-  }, [user]);
+  useEffect(() => { setSessionUser(user || authManager.getUser()); }, [user]);
 
   const currentUserRole = String(sessionUser?.role || "");
   const allowedOwnerTypes: OwnerType[] = useMemo(() => ["head", "assistant_head"].includes(currentUserRole)
@@ -57,10 +63,7 @@ export default function GeneratePage() {
 
   useEffect(() => {
     if (allowedOwnerTypes.length > 0 && !allowedOwnerTypes.includes(ownerType)) {
-      setOwnerType(allowedOwnerTypes[0]);
-      setSelected(null);
-      setCard(null);
-      return;
+      setOwnerType(allowedOwnerTypes[0]); setSelected(null); setCard(null); return;
     }
     load().catch(() => undefined);
   }, [ownerType, currentUserRole, allowedOwnerTypes]);
@@ -68,17 +71,13 @@ export default function GeneratePage() {
   useEffect(() => {
     if (!requestedOwnerId || selected?._id === requestedOwnerId) return;
     const match = people.find((person) => person._id === requestedOwnerId);
-    if (match) {
-      setSelected(match);
-      setCard(null);
-    }
+    if (match) { setSelected(match); setCard(null); }
   }, [people, requestedOwnerId, selected?._id]);
+
   useEffect(() => {
     const sessionInstitution = sessionUser?.institution || authManager.getUser()?.institution;
     if (sessionInstitution) setInstitution(sessionInstitution);
-    api.institution.profile()
-      .then((response: any) => setInstitution(response?.institution || sessionInstitution || null))
-      .catch(() => undefined);
+    api.institution.profile().then((response: any) => setInstitution(response?.institution || sessionInstitution || null)).catch(() => undefined);
   }, [sessionUser]);
 
   const generate = async () => {
@@ -90,18 +89,13 @@ export default function GeneratePage() {
   const previewName = card?.ownerId?.name || ownerDisplayName(selected) || "Select person";
   const previewId = card?.cardNumber || ownerDisplayId(selected);
   const headName = institution?.headId?.name || (sessionUser?.role === "head" ? sessionUser?.name : undefined) || "";
-  const role = ownerType === "teacher" ? "teacher" : ownerType === "staff" ? "staff" : "student";
+  const role = normalizeRole(selected?.role || selected?.userId?.role || selected?.designationRole || selected?.designation, ownerType);
   const className = selected?.classId?.name || selected?.className || selected?.designation || selected?.department || "";
+  const sectionName = selected?.sectionId?.name || selected?.sectionName || "";
+  const photoUrl = selected?.userId?.avatar || selected?.avatar || selected?.photoUrl || "";
 
   if (!canGenerateCards) {
-    return (
-      <div className="space-y-5">
-        <PageHeader title="Generate ID Card" description="Only authorized users can generate ID cards." icon={BadgeCheck} />
-        <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-700 shadow-sm">
-          You can download only your own ID card from My ID Card.
-        </section>
-      </div>
-    );
+    return <div className="space-y-5"><PageHeader title="Generate ID Card" description="Only authorized users can generate ID cards." icon={BadgeCheck} /><section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-700 shadow-sm">You can download only your own ID card from My ID Card.</section></div>;
   }
 
   return (
@@ -110,32 +104,13 @@ export default function GeneratePage() {
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
         <section className="space-y-4 rounded-lg border border-border bg-card p-4 shadow-sm">
           <Step title="1. Card type"><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={ownerType} onChange={(e) => { setOwnerType(e.target.value as OwnerType); setSelected(null); setCard(null); }}>{allowedOwnerTypes.map((type) => <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>)}</select></Step>
-          <Step title="2. Search person"><div className="flex gap-2"><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, roll or ID" /><Button onClick={() => load()}><Search className="h-4 w-4" /></Button></div><div className="mt-2 max-h-56 space-y-2 overflow-auto">{people.map((p) => <button key={p._id} onClick={() => { setSelected(p); setCard(null); }} className="w-full rounded-md border border-slate-200 p-2 text-left text-sm hover:bg-slate-50">{ownerDisplayName(p) || "Unnamed person"}<div className="text-xs text-slate-500">{ownerDisplayId(p)}</div></button>)}</div></Step>
+          <Step title="2. Search person"><div className="flex gap-2"><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name, roll or ID" /><Button onClick={() => load()}><Search className="h-4 w-4" /></Button></div><div className="mt-2 max-h-56 space-y-2 overflow-auto">{people.map((p) => <button key={p._id} onClick={() => { setSelected(p); setCard(null); }} className="w-full rounded-md border border-slate-200 p-2 text-left text-sm hover:bg-slate-50">{ownerDisplayName(p) || "Unnamed person"}<div className="text-xs text-slate-500">{ownerDisplayId(p)} · {normalizeRole(p?.role || p?.userId?.role || p?.designation, ownerType)}</div></button>)}</div></Step>
           <Step title="3. Template options"><div className="grid grid-cols-2 gap-2">{Object.entries(options).map(([key, value]) => <label key={key} className="flex items-center gap-2 text-sm capitalize"><input type="checkbox" checked={value} onChange={(e) => setOptions({ ...options, [key]: e.target.checked })} />{key}</label>)}</div></Step>
           <Button className="w-full" disabled={!selected} onClick={generate}>Generate Card</Button>
         </section>
         <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <div className="mb-3 font-semibold">4. Preview card</div>
-          <div className="overflow-x-auto">
-            <div ref={previewRef} className="mx-auto min-w-max">
-              <ProfessionalIDCard
-                role={role}
-                name={previewName}
-                idNumber={previewId}
-                institutionName={institution?.name || "Educational Institution"}
-                institutionLogo={options.logo ? institution?.logo : undefined}
-                institutionAddress={institution?.address}
-                institutionPhone={institution?.phone}
-                institutionEmail={institution?.email}
-                institutionWebsite={institution?.website}
-                institutionSeal={institution?.seal}
-                headSignature={institution?.headSignature}
-                headName={headName}
-                stream={className}
-                validityDate={card?.validityEnd || undefined}
-              />
-            </div>
-          </div>
+          <div className="overflow-x-auto"><div ref={previewRef} className="mx-auto min-w-max"><ProfessionalIDCard role={role} name={previewName} idNumber={previewId} rollNumber={selected?.rollNumber || selected?.studentId || ""} studentClassName={selected?.classId?.name || selected?.className || ""} sectionName={sectionName} institutionName={institution?.name || "Educational Institution"} institutionLogo={options.logo ? institution?.logo : undefined} institutionAddress={institution?.address} institutionPhone={institution?.phone} institutionEmail={institution?.email} institutionWebsite={institution?.website} institutionSeal={institution?.seal} headSignature={institution?.headSignature} headName={headName} stream={className} designation={selected?.designation || className} department={selected?.department || ""} validityDate={card?.validityEnd || undefined} photoUrl={photoUrl} dateOfBirth={selected?.dateOfBirth || selected?.userId?.dateOfBirth || ""} fatherName={selected?.fatherName || ""} motherName={selected?.motherName || ""} guardianName={selected?.guardianName || ""} guardianPhone={selected?.guardianPhone || ""} admissionNumber={selected?.admissionNumber || ""} registrationNumber={selected?.registrationNumber || ""} /></div></div>
           <div className="mt-4"><DownloadButtons targetRef={previewRef} filename={`id-${previewId}`} cardId={card?._id} /></div>
         </section>
       </div>
@@ -143,6 +118,4 @@ export default function GeneratePage() {
   );
 }
 
-function Step({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div><h2 className="mb-2 text-sm font-semibold text-slate-950">{title}</h2>{children}</div>;
-}
+function Step({ title, children }: { title: string; children: React.ReactNode }) { return <div><h2 className="mb-2 text-sm font-semibold text-slate-950">{title}</h2>{children}</div>; }
