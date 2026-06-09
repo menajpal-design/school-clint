@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Camera as CameraIcon, Keyboard, RefreshCw, ShieldAlert, VideoOff } from "lucide-react";
+import { AlertTriangle, Camera as CameraIcon, Keyboard, QrCode, RefreshCw, ShieldAlert, VideoOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,27 @@ interface WebcamScannerProps {
   enabled?: boolean;
   autoStart?: boolean;
 }
+
+type FacingMode = "environment" | "user";
+
+type NativeBarcodeDetector = {
+  detect: (source: CanvasImageSource) => Promise<Array<{ rawValue?: string; format?: string }>>;
+};
+
+const BARCODE_FORMATS = [
+  "qr_code",
+  "code_128",
+  "code_39",
+  "code_93",
+  "codabar",
+  "ean_13",
+  "ean_8",
+  "itf",
+  "upc_a",
+  "upc_e",
+  "pdf417",
+  "data_matrix",
+];
 
 const detectBarcodePattern = (imageData: Uint8ClampedArray): string | null => {
   let darkCount = 0;
@@ -38,6 +59,21 @@ const getCameraErrorMessage = (err: any) => {
   return err?.message || "Failed to access camera.";
 };
 
+const getDetector = (): NativeBarcodeDetector | null => {
+  try {
+    const Detector = typeof window !== "undefined" ? (window as any).BarcodeDetector : null;
+    if (!Detector) return null;
+    return new Detector({ formats: BARCODE_FORMATS });
+  } catch {
+    try {
+      const Detector = typeof window !== "undefined" ? (window as any).BarcodeDetector : null;
+      return Detector ? new Detector() : null;
+    } catch {
+      return null;
+    }
+  }
+};
+
 export function WebcamScanner({ onScan, enabled = true, autoStart = false }: WebcamScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,10 +83,12 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
   const [permission, setPermission] = useState<"granted" | "denied" | "prompt" | "unsupported" | null>(null);
   const [error, setError] = useState<string>("");
   const [info, setInfo] = useState<string>(autoStart ? "Camera is ready to start..." : "Press Start Camera to allow camera access.");
-  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [facingMode, setFacingMode] = useState<FacingMode>("environment");
+  const [decoderReady, setDecoderReady] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const lastDetectionRef = useRef<number>(0);
+  const detectorRef = useRef<NativeBarcodeDetector | null>(null);
+  const lastDetectionRef = useRef<{ value: string; time: number }>({ value: "", time: 0 });
 
   const stopCamera = useCallback(() => {
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
@@ -63,28 +101,69 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     setInfo("Camera stopped. Press Start Camera to scan again.");
   }, []);
 
+  const emitScan = useCallback((value: string) => {
+    const clean = String(value || "").trim();
+    if (!clean) return;
+    const now = Date.now();
+    if (lastDetectionRef.current.value === clean && now - lastDetectionRef.current.time < 2500) return;
+    lastDetectionRef.current = { value: clean, time: now };
+    setInfo(`QR/Barcode scanned: ${clean}`);
+    onScan(clean);
+  }, [onScan]);
+
+  const scanWithNativeDetector = useCallback(async (video: HTMLVideoElement, canvas: HTMLCanvasElement) => {
+    const detector = detectorRef.current;
+    if (!detector) return false;
+    try {
+      let results = await detector.detect(video as unknown as CanvasImageSource);
+      if (!results.length) {
+        const context = canvas.getContext("2d", { willReadFrequently: true });
+        if (!context || !video.videoWidth) return false;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        results = await detector.detect(canvas);
+      }
+      const rawValue = results.find((item) => item.rawValue)?.rawValue || "";
+      if (rawValue) {
+        emitScan(rawValue);
+        return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  }, [emitScan]);
+
   const startScanning = useCallback(() => {
-    const scan = () => {
+    const scan = async () => {
       if (!videoRef.current || !canvasRef.current || !streamRef.current) {
         animationFrameRef.current = requestAnimationFrame(scan);
         return;
       }
       try {
+        const video = videoRef.current;
         const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
-        if (!context || !videoRef.current.videoWidth) {
+        if (!video.videoWidth || video.readyState < 2) {
           animationFrameRef.current = requestAnimationFrame(scan);
           return;
         }
-        canvas.width = videoRef.current.videoWidth;
-        canvas.height = videoRef.current.videoHeight;
-        context.drawImage(videoRef.current, 0, 0);
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const detected = detectBarcodePattern(imageData.data);
-        const now = Date.now();
-        if (detected && now - lastDetectionRef.current > 1000) {
-          lastDetectionRef.current = now;
-          setInfo("QR/Barcode detected. If code is not captured, paste/type it below and press Enter.");
+
+        const decoded = await scanWithNativeDetector(video, canvas);
+        if (!decoded) {
+          const context = canvas.getContext("2d", { willReadFrequently: true });
+          if (context) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const detected = detectBarcodePattern(imageData.data);
+            const now = Date.now();
+            if (detected && now - lastDetectionRef.current.time > 1200) {
+              lastDetectionRef.current = { value: detected, time: now };
+              setInfo(decoderReady ? "QR/Barcode detected, keep it steady..." : "QR/Barcode detected, but this browser cannot decode it. Paste/type the code below and press Enter.");
+            }
+          }
         }
       } catch (err) {
         console.error("Scan error:", err);
@@ -93,7 +172,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     };
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = requestAnimationFrame(scan);
-  }, []);
+  }, [decoderReady, scanWithNativeDetector]);
 
   const checkPermissionState = useCallback(async () => {
     if (typeof navigator === "undefined" || !(navigator as any).permissions?.query) return;
@@ -106,7 +185,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     }
   }, []);
 
-  const requestStream = async (mode: "environment" | "user") => {
+  const requestStream = async (mode: FacingMode) => {
     const constraints: MediaStreamConstraints = {
       video: { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false,
@@ -121,7 +200,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     }
   };
 
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (mode: FacingMode = facingMode) => {
     if (!enabled || starting) return;
     try {
       setStarting(true);
@@ -143,13 +222,17 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
       }
       stopCamera();
       setStarting(true);
+      setFacingMode(mode);
       setInfo("Opening camera...");
-      const stream = await requestStream(facingMode);
+      const stream = await requestStream(mode);
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => undefined);
-        setInfo("Camera ready. Point at ID card or QR code.");
+        const detector = getDetector();
+        detectorRef.current = detector;
+        setDecoderReady(Boolean(detector));
+        setInfo(detector ? "Camera ready. Point at QR or barcode." : "Camera ready, but this browser has no built-in QR decoder. Use manual/barcode input if scan does not capture.");
         setIsActive(true);
         setPermission("granted");
         startScanning();
@@ -166,18 +249,17 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     }
   }, [enabled, facingMode, permission, startScanning, starting, stopCamera]);
 
-  const switchCamera = async () => {
+  const switchCamera = () => {
     const next = facingMode === "environment" ? "user" : "environment";
-    setFacingMode(next);
     stopCamera();
-    setTimeout(() => startCamera(), 50);
+    setTimeout(() => startCamera(next), 50);
   };
 
   const handleManualSubmit = () => {
     const code = manualInputRef.current?.value.trim() || "";
     if (!code) return;
     setInfo(`Code captured: ${code}`);
-    onScan(code);
+    emitScan(code);
     if (manualInputRef.current) manualInputRef.current.value = "";
   };
 
@@ -187,6 +269,8 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
 
   useEffect(() => {
     checkPermissionState();
+    detectorRef.current = getDetector();
+    setDecoderReady(Boolean(detectorRef.current));
   }, [checkPermissionState]);
 
   useEffect(() => {
@@ -207,7 +291,8 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
               <CameraIcon className="mx-auto h-10 w-10 text-emerald-300" />
               <p className="font-semibold">Camera permission required</p>
               <p className="text-xs text-slate-200">Press Start Camera, then choose Allow from the browser permission popup.</p>
-              <Button type="button" onClick={startCamera} disabled={starting || !enabled} className="w-full">
+              {!decoderReady && <p className="rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-100">Your browser may not decode QR automatically. Manual/barcode input will still work.</p>}
+              <Button type="button" onClick={() => startCamera()} disabled={starting || !enabled} className="w-full">
                 {starting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <CameraIcon className="mr-2 h-4 w-4" />}
                 {starting ? "Opening Camera..." : "Start Camera"}
               </Button>
@@ -223,11 +308,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
               <div className="absolute -bottom-1 -left-1 h-4 w-4 border-b-2 border-l-2 border-blue-500" />
               <div className="absolute -bottom-1 -right-1 h-4 w-4 border-b-2 border-r-2 border-blue-500" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex gap-2">
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" style={{ animationDelay: "0.2s" }} />
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" style={{ animationDelay: "0.4s" }} />
-                </div>
+                <QrCode className="h-8 w-8 text-blue-400 opacity-70" />
               </div>
             </div>
           </div>
@@ -235,7 +316,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
 
         <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full bg-black/60 px-3 py-2 text-xs font-medium text-white backdrop-blur-sm">
           <div className={cn("h-2 w-2 rounded-full", isActive ? "animate-pulse bg-green-500" : permission === "denied" ? "bg-red-500" : "bg-slate-500")} />
-          {isActive ? "Scanning" : permission === "denied" ? "Permission denied" : starting ? "Opening" : "Offline"}
+          {isActive ? (decoderReady ? "Scanning QR" : "Camera only") : permission === "denied" ? "Permission denied" : starting ? "Opening" : "Offline"}
         </div>
 
         {info && <div className="absolute bottom-3 left-3 right-3 rounded bg-black/60 px-3 py-2 text-center text-xs text-white backdrop-blur-sm">{info}</div>}
@@ -250,7 +331,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
                 <p className="font-semibold">Fix permission:</p>
                 <p>Chrome/Android: tap lock icon beside address bar → Site settings → Camera → Allow.</p>
                 <p>Desktop Chrome: address bar lock icon → Camera → Allow → reload.</p>
-                <p>Then press Retry Camera.</p>
+                <p>If it still says denied, clear site settings for easyschool.live and open the page again.</p>
               </div>
             </div>
           </div>
@@ -263,11 +344,11 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
           <input ref={manualInputRef} type="text" placeholder="Type/paste ID card code or QR data, then press Enter" onKeyDown={handleManualInput} className="min-h-11 flex-1 rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200" />
           <Button type="button" onClick={handleManualSubmit}>Submit</Button>
         </div>
-        <p className="text-xs text-emerald-800">Camera blocked হলেও এই manual entry দিয়ে attendance scan কাজ করবে।</p>
+        <p className="text-xs text-emerald-800">Camera blocked হলেও manual entry/barcode scanner দিয়ে attendance scan কাজ করবে।</p>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-3">
-        {isActive ? <Button size="sm" variant="outline" onClick={stopCamera} className="flex-1"><VideoOff className="mr-2 h-4 w-4" />Stop Camera</Button> : <Button size="sm" onClick={startCamera} disabled={starting || !enabled} className="flex-1"><RefreshCw className={cn("mr-2 h-4 w-4", starting && "animate-spin")} />Retry Camera</Button>}
+        {isActive ? <Button size="sm" variant="outline" onClick={stopCamera} className="flex-1"><VideoOff className="mr-2 h-4 w-4" />Stop Camera</Button> : <Button size="sm" onClick={() => startCamera()} disabled={starting || !enabled} className="flex-1"><RefreshCw className={cn("mr-2 h-4 w-4", starting && "animate-spin")} />Retry Camera</Button>}
         <Button size="sm" variant="outline" onClick={switchCamera} disabled={starting || !enabled} className="flex-1"><CameraIcon className="mr-2 h-4 w-4" />{facingMode === "environment" ? "Use Front" : "Use Back"}</Button>
         <Button size="sm" variant="outline" onClick={() => manualInputRef.current?.focus()} className="flex-1"><ShieldAlert className="mr-2 h-4 w-4" />Use Manual</Button>
       </div>
@@ -276,6 +357,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
         <p className="font-medium text-blue-900">Scanner Tips:</p>
         <ul className="mt-1 list-inside list-disc space-y-1">
           <li>Camera popup শুধু Start Camera চাপার পর আসবে।</li>
+          <li>QR/Barcode auto scan browser support থাকলে সরাসরি present mark করবে।</li>
           <li>Allow camera permission from browser site settings.</li>
           <li>Use HTTPS and avoid opening inside unsupported in-app browsers.</li>
           <li>Manual entry works with barcode scanner devices and pasted QR data.</li>
