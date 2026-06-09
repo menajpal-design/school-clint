@@ -47,7 +47,9 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
       el.style.setProperty('print-color-adjust', 'exact')
       el.style.setProperty('color-adjust', 'exact')
       el.style.boxSizing = 'border-box'
-      if (el.style.transform && el !== root) el.style.transform = el.style.transform
+      el.style.maxWidth = 'none'
+      el.style.transform = 'none'
+      el.style.zoom = '1'
     })
   }
 
@@ -56,20 +58,10 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
     if (!card) return null
     await document.fonts?.ready?.catch(() => undefined)
     const rect = card.getBoundingClientRect()
-    const width = Math.ceil(rect.width || card.offsetWidth || 800)
-    const height = Math.ceil(rect.height || card.offsetHeight || 500)
+    const width = Math.ceil(Math.max(card.scrollWidth, card.offsetWidth, rect.width, 320))
+    const height = Math.ceil(Math.max(card.scrollHeight, card.offsetHeight, rect.height, 200))
     const wrapper = document.createElement('div')
-    wrapper.style.position = 'fixed'
-    wrapper.style.left = '-10000px'
-    wrapper.style.top = '0'
-    wrapper.style.width = `${width}px`
-    wrapper.style.height = `${height}px`
-    wrapper.style.overflow = 'hidden'
-    wrapper.style.margin = '0'
-    wrapper.style.padding = '0'
-    wrapper.style.background = '#ffffff'
-    wrapper.style.display = 'block'
-    wrapper.style.boxSizing = 'border-box'
+    wrapper.style.cssText = `position:fixed;left:0;top:0;width:${width}px;min-width:${width}px;height:${height}px;min-height:${height}px;overflow:hidden;margin:0;padding:0;background:#ffffff;display:block;box-sizing:border-box;z-index:2147483647;pointer-events:none;`
     wrapper.style.setProperty('-webkit-print-color-adjust', 'exact')
     wrapper.style.setProperty('print-color-adjust', 'exact')
 
@@ -79,9 +71,10 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
     cloned.style.top = '0'
     cloned.style.transform = 'none'
     cloned.style.zoom = '1'
-    cloned.style.maxWidth = `${width}px`
+    cloned.style.maxWidth = 'none'
     cloned.style.minWidth = `${width}px`
     cloned.style.width = `${width}px`
+    cloned.style.minHeight = `${height}px`
     cloned.style.height = `${height}px`
     cloned.style.background = cloned.style.background || '#ffffff'
     cloned.style.overflow = 'hidden'
@@ -91,21 +84,24 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
     document.body.appendChild(wrapper)
 
     try {
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
       const canvas = await html2canvas(cloned, {
-        scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
+        scale: 2,
         backgroundColor: '#ffffff',
         useCORS: true,
         allowTaint: true,
         foreignObjectRendering: false,
         scrollX: 0,
         scrollY: 0,
+        x: 0,
+        y: 0,
         width,
         height,
         windowWidth: width,
         windowHeight: height,
         onclone: (doc) => {
           const style = doc.createElement('style')
-          style.textContent = '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;box-sizing:border-box!important} body{margin:0!important;background:#fff!important}'
+          style.textContent = '@page{size:auto;margin:0}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;box-sizing:border-box!important;max-width:none!important}html,body{margin:0!important;background:#fff!important;width:auto!important;overflow:visible!important}'
           doc.head.appendChild(style)
         },
       })
@@ -142,10 +138,7 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
       api.idCards.renderPdf(formData).then((blob: Blob) => {
         const url = URL.createObjectURL(blob)
         const popup = window.open(url, '_blank')
-        if (popup) {
-          popup.focus()
-          setTimeout(() => { try { popup.print() } catch {} }, 1200)
-        }
+        if (popup) { popup.focus(); setTimeout(() => { try { popup.print() } catch {} }, 1200) }
         setTimeout(() => URL.revokeObjectURL(url), 30000)
       }).catch(() => undefined)
       return
@@ -194,10 +187,7 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
     el.style.boxSizing = 'border-box'
     el.style.marginTop = '8px'
     const containerParent = (target.closest && (target.closest('section') as HTMLElement)) || target.parentElement
-    if (containerParent) {
-      containerParent.appendChild(el)
-      setPortalRoot(el)
-    }
+    if (containerParent) { containerParent.appendChild(el); setPortalRoot(el) }
     return () => { try { if (el.parentElement) el.parentElement.removeChild(el) } catch {} }
   }, [targetRef])
 
