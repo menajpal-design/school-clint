@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
+import './mobile-comfort.css'
 import { ToastProvider } from '@/hooks/useToast'
 import { LanguageProvider } from '@/lib/i18n'
 import { MobileTableEnhancer } from '@/components/layout/MobileTableEnhancer'
