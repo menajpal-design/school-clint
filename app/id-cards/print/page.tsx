@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { StudentIDCard } from '@/components/id-cards/StudentIDCard'
 import { TeacherIDCard } from '@/components/id-cards/TeacherIDCard'
 import { StaffIDCard } from '@/components/id-cards/StaffIDCard'
@@ -45,228 +45,49 @@ export default function PrintPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const cardRef = useRef<HTMLDivElement>(null)
-
-  // Get card data from URL params
+  const [ready, setReady] = useState(false)
   const cardDataJson = searchParams.get('data')
   const cardData: CardData | null = cardDataJson ? JSON.parse(decodeURIComponent(cardDataJson)) : null
 
   useEffect(() => {
-    // Auto-trigger print dialog on page load
-    if (cardData && cardRef.current) {
-      setTimeout(() => {
-        window.print()
-      }, 500)
-    }
-  }, [cardData])
+    const timer = setTimeout(() => setReady(true), 300)
+    return () => clearTimeout(timer)
+  }, [cardDataJson])
 
   if (!cardData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">No card data provided</h1>
-          <Button onClick={() => router.back()}>Go Back</Button>
-        </div>
-      </div>
-    )
+    return <div className="min-h-screen flex items-center justify-center p-4"><div className="text-center"><h1 className="text-2xl font-bold mb-4">No card data provided</h1><Button onClick={() => router.back()}>Go Back</Button></div></div>
   }
 
   const renderCard = () => {
     switch (cardData.cardType) {
       case 'student-id':
-        return (
-          <StudentIDCard
-            ref={cardRef}
-            name={cardData.name || ''}
-            idNumber={cardData.idNumber || ''}
-            email={cardData.email || ''}
-            phone={cardData.phone || ''}
-            photoUrl={cardData.photoUrl || ''}
-            institutionName={cardData.institutionName || ''}
-            institutionLogo={cardData.institutionLogo || ''}
-            institutionAddress={cardData.institutionAddress || ''}
-            institutionPhone={cardData.institutionPhone || ''}
-            institutionEmail={cardData.institutionEmail || ''}
-            institutionSeal={cardData.institutionSeal || ''}
-            headSignature={cardData.headSignature || ''}
-            validityDate={cardData.validityDate || ''}
-            dateOfBirth={cardData.dateOfBirth || ''}
-            fatherName={cardData.fatherName || ''}
-            admissionNumber={cardData.admissionNumber || ''}
-            registrationNumber={cardData.registrationNumber || ''}
-            stream={cardData.stream || ''}
-          />
-        )
-
+        return <StudentIDCard ref={cardRef} name={cardData.name || ''} idNumber={cardData.idNumber || ''} email={cardData.email || ''} phone={cardData.phone || ''} photoUrl={cardData.photoUrl || ''} institutionName={cardData.institutionName || ''} institutionLogo={cardData.institutionLogo || ''} institutionAddress={cardData.institutionAddress || ''} institutionPhone={cardData.institutionPhone || ''} institutionEmail={cardData.institutionEmail || ''} institutionSeal={cardData.institutionSeal || ''} headSignature={cardData.headSignature || ''} validityDate={cardData.validityDate || ''} dateOfBirth={cardData.dateOfBirth || ''} fatherName={cardData.fatherName || ''} admissionNumber={cardData.admissionNumber || ''} registrationNumber={cardData.registrationNumber || ''} stream={cardData.stream || ''} />
       case 'teacher-id':
-        return (
-          <TeacherIDCard
-            ref={cardRef}
-            name={cardData.name || ''}
-            idNumber={cardData.idNumber || ''}
-            email={cardData.email || ''}
-            phone={cardData.phone || ''}
-            designation={cardData.designation || ''}
-            photoUrl={cardData.photoUrl || ''}
-            institutionName={cardData.institutionName || ''}
-            institutionLogo={cardData.institutionLogo || ''}
-            institutionAddress={cardData.institutionAddress || ''}
-            institutionPhone={cardData.institutionPhone || ''}
-            institutionEmail={cardData.institutionEmail || ''}
-            institutionSeal={cardData.institutionSeal || ''}
-            headSignature={cardData.headSignature || ''}
-            validityDate={cardData.validityDate || ''}
-            dateOfBirth={cardData.dateOfBirth || ''}
-          />
-        )
-
+        return <TeacherIDCard ref={cardRef} name={cardData.name || ''} idNumber={cardData.idNumber || ''} email={cardData.email || ''} phone={cardData.phone || ''} designation={cardData.designation || ''} photoUrl={cardData.photoUrl || ''} institutionName={cardData.institutionName || ''} institutionLogo={cardData.institutionLogo || ''} institutionAddress={cardData.institutionAddress || ''} institutionPhone={cardData.institutionPhone || ''} institutionEmail={cardData.institutionEmail || ''} institutionSeal={cardData.institutionSeal || ''} headSignature={cardData.headSignature || ''} validityDate={cardData.validityDate || ''} dateOfBirth={cardData.dateOfBirth || ''} />
       case 'staff-id':
-        return (
-          <StaffIDCard
-            ref={cardRef}
-            name={cardData.name || ''}
-            idNumber={cardData.idNumber || ''}
-            email={cardData.email || ''}
-            phone={cardData.phone || ''}
-            designation={cardData.designation || ''}
-            department={cardData.department || ''}
-            photoUrl={cardData.photoUrl || ''}
-            institutionName={cardData.institutionName || ''}
-            institutionLogo={cardData.institutionLogo || ''}
-            institutionAddress={cardData.institutionAddress || ''}
-            institutionPhone={cardData.institutionPhone || ''}
-            institutionEmail={cardData.institutionEmail || ''}
-            institutionSeal={cardData.institutionSeal || ''}
-            headSignature={cardData.headSignature || ''}
-            validityDate={cardData.validityDate || ''}
-            dateOfBirth={cardData.dateOfBirth || ''}
-          />
-        )
-
+        return <StaffIDCard ref={cardRef} name={cardData.name || ''} idNumber={cardData.idNumber || ''} email={cardData.email || ''} phone={cardData.phone || ''} designation={cardData.designation || ''} department={cardData.department || ''} photoUrl={cardData.photoUrl || ''} institutionName={cardData.institutionName || ''} institutionLogo={cardData.institutionLogo || ''} institutionAddress={cardData.institutionAddress || ''} institutionPhone={cardData.institutionPhone || ''} institutionEmail={cardData.institutionEmail || ''} institutionSeal={cardData.institutionSeal || ''} headSignature={cardData.headSignature || ''} validityDate={cardData.validityDate || ''} dateOfBirth={cardData.dateOfBirth || ''} />
       case 'head-id':
-        return (
-          <IDCardPreview
-            ref={cardRef}
-            name={cardData.name || ''}
-            idNumber={cardData.idNumber || ''}
-            email={cardData.email || ''}
-            phone={cardData.phone || ''}
-            designation={cardData.designation || ''}
-            photoUrl={cardData.photoUrl || ''}
-            institutionName={cardData.institutionName || ''}
-            institutionLogo={cardData.institutionLogo || ''}
-            institutionAddress={cardData.institutionAddress || ''}
-            institutionPhone={cardData.institutionPhone || ''}
-            institutionEmail={cardData.institutionEmail || ''}
-            institutionSeal={cardData.institutionSeal || ''}
-            headSignature={cardData.headSignature || ''}
-            validityDate={cardData.validityDate || ''}
-            dateOfBirth={cardData.dateOfBirth || ''}
-            type="head"
-          />
-        )
-
+        return <IDCardPreview ref={cardRef} name={cardData.name || ''} idNumber={cardData.idNumber || ''} email={cardData.email || ''} phone={cardData.phone || ''} designation={cardData.designation || ''} photoUrl={cardData.photoUrl || ''} institutionName={cardData.institutionName || ''} institutionLogo={cardData.institutionLogo || ''} institutionAddress={cardData.institutionAddress || ''} institutionPhone={cardData.institutionPhone || ''} institutionEmail={cardData.institutionEmail || ''} institutionSeal={cardData.institutionSeal || ''} headSignature={cardData.headSignature || ''} validityDate={cardData.validityDate || ''} dateOfBirth={cardData.dateOfBirth || ''} type="head" />
       case 'admit-card':
-        return (
-          <AdmitCard
-            ref={cardRef}
-            name={cardData.name}
-            rollNumber={cardData.idNumber}
-            photoUrl={cardData.photoUrl}
-            institutionName={cardData.institutionName}
-            institutionLogo={cardData.institutionLogo}
-            institutionAddress={cardData.institutionAddress}
-            institutionPhone={cardData.institutionPhone}
-            institutionEmail={cardData.institutionEmail}
-            institutionSeal={cardData.institutionSeal}
-            headSignature={cardData.headSignature}
-            examName={cardData.examName}
-            examDate={cardData.examDate}
-            examCenter={cardData.examCenter}
-            centerCode={cardData.centerCode}
-            headName={cardData.headName}
-            dateOfBirth={cardData.dateOfBirth}
-            fatherName={cardData.fatherName}
-            stream={cardData.stream}
-            examData={cardData.examData}
-          />
-        )
-
+        return <AdmitCard ref={cardRef} name={cardData.name} rollNumber={cardData.idNumber} photoUrl={cardData.photoUrl} institutionName={cardData.institutionName} institutionLogo={cardData.institutionLogo} institutionAddress={cardData.institutionAddress} institutionPhone={cardData.institutionPhone} institutionEmail={cardData.institutionEmail} institutionSeal={cardData.institutionSeal} headSignature={cardData.headSignature} examName={cardData.examName} examDate={cardData.examDate} examCenter={cardData.examCenter} centerCode={cardData.centerCode} headName={cardData.headName} dateOfBirth={cardData.dateOfBirth} fatherName={cardData.fatherName} stream={cardData.stream} examData={cardData.examData} />
       default:
         return null
     }
   }
 
   return (
-    <div className="w-full min-h-screen bg-white print:bg-white">
-      {/* Non-print UI */}
-      <div className="print:hidden sticky top-0 z-50 bg-white border-b p-4 flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={() => router.back()}>
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          Back to Generate
-        </Button>
+    <div className="w-full min-h-screen bg-white">
+      <div className="sticky top-0 z-50 bg-white border-b p-4 flex items-center gap-4">
+        <Button variant="outline" size="sm" onClick={() => router.back()}><ChevronLeft className="mr-2 h-4 w-4" />Back to Generate</Button>
         <h1 className="flex-1 text-lg font-semibold">Print ID Card</h1>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => window.print()}>
-            Print / PDF Download
-          </Button>
-        </div>
+        <span className="text-xs text-slate-500">Use PDF/Print buttons below for fixed device-independent output.</span>
       </div>
-
-      {/* Card rendering area - optimized for print */}
-      <div className="w-full flex items-center justify-center py-8 print:py-0 print:m-0 bg-gray-50 print:bg-white">
-        <div className="print:w-full print:bg-white">
-          {renderCard()}
-        </div>
+      <div className="w-full flex items-center justify-center py-8 bg-gray-50">
+        <div>{renderCard()}</div>
       </div>
-
-      {/* Download buttons - hidden on print */}
-      <div className="print:hidden sticky bottom-0 z-50 bg-white border-t p-4 flex justify-center gap-4">
-        {cardRef.current && (
-          <DownloadButtons
-            targetRef={cardRef}
-            filename={`${cardData.cardType}-${cardData.name}`}
-            printTitle={`${cardData.cardType} Card`}
-            emailSubject={`${cardData.cardType} Card for ${cardData.name}`}
-          />
-        )}
+      <div className="sticky bottom-0 z-50 bg-white border-t p-4 flex justify-center gap-4">
+        {ready && cardRef.current && <DownloadButtons targetRef={cardRef} filename={`${cardData.cardType}-${cardData.name}`} printTitle={`${cardData.cardType} Card`} emailSubject={`${cardData.cardType} Card for ${cardData.name}`} />}
       </div>
-
-      {/* Print styles */}
-      <style>{`
-        @media print {
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
-          }
-
-          body, html {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: white !important;
-          }
-          
-          @page {
-            size: A4;
-            margin: 12mm;
-            padding: 0;
-          }
-          
-          .professional-id-card {
-            page-break-after: avoid !important;
-          }
-          
-          .admit-card {
-            width: 186mm !important;
-            height: 131.5mm !important;
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-            page-break-after: avoid !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }
