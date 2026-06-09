@@ -47,11 +47,31 @@ jobs:
             echo "Current deployed commit:"
             git rev-parse HEAD
 
+            echo "Node and npm version:"
+            node -v
+            npm -v
+
+            echo "Cleaning stale core-js folder if present..."
+            python3 - <<'PY'
+            from pathlib import Path
+            import shutil
+            for p in [Path('node_modules/core-js'), Path('node_modules/.cache')]:
+                if p.exists():
+                    shutil.rmtree(p, ignore_errors=True)
+            PY
+
             echo "Installing dependencies..."
             if [ -f package-lock.json ]; then
-              npm ci --prefer-offline --no-audit --no-fund
+              npm ci --no-audit --no-fund || (python3 - <<'PY'
+            from pathlib import Path
+            import shutil
+            for p in [Path('node_modules/core-js'), Path('node_modules/.cache')]:
+                if p.exists():
+                    shutil.rmtree(p, ignore_errors=True)
+            PY
+              npm ci --no-audit --no-fund)
             else
-              npm install --prefer-offline --no-audit --no-fund
+              npm install --no-audit --no-fund
             fi
 
             echo "Patching billing payment buttons so widget-ready state does not keep them disabled..."
