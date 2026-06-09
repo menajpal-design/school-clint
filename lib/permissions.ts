@@ -21,6 +21,7 @@ const ACADEMIC_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, ...STUDENT_PA
 const RESULT_ENTRY: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'];
 const ATTENDANCE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT];
 const ATTENDANCE_MARK: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
+const ATTENDANCE_BIOMETRIC: UserRole[] = ['head', 'assistant_head'];
 const SMS_MONITORING: UserRole[] = ['admin', 'super_admin', 'head'];
 const SETTINGS: UserRole[] = ['head'];
 const HOLIDAY_VIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'student', 'parent', 'staff', 'finance_officer'];
@@ -97,6 +98,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Overview', href: '/attendance', roles: ATTENDANCE_MARK },
     { label: 'Mark Attendance', href: '/attendance/mark', roles: ATTENDANCE_MARK },
     { label: 'All Present Scanner', href: '/attendance/all-present', roles: ATTENDANCE_MARK },
+    { label: 'Add Fingerprint', href: '/attendance/add-fingerprint', roles: ATTENDANCE_BIOMETRIC },
     { label: 'Reports', href: '/attendance/reports', roles: ATTENDANCE_MARK },
     { label: 'My Attendance', href: '/attendance/my-attendance', roles: ATTENDANCE_VIEW },
   ] },
@@ -178,49 +180,30 @@ export const permissionActions = {
   canResultApproveAssistant: (user?: User | null | any) => hasPermission(user, 'result:approve_assistant'),
   canResultApproveHead: (user?: User | null | any) => hasPermission(user, 'result:approve_head'),
   canResultPublish: (user?: User | null | any) => hasPermission(user, 'result:publish'),
-  canResultDelete: (user?: User | null | any) => hasPermission(user, 'result:delete'),
   canExamPublish: (user?: User | null | any) => hasPermission(user, 'exam:publish'),
-  canMarkAttendance: (user?: User | null | any) => hasPermission(user, 'attendance:mark'),
-  canApproveLeave: (user?: User | null | any) => hasPermission(user, 'leave:approve'),
+  canAttendanceMark: (user?: User | null | any) => hasPermission(user, 'attendance:mark'),
+  canFeeCollect: (user?: User | null | any) => hasPermission(user, 'fee:collect'),
 };
 
-export function getVisibleMenuItems(userRole: UserRole): MenuItemConfig[] {
-  const role = normalizeUserRole(userRole) || userRole;
-  return filterMenuByRole(role);
-}
-
-export function getMenuForUser(userOrRole?: User | UserRole | string | null): MenuItemConfig[] {
-  const role = typeof userOrRole === 'string' ? userOrRole : userOrRole?.role;
-  const normalized = normalizeUserRole(role || '') || (role as UserRole);
-  return normalized ? filterMenuByRole(normalized) : [];
-}
-
-export function filterMenuByRole(role: UserRole) {
-  const normalizedRole = normalizeUserRole(role) || role;
-  if (!normalizedRole) return [];
+export function getAllowedMenu(user?: User | null) {
   return menuConfig
-    .filter((item) => hasRole({ role: normalizedRole } as User, item.roles))
-    .map((item) => ({ ...item, children: item.children?.filter((child) => hasRole({ role: normalizedRole } as User, child.roles)) }))
-    .filter((item) => !item.children || item.children.length > 0);
+    .filter((item) => hasRole(user, item.roles))
+    .map((item) => ({
+      ...item,
+      children: item.children?.filter((child) => hasRole(user, child.roles)),
+    }));
 }
 
-export function canAccessRoute(user: User | null | undefined, path: string) {
+export function canAccessPath(user: User | null | undefined, path: string): boolean {
   if (!user) return false;
-  const role = normalizeUserRole(user.role) || user.role;
-  if (role === 'super_admin') return true;
-  const items = flattenMenu(menuConfig);
-  const matches = items
-    .filter((item) => path === item.href || path.startsWith(item.href + '/'))
-    .sort((a, b) => b.href.length - a.href.length);
-  const match = matches[0];
-  if (!match) return true;
-  return hasRole({ role } as User, match.roles);
-}
-
-export function isRouteAllowed(user: User | null | undefined, path: string) {
-  return canAccessRoute(user, path);
-}
-
-function flattenMenu(items: MenuItemConfig[]): MenuItemConfig[] {
-  return items.flatMap((item) => [item, ...(item.children ? flattenMenu(item.children) : [])]);
+  const normalized = normalizeUserRole(user.role) || user.role;
+  if (normalized === 'super_admin') return true;
+  const allowed = getAllowedMenu(user);
+  const paths = new Set<string>();
+  allowed.forEach((item) => {
+    paths.add(item.href);
+    item.children?.forEach((child) => paths.add(child.href));
+  });
+  if (paths.has(path)) return true;
+  return [...paths].some((allowedPath) => allowedPath !== '/' && path.startsWith(`${allowedPath}/`));
 }
