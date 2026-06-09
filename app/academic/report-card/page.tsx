@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { downloadElementPdf, printElement } from "@/lib/export-utils";
+import { useAuth } from "@/hooks/useAuth";
+import { normalizeUserRole } from "@/lib/permissions";
 
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
 type StudentItem = { _id: string; rollNumber: string; userId?: { name: string; avatar?: string }; sectionId?: { _id: string; name: string } };
@@ -31,6 +33,9 @@ type ReportCard = {
 };
 
 export default function ReportCardPage() {
+  const { user } = useAuth();
+  const role = normalizeUserRole(user?.role) || user?.role;
+  const isOwnView = role === "student" || role === "parent";
   const previewRef = useRef<HTMLDivElement>(null);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [students, setStudents] = useState<StudentItem[]>([]);
@@ -51,16 +56,23 @@ export default function ReportCardPage() {
     setLoading(true);
     setError("");
     try {
-      const [classRes, examRes] = await Promise.all([
-        api.academic.classes.getAll() as Promise<{ classes: ClassItem[] }>,
-        api.academic.exams.getAll() as Promise<{ exams: ExamItem[] }>,
-      ]);
-      const firstClass = classRes.classes?.[0]?._id || "";
       const params = new URLSearchParams(window.location.search);
       const queryClassId = params.get("classId") || "";
       const querySectionId = params.get("sectionId") || "";
       const queryExamId = params.get("examId") || "";
       const queryStudentId = params.get("studentId") || "";
+      if (isOwnView) {
+        setClassId(queryClassId);
+        setSectionId(querySectionId);
+        setExamId(queryExamId);
+        setStudentId(queryStudentId);
+        return;
+      }
+      const [classRes, examRes] = await Promise.all([
+        api.academic.classes.getAll() as Promise<{ classes: ClassItem[] }>,
+        api.academic.exams.getAll() as Promise<{ exams: ExamItem[] }>,
+      ]);
+      const firstClass = classRes.classes?.[0]?._id || "";
       setClasses(classRes.classes || []);
       setExams(examRes.exams || []);
       setClassId((current) => current || queryClassId || firstClass);
@@ -72,26 +84,34 @@ export default function ReportCardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isOwnView]);
 
   const loadStudents = useCallback(async () => {
-    if (!classId) return;
+    if (isOwnView || !classId) return;
     const data = await api.academic.reportCard.students({ classId, sectionId: sectionId || undefined }) as { students: StudentItem[] };
     setStudents(data.students || []);
     setStudentId((current) => current || data.students?.[0]?._id || "");
-  }, [classId, sectionId]);
+  }, [classId, sectionId, isOwnView]);
 
   const loadReportCard = useCallback(async () => {
-    if (!studentId) return;
+    if (!isOwnView && !studentId) return;
     setError("");
+    setLoading(true);
     try {
-      const data = await api.academic.reportCard.get({ classId, sectionId: sectionId || undefined, examId: examId || undefined, studentId }) as { reportCard: ReportCard };
+      const params: any = {};
+      if (classId) params.classId = classId;
+      if (sectionId) params.sectionId = sectionId;
+      if (examId) params.examId = examId;
+      if (studentId) params.studentId = studentId;
+      const data = await api.academic.reportCard.get(params) as { reportCard: ReportCard };
       setReportCard(data.reportCard);
     } catch (err: any) {
       setError(err?.message || "Failed to load report card");
       setReportCard(null);
+    } finally {
+      setLoading(false);
     }
-  }, [classId, examId, sectionId, studentId]);
+  }, [classId, examId, sectionId, studentId, isOwnView]);
 
   useEffect(() => { loadLookups(); }, [loadLookups]);
   useEffect(() => { loadStudents().catch(() => setStudents([])); }, [loadStudents]);
@@ -105,22 +125,22 @@ export default function ReportCardPage() {
     <div className="space-y-5">
       <PageHeader
         title="Report Card"
-        description="Preview student report cards with marks, GPA, attendance and remarks."
+        description={isOwnView ? "View your published report card with marks, GPA, attendance and remarks." : "Preview student report cards with marks, GPA, attendance and remarks."}
         icon={FileText}
         status={<Badge variant="outline">{reportCard?.grade || "Preview"}</Badge>}
         actions={[
-          <Button key="download-pdf" variant="outline" size="sm" onClick={downloadPdf}>
+          <Button key="download-pdf" variant="outline" size="sm" onClick={downloadPdf} disabled={!reportCard}>
             <Download className="mr-2 h-4 w-4" />
             Download PDF
           </Button>,
-          <Button key="print" variant="outline" size="sm" onClick={() => printElement(previewRef.current, "Report Card")}>
+          <Button key="print" variant="outline" size="sm" onClick={() => printElement(previewRef.current, "Report Card")} disabled={!reportCard}>
             <Printer className="mr-2 h-4 w-4" />
             Print
           </Button>,
         ]}
       />
 
-      <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
+      {!isOwnView && <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-4">
           <Select label="Class" value={classId} onChange={(value) => { setClassId(value); setSectionId(""); setStudentId(""); }}>
             <option value="">Select class</option>
@@ -139,15 +159,16 @@ export default function ReportCardPage() {
             {students.map((item) => <option key={item._id} value={item._id}>{item.rollNumber} - {item.userId?.name}</option>)}
           </Select>
         </div>
-      </section>
+      </section>}
 
+      {isOwnView && <section className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">Only your own published report card is shown here.</section>}
       {error && <div className="rounded-lg border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <Card className="border-slate-200 shadow-sm">
         <CardContent className="p-6">
           <div ref={previewRef} className="mx-auto max-w-4xl bg-card text-foreground">
             {!reportCard ? (
-              <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">{loading ? "Loading report card..." : "Select filters to preview a report card."}</div>
+              <div className="flex min-h-80 items-center justify-center text-sm text-slate-500">{loading ? "Loading report card..." : isOwnView ? "No published report card found yet." : "Select filters to preview a report card."}</div>
             ) : (
               <div className="space-y-6 rounded-lg border border-slate-200 p-6">
                 <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-5">
@@ -170,35 +191,13 @@ export default function ReportCardPage() {
                 </div>
 
                 <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-muted text-left text-xs uppercase text-muted-foreground">
-                      <th className="border border-slate-200 px-3 py-2">Subject</th>
-                      <th className="border border-slate-200 px-3 py-2">Marks</th>
-                      <th className="border border-slate-200 px-3 py-2">Grade</th>
-                      <th className="border border-slate-200 px-3 py-2">GPA</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(reportCard.subjects || []).map((subject) => (
-                      <tr key={`${subject.name}-${subject.code}`}>
-                        <td className="border border-slate-200 px-3 py-2">{subject.name}</td>
-                        <td className="border border-slate-200 px-3 py-2">{subject.marks ?? "-"}</td>
-                        <td className="border border-slate-200 px-3 py-2">{subject.grade || "-"}</td>
-                        <td className="border border-slate-200 px-3 py-2">{subject.gpa ?? "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
+                  <thead><tr className="bg-muted text-left text-xs uppercase text-muted-foreground"><th className="border border-slate-200 px-3 py-2">Subject</th><th className="border border-slate-200 px-3 py-2">Marks</th><th className="border border-slate-200 px-3 py-2">Grade</th><th className="border border-slate-200 px-3 py-2">GPA</th></tr></thead>
+                  <tbody>{(reportCard.subjects || []).map((subject) => <tr key={`${subject.name}-${subject.code}`}><td className="border border-slate-200 px-3 py-2">{subject.name}</td><td className="border border-slate-200 px-3 py-2">{subject.marks ?? "-"}</td><td className="border border-slate-200 px-3 py-2">{subject.grade || "-"}</td><td className="border border-slate-200 px-3 py-2">{subject.gpa ?? "-"}</td></tr>)}</tbody>
                 </table>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-lg border border-slate-200 p-4">
-                    <h3 className="font-semibold">Attendance Summary</h3>
-                    <p className="mt-2 text-sm text-slate-600">Present {reportCard.attendanceSummary?.present || 0}, Absent {reportCard.attendanceSummary?.absent || 0}, Late {reportCard.attendanceSummary?.late || 0}, Leave {reportCard.attendanceSummary?.leave || 0}</p>
-                  </div>
-                  <div className="rounded-lg border border-slate-200 p-4">
-                    <h3 className="font-semibold">Teacher Remarks</h3>
-                    <p className="mt-2 text-sm text-slate-600">{reportCard.teacherRemarks}</p>
-                  </div>
+                  <div className="rounded-lg border border-slate-200 p-4"><h3 className="font-semibold">Attendance Summary</h3><p className="mt-2 text-sm text-slate-600">Present {reportCard.attendanceSummary?.present || 0}, Absent {reportCard.attendanceSummary?.absent || 0}, Late {reportCard.attendanceSummary?.late || 0}, Leave {reportCard.attendanceSummary?.leave || 0}</p></div>
+                  <div className="rounded-lg border border-slate-200 p-4"><h3 className="font-semibold">Teacher Remarks</h3><p className="mt-2 text-sm text-slate-600">{reportCard.teacherRemarks}</p></div>
                 </div>
               </div>
             )}
