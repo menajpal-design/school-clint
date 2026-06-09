@@ -4,18 +4,19 @@ import { getPrintInstitution } from "@/lib/export-utils";
 
 type Row = { subjectId: string; subjectName: string; subjectCode?: string; date: string; duration: number; totalMarks: number; passingMarks: number };
 
+const A4_LANDSCAPE_WIDTH = 1123;
 const fmt = (d?: string) => d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-";
 const day = (d?: string) => d ? new Date(d).toLocaleDateString("en-US", { weekday: "long" }) : "-";
 
-export function ExamRoutinePaper({ refEl, exam, rows }: { refEl?: any; exam: any; rows: Row[] }) {
+export function ExamRoutinePaper({ refEl, exam, rows, hidden = false }: { refEl?: any; exam: any; rows: Row[]; hidden?: boolean }) {
   const institution = getPrintInstitution();
   const sortedRows = [...(rows || [])].sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime());
   const className = exam?.classId?.name || exam?.className || "-";
   const period = `${fmt(exam?.startDate)} - ${fmt(exam?.endDate || exam?.startDate)}`;
 
   return (
-    <div className="overflow-x-auto rounded-2xl border bg-slate-100 p-3">
-      <div ref={refEl} id={refEl ? "exam-routine-print" : undefined} className="mx-auto w-[1120px] min-w-[1120px] overflow-hidden rounded-2xl border border-slate-300 bg-white text-slate-950 shadow-sm">
+    <div className={hidden ? "pointer-events-none fixed left-[-9999px] top-0 z-[-1] overflow-visible bg-white" : "overflow-x-auto rounded-2xl border bg-slate-100 p-3"} aria-hidden={hidden || undefined}>
+      <div ref={refEl} id={refEl ? "exam-routine-print" : undefined} style={{ width: A4_LANDSCAPE_WIDTH, minWidth: A4_LANDSCAPE_WIDTH }} className="mx-auto overflow-hidden rounded-2xl border border-slate-300 bg-white text-slate-950 shadow-sm">
         <div className="bg-gradient-to-r from-slate-950 via-emerald-900 to-slate-800 px-8 py-7 text-white">
           <div className="flex items-center justify-between gap-6">
             <div className="flex items-center gap-4">
