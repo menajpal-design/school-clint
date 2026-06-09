@@ -54,6 +54,17 @@ jobs:
               npm install --prefer-offline --no-audit --no-fund
             fi
 
+            echo "Patching billing payment buttons so widget-ready state does not keep them disabled..."
+            python3 - <<'PY'
+            from pathlib import Path
+            p = Path('app/billing/page.tsx')
+            text = p.read_text()
+            text = text.replace("disabled={isPurchasingSms || !isWidgetReady}", "disabled={isPurchasingSms}")
+            text = text.replace("disabled={isTopping || !isWidgetReady}", "disabled={isTopping}")
+            text = text.replace("disabled={isPaying || (selectedPaymentMethod === 'bkash' && !isWidgetReady)}", "disabled={isPaying}")
+            p.write_text(text)
+            PY
+
             echo "Building Next.js app..."
             rm -rf .next out
             npm run build
