@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Loader2, Ticket } from "lucide-react";
+import { Download, Loader2, Search, Ticket, UserRound } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { downloadElementPdf } from "@/lib/export-utils";
 
@@ -84,7 +84,7 @@ export function AdmitCardDownload() {
   }, [students, filter]);
 
   const previewClassName = selectedStudent?.classId?.name || "";
-  const previewSectionName = selectedStudent?.sectionId?.name ? `-${selectedStudent.sectionId.name}` : "";
+  const previewSectionName = selectedStudent?.sectionId?.name ? `Section ${selectedStudent.sectionId.name}` : "";
   const previewRollNumber = selectedStudent?.rollNumber || selectedStudent?.admissionNumber || selectedStudent?.registrationNumber || selectedStudent?._id || "";
   const previewDateOfBirth = getStudentDob(selectedStudent);
   const previewExamRows = useMemo(() => {
@@ -96,15 +96,59 @@ export function AdmitCardDownload() {
   const handleDownload = async () => { if (!selectedStudent) return; setDownloading(true); try { const rollNumber = selectedStudent.rollNumber || selectedStudent.admissionNumber || selectedStudent.registrationNumber || selectedStudent._id; await downloadElementPdf(previewRef.current, `admit-card-${rollNumber}.pdf`); } finally { setDownloading(false); } };
 
   return (
-    <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5" />Admit Card Download</CardTitle><CardDescription>Select a student from the database and download the admit card.</CardDescription></CardHeader>
-      <CardContent className="space-y-5">
-        <div className="space-y-2"><Label htmlFor="student">Student</Label><div className="flex gap-2"><Input placeholder={loading ? "Loading students..." : "Search name/class/roll/DOB"} value={filter} onChange={(e) => setFilter((e.target as HTMLInputElement).value)} /><Select value={selectedStudentId} onValueChange={setSelectedStudentId} disabled={loading || !students.length}><SelectTrigger id="student"><SelectValue placeholder={loading ? "Loading students..." : "Select student"} /></SelectTrigger><SelectContent>{filteredStudents.map((student) => <SelectItem key={student._id} value={student._id}>{getStudentName(student)}{student.rollNumber ? ` - ${student.rollNumber}` : ""}</SelectItem>)}</SelectContent></Select></div></div>
-        <Button onClick={handleDownload} disabled={!selectedStudent || downloading} className="w-full sm:w-auto">{downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Download Admit Card</Button>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm"><div className="mb-3 font-semibold">Preview admit card</div><div className="overflow-x-auto"><div className="min-w-max"><AdmitCard ref={previewRef} name={getStudentName(selectedStudent)} rollNumber={previewRollNumber} photoUrl={selectedStudent?.userId?.avatar || ""} institutionName={institution?.name || "Institution"} institutionLogo={institution?.logo || institution?.logoUrl || ""} institutionAddress={institution?.address || ""} institutionPhone={institution?.phone || ""} institutionEmail={institution?.email || ""} institutionSeal={institution?.seal || ""} headSignature={institution?.headSignature || ""} examName={selectedExam?.name || "Admit Card"} examDate={selectedExam?.date || selectedExam?.startDate || ""} examCenter={institution?.address || ""} centerCode={institution?.eiin || institution?.code || ""} headName={institution?.headId?.name || institution?.headName || ""} dateOfBirth={previewDateOfBirth} fatherName={selectedStudent?.fatherName || ""} motherName={selectedStudent?.motherName || ""} stream={[previewClassName, previewSectionName].filter(Boolean).join(" ")} examData={previewExamRows} /></div></div><div className="mt-4"><DownloadButtons targetRef={previewRef} filename={`admit-card-${previewRollNumber || "student"}`} printTitle="Print Admit Card" emailSubject={`Admit Card - ${getStudentName(selectedStudent)}`} /></div></div>
+    <Card className="overflow-hidden border-slate-200 shadow-sm">
+      <CardHeader className="border-b bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-900 text-white">
+        <CardTitle className="flex items-center gap-2 text-xl"><Ticket className="h-5 w-5" />Professional Admit Card Generator</CardTitle>
+        <CardDescription className="text-slate-200">Select a student, review exam details and download an official admit card.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5 p-4 md:p-6">
+        <div className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[1.1fr_1fr_auto] lg:items-end">
+          <div className="space-y-2">
+            <Label htmlFor="admit-search" className="flex items-center gap-2"><Search className="h-4 w-4" />Search student</Label>
+            <Input id="admit-search" placeholder={loading ? "Loading students..." : "Search name, class, roll, DOB, father or mother"} value={filter} onChange={(e) => setFilter((e.target as HTMLInputElement).value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="student" className="flex items-center gap-2"><UserRound className="h-4 w-4" />Student</Label>
+            <Select value={selectedStudentId} onValueChange={setSelectedStudentId} disabled={loading || !students.length}>
+              <SelectTrigger id="student"><SelectValue placeholder={loading ? "Loading students..." : "Select student"} /></SelectTrigger>
+              <SelectContent>{filteredStudents.map((student) => <SelectItem key={student._id} value={student._id}>{getStudentName(student)}{student.rollNumber ? ` - Roll ${student.rollNumber}` : ""}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <Button onClick={handleDownload} disabled={!selectedStudent || downloading} className="w-full lg:w-auto">
+            {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}Download PDF
+          </Button>
+        </div>
+
+        {selectedStudent && (
+          <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm md:grid-cols-4">
+            <Info label="Student" value={getStudentName(selectedStudent)} />
+            <Info label="Roll" value={previewRollNumber} />
+            <Info label="Class" value={[previewClassName, previewSectionName].filter(Boolean).join(" • ")} />
+            <Info label="Exam" value={selectedExam?.name || "Admit Card"} />
+          </div>
+        )}
+
+        <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="text-base font-bold text-slate-950">Preview admit card</div>
+              <p className="text-sm text-slate-500">This preview uses the same fixed layout for PDF and print.</p>
+            </div>
+            <DownloadButtons targetRef={previewRef} filename={`admit-card-${previewRollNumber || "student"}`} printTitle="Print Admit Card" emailSubject={`Admit Card - ${getStudentName(selectedStudent)}`} />
+          </div>
+          <div className="overflow-x-auto rounded-xl bg-slate-100 p-3">
+            <div className="min-w-max">
+              <AdmitCard ref={previewRef} name={getStudentName(selectedStudent)} rollNumber={previewRollNumber} photoUrl={selectedStudent?.userId?.avatar || ""} institutionName={institution?.name || "Institution"} institutionLogo={institution?.logo || institution?.logoUrl || ""} institutionAddress={institution?.address || ""} institutionPhone={institution?.phone || ""} institutionEmail={institution?.email || ""} institutionSeal={institution?.seal || ""} headSignature={institution?.headSignature || ""} examName={selectedExam?.name || "Admit Card"} examDate={selectedExam?.date || selectedExam?.startDate || ""} examCenter={institution?.address || ""} centerCode={institution?.eiin || institution?.code || ""} headName={institution?.headId?.name || institution?.headName || ""} dateOfBirth={previewDateOfBirth} fatherName={selectedStudent?.fatherName || ""} motherName={selectedStudent?.motherName || ""} stream={[previewClassName, previewSectionName].filter(Boolean).join(" • ")} examData={previewExamRows} />
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
+}
+
+function Info({ label, value }: { label: string; value?: string }) {
+  return <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 font-semibold text-slate-900">{value || "-"}</p></div>;
 }
 
 export default AdmitCardDownload;
