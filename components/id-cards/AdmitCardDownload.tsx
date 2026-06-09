@@ -95,6 +95,15 @@ export function AdmitCardDownload() {
     return [{ courseCode: previewClassName || "Exam", examDate: formatDate(selectedExam.date || selectedExam.startDate), examTime: formatDuration(selectedExam.duration), examCentre: institution?.address || institution?.name || "" }];
   }, [selectedExam, previewClassName, institution?.address, institution?.name]);
 
+  const previewQrData = useMemo(() => JSON.stringify({
+    type: "admit-card",
+    studentId: selectedStudent?._id || "",
+    roll: previewRollNumber,
+    examId: selectedExam?._id || "",
+    exam: selectedExam?.name || "Admit Card",
+    institution: institution?.name || "Institution",
+  }), [selectedStudent?._id, previewRollNumber, selectedExam?._id, selectedExam?.name, institution?.name]);
+
   const buildServerPayload = () => ({
     student: {
       _id: selectedStudent?._id,
@@ -129,7 +138,7 @@ export function AdmitCardDownload() {
       centerCode: institution?.eiin || institution?.code || "",
     },
     examRows: previewExamRows,
-    qrData: JSON.stringify({ type: "admit-card", studentId: selectedStudent?._id, roll: previewRollNumber, examId: selectedExam?._id, institution: institution?.name || "Institution" }),
+    qrData: previewQrData,
   });
 
   const handleDownload = async () => {
@@ -193,7 +202,7 @@ export function AdmitCardDownload() {
           </div>
           <div className="overflow-x-auto rounded-xl bg-slate-100 p-3">
             <div className="min-w-max">
-              <AdmitCard ref={previewRef} name={getStudentName(selectedStudent)} rollNumber={previewRollNumber} photoUrl={selectedStudent?.userId?.avatar || ""} institutionName={institution?.name || "Institution"} institutionLogo={institution?.logo || institution?.logoUrl || ""} institutionAddress={institution?.address || ""} institutionPhone={institution?.phone || ""} institutionEmail={institution?.email || ""} institutionSeal={institution?.seal || ""} headSignature={institution?.headSignature || ""} examName={selectedExam?.name || "Admit Card"} examDate={selectedExam?.date || selectedExam?.startDate || ""} examCenter={institution?.address || ""} centerCode={institution?.eiin || institution?.code || ""} headName={institution?.headId?.name || institution?.headName || ""} dateOfBirth={previewDateOfBirth} fatherName={selectedStudent?.fatherName || ""} motherName={selectedStudent?.motherName || ""} stream={[previewClassName, previewSectionName].filter(Boolean).join(" • ")} examData={previewExamRows} />
+              <AdmitCard ref={previewRef} name={getStudentName(selectedStudent)} rollNumber={previewRollNumber} photoUrl={selectedStudent?.userId?.avatar || ""} institutionName={institution?.name || "Institution"} institutionLogo={institution?.logo || institution?.logoUrl || ""} institutionAddress={institution?.address || ""} institutionPhone={institution?.phone || ""} institutionEmail={institution?.email || ""} institutionSeal={institution?.seal || ""} headSignature={institution?.headSignature || ""} examName={selectedExam?.name || "Admit Card"} examDate={selectedExam?.date || selectedExam?.startDate || ""} examCenter={institution?.address || ""} centerCode={institution?.eiin || institution?.code || ""} headName={institution?.headId?.name || institution?.headName || ""} dateOfBirth={previewDateOfBirth} fatherName={selectedStudent?.fatherName || ""} motherName={selectedStudent?.motherName || ""} stream={[previewClassName, previewSectionName].filter(Boolean).join(" • ")} examData={previewExamRows} qrData={previewQrData} />
             </div>
           </div>
         </div>
