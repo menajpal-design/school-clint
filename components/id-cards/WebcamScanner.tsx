@@ -22,9 +22,9 @@ const isHttpsReady = () => {
 const getCameraErrorMessage = (err: any) => {
   const name = String(err?.name || err?.originalError?.name || "");
   const message = String(err?.message || err?.originalError?.message || "");
-  if (name === "NotAllowedError" || name === "PermissionDeniedError" || /permission|denied/i.test(message)) return "Camera permission denied by browser or Windows privacy settings. Make sure browser site Camera is Allow and Windows Settings > Privacy & security > Camera allows desktop apps.";
+  if (name === "NotAllowedError" || name === "PermissionDeniedError" || /permission|denied/i.test(message)) return "Camera blocked by browser, Windows privacy, antivirus, or another app. Browser permission may show Allow, but Windows must also allow camera access for desktop apps.";
   if (name === "NotFoundError" || name === "DevicesNotFoundError") return "No camera found on this device.";
-  if (name === "NotReadableError" || name === "TrackStartError") return "Camera is busy or blocked by another app. Close other camera apps and try again.";
+  if (name === "NotReadableError" || name === "TrackStartError") return "Camera is busy or blocked by another app. Close Camera/Meet/Zoom/OBS and try again.";
   if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") return "Requested camera is not available. Try Front/Back camera switch.";
   if (!isHttpsReady()) return "Camera needs HTTPS secure connection. Open the site with https://";
   return message || "Failed to access camera.";
@@ -97,14 +97,14 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     }
   }, []);
 
-  const openBrowserCamera = async (mode: FacingMode) => {
+  const openBrowserCamera = async (mode: FacingMode, preferSwitch = false) => {
+    if (!preferSwitch) {
+      return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    }
     try {
       return await navigator.mediaDevices.getUserMedia(makeCameraConstraints(mode));
-    } catch (primaryError: any) {
-      if (primaryError?.name === "OverconstrainedError" || primaryError?.name === "ConstraintNotSatisfiedError") {
-        return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      }
-      throw primaryError;
+    } catch {
+      return await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     }
   };
 
@@ -142,7 +142,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
     throw new Error("ZXing video decoder method not found.");
   };
 
-  const startCamera = useCallback(async (mode: FacingMode = facingMode) => {
+  const startCamera = useCallback(async (mode: FacingMode = facingMode, preferSwitch = false) => {
     if (!enabled || starting) return;
     try {
       setStarting(true);
@@ -169,7 +169,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
       setStarting(true);
       setFacingMode(mode);
 
-      const stream = await openBrowserCamera(mode);
+      const stream = await openBrowserCamera(mode, preferSwitch);
       streamRef.current = stream;
       const video = videoRef.current;
       if (!video) throw new Error("Camera video element is not ready.");
@@ -199,7 +199,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
   const switchCamera = () => {
     const next = facingMode === "environment" ? "user" : "environment";
     stopCamera();
-    setTimeout(() => startCamera(next), 100);
+    setTimeout(() => startCamera(next, true), 100);
   };
 
   const handleManualSubmit = () => {
@@ -276,7 +276,7 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
                 <p className="font-semibold">Fix permission:</p>
                 <p>Browser: lock icon → Site settings → Camera → Allow → reload.</p>
                 <p>Windows: Settings → Privacy & security → Camera → allow browser/desktop apps.</p>
-                <p>If it still says denied, reset site permissions for easyschool.live and open again.</p>
+                <p>Close Camera/Meet/Zoom/OBS if they are using the camera.</p>
               </div>
             </div>
           </div>
@@ -301,8 +301,8 @@ export function WebcamScanner({ onScan, enabled = true, autoStart = false }: Web
       <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
         <p className="font-medium text-blue-900">Scanner Tips:</p>
         <ul className="mt-1 list-inside list-disc space-y-1">
-          <li>Camera popup শুধু Start Camera চাপার পর আসবে।</li>
-          <li>Camera first open হবে, তারপর ZXing package দিয়ে QR/Barcode scan হবে।</li>
+          <li>Start Camera প্রথমে সাধারণ video:true দিয়ে যেকোনো camera open করবে।</li>
+          <li>Camera open হওয়ার পর ZXing package দিয়ে QR/Barcode scan হবে।</li>
           <li>Windows camera privacy setting-এ browser access Allow থাকতে হবে।</li>
           <li>Manual entry works with barcode scanner devices and pasted QR data.</li>
         </ul>
