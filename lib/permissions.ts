@@ -209,3 +209,5 @@ export function canAccessPath(user: User | null | undefined, path: string): bool
   if (paths.has(path)) return true;
   return [...paths].some((allowedPath) => allowedPath !== '/' && path.startsWith(`${allowedPath}/`));
 }
+
+export const isRouteAllowed = canAccessPath;
