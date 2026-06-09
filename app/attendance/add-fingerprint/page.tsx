@@ -115,6 +115,15 @@ export default function AddFingerprintPage() {
     }
   };
 
+  const tableRows = visiblePeople.map((person) => [
+    <div key="name"><p className="font-medium">{getName(person)}</p><p className="text-xs text-muted-foreground">{getSection(person)}</p></div>,
+    getRole(person),
+    getCode(person),
+    getClassGroup(person),
+    getFingerprint(person) ? <Badge key="fp" variant="default">{getFingerprint(person)}</Badge> : <Badge key="no-fp" variant="secondary">Not added</Badge>,
+    <div key="actions" className="flex flex-wrap gap-2"><Button size="sm" onClick={() => choosePerson(person)}>Select</Button><Button size="sm" variant="outline" disabled={!getFingerprint(person) || saving} onClick={() => removeFingerprint(person)}><Trash2 className="mr-1 h-3 w-3" />Remove</Button></div>,
+  ]);
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -182,23 +191,9 @@ export default function AddFingerprintPage() {
             </div>
 
             <ResponsiveTable
-              columns={[
-                { key: 'name', label: 'Name' },
-                { key: 'role', label: 'Role' },
-                { key: 'code', label: 'Code' },
-                { key: 'class', label: 'Class / Group' },
-                { key: 'fingerprint', label: 'Fingerprint ID' },
-                { key: 'actions', label: 'Actions' },
-              ]}
-              data={visiblePeople.map((person) => ({
-                name: <div><p className="font-medium">{getName(person)}</p><p className="text-xs text-muted-foreground">{getSection(person)}</p></div>,
-                role: getRole(person),
-                code: getCode(person),
-                class: getClassGroup(person),
-                fingerprint: getFingerprint(person) ? <Badge variant="default">{getFingerprint(person)}</Badge> : <Badge variant="secondary">Not added</Badge>,
-                actions: <div className="flex flex-wrap gap-2"><Button size="sm" onClick={() => choosePerson(person)}>Select</Button><Button size="sm" variant="outline" disabled={!getFingerprint(person) || saving} onClick={() => removeFingerprint(person)}><Trash2 className="mr-1 h-3 w-3" />Remove</Button></div>,
-              }))}
-              emptyMessage={loading ? 'Loading...' : 'No people found.'}
+              columns={['Name', 'Role', 'Code', 'Class / Group', 'Fingerprint ID', 'Actions']}
+              rows={tableRows}
+              empty={loading ? 'Loading...' : 'No people found.'}
             />
           </CardContent>
         </Card>
