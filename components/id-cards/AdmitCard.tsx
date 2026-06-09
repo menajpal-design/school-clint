@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 
 export interface AdmitCardExamItem {
@@ -53,6 +53,20 @@ const formatDisplayDate = (value?: string) => {
 const shortText = (value: any, max = 52) => {
   const text = String(value || '').replace(/\s+/g, ' ').trim()
   return text.length > max ? `${text.slice(0, max - 1)}…` : text
+}
+
+function PrintSafeQr({ value, size = 56 }: { value: string; size?: number }) {
+  const [dataUrl, setDataUrl] = useState('')
+  useEffect(() => {
+    let cancelled = false
+    import('qrcode')
+      .then((QRCode) => QRCode.toDataURL(value || '-', { width: size * 3, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#0f172a', light: '#ffffff' } }))
+      .then((url) => { if (!cancelled) setDataUrl(url) })
+      .catch(() => { if (!cancelled) setDataUrl('') })
+    return () => { cancelled = true }
+  }, [value, size])
+  if (dataUrl) return <img src={dataUrl} alt="Verification QR" style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
+  return <QRCodeSVG value={value || '-'} size={size} level="M" includeMargin={false} />
 }
 
 function AdmitLogo({ logoUrl }: { logoUrl?: string }) {
@@ -131,7 +145,7 @@ export const AdmitCard = React.forwardRef<HTMLDivElement, AdmitCardProps>(
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 70, height: 70, borderRadius: 14, border: '1px solid #cbd5e1', background: '#fff', padding: 6 }}>
-                <QRCodeSVG value={resolvedQrData} size={56} level="M" includeMargin={false} />
+                <PrintSafeQr value={resolvedQrData} size={56} />
               </div>
               <div style={{ marginTop: 3, color: '#64748b', fontSize: 8, fontWeight: 900, letterSpacing: '.12em', textTransform: 'uppercase' }}>Verify QR</div>
             </div>
