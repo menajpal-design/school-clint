@@ -19,6 +19,8 @@ const SCHOOL_USERS: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'su
 const STUDENT_PARENT: UserRole[] = ['student', 'parent'];
 const ACADEMIC_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, ...STUDENT_PARENT];
 const RESULT_ENTRY: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'];
+const QUESTION_MANAGE: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'];
+const MCQ_PRACTICE: UserRole[] = [...QUESTION_MANAGE, 'student', 'parent'];
 const ATTENDANCE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT];
 const ATTENDANCE_MARK: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
 const ATTENDANCE_BIOMETRIC: UserRole[] = ['head', 'assistant_head'];
@@ -94,6 +96,9 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
     { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
   ] },
+  { label: 'AI Question Manage', href: '/ai-manage', roles: QUESTION_MANAGE, icon: 'BookOpenCheck' },
+  { label: 'MCQ Manage', href: '/mcq-manage', roles: QUESTION_MANAGE, icon: 'BookOpenCheck' },
+  { label: 'MCQ Practice', href: '/mcq-practice', roles: MCQ_PRACTICE, icon: 'BookOpenCheck' },
   { label: 'Attendance', href: '/attendance', roles: ATTENDANCE_VIEW, icon: 'CheckCircle2', children: [
     { label: 'Overview', href: '/attendance', roles: ATTENDANCE_MARK },
     { label: 'Mark Attendance', href: '/attendance/mark', roles: ATTENDANCE_MARK },
