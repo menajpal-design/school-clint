@@ -59,13 +59,23 @@ jobs:
             node -v
             npm -v
 
-            echo "Cleaning stale core-js folder if present..."
+            echo "Stopping running client before cleaning build cache..."
+            pm2 stop school-client || true
+            pm2 stop school-clint || true
+
+            echo "Cleaning stale folders before install/build..."
+            rm -rf .next/export .next/cache out node_modules/.cache || true
             python3 - <<'PY'
             from pathlib import Path
-            import shutil
-            for p in [Path('node_modules/core-js'), Path('node_modules/.cache')]:
+            import shutil, time
+            for name in ['.next', 'out', 'node_modules/core-js', 'node_modules/.cache']:
+                p = Path(name)
                 if p.exists():
-                    shutil.rmtree(p, ignore_errors=True)
+                    for _ in range(5):
+                        shutil.rmtree(p, ignore_errors=True)
+                        if not p.exists():
+                            break
+                        time.sleep(1)
             PY
 
             echo "Installing dependencies..."
@@ -111,8 +121,8 @@ jobs:
             PY
 
             echo "Building Next.js app..."
-            rm -rf .next out
-            npm run build
+            rm -rf .next/export .next/cache out || true
+            NODE_OPTIONS="--max-old-space-size=3072" NEXT_TELEMETRY_DISABLED=1 npm run build
 
             echo "PM2 process details before restart:"
             pm2 describe school-client || true
