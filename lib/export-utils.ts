@@ -60,7 +60,7 @@ const pageShell = (title: string, body: string, styles = "") => `<!doctype html>
 export const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 export function downloadCsv(filename: string, rows: unknown[][]) { downloadFile(`\uFEFF${rows.map((r) => r.map(csvCell).join(",")).join("\r\n")}`, filename, "text/csv;charset=utf-8"); }
 
-function preparePdfNode(root: HTMLElement, widthPx: number) {
+function preparePdfNode(root: HTMLElement, widthPx: number, preserveTables = false) {
   const walk = (el: Element) => {
     if (el instanceof HTMLElement) {
       el.style.zoom = "1";
@@ -70,7 +70,7 @@ function preparePdfNode(root: HTMLElement, widthPx: number) {
       el.style.boxSizing = "border-box";
       el.style.opacity = "1";
       el.style.visibility = "visible";
-      if (el.tagName === "TABLE") { el.style.width = "100%"; el.style.tableLayout = "auto"; }
+      if (!preserveTables && el.tagName === "TABLE") { el.style.width = "100%"; el.style.tableLayout = "auto"; }
       if (el.tagName === "TH" || el.tagName === "TD") { el.style.whiteSpace = "normal"; el.style.wordBreak = "break-word"; }
     }
     Array.from(el.children).forEach(walk);
@@ -85,8 +85,8 @@ async function saveCanvasAsPdf(canvas: HTMLCanvasElement, filename: string, land
   const pdf = new jsPDF(landscape ? "l" : "p", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const marginX = fitSinglePage ? 5 : 8;
-  const marginY = fitSinglePage ? 5 : 8;
+  const marginX = fitSinglePage ? 4 : 8;
+  const marginY = fitSinglePage ? 4 : 8;
   const maxWidth = pageWidth - marginX * 2;
   const maxHeight = pageHeight - marginY * 2;
   const data = canvas.toDataURL("image/png", 1.0);
@@ -141,6 +141,31 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
   if (!target) return;
   const html2canvas = (await import("html2canvas")).default;
   await document.fonts?.ready?.catch(() => undefined);
+  const admitTarget = target.classList.contains("admit-card") ? target : (target.querySelector?.(".admit-card") as HTMLElement | null);
+  if (admitTarget) {
+    const cloned = admitTarget.cloneNode(true) as HTMLElement;
+    copyComputedStyles(cloned, admitTarget);
+    cloned.style.width = "1123px";
+    cloned.style.height = "794px";
+    cloned.style.minWidth = "1123px";
+    cloned.style.maxWidth = "1123px";
+    cloned.style.minHeight = "794px";
+    cloned.style.maxHeight = "794px";
+    cloned.style.overflow = "hidden";
+    preparePdfNode(cloned, A4_WIDTH_PX, true);
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = `position:fixed;left:0;top:0;width:${A4_WIDTH_PX}px;height:${A4_MIN_HEIGHT_PX}px;min-width:${A4_WIDTH_PX}px;min-height:${A4_MIN_HEIGHT_PX}px;background:#fff;padding:0;margin:0;overflow:hidden;pointer-events:none;z-index:2147483647;visibility:visible;box-sizing:border-box;`;
+    wrapper.appendChild(cloned);
+    document.body.appendChild(wrapper);
+    try {
+      await inlineImages(wrapper);
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: true, foreignObjectRendering: false, scrollX: 0, scrollY: 0, width: A4_WIDTH_PX, height: A4_MIN_HEIGHT_PX, windowWidth: A4_WIDTH_PX, windowHeight: A4_MIN_HEIGHT_PX });
+      await saveCanvasAsPdf(canvas, filename, true, true);
+    } finally { document.body.removeChild(wrapper); }
+    return;
+  }
+
   const rect = target.getBoundingClientRect();
   const contentWidth = Math.ceil(Math.max(target.scrollWidth, target.offsetWidth, rect.width, 900));
   const contentHeight = Math.ceil(Math.max(target.scrollHeight, target.offsetHeight, rect.height, 600));
@@ -197,9 +222,5 @@ export async function printHtml(title: string, bodyHtml: string, styles = "", qr
   if (isMobileBrowser()) { await downloadHtmlAsPdf(title, bodyWithQr, finalStyles, `${safeFilename(title)}.pdf`); return; }
   const popup = window.open("", "_blank", "width=1000,height=900");
   if (!popup) { await downloadHtmlAsPdf(title, bodyWithQr, finalStyles, `${safeFilename(title)}.pdf`); return; }
-  popup.document.open();
-  popup.document.write(pageShell(title, bodyWithQr, finalStyles));
-  popup.document.close();
-  popup.focus();
-  setTimeout(() => { try { popup.print(); } catch {} }, 600);
+  popup.document.open(); popup.document.write(pageShell(title, bodyWithQr, finalStyles)); popup.document.close(); popup.focus(); setTimeout(() => { try { popup.print(); } catch {} }, 600);
 }
