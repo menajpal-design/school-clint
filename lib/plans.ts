@@ -13,9 +13,10 @@ export const easySchoolStorageMonthlyPrice = 100;
 
 export const getPlanByCode = (code?: string) => schoolPlans.find((plan) => plan.code === code) || schoolPlans[0];
 
-export const calculatePlanDue = (code?: string, cycle: "monthly" | "yearly" = "monthly", useEasySchoolStorage = true) => {
+export const calculatePlanDue = (code?: string, cycle: "monthly" | "yearly" = "monthly", useEasySchoolStorage = true, extraAmount = 0) => {
   const plan = getPlanByCode(code);
   const baseAmount = cycle === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
   const storageAmount = useEasySchoolStorage ? easySchoolStorageMonthlyPrice * (cycle === "yearly" ? 12 : 1) : 0;
-  return { plan, baseAmount, storageAmount, total: baseAmount + storageAmount };
+  const extra = Number(extraAmount || 0);
+  return { plan, baseAmount, storageAmount, extraAmount: extra, total: baseAmount + storageAmount + extra };
 };
