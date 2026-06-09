@@ -65,6 +65,21 @@ jobs:
             p.write_text(text)
             PY
 
+            echo "Patching exam routine page to use polished PDF paper..."
+            python3 - <<'PY'
+            from pathlib import Path
+            p = Path('app/academic/exam-routine/page.tsx')
+            text = p.read_text()
+            marker = 'import { normalizeUserRole } from "@/lib/permissions";'
+            extra = marker + '\nimport { ExamRoutinePaper } from "@/components/academic/ExamRoutinePaper";'
+            if marker in text and 'ExamRoutinePaper' not in text:
+                text = text.replace(marker, extra)
+            text = text.replace('<Paper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
+            text = text.replace('<Paper exam={preview} rows={rowsFrom(preview)} />', '<ExamRoutinePaper exam={preview} rows={rowsFrom(preview)} />')
+            text = text.replace('min-width:1050px!important', 'min-width:1120px!important')
+            p.write_text(text)
+            PY
+
             echo "Building Next.js app..."
             rm -rf .next out
             npm run build
