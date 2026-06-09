@@ -194,6 +194,8 @@ export function getAllowedMenu(user?: User | null) {
     }));
 }
 
+export const getMenuForUser = getAllowedMenu;
+
 export function canAccessPath(user: User | null | undefined, path: string): boolean {
   if (!user) return false;
   const normalized = normalizeUserRole(user.role) || user.role;
