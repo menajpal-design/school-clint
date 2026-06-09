@@ -32,12 +32,14 @@ const ID_CARD_OWN: UserRole[] = [...EMPLOYEES, 'student', 'parent'];
 const ID_CARD_GENERATE: UserRole[] = SCHOOL_LEADER_ADMIN;
 const NOTICE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT, 'committee_member'];
 const DOCUMENT_VIEW: UserRole[] = ['head', 'assistant_head', 'finance_officer', 'staff', 'student', 'parent'];
+const DOCUMENT_MANAGE: UserRole[] = ['head', 'assistant_head', 'finance_officer', 'staff'];
 const LIBRARY_VIEW: UserRole[] = [...SCHOOL_LEADER_ADMIN, ...TEACHERS, 'staff', 'student', 'parent'];
 const LIBRARY_MANAGE: UserRole[] = [...SCHOOL_LEADER_ADMIN, 'staff'];
 const HOMEWORK_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, 'student', 'parent'];
 const LEAVE_REVIEW: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
 const LEAVE_APPLY: UserRole[] = ['student', 'parent', 'teacher', 'subject_teacher', 'class_teacher', 'staff', 'finance_officer'];
 const FEE_COLLECT_ROLES: UserRole[] = ['head', 'assistant_head', 'finance_officer', 'class_teacher'];
+const FINANCE_VIEW: UserRole[] = ['head', 'assistant_head', 'finance_officer'];
 
 export function normalizeUserRole(role?: string | null): UserRole | undefined {
   if (!role) return undefined;
@@ -57,23 +59,36 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Subscriptions', href: '/admin/subscriptions', roles: PLATFORM_ADMIN },
     { label: 'Accounting', href: '/admin/accounting', roles: PLATFORM_ADMIN },
     { label: 'SMS Usage', href: '/admin/sms-usage', roles: PLATFORM_ADMIN },
+    { label: 'Admin SMS Monitoring', href: '/admin/sms-monitoring', roles: PLATFORM_ADMIN },
     { label: 'Select School', href: '/admin/select-school', roles: PLATFORM_ADMIN },
     { label: 'User Management', href: '/admin/users', roles: PLATFORM_ADMIN },
     { label: 'Backup & Restore', href: '/admin/backup', roles: ['super_admin'] },
   ] },
-  { label: 'Dashboard', href: '/dashboard', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS], icon: 'LayoutGrid' },
+  { label: 'Dashboard', href: '/dashboard', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS], icon: 'LayoutGrid', children: [
+    { label: 'Dashboard', href: '/dashboard', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS] },
+    { label: 'Charts', href: '/charts', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS] },
+    { label: 'Profile Charts', href: '/charts/profile', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS] },
+    { label: 'Parent Charts', href: '/charts/parent', roles: ['parent'] },
+  ] },
   { label: 'Billing & Subscription', href: '/billing', roles: BILLING_ROLES, icon: 'CreditCard' },
   { label: 'Notice Board', href: '/notices', roles: NOTICE_VIEW, icon: 'Bell' },
+  { label: 'Notifications', href: '/notifications', roles: ALL_ROLES, icon: 'Bell' },
+  { label: 'Messages', href: '/messages', roles: ALL_ROLES, icon: 'MessageSquare' },
   { label: 'Holidays', href: '/holidays', roles: HOLIDAY_VIEW, icon: 'CalendarDays' },
+  { label: 'Downloads', href: '/downloads', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS], icon: 'FileText' },
   { label: 'ID Card', href: '/id-cards', roles: ID_CARD_OWN, icon: 'CreditCard', children: [
+    { label: 'Overview', href: '/id-cards', roles: ID_CARD_OWN },
     { label: 'My ID Card', href: '/id-cards/my-card', roles: ID_CARD_OWN },
     { label: 'Generate Card', href: '/id-cards/generate', roles: ID_CARD_GENERATE },
     { label: 'Admit Card', href: '/id-cards/admit-card', roles: SCHOOL_LEADER_ADMIN },
     { label: 'Bulk Generate', href: '/id-cards/bulk-generate', roles: ID_CARD_GENERATE },
+    { label: 'Print Card', href: '/id-cards/print', roles: ID_CARD_GENERATE },
+    { label: 'Renewal', href: '/id-cards/renewal', roles: ID_CARD_GENERATE },
     { label: 'Templates', href: '/id-cards/templates', roles: SCHOOL_LEADER_ADMIN },
     { label: 'Reports', href: '/id-cards/reports', roles: SCHOOL_LEADER_ADMIN },
   ] },
   { label: 'Institution', href: '/institution', roles: [...SCHOOL_LEADERS, 'class_teacher'], icon: 'Building2', children: [
+    { label: 'Overview', href: '/institution', roles: SCHOOL_LEADERS },
     { label: 'Profile', href: '/institution/profile', roles: SCHOOL_LEADERS },
     { label: 'Billing & Subscription', href: '/billing', roles: ['head'] },
     { label: 'Finance Audit', href: '/institution/finance-audit', roles: SCHOOL_LEADERS },
@@ -82,6 +97,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Teachers', href: '/institution/teachers', roles: SCHOOL_LEADERS },
     { label: 'Staff', href: '/institution/staff', roles: SCHOOL_LEADERS },
     { label: 'Admission', href: '/institution/admission', roles: SCHOOL_LEADERS },
+    { label: 'Subordinates', href: '/institution/subordinates', roles: ['head'] },
     { label: 'Backup', href: '/institution/backup', roles: ['head'] },
   ] },
   { label: 'Academic', href: '/academic-menu', roles: ACADEMIC_VIEW, icon: 'BookOpen', children: [
@@ -91,6 +107,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Subjects', href: '/academic/subjects', roles: SCHOOL_LEADER_ADMIN },
     { label: 'Syllabus', href: '/academic/syllabus', roles: ACADEMIC_VIEW },
     { label: 'Class Routine', href: '/academic/class-routine', roles: ACADEMIC_VIEW },
+    { label: 'Class Routine Overview', href: '/class-routine', roles: ACADEMIC_VIEW },
     { label: 'Exam Routine', href: '/academic/exam-routine', roles: ACADEMIC_VIEW },
     { label: 'Exams', href: '/academic/exams', roles: ACADEMIC_VIEW },
     { label: 'Results', href: '/academic/results', roles: [...RESULT_ENTRY, ...STUDENT_PARENT] },
@@ -98,6 +115,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
   ] },
   { label: 'Question Bank', href: '/question-bank', roles: QUESTION_BANK_VIEW, icon: 'BookOpenCheck', children: [
+    { label: 'Overview', href: '/question-bank', roles: QUESTION_BANK_VIEW },
     { label: 'Question Generate', href: '/question-bank/question-generate', roles: QUESTION_MANAGE },
     { label: 'Question Storage', href: '/question-bank/question-generate/storage', roles: QUESTION_MANAGE },
     { label: 'AI Question Manage', href: '/question-bank/ai-manage', roles: QUESTION_MANAGE },
@@ -113,26 +131,30 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'All Present Scanner', href: '/attendance/all-present', roles: ATTENDANCE_MARK },
     { label: 'Add Fingerprint', href: '/attendance/add-fingerprint', roles: ATTENDANCE_BIOMETRIC },
     { label: 'Reports', href: '/attendance/reports', roles: ATTENDANCE_MARK },
+    { label: 'Attendance SMS', href: '/attendance/sms-monitoring', roles: ['head', 'assistant_head', 'class_teacher'] },
     { label: 'My Attendance', href: '/attendance/my-attendance', roles: ATTENDANCE_VIEW },
   ] },
   { label: 'Leave Application', href: '/leave-application-menu', roles: [...LEAVE_REVIEW, ...LEAVE_APPLY], icon: 'CalendarDays', children: [
     { label: 'Apply for Leave', href: '/leave-application', roles: [...LEAVE_REVIEW, ...LEAVE_APPLY] },
     { label: 'Leave List', href: '/leave-list', roles: LEAVE_REVIEW },
   ] },
-  { label: 'Finance', href: '/finance-menu', roles: [...FEE_COLLECT_ROLES, 'student', 'parent'], icon: 'DollarSign', children: [
-    { label: 'Overview', href: '/finance', roles: ['head', 'assistant_head', 'finance_officer'] },
-    { label: 'Fees', href: '/finance/fees', roles: ['head', 'assistant_head', 'finance_officer'] },
+  { label: 'Finance', href: '/finance-menu', roles: [...FEE_COLLECT_ROLES, ...STUDENT_PARENT], icon: 'DollarSign', children: [
+    { label: 'Overview', href: '/finance', roles: FINANCE_VIEW },
+    { label: 'Fees', href: '/finance/fees', roles: FINANCE_VIEW },
     { label: 'Fees Collect', href: '/finance/fee-collect', roles: FEE_COLLECT_ROLES },
     { label: 'Collections', href: '/finance/collections', roles: FEE_COLLECT_ROLES },
-    { label: 'Salary', href: '/finance/salary', roles: ['head'] },
-    { label: 'Reports', href: '/finance/reports', roles: ['head', 'assistant_head', 'finance_officer'] },
-    { label: 'My Fees', href: '/finance/my-fees', roles: ['student', 'parent'] },
+    { label: 'Salary', href: '/finance/salary', roles: ['head', 'finance_officer'] },
+    { label: 'Reports', href: '/finance/reports', roles: FINANCE_VIEW },
+    { label: 'My Fees', href: '/finance/my-fees', roles: STUDENT_PARENT },
   ] },
   { label: 'Documents', href: '/documents', roles: DOCUMENT_VIEW, icon: 'FileText', children: [
     { label: 'Overview', href: '/documents', roles: DOCUMENT_VIEW },
-    { label: 'Memo', href: '/documents/memo', roles: ['head', 'assistant_head', 'finance_officer', 'staff'] },
+    { label: 'Memo', href: '/documents/memo', roles: DOCUMENT_MANAGE },
+    { label: 'Admit Cards', href: '/documents/admit-cards', roles: DOCUMENT_MANAGE },
     { label: 'Upload', href: '/documents/upload', roles: ['head', 'assistant_head', 'staff'] },
     { label: 'Management', href: '/documents/manage', roles: SCHOOL_LEADERS },
+    { label: 'Management Alias', href: '/documents/management', roles: SCHOOL_LEADERS },
+    { label: 'Document SMS', href: '/documents/sms-monitoring', roles: ['head', 'assistant_head', 'staff'] },
   ] },
   { label: 'Users & Roles', href: '/users-roles', roles: ['admin', 'super_admin', 'head'], icon: 'Users', children: [
     { label: 'Overview', href: '/users-roles', roles: ['admin', 'super_admin', 'head'] },
@@ -141,6 +163,7 @@ export const menuConfig: MenuItemConfig[] = [
   ] },
   { label: 'Committee', href: '/committee', roles: ['head', 'assistant_head', 'committee_member'], icon: 'Users2' },
   { label: 'Library', href: '/library', roles: LIBRARY_VIEW, icon: 'BookMarked', children: [
+    { label: 'Overview', href: '/library', roles: LIBRARY_VIEW },
     { label: 'Books', href: '/library/books', roles: LIBRARY_MANAGE },
     { label: 'Loans', href: '/library/loans', roles: LIBRARY_MANAGE },
   ] },
@@ -209,18 +232,23 @@ export function getAllowedMenu(user?: User | null) {
 
 export const getMenuForUser = getAllowedMenu;
 
+const isPathInList = (path: string, list: string[]) => list.some((target) => path === target || path.startsWith(`${target}/`));
+
 export function canAccessPath(user: User | null | undefined, path: string): boolean {
   if (!user) return false;
   const normalized = normalizeUserRole(user.role) || user.role;
   if (normalized === 'super_admin') return true;
+  const cleanPath = path.split('?')[0].replace(/\/$/, '') || '/';
+  if (hasRole(user, QUESTION_MANAGE) && isPathInList(cleanPath, ['/question-generate', '/ai-manage', '/mcq-manage'])) return true;
+  if (hasRole(user, MCQ_PRACTICE) && isPathInList(cleanPath, ['/mcq-practice'])) return true;
   const allowed = getAllowedMenu(user);
   const paths = new Set<string>();
   allowed.forEach((item) => {
     paths.add(item.href);
     item.children?.forEach((child) => paths.add(child.href));
   });
-  if (paths.has(path)) return true;
-  return [...paths].some((allowedPath) => allowedPath !== '/' && path.startsWith(`${allowedPath}/`));
+  if (paths.has(cleanPath)) return true;
+  return [...paths].some((allowedPath) => allowedPath !== '/' && cleanPath.startsWith(`${allowedPath}/`));
 }
 
 export const isRouteAllowed = canAccessPath;
