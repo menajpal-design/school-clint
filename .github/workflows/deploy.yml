@@ -15,7 +15,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          command_timeout: 25m
+          command_timeout: 35m
           script: |
             set -e
             # Detect client directory
@@ -47,6 +47,14 @@ jobs:
             echo "Current deployed commit:"
             git rev-parse HEAD
 
+            echo "Activating Node 20 if nvm exists..."
+            export NVM_DIR="$HOME/.nvm"
+            if [ -s "$NVM_DIR/nvm.sh" ]; then
+              . "$NVM_DIR/nvm.sh"
+              nvm install 20
+              nvm use 20
+            fi
+
             echo "Node and npm version:"
             node -v
             npm -v
@@ -62,16 +70,16 @@ jobs:
 
             echo "Installing dependencies..."
             if [ -f package-lock.json ]; then
-              npm ci --no-audit --no-fund || (python3 - <<'PY'
+              npm ci --no-audit --no-fund --prefer-offline || (python3 - <<'PY'
             from pathlib import Path
             import shutil
             for p in [Path('node_modules/core-js'), Path('node_modules/.cache')]:
                 if p.exists():
                     shutil.rmtree(p, ignore_errors=True)
             PY
-              npm ci --no-audit --no-fund)
+              npm ci --no-audit --no-fund --prefer-offline)
             else
-              npm install --no-audit --no-fund
+              npm install --no-audit --no-fund --prefer-offline
             fi
 
             echo "Patching billing payment buttons so widget-ready state does not keep them disabled..."
