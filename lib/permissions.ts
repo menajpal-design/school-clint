@@ -21,6 +21,7 @@ const ACADEMIC_VIEW: UserRole[] = [...SCHOOL_LEADERS, ...TEACHERS, ...STUDENT_PA
 const RESULT_ENTRY: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'];
 const QUESTION_MANAGE: UserRole[] = ['head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher'];
 const MCQ_PRACTICE: UserRole[] = [...QUESTION_MANAGE, 'student', 'parent'];
+const QUESTION_BANK_VIEW: UserRole[] = [...QUESTION_MANAGE, 'student', 'parent'];
 const ATTENDANCE_VIEW: UserRole[] = [...EMPLOYEES, ...STUDENT_PARENT];
 const ATTENDANCE_MARK: UserRole[] = ['head', 'assistant_head', 'class_teacher'];
 const ATTENDANCE_BIOMETRIC: UserRole[] = ['head', 'assistant_head'];
@@ -96,10 +97,16 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
     { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
   ] },
-  { label: 'Question Generate', href: '/question-generate', roles: QUESTION_MANAGE, icon: 'BookOpenCheck' },
-  { label: 'AI Question Manage', href: '/ai-manage', roles: QUESTION_MANAGE, icon: 'BookOpenCheck' },
-  { label: 'MCQ Manage', href: '/mcq-manage', roles: QUESTION_MANAGE, icon: 'BookOpenCheck' },
-  { label: 'MCQ Practice', href: '/mcq-practice', roles: MCQ_PRACTICE, icon: 'BookOpenCheck' },
+  { label: 'Question Bank', href: '/question-bank', roles: QUESTION_BANK_VIEW, icon: 'BookOpenCheck', children: [
+    { label: 'Question Generate', href: '/question-bank/question-generate', roles: QUESTION_MANAGE },
+    { label: 'Question Storage', href: '/question-bank/question-generate/storage', roles: QUESTION_MANAGE },
+    { label: 'AI Question Manage', href: '/question-bank/ai-manage', roles: QUESTION_MANAGE },
+    { label: 'AI Storage', href: '/question-bank/ai-manage/storage', roles: QUESTION_MANAGE },
+    { label: 'MCQ Manage', href: '/question-bank/mcq-manage', roles: QUESTION_MANAGE },
+    { label: 'MCQ Storage', href: '/question-bank/mcq-manage/storage', roles: QUESTION_MANAGE },
+    { label: 'MCQ Practice', href: '/question-bank/mcq-practice', roles: MCQ_PRACTICE },
+    { label: 'Practice Storage', href: '/question-bank/mcq-practice/storage', roles: MCQ_PRACTICE },
+  ] },
   { label: 'Attendance', href: '/attendance', roles: ATTENDANCE_VIEW, icon: 'CheckCircle2', children: [
     { label: 'Overview', href: '/attendance', roles: ATTENDANCE_MARK },
     { label: 'Mark Attendance', href: '/attendance/mark', roles: ATTENDANCE_MARK },
