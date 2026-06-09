@@ -37,19 +37,31 @@ const copyComputedStyles = (clone: HTMLElement, source: Element) => {
   cloneChildren.forEach((child, i) => { if (sourceChildren[i]) copyComputedStyles(child, sourceChildren[i]); });
 };
 
+const waitForImageReady = async (img: HTMLImageElement) => {
+  try {
+    if (!img.getAttribute("src")) return;
+    if (typeof img.decode === "function") { await img.decode().catch(() => undefined); return; }
+    if (img.complete) return;
+    await new Promise<void>((resolve) => { img.onload = () => resolve(); img.onerror = () => resolve(); setTimeout(resolve, 1200); });
+  } catch {}
+};
+
 const inlineImages = async (root: HTMLElement) => {
   const imgs = Array.from(root.querySelectorAll("img")) as HTMLImageElement[];
   await Promise.all(imgs.map(async (img) => {
     try {
       const src = img.getAttribute("src") || "";
-      if (!src || src.startsWith("data:") || src.startsWith("blob:")) return;
-      const res = await fetch(src, { mode: "cors" });
-      if (!res.ok) return;
-      const blob = await res.blob();
-      const reader = new FileReader();
-      const dataUrl: string = await new Promise((resolve, reject) => { reader.onloadend = () => resolve(String(reader.result || "")); reader.onerror = reject; reader.readAsDataURL(blob); });
-      img.setAttribute("src", dataUrl);
-    } catch {}
+      if (src && !src.startsWith("data:") && !src.startsWith("blob:")) {
+        const res = await fetch(src, { mode: "cors" });
+        if (res.ok) {
+          const blob = await res.blob();
+          const reader = new FileReader();
+          const dataUrl: string = await new Promise((resolve, reject) => { reader.onloadend = () => resolve(String(reader.result || "")); reader.onerror = reject; reader.readAsDataURL(blob); });
+          img.setAttribute("src", dataUrl);
+        }
+      }
+      await waitForImageReady(img);
+    } catch { await waitForImageReady(img); }
   }));
 };
 
