@@ -60,13 +60,12 @@ function PrintSafeQr({ value, size = 56 }: { value: string; size?: number }) {
   useEffect(() => {
     let cancelled = false
     import('qrcode')
-      .then((QRCode) => QRCode.toDataURL(value || '-', { width: size * 3, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#0f172a', light: '#ffffff' } }))
+      .then((QRCode) => QRCode.toDataURL(value || '-', { width: size * 4, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#0f172a', light: '#ffffff' } }))
       .then((url) => { if (!cancelled) setDataUrl(url) })
       .catch(() => { if (!cancelled) setDataUrl('') })
     return () => { cancelled = true }
   }, [value, size])
-  if (dataUrl) return <img src={dataUrl} alt="Verification QR" style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} />
-  return <QRCodeSVG value={value || '-'} size={size} level="M" includeMargin={false} />
+  return <div data-print-safe-qr="true" data-qr-value={value || '-'} data-qr-size={size} style={{ width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>{dataUrl ? <img data-qr-img="true" src={dataUrl} alt="Verification QR" style={{ width: size, height: size, objectFit: 'contain', display: 'block' }} /> : <QRCodeSVG value={value || '-'} size={size} level="M" includeMargin={false} />}</div>
 }
 
 function AdmitLogo({ logoUrl }: { logoUrl?: string }) {
