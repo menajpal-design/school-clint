@@ -6,6 +6,7 @@ import { StudentFormExtraFields } from "@/components/layout/StudentFormExtraFiel
 import { StoragePlanVisibilityFix } from "@/components/layout/StoragePlanVisibilityFix";
 import { PdfPrintSafetyStyles } from "@/components/layout/PdfPrintSafetyStyles";
 import { StudentFeePaymentPanel } from "@/components/layout/StudentFeePaymentPanel";
+import { ExamViewButtonInjector } from "@/components/academic/ExamViewButtonInjector";
 
 function hideStudentFeeField() {
   if (!window.location.pathname.includes("/institution/students") && !window.location.pathname.includes("/institution/admission")) return;
@@ -41,5 +42,5 @@ export function AttendanceApiCompatLoader() {
     const id = window.setInterval(run, 500);
     return () => window.clearInterval(id);
   }, []);
-  return <><StudentFormExtraFields /><StoragePlanVisibilityFix /><PdfPrintSafetyStyles /><StudentFeePaymentPanel /></>;
+  return <><StudentFormExtraFields /><StoragePlanVisibilityFix /><PdfPrintSafetyStyles /><StudentFeePaymentPanel /><ExamViewButtonInjector /></>;
 }
