@@ -4,7 +4,6 @@ import "@/lib/attendance-api-compat";
 import { useEffect } from "react";
 import { StudentFormExtraFields } from "@/components/layout/StudentFormExtraFields";
 import { StoragePlanVisibilityFix } from "@/components/layout/StoragePlanVisibilityFix";
-import { FinanceGlobalPeriodFilter } from "@/components/layout/FinanceGlobalPeriodFilter";
 import { PdfPrintSafetyStyles } from "@/components/layout/PdfPrintSafetyStyles";
 import { StudentFeePaymentPanel } from "@/components/layout/StudentFeePaymentPanel";
 
@@ -42,5 +41,5 @@ export function AttendanceApiCompatLoader() {
     const id = window.setInterval(run, 500);
     return () => window.clearInterval(id);
   }, []);
-  return <><StudentFormExtraFields /><StoragePlanVisibilityFix /><FinanceGlobalPeriodFilter /><PdfPrintSafetyStyles /><StudentFeePaymentPanel /></>;
+  return <><StudentFormExtraFields /><StoragePlanVisibilityFix /><PdfPrintSafetyStyles /><StudentFeePaymentPanel /></>;
 }
