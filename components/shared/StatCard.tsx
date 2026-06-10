@@ -25,15 +25,17 @@ const toneClasses = {
 
 export function StatCard({ label, value, helper, icon: Icon, tone = "slate", loading, className }: StatCardProps) {
   return (
-    <Card className={cn("border-border shadow-sm", className)}>
-      <CardContent className="flex items-center justify-between p-5">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="mt-2 truncate text-2xl font-semibold text-foreground">{loading ? "..." : value}</p>
-          {helper && <p className="mt-1 truncate text-xs text-muted-foreground">{helper}</p>}
+    <Card className={cn("min-h-[112px] border-border shadow-sm", className)}>
+      <CardContent className="flex min-h-[112px] items-center justify-between gap-3 p-5">
+        <div className="min-w-0 flex-1">
+          <p className="h-5 truncate text-sm font-medium leading-5 text-muted-foreground">{label}</p>
+          <div className="mt-2 flex h-9 items-center">
+            {loading ? <span className="inline-block h-7 w-16 animate-pulse rounded-md bg-muted" aria-label="Loading" /> : <p className="truncate text-2xl font-semibold leading-9 text-foreground">{value}</p>}
+          </div>
+          <div className="mt-1 h-4">{helper && <p className="truncate text-xs leading-4 text-muted-foreground">{helper}</p>}</div>
         </div>
         {Icon && (
-          <div className={cn("rounded-lg p-3", toneClasses[tone])}>
+          <div className={cn("shrink-0 rounded-lg p-3", toneClasses[tone])}>
             <Icon className="h-5 w-5" />
           </div>
         )}
