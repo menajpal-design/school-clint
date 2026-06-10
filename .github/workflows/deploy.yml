@@ -4,151 +4,133 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Install SSH password client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+
       - name: Deploy Frontend via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          command_timeout: 40m
-          script: |
-            set -e
-            if [ -d "$HOME/projects/school/school-clint" ]; then
-              cd "$HOME/projects/school/school-clint"
-            elif [ -d "$HOME/projects/school/school-client" ]; then
-              cd "$HOME/projects/school/school-client"
-            elif [ -d "$HOME/school-clint" ]; then
-              cd "$HOME/school-clint"
-            elif [ -d "$HOME/school-client" ]; then
-              cd "$HOME/school-client"
-            elif [ -d "/var/www/school-clint" ]; then
-              cd "/var/www/school-clint"
-            elif [ -d "/var/www/school-client" ]; then
-              cd "/var/www/school-client"
-            else
-              echo "School client directory not found, cloning into $HOME/school-clint..."
-              git clone https://github.com/menajpal-design/school-clint.git "$HOME/school-clint"
-              cd "$HOME/school-clint"
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          set -e
+          sshpass -p "$SSH_PASSWORD" ssh \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=20 \
+            -o TCPKeepAlive=yes \
+            "$SSH_USER@$SSH_HOST" 'bash -s' <<'EOF'
+          set -e
+
+          if [ -d "$HOME/projects/school/school-clint" ]; then
+            cd "$HOME/projects/school/school-clint"
+          elif [ -d "$HOME/projects/school/school-client" ]; then
+            cd "$HOME/projects/school/school-client"
+          elif [ -d "$HOME/school-clint" ]; then
+            cd "$HOME/school-clint"
+          elif [ -d "$HOME/school-client" ]; then
+            cd "$HOME/school-client"
+          elif [ -d "/var/www/school-clint" ]; then
+            cd "/var/www/school-clint"
+          elif [ -d "/var/www/school-client" ]; then
+            cd "/var/www/school-client"
+          else
+            echo "School client directory not found, cloning into $HOME/school-clint..."
+            git clone https://github.com/menajpal-design/school-clint.git "$HOME/school-clint"
+            cd "$HOME/school-clint"
+          fi
+
+          pm2_has() { pm2 jlist | grep -q "\"name\":\"$1\""; }
+          pm2_stop_if_exists() { if pm2_has "$1"; then pm2 stop "$1" || true; else echo "PM2 process $1 not found; skip stop."; fi; }
+          pm2_restart_if_exists() { if pm2_has "$1"; then pm2 restart "$1" --update-env; return 0; fi; return 1; }
+          clean_next_build() {
+            echo "Force cleaning Next build output..."
+            rm -rf .next .next.tmp out node_modules/.cache || true
+            if [ -d .next ]; then
+              echo ".next still exists after rm; trying chmod and rm again..."
+              chmod -R u+w .next || true
+              rm -rf .next || true
             fi
-
-            pm2_has() { pm2 jlist | grep -q "\"name\":\"$1\""; }
-            pm2_stop_if_exists() { if pm2_has "$1"; then pm2 stop "$1" || true; else echo "PM2 process $1 not found; skip stop."; fi; }
-            pm2_restart_if_exists() { if pm2_has "$1"; then pm2 restart "$1" --update-env; return 0; fi; return 1; }
-            clean_next_build() {
-              echo "Force cleaning Next build output..."
-              rm -rf .next out node_modules/.cache || true
-              python3 - <<'PY'
-            from pathlib import Path
-            import shutil, time, subprocess
-            for name in ['.next', 'out', 'node_modules/.cache']:
-                p = Path(name)
-                for _ in range(10):
-                    if not p.exists():
-                        break
-                    shutil.rmtree(p, ignore_errors=True)
-                    time.sleep(0.5)
-                if p.exists():
-                    subprocess.run(['rm', '-rf', str(p)], check=False)
-            PY
-              if [ -d .next ]; then
-                echo ".next still exists after clean; listing for debug"
-                find .next -maxdepth 3 -type f | head -50 || true
-                exit 1
-              fi
-            }
-            build_next() {
-              clean_next_build
-              NODE_OPTIONS="--max-old-space-size=3072" NEXT_TELEMETRY_DISABLED=1 npm run build
-            }
-
-            echo "Deploying to $(pwd)..."
-            git remote -v
-            git fetch origin main
-            git checkout main
-            git reset --hard origin/main
-            git clean -fdx -e node_modules/
-
-            echo "Current deployed commit:"
-            git rev-parse HEAD
-
-            echo "Activating Node 20 if nvm exists..."
-            export NVM_DIR="$HOME/.nvm"
-            if [ -s "$NVM_DIR/nvm.sh" ]; then
-              . "$NVM_DIR/nvm.sh"
-              nvm install 20
-              nvm use 20
+            if [ -d .next ]; then
+              echo ".next could not be deleted. Stop deploy to avoid corrupt build."
+              find .next -maxdepth 3 -type f | head -50 || true
+              exit 1
             fi
+          }
+          build_next() {
+            clean_next_build
+            NODE_OPTIONS="--max-old-space-size=3072" NEXT_TELEMETRY_DISABLED=1 npm run build
+          }
 
-            echo "Node and npm version:"
-            node -v
-            npm -v
+          echo "Deploying to $(pwd)..."
+          git remote -v
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          git clean -fdx -e node_modules/
 
-            echo "Stopping running client before build..."
-            pm2_stop_if_exists school-client
-            pm2_stop_if_exists school-clint
-            pkill -f "next start" || true
-            pkill -f "next-server" || true
+          echo "Current deployed commit:"
+          git rev-parse HEAD
 
-            echo "Installing dependencies..."
-            rm -rf node_modules/.cache || true
-            if [ -f package-lock.json ]; then
-              npm ci --no-audit --no-fund --prefer-offline || (rm -rf node_modules package-lock.json && npm install --no-audit --no-fund --prefer-offline)
-            else
-              npm install --no-audit --no-fund --prefer-offline
-            fi
+          echo "Activating Node 20 if nvm exists..."
+          export NVM_DIR="$HOME/.nvm"
+          if [ -s "$NVM_DIR/nvm.sh" ]; then
+            . "$NVM_DIR/nvm.sh"
+            nvm install 20
+            nvm use 20
+          fi
 
-            echo "Patching billing payment buttons so widget-ready state does not keep them disabled..."
-            python3 - <<'PY'
-            from pathlib import Path
-            p = Path('app/billing/page.tsx')
-            if p.exists():
-                text = p.read_text()
-                text = text.replace("disabled={isPurchasingSms || !isWidgetReady}", "disabled={isPurchasingSms}")
-                text = text.replace("disabled={isTopping || !isWidgetReady}", "disabled={isTopping}")
-                text = text.replace("disabled={isPaying || (selectedPaymentMethod === 'bkash' && !isWidgetReady)}", "disabled={isPaying}")
-                p.write_text(text)
-            PY
+          echo "Node and npm version:"
+          node -v
+          npm -v
 
-            echo "Patching exam routine page to use hidden A4 PDF paper..."
-            python3 - <<'PY'
-            from pathlib import Path
-            p = Path('app/academic/exam-routine/page.tsx')
-            if p.exists():
-                text = p.read_text()
-                marker = 'import { normalizeUserRole } from "@/lib/permissions";'
-                extra = marker + '\nimport { ExamRoutinePaper } from "@/components/academic/ExamRoutinePaper";'
-                if marker in text and 'ExamRoutinePaper' not in text:
-                    text = text.replace(marker, extra)
-                text = text.replace('<Paper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper hidden refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
-                text = text.replace('<ExamRoutinePaper refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />', '<ExamRoutinePaper hidden refEl={printRef} exam={selectedExam} rows={rows.length ? rows : rowsFrom(selectedExam)} />')
-                text = text.replace('<Paper exam={preview} rows={rowsFrom(preview)} />', '<ExamRoutinePaper exam={preview} rows={rowsFrom(preview)} />')
-                text = text.replace('min-width:1050px!important', 'min-width:1123px!important')
-                text = text.replace('min-width:1120px!important', 'min-width:1123px!important')
-                p.write_text(text)
-            PY
+          echo "Stopping running client before build..."
+          pm2_stop_if_exists school-client
+          pm2_stop_if_exists school-clint
+          pkill -f "next start" || true
+          pkill -f "next-server" || true
+          sleep 2
 
-            echo "Building Next.js app..."
-            if ! build_next; then
-              echo "First build failed. Cleaning .next fully and retrying once..."
-              clean_next_build
-              NODE_OPTIONS="--max-old-space-size=3072" NEXT_TELEMETRY_DISABLED=1 npm run build
-            fi
+          echo "Installing dependencies..."
+          rm -rf node_modules/.cache || true
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund --prefer-offline || npm install --no-audit --no-fund --prefer-offline
+          else
+            npm install --no-audit --no-fund --prefer-offline
+          fi
 
-            echo "PM2 process details before restart:"
-            pm2 describe school-client || true
-            pm2 describe school-clint || true
+          echo "Patching billing payment buttons so widget-ready state does not keep them disabled..."
+          sed -i 's/disabled={isPurchasingSms || !isWidgetReady}/disabled={isPurchasingSms}/g' app/billing/page.tsx 2>/dev/null || true
+          sed -i 's/disabled={isTopping || !isWidgetReady}/disabled={isTopping}/g' app/billing/page.tsx 2>/dev/null || true
+          sed -i "s/disabled={isPaying || (selectedPaymentMethod === 'bkash' && !isWidgetReady)}/disabled={isPaying}/g" app/billing/page.tsx 2>/dev/null || true
 
-            if pm2_restart_if_exists school-client; then
-              echo "Restarted school-client"
-            elif pm2_restart_if_exists school-clint; then
-              echo "Restarted school-clint"
-            else
-              echo "No existing client PM2 process found; starting school-client"
-              pm2 start npm --name "school-client" -- start
-            fi
-            pm2 save || true
+          echo "Building Next.js app..."
+          if ! build_next; then
+            echo "First build failed. Cleaning .next fully and retrying once..."
+            clean_next_build
+            NODE_OPTIONS="--max-old-space-size=3072" NEXT_TELEMETRY_DISABLED=1 npm run build
+          fi
+
+          echo "PM2 process details before restart:"
+          pm2 describe school-client || true
+          pm2 describe school-clint || true
+
+          if pm2_restart_if_exists school-client; then
+            echo "Restarted school-client"
+          elif pm2_restart_if_exists school-clint; then
+            echo "Restarted school-clint"
+          else
+            echo "No existing client PM2 process found; starting school-client"
+            pm2 start npm --name "school-client" -- start
+          fi
+          pm2 save || true
+          EOF
