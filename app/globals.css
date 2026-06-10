@@ -4,34 +4,34 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 220 33% 98%;
     --foreground: 222.2 47.4% 11.2%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 262 83% 58%; /* Vibrant Purple */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
+    --secondary: 199 89% 48%; /* Bright Blue */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 214 32% 91%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 199 89% 48%;
+    --accent: 316 73% 52%; /* Pink/Fuchsia */
     --accent-foreground: 210 40% 98%;
     --destructive: 350 80% 55%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.75rem;
+    --ring: 262 83% 58%;
+    --radius: 1rem;
     --success: 160 84% 39%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
-    --brand-gradient: linear-gradient(135deg, hsl(221.2 83.2% 53.3%) 0%, hsl(199 89% 48%) 52%, hsl(160 84% 39%) 100%);
-    --soft-gradient: linear-gradient(135deg, hsl(221.2 83.2% 53.3% / 0.10), hsl(199 89% 48% / 0.08), hsl(160 84% 39% / 0.08));
-    /* Hex palette (approved) */
-    --brand-primary: #2563eb;
-    --brand-accent: #3b82f6;
+    --brand-gradient: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(316 73% 52%) 100%);
+    --soft-gradient: linear-gradient(135deg, hsl(262 83% 58% / 0.10), hsl(316 73% 52% / 0.08));
+    /* Hex palette */
+    --brand-primary: #7c3aed;
+    --brand-accent: #d946ef;
     --brand-background: #f8fafc;
     --brand-surface: #ffffff;
     --brand-text: #0f172a;
@@ -121,9 +121,8 @@
 
   .app-surface {
     background:
-      linear-gradient(180deg, hsl(var(--background) / 0.96), hsl(var(--background) / 0.88)),
-      radial-gradient(circle at top left, hsl(224 78% 44% / 0.08), transparent 24rem),
-      radial-gradient(circle at top right, hsl(199 89% 48% / 0.08), transparent 24rem);
+      linear-gradient(180deg, hsl(var(--background) / 0.70), hsl(var(--background) / 0.60));
+    backdrop-filter: blur(8px);
   }
 
   .min-h-screen.bg-slate-50,
@@ -616,14 +615,27 @@ button[class*="bg-primary"], a[class*="bg-primary"] {
 .text-foreground { color: var(--brand-text) !important; }
 .text-muted { color: var(--brand-muted) !important; }
 
-/* Premium UI styling additions - upgrades all 92 pages */
+/* Premium UI styling additions - upgrades all 121 pages */
 @layer base {
   body {
-    background:
-      radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
-      linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    background: #f8fafc !important;
     background-attachment: fixed !important;
+  }
+  
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    z-index: -1;
+    background: 
+      radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.12), transparent 40%),
+      radial-gradient(circle at 85% 30%, rgba(217, 70, 239, 0.12), transparent 40%),
+      radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.10), transparent 40%);
+    filter: blur(40px);
+    animation: blob-spin 20s infinite alternate ease-in-out;
   }
   
   /* Smooth scrolling and thin elegant scrollbar */
