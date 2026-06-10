@@ -15,7 +15,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
-          command_timeout: 35m
+          command_timeout: 40m
           script: |
             set -e
             if [ -d "$HOME/projects/school/school-clint" ]; then
@@ -37,15 +37,41 @@ jobs:
             fi
 
             pm2_has() { pm2 jlist | grep -q "\"name\":\"$1\""; }
-            pm2_stop_if_exists() { if pm2_has "$1"; then pm2 stop "$1"; else echo "PM2 process $1 not found; skip stop."; fi; }
+            pm2_stop_if_exists() { if pm2_has "$1"; then pm2 stop "$1" || true; else echo "PM2 process $1 not found; skip stop."; fi; }
             pm2_restart_if_exists() { if pm2_has "$1"; then pm2 restart "$1" --update-env; return 0; fi; return 1; }
+            clean_next_build() {
+              echo "Force cleaning Next build output..."
+              rm -rf .next out node_modules/.cache || true
+              python3 - <<'PY'
+            from pathlib import Path
+            import shutil, time, subprocess
+            for name in ['.next', 'out', 'node_modules/.cache']:
+                p = Path(name)
+                for _ in range(10):
+                    if not p.exists():
+                        break
+                    shutil.rmtree(p, ignore_errors=True)
+                    time.sleep(0.5)
+                if p.exists():
+                    subprocess.run(['rm', '-rf', str(p)], check=False)
+            PY
+              if [ -d .next ]; then
+                echo ".next still exists after clean; listing for debug"
+                find .next -maxdepth 3 -type f | head -50 || true
+                exit 1
+              fi
+            }
+            build_next() {
+              clean_next_build
+              NODE_OPTIONS="--max-old-space-size=3072" NEXT_TELEMETRY_DISABLED=1 npm run build
+            }
 
             echo "Deploying to $(pwd)..."
             git remote -v
             git fetch origin main
             git checkout main
             git reset --hard origin/main
-            git clean -fd
+            git clean -fdx -e node_modules/
 
             echo "Current deployed commit:"
             git rev-parse HEAD
@@ -62,35 +88,16 @@ jobs:
             node -v
             npm -v
 
-            echo "Stopping running client before cleaning build cache..."
+            echo "Stopping running client before build..."
             pm2_stop_if_exists school-client
             pm2_stop_if_exists school-clint
-
-            echo "Cleaning stale folders before install/build..."
-            rm -rf .next/export .next/cache out node_modules/.cache || true
-            python3 - <<'PY'
-            from pathlib import Path
-            import shutil, time
-            for name in ['.next', 'out', 'node_modules/core-js', 'node_modules/.cache']:
-                p = Path(name)
-                if p.exists():
-                    for _ in range(5):
-                        shutil.rmtree(p, ignore_errors=True)
-                        if not p.exists():
-                            break
-                        time.sleep(1)
-            PY
+            pkill -f "next start" || true
+            pkill -f "next-server" || true
 
             echo "Installing dependencies..."
+            rm -rf node_modules/.cache || true
             if [ -f package-lock.json ]; then
-              npm ci --no-audit --no-fund --prefer-offline || (python3 - <<'PY'
-            from pathlib import Path
-            import shutil
-            for p in [Path('node_modules/core-js'), Path('node_modules/.cache')]:
-                if p.exists():
-                    shutil.rmtree(p, ignore_errors=True)
-            PY
-              npm ci --no-audit --no-fund --prefer-offline)
+              npm ci --no-audit --no-fund --prefer-offline || (rm -rf node_modules package-lock.json && npm install --no-audit --no-fund --prefer-offline)
             else
               npm install --no-audit --no-fund --prefer-offline
             fi
@@ -126,8 +133,11 @@ jobs:
             PY
 
             echo "Building Next.js app..."
-            rm -rf .next/export .next/cache out || true
-            NODE_OPTIONS="--max-old-space-size=3072" NEXT_TELEMETRY_DISABLED=1 npm run build
+            if ! build_next; then
+              echo "First build failed. Cleaning .next fully and retrying once..."
+              clean_next_build
+              NODE_OPTIONS="--max-old-space-size=3072" NEXT_TELEMETRY_DISABLED=1 npm run build
+            fi
 
             echo "PM2 process details before restart:"
             pm2 describe school-client || true
