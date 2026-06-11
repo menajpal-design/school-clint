@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
 
 interface Message {
   _id: string;
@@ -17,6 +18,7 @@ interface Message {
 }
 
 export default function InboxPage() {
+  const { language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -57,10 +59,10 @@ export default function InboxPage() {
   };
 
   const roleLabel = (r: string) => {
-    if (r === 'head') return 'হেড';
-    if (r === 'teacher') return 'টিচার';
-    if (r === 'parent') return 'প্যারেন্ট';
-    return 'স্টাফ';
+    if (r === 'head') return 'Head';
+    if (r === 'teacher') return 'Teacher';
+    if (r === 'parent') return 'Parent';
+    return 'Staff';
   };
 
   const roleBadgeClass = (r: string) => {
@@ -99,7 +101,7 @@ export default function InboxPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('bn-BD', {
+    return new Date(dateString).toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -135,7 +137,7 @@ export default function InboxPage() {
                 : 'bg-card text-foreground border border-border hover:bg-popover'
             }`}
           >
-            ইনবক্স ({messages.length})
+            Inbox ({messages.length})
           </button>
           <button
             onClick={() => setSelectedTab('sent')}
@@ -145,18 +147,18 @@ export default function InboxPage() {
                 : 'bg-card text-foreground border border-border hover:bg-popover'
             }`}
           >
-            পাঠানো
+            Sent
           </button>
         </div>
 
         {/* Role Filters */}
         <div className="flex gap-3 mb-6">
           {[
-            { key: 'all', label: 'সব' },
-            { key: 'head', label: 'হেড' },
-            { key: 'teacher', label: 'টিচার' },
-            { key: 'parent', label: 'প্যারেন্ট' },
-            { key: 'staff', label: 'স্টাফ' },
+            { key: 'all', label: 'All' },
+            { key: 'head', label: 'Head' },
+            { key: 'teacher', label: 'Teacher' },
+            { key: 'parent', label: 'Parent' },
+            { key: 'staff', label: 'Staff' },
           ].map((item) => (
             <button
               key={item.key}

@@ -276,7 +276,6 @@ const dictionary: Record<string, string> = {
   'Public Result': 'পাবলিক রেজাল্ট',
   'Search school, select class and exam, then enter roll number.': 'স্কুল খুঁজুন, শ্রেণি ও পরীক্ষা নির্বাচন করুন, তারপর রোল নম্বর দিন।',
   Home: 'হোম',
-  School: 'স্কুল',
   'Registered schools are shown here.': 'রেজিস্টার্ড স্কুলগুলো এখানে দেখানো হয়েছে।',
   'School name or EIIN': 'স্কুলের নাম বা EIIN',
   'Result Lookup': 'রেজাল্ট অনুসন্ধান',
@@ -293,9 +292,339 @@ const dictionary: Record<string, string> = {
   Subject: 'বিষয়',
   Marks: 'নম্বর',
   Grade: 'গ্রেড',
+  'Institution Profile': 'প্রতিষ্ঠান প্রোফাইল',
+  'Edit identity, contact details and official assets.': 'পরিচয়, যোগাযোগের বিবরণ এবং অফিশিয়াল অ্যাসেট সম্পাদনা করুন।',
+  'Profile Details': 'প্রোফাইলের বিবরণ',
+  'These details are used in admissions, reports, cards, and certificates.': 'এই বিবরণগুলো ভর্তি, রিপোর্ট, কার্ড এবং সার্টিফিকেটে ব্যবহৃত হয়।',
+  'Phone Number': 'ফোন নম্বর',
+  'Official Seal': 'অফিশিয়াল সিল',
+  'Head Teacher\'s Signature': 'প্রধান শিক্ষকের স্বাক্ষর',
+  'Card Preview': 'কার্ড প্রিভিউ',
+  'Preview of how the institution\'s information will appear on official headers and ID cards.': 'অফিশিয়াল হেডার ও আইডি কার্ডে কীভাবে প্রতিষ্ঠানের তথ্য দেখাবে তার প্রিভিউ।',
+  'Save Profile': 'প্রোফাইল সংরক্ষণ করুন',
+  'Click to upload': 'আপলোড করতে ক্লিক করুন',
+  'Uploading...': 'আপলোড হচ্ছে...',
+  'Max 5MB · JPG, PNG, WebP': 'সর্বোচ্চ ৫এমবি · JPG, PNG, WebP',
+  'School': 'বিদ্যালয়',
+  'Madrasah': 'মাদ্রাসা',
+  'Type': 'ধরণ',
+  'Website': 'ওয়েবসাইট',
+  'Domains': 'ডোমেনসমূহ',
+  'Provide one domain per line. The public results page will be accessible from these domains.': 'প্রতি লাইনে একটি করে ডোমেন দিন। পাবলিক রেজাল্ট দেখার পেজটি এই ডোমেনগুলো থেকে ডাটা খুঁজে বের করতে পারবে।',
+  'Storage': 'স্টোরেজ',
+  'Images are stored in MongoDB GridFS. Set a MongoDB URI per school for separate storage.': 'ছবিগুলো মঙ্গোডিবি গ্রিডএফএস (GridFS)-এ সংরক্ষিত হয়। আলাদা স্টোরেজের জন্য স্কুল প্রতি একটি মঙ্গোডিবি ইউআরআই সেট করুন।',
+  'MongoDB URI (Optional)': 'MongoDB URI (ঐচ্ছিক)',
+  '✅ Images are now on ': '✅ ছবিগুলো এখন ',
+  ' - no external API key needed.': ' — কোনো এক্সটার্নাল এপিআই কি প্রয়োজন নেই।',
+  'SMS Settings': 'এসএমএস সেটিংস',
+  'Configure SMS provider and API keys. Visible only to headmaster.': 'এসএমএস প্রোভাইডার এবং এপিআই কি কনফিগার করুন। শুধুমাত্র প্রধান শিক্ষকের জন্য দৃশ্যমান।',
+  'Enable SMS': 'এসএমএস চালু করুন',
+  'Enable/disable SMS notifications for this institution.': 'এই প্রতিষ্ঠানের জন্য এসএমএস নোটিফিকেশন চালু/বন্ধ করুন।',
+  'Provider': 'প্রোভাইডার',
+  'API URL': 'এপিআই ইউআরএল',
+  'API Key': 'এপিআই কি',
+  'Academic Year Settings': 'শিক্ষাবর্ষের সেটিংস',
+  'Use one line per year: Year | MongoDB URI | ImgBB API Key': 'প্রতি বছরের জন্য একটি করে লাইন ব্যবহার করুন: শিক্ষাবর্ষ | মঙ্গোডিবি ইউআরআই | ইমজবিবি এপিআই কি',
+  'Active Academic Year': 'সক্রিয় শিক্ষাবর্ষ',
+  'Yearly Storage': 'বছর-ভিত্তিক স্টোরেজ',
+  'Billing & Activation': 'বিলিং এবং অ্যাক্টিভেশন',
+  'Activate school after recording payment received.': 'প্রাপ্ত পেমেন্ট রেকর্ড করার পর স্কুলটি সক্রিয় করুন।',
+  'Plan': 'প্ল্যান',
+  'Billing Cycle': 'বিলিং চক্র',
+  'EASY SCHOOL storage - ৳100/month': 'EASY SCHOOL storage - ৳100/মাস',
+  'Own MongoDB URI and ImgBB API - no extra cost': 'নিজস্ব মঙ্গোডিবি ইউআরআই এবং ইমজবিবি এপিআই - কোনো অতিরিক্ত খরচ নেই',
+  'School Status': 'স্কুলের অবস্থা',
+  'Only platform admin can activate or suspend a school.': 'শুধুমাত্র প্ল্যাটফর্ম এডমিন কোনো স্কুল সক্রিয় বা স্থগিত করতে পারেন।',
+  'Payment Received': 'প্রাপ্ত পেমেন্ট',
+  'Received': 'প্রাপ্ত হয়েছে',
+  'Not Received': 'প্রাপ্ত হয়নি',
+  'Received Amount': 'প্রাপ্ত পরিমাণ',
+  'Gateway': 'গেটওয়ে',
+  'Payment transaction ID': 'পেমেন্ট ট্রানজেকশন আইডি',
+  'Plan Due: ': 'প্ল্যান বকেয়া: ',
+  ' + Storage ': ' + স্টোরেজ ',
+  '. Yearly Discount: ': '. বার্ষিক ছাড়: ',
+  'Subscription': 'সাবস্ক্রিপশন',
+  'Manage subscription and view active package.': 'সাবস্ক্রিপশন পরিচালনা করুন এবং সক্রিয় প্যাকেজ দেখুন।',
+  'Manage Subscription': 'সাবস্ক্রিপশন পরিচালনা করুন',
+  'Billing Dashboard': 'বিলিং ড্যাশবোর্ড',
+  // Sidebar missing items
+  'Subscriptions': 'সাবস্ক্রিপশনসমূহ',
+  'Accounting': 'হিসাবরক্ষণ',
+  'Admin SMS Monitoring': 'এডমিন এসএমএস মনিটরিং',
+  'Charts': 'চার্টসমূহ',
+  'Profile Charts': 'প্রোফাইল চার্টসমূহ',
+  'Downloads': 'ডাউনলোডসমূহ',
+  'Online Classes': 'অনলাইন ক্লাস',
+  'Online Routine': 'অনলাইন রুটিন',
+  'Recorded Classes': 'রেকর্ডকৃত ক্লাস',
+  'Class Schedule': 'ক্লাসের সময়সূচী',
+  'PDF Books': 'পিডিএফ বই',
+  'Print Card': 'কার্ড প্রিন্ট করুন',
+  'Renewal': 'নবায়ন',
+  'Pending Admissions': 'অপেক্ষমান ভর্তি',
+  'Admission': 'ভর্তি',
+  'Subordinates': 'অধীনস্থ',
+  'Backup': 'ব্যাকআপ',
+  'Class Routine Overview': 'ক্লাস রুটিনের ওভারভিউ',
+  'Question Bank': 'প্রশ্ন ব্যাংক',
+  'Question Generate': 'প্রশ্ন তৈরি করুন',
+  'Question Storage': 'প্রশ্ন সংরক্ষণ',
+  'AI Question Manage': 'এআই প্রশ্ন ব্যবস্থাপনা',
+  'AI Storage': 'এআই স্টোরেজ',
+  'MCQ Manage': 'এমসিকিউ ব্যবস্থাপনা',
+  'MCQ Storage': 'এমসিকিউ স্টোরেজ',
+  'MCQ Practice': 'এমসিকিউ অনুশীলন',
+  'Practice Storage': 'অনুশীলন স্টোরেজ',
+  'Add Fingerprint': 'আঙুলের ছাপ যোগ করুন',
+  'Attendance SMS': 'উপস্থিতির এসএমএস',
+  'Memo': 'মেমো',
+  'Admit Cards': 'অ্যাডমিট কার্ডসমূহ',
+  'Document SMS': 'নথিপত্রের এসএমএস',
+
+  // Dashboard missing items
+  'Quick Actions': 'দ্রুত অ্যাকশন',
+  'Actions are filtered by your role and permission.': 'অ্যাকশনসমূহ আপনার রোল এবং পারমিশন অনুযায়ী ফিল্টার করা হয়েছে।',
+  'Analytics Overview': 'বিশ্লেষণ ওভারভিউ',
+  'Loading analytics dashboard...': 'অ্যানালিটিক্স ড্যাশবোর্ড লোড হচ্ছে...',
+  'Total Students': 'মোট শিক্ষার্থী',
+  'Total Teachers': 'মোট শিক্ষক',
+  'Today Attendance': 'আজকের উপস্থিতি',
+  'Active Notices': 'সক্রিয় নোটিশ',
+  'Attendance Rate': 'উপস্থিতির হার',
+  'Fee Balance Dues': 'বকেয়া ফি',
+  'Published Results': 'প্রকাশিত রেজাল্ট',
+  'No fee collection data found.': 'কোনো ফি সংগ্রহের ডাটা পাওয়া যায়নি।',
+  'No class attendance data found for today. Mark attendance first to see dynamic rates.': 'আজকের কোনো ক্লাসের উপস্থিতির ডাটা পাওয়া যায়নি। ডায়নামিক হার দেখতে প্রথমে উপস্থিতি দিন।',
+  'Students distribution will appear after class data is available.': 'ক্লাসের ডাটা পাওয়া যাওয়ার পর শিক্ষার্থীর বণ্টন দেখতে পাবেন।',
+  'No weekly attendance data found.': 'কোনো সাপ্তাহিক উপস্থিতির ডাটা পাওয়া যায়নি।',
+  'No attendance summary found.': 'কোনো উপস্থিতির সারসংক্ষেপ পাওয়া যায়নি।',
+  'No fee payment data found.': 'কোনো পেমেন্টের ডাটা পাওয়া যায়নি।',
+  'No published marks found.': 'কোনো প্রকাশিত নম্বরের ডাটা পাওয়া যায়নি।',
+  'Monthly Fee Collections (Revenue)': 'মাসিক ফি সংগ্রহ (রাজস্ব)',
+  'Class-wise Daily Attendance Rate (%)': 'শ্রেণিভিত্তিক দৈনিক উপস্থিতির হার (%)',
+  'Weekly Attendance Rates (%)': 'সাপ্তাহিক উপস্থিতির হার (%)',
+  'Attendance Summary': 'উপস্থিতির সারসংক্ষেপ',
+  'Fee Payment Summary (৳)': 'ফি পেমেন্টের সারসংক্ষেপ (৳)',
+  'Academic Subject-wise Marks (%)': 'একাডেমিক বিষয়ভিত্তিক নম্বর (%)',
+
+  'Role-based dashboard for Head. Only permitted actions are shown here.': 'প্রধান শিক্ষকের জন্য ভূমিকা-ভিত্তিক ড্যাশবোর্ড। শুধুমাত্র অনুমোদিত কাজগুলো এখানে দেখানো হয়েছে।',
+  'Role-based dashboard for Assistant Head. Only permitted actions are shown here.': 'সহকারী প্রধান শিক্ষকের জন্য ভূমিকা-ভিত্তিক ড্যাশবোর্ড। শুধুমাত্র অনুমোদিত কাজগুলো এখানে দেখানো হয়েছে।',
+  'Role-based dashboard for Class Teacher. Only permitted actions are shown here.': 'শ্রেণি শিক্ষকের জন্য ভূমিকা-ভিত্তিক ড্যাশবোর্ড। শুধুমাত্র অনুমোদিত কাজগুলো এখানে দেখানো হয়েছে।',
+  'Role-based dashboard for Student. Only permitted actions are shown here.': 'শিক্ষার্থীর জন্য ভূমিকা-ভিত্তিক ড্যাশবোর্ড। শুধুমাত্র অনুমোদিত কাজগুলো এখানে দেখানো হয়েছে।',
+  'Role-based dashboard for Parent. Only permitted actions are shown here.': 'অভিভাবকের জন্য ভূমিকা-ভিত্তিক ড্যাশবোর্ড। শুধুমাত্র অনুমোদিত কাজগুলো এখানে দেখানো হয়েছে।',
+  'Role-based dashboard for Teacher. Only permitted actions are shown here.': 'শিক্ষকের জন্য ভূমিকা-ভিত্তিক ড্যাশবোর্ড। শুধুমাত্র অনুমোদিত কাজগুলো এখানে দেখানো হয়েছে।',
+  'Role-based dashboard for Finance Officer. Only permitted actions are shown here.': 'অর্থ কর্মকর্তার জন্য ভূমিকা-ভিত্তিক ড্যাশবোর্ড। শুধুমাত্র অনুমোদিত কাজগুলো এখানে দেখানো হয়েছে।',
+  'Role-based dashboard for Staff. Only permitted actions are shown here.': 'স্টাফের জন্য ভূমিকা-ভিত্তিক ড্যাশবোর্ড। শুধুমাত্র অনুমোদিত কাজগুলো এখানে দেখানো হয়েছে।',
+  'Role-based dashboard for Guest. Only permitted actions are shown here.': 'গেস্টের জন্য ভূমিকা-ভিত্তিক ড্যাশবোর্ড। শুধুমাত্র অনুমোদিত কাজগুলো এখানে দেখানো হয়েছে।',
+
+  'Head': 'প্রধান শিক্ষক',
+  'Assistant Head': 'সহকারী প্রধান শিক্ষক',
+  'Class Teacher': 'শ্রেণি শিক্ষক',
+  'Finance Officer': 'অর্থ কর্মকর্তা',
+  'Guest': 'গেস্ট',
+
+  'My Result': 'আমার রেজাল্ট',
+  'View and download your own result only.': 'শুধুমাত্র নিজের রেজাল্ট দেখুন এবং ডাউনলোড করুন।',
+  'View your own attendance record.': 'নিজের উপস্থিতির রেকর্ড দেখুন।',
+  'Preview or download your ID card.': 'আপনার আইডি কার্ডের প্রিভিউ দেখুন বা ডাউনলোড করুন।',
+  'View your own fee status.': 'নিজের ফির অবস্থা দেখুন।',
+  'View your class syllabus only.': 'শুধুমাত্র আপনার ক্লাসের সিলেবাস দেখুন।',
+  'View your class routine only.': 'শুধুমাত্র আপনার ক্লাসের রুটিন দেখুন।',
+  'See today\'s and previous homework.': 'আজকের এবং আগের হোমওয়ার্ক দেখুন।',
+  'Apply for leave and view your applications.': 'ছুটির আবেদন করুন এবং আপনার আবেদনগুলো দেখুন।',
+
+  'Child Result': 'সন্তানের রেজাল্ট',
+  'View and download child result only.': 'শুধুমাত্র সন্তানের রেজাল্ট দেখুন এবং ডাউনলোড করুন।',
+  'View child attendance.': 'সন্তানের উপস্থিতি দেখুন।',
+  'Child Fees': 'সন্তানের ফি',
+  'View child fee status.': 'সন্তানের ফির অবস্থা দেখুন।',
+  'Child Routine': 'সন্তানের রুটিন',
+  'View child class routine.': 'সন্তানের ক্লাস রুটিন দেখুন।',
+  'Child Syllabus': 'সন্তানের সিলেবাস',
+  'View child class syllabus.': 'সন্তানের ক্লাস সিলেবাস দেখুন।',
+  'View child homework.': 'সন্তানের হোমওয়ার্ক দেখুন।',
+  'Apply for child leave.': 'সন্তানের ছুটির আবেদন করুন।',
+
+  'View and update your own profile.': 'আপনার নিজের প্রোফাইল দেখুন এবং আপডেট করুন।',
+  'Read published school notices.': 'প্রকাশিত স্কুলের নোটিশগুলো পড়ুন।',
+
+  'Admit a new student.': 'নতুন শিক্ষার্থী ভর্তি করুন।',
+  'Review, approve, or publish results.': 'রেজাল্ট পর্যালোচনা, অনুমোদন বা প্রকাশ করুন।',
+  'Approve or reject leave applications.': 'ছুটির আবেদনপত্র অনুমোদন বা বাতিল করুন।',
+  'Monitor monthly SMS usage.': 'মাসিক এসএমএস ব্যবহার মনিটর করুন।',
+  'Mark assigned class attendance.': 'শ্রেণির শিক্ষার্থীদের উপস্থিতি নিন।',
+  'Class Results': 'শ্রেণির রেজাল্ট',
+  'Review assigned student leave.': 'শিক্ষার্থীদের ছুটির আবেদন পর্যালোচনা করুন।',
+  'Create class homework.': 'শ্রেণির হোমওয়ার্ক তৈরি করুন।',
+  'Enter results for assigned subjects.': 'নির্ধারিত বিষয়ের রেজাল্ট ইনপুট দিন।',
+  'Create homework for students.': 'শিক্ষার্থীদের জন্য হোমওয়ার্ক তৈরি করুন।',
+  'View or propose routine items.': 'রুটিন দেখুন বা প্রস্তাব করুন।',
+  'Manage fee collection.': 'ফি সংগ্রহ পরিচালনা করুন।',
+  'Manage permitted documents.': 'অনুমোদিত ডকুমেন্টস পরিচালনা করুন।',
+  'Manage library records if assigned.': 'লাইব্রেরির রেকর্ড পরিচালনা করুন (যদি নির্ধারিত থাকে)।',
+
+  // Billing missing English items
+  'Billing & SMS': 'বিলিং ও এসএমএস',
+  'Validity': 'কতদিন চলবে',
+  'In this payment': 'এই পেমেন্টে',
+  'Buy SMS': 'SMS কিনুন',
+  'SMS can be recharged with the billing popup system.': 'Billing popup system দিয়ে SMS recharge করা যাবে।',
+  'Open SMS Monitoring / Recharge': 'SMS Monitoring / Recharge খুলুন',
+  'Expires': 'শেষ হবে',
+  'Validity Panel': 'কতদিন চলবে প্যানেল',
 };
 
-const reverseDictionary = Object.fromEntries(Object.entries(dictionary).map(([english, bangla]) => [bangla, english]));
+const reverseDictionary: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(dictionary).map(([english, bangla]) => [bangla, english])),
+  'বিদ্যালয়': 'School',
+  'বিদ্যালয় (School)': 'School',
+  'মাদ্রাসা (Madrasah)': 'Madrasah',
+  'সাবডোমেন (Subdomain)': 'Subdomain',
+  'তৈরি করুন (Generate)': 'Generate',
+  'যাচাই করুন (Check)': 'Check',
+  'উপলব্ধ (Available)': 'Available',
+  'উপলব্ধ নয় (Not available)': 'Not available',
+  'লোগো (Logo)': 'Logo',
+  'সিল (Seal)': 'Seal',
+  'অ্যাডমিট কার্ড (Admit Card)': 'Admit Card',
+  'আর্থিক অডিট (Finance Audit)': 'Finance Audit',
+  'একটি ছোট ছোট হাতের অক্ষরের নাম দিন (অক্ষর, সংখ্যা, হাইফেন)। এটি subdomain.MAIN_DOMAIN হিসেবে সেট হবে।': 'Enter a subdomain in lowercase (letters, numbers, hyphens). It will be set as subdomain.MAIN_DOMAIN.',
+
+  // Holiday and weekday names mappings
+  'শনিবার': 'Saturday',
+  'রবিবার': 'Sunday',
+  'সোমবার': 'Monday',
+  'মঙ্গলবার': 'Tuesday',
+  'বুধবার': 'Wednesday',
+  'বৃহস্পতিবার': 'Thursday',
+  'শুক্রবার': 'Friday',
+
+  // Billing page reverse mappings
+  'কতদিন চলবে': 'Validity',
+  'শেষ হবে: ': 'Expires: ',
+  'এই পেমেন্টে': 'In this payment',
+  'SMS কিনুন': 'Buy SMS',
+  'Billing popup system দিয়ে SMS recharge করা যাবে।': 'SMS can be recharged with the billing popup system.',
+  'SMS Monitoring / Recharge খুলুন': 'Open SMS Monitoring / Recharge',
+  ' দিন': ' days',
+  ' টি': ' SMS',
+  ' জন': ' students',
+  'বার্ষিক': 'yearly',
+  'মাসিক': 'monthly',
+  'প্রায়': 'Approx',
+  'প্রতিষ্ঠান প্রধানের সাথে যোগাযোগ করুন।': 'Please contact the head of the institution.',
+  'লগআউট': 'Logout',
+  'আপনার সাবস্ক্রিপশন এবং এসএমএস ব্যালেন্স এখানে দেখুন ও পরিচালনা করুন।': 'View and manage your subscription and SMS balance here.',
+  '✅ सक्रिय প্যাকেজ': '✅ Active Package',
+  '🔄 Trial চলছে': '🔄 Trial Active',
+  '⚠️ Subscription নেই': '⚠️ No Subscription',
+  'প্রতিষ্ঠান': 'Institution',
+  'প্যাকেজ': 'Package',
+  'বিলিং চক্র': 'Billing Cycle',
+  'ছাত্র সীমা': 'Student Limit',
+  'মাসিক ফ্রি SMS': 'Monthly Free SMS',
+  'মেয়াদ শেষ: ': 'Expires: ',
+  '📱 SMS ব্যালেন্স': '📱 SMS Balance',
+  'আপনার অবশিষ্ট SMS সংখ্যা': 'Your remaining SMS count',
+  '⚠️ SMS ব্যালেন্স কম! নিচে থেকে SMS প্যাকেজ কিনুন।': '⚠️ SMS Balance low! Purchase SMS package below.',
+  'কেনা SMS বাকি': 'Purchased SMS remaining',
+  'প্ল্যান থেকে ফ্রি': 'Free from plan',
+  'এ মাসে পাঠানো': 'Sent this month',
+  'মোট ব্যবহারযোগ্য': 'Total usable',
+  ' স্কুল বিল পরিশোধ': ' School Bill Payment',
+  'নিবন্ধন বিল এবং মাসিক বিল শুধুমাত্র পপআপ পেমেন্ট গেটওয়ে দিয়ে পরিশোধ করতে হবে।': 'Registration and monthly bills must be paid via the popup payment gateway only.',
+  'সাবস্ক্রিপশন প্ল্যান': 'Subscription Plan',
+  'ইজি স্কুল স্টোরেজ ব্যবহার করুন': 'Use Easy School Storage',
+  'বিল পরিশোধ': 'Pay Bill',
+  'একটি প্যাকেজ বেছে নিন।': 'Please select a package.',
+  'Payment popup লোড হয়নি। একটু পরে চেষ্টা করুন।': 'Payment popup not loaded. Please try again in a moment.',
+  'পেমেন্ট সম্পন্ন। SMS প্যাকেজ activate করা হচ্ছে...': 'Payment complete. Activating SMS package...',
+  'সফলভাবে কেনা হয়েছে!': 'successfully purchased!',
+  'SMS credit যোগ হয়েছে।': 'SMS credit added.',
+  'SMS প্যাকেজ activate করতে সমস্যা হয়েছে।': 'Failed to activate SMS package.',
+  'বিকাশ পেমেন্ট': 'bKash Payment',
+  'স্ট্রাইপ পেমেন্ট': 'Stripe Payment',
+  'কার্ড হোল্ডারের নাম': 'Card Holder Name',
+  'কার্ড নম্বর': 'Card Number',
+  'মেয়াদ (MM/YY)': 'Expiry (MM/YY)',
+  'পেমেন্ট সফল হয়েছে।': 'Payment successful.',
+  'পেমেন্ট প্রক্রিয়া করতে সমস্যা হয়েছে।': 'Failed to process payment.',
+  'পেমেন্ট নিশ্চিত করুন': 'Confirm Payment',
+  'পেমেন্ট বাতিল করুন': 'Cancel Payment',
+  '৫০ SMS': '50 SMS',
+  '১০০ SMS': '100 SMS',
+  '২০০ SMS': '200 SMS',
+  '৩০০ SMS': '300 SMS',
+  '৫০০ SMS': '500 SMS',
+  '১০০০ SMS': '1000 SMS',
+  '২০০০ SMS': '2000 SMS',
+  '৫০০০ SMS': '5000 SMS',
+
+  // Settings page reverse mappings
+  'ছুটি ও বন্ধের সেটিংস server/database-এ সংরক্ষণ করা হয়েছে। Attendance calendar refresh করলে ঠিক দেখাবে।': 'Holiday & closure settings have been saved to the server/database. It will display correctly after refreshing the attendance calendar.',
+  'UI color এবং school control settings সংরক্ষণ করা হয়েছে।': 'UI color and school control settings have been saved.',
+  'এসএমএস সেটিংস সংরক্ষণ করা হয়েছে।': 'SMS settings have been saved.',
+  'MongoDB সেটিংস সংরক্ষণ করা হয়েছে।': 'MongoDB settings have been saved.',
+  'সংরক্ষণ করা যায়নি।': 'Could not save.',
+  'MongoDB URI দিন': 'Please provide MongoDB URI',
+  'এসএমএস সফলভাবে পাঠানো হয়েছে': 'SMS sent successfully',
+  'এসএমএস পাঠানো যায়নি': 'SMS could not be sent',
+  'ছুটি, storage, SMS, UI color, academic year, parent/student portal এবং school control settings এক জায়গায় সুন্দরভাবে manage করুন।': 'Manage holidays, storage, SMS, UI colors, academic year, parent/student portals, and school control settings beautifully in one place.',
+  'Personal MongoDB URI save করুন। URI masked থাকবে, শুধু connection/history status দেখা যাবে।': 'Save your personal MongoDB URI. The URI will remain masked, only connection/history status will be shown.',
+  'New MongoDB URI paste করুন': 'Paste new MongoDB URI',
+  'Academic year, timezone, language এবং portal control settings।': 'Academic year, timezone, language, and portal control settings.',
+  'সাপ্তাহিক ছুটি এবং বিশেষ বন্ধের সময়সীমা database/server-এ save হবে।': 'Weekly holidays and special closure limits will be saved in the database/server.',
+  'ছুটি/বন্ধের নিয়মাবলী চালু করুন': 'Enable holiday/closure rules',
+  'সাপ্তাহিক ছুটির দিনসমূহ': 'Weekly Holidays',
+  'বন্ধের শুরুর তারিখ': 'Closure Start Date',
+  'বন্ধের শেষের তারিখ': 'Closure End Date',
+  'বন্ধের কারণ': 'Closure Reason',
+  'মোট বন্ধের মেয়াদ: ': 'Total Closure Duration: ',
+  ' দিন। সাপ্তাহিক ছুটি: ': ' days. Weekly Holidays: ',
+  'কোনোটিই নয়': 'None',
+  'Site color mixer এবং attendance calendar-এর রঙ control করুন।': 'Control site color mixer and attendance calendar colors.',
+  'উপস্থিত': 'Present',
+  'অনুপস্থিত': 'Absent',
+  'ছুটি': 'Leave',
+  'সাপ্তাহিক ছুটি': 'Weekly Holiday',
+  'বিদ্যালয় বন্ধ': 'School Closed',
+  'এসএমএস service চালু/বন্ধ, API URL/key, diagnostic এবং test SMS। Saved URL/key plain text দেখানো হবে না।': 'SMS service enable/disable, API URL/key, diagnostic, and test SMS. Saved URL/key will not be shown in plain text.',
+  'নতুন URL দিলে আগের URL replace হবে': 'Providing new URL will replace the previous URL',
+  'SMS API URL paste করুন': 'Paste SMS API URL',
+  'নতুন key দিলে আগের key replace হবে': 'Providing new key will replace the previous key',
+  'SMS API key paste করুন': 'Paste SMS API key',
+  'এসএমএস চালু করুন': 'Enable SMS',
+  'সমাধান: ': 'Solution: ',
+  'প্রতি স্কুল নিজের payment system চালু করবে। Recommended GatewayFlow popup এ customer TrxID দেবে না; sender number + exact amount + SMS receive time match হবে। Official bKash/Nagad/SSLCommerz হলে তাদের merchant credentials লাগবে।': 'Each school will enable its own payment system. Recommended GatewayFlow popup does not require the customer TrxID; sender number + exact amount + SMS receive time will be matched. Official bKash/Nagad/SSLCommerz requires their merchant credentials.',
+  'শুধুমাত্র প্রধান শিক্ষকই স্কুলের সেটিংস পরিবর্তন করতে পারবেন।': 'Only the headmaster can modify the school settings.',
+
+  // Notification / Message mappings
+  'বার্তা': 'Messages',
+  'লোড হচ্ছে...': 'Loading...',
+  'কোনো বার্তা নেই': 'No messages',
+  'পড়া চিহ্নিত করুন': 'Mark as read',
+  'সব বার্তা দেখুন': 'View all messages',
+  'থেকে: ': 'From: ',
+  'গতকাল': 'Yesterday',
+  'অপড়া': 'Unread',
+  'মুছুন': 'Delete',
+  'একটি বার্তা নির্বাচন করুন': 'Select a message',
+  'সব': 'All',
+  'কোনো অপড়া বার্তা নেই': 'No unread messages',
+  'বিজ্ঞপ্তি কেন্দ্র': 'Notification Center',
+  'সকল আপনার বার্তা এবং বিজ্ঞপ্তি একসাথে দেখুন': 'View all your messages and notifications in one place',
+  'ইনবক্স': 'Inbox',
+  'পাঠানো': 'Sent',
+  'কোনো পাঠানো বার্তা নেই': 'No sent messages',
+  'প্রাপক: ': 'To: ',
+  'অপড়া বার্তা': 'unread messages',
+  'হেড': 'Head',
+  'টিচার': 'Teacher',
+  'প্যারেন্ট': 'Parent',
+  'স্টাফ': 'Staff',
+};
+
 const englishEntries = Object.entries(dictionary).sort((left, right) => right[0].length - left[0].length);
 const banglaEntries = Object.entries(reverseDictionary).sort((left, right) => right[0].length - left[0].length);
 
@@ -319,7 +648,9 @@ function translateText(text: string, language: AppLanguage) {
 
   entries.forEach(([source, target]) => {
     if (!source || !target) return;
-    result = result.replace(new RegExp(escapeRegExp(source), 'g'), target);
+    // Match only whole words or full phrases using custom word boundaries that support Bengali characters as well.
+    const boundaryRegex = new RegExp('(?<![\\u0980-\\u09FFa-zA-Z0-9])' + escapeRegExp(source) + '(?![\\u0980-\\u09FFa-zA-Z0-9])', 'g');
+    result = result.replace(boundaryRegex, target);
   });
 
   return result;
@@ -355,14 +686,38 @@ function applyDomLanguage(language: AppLanguage) {
   const nodes: Text[] = [];
   while (walker.nextNode()) nodes.push(walker.currentNode as Text);
   nodes.forEach((node) => {
-    node.nodeValue = translateText(node.nodeValue || '', language);
+    const anyNode = node as any;
+    const currentVal = node.nodeValue || '';
+    if (anyNode.__translatedValue === currentVal && anyNode.__translatedLang === language) {
+      return;
+    }
+    const translated = translateText(currentVal, language);
+    if (currentVal !== translated) {
+      anyNode.__translatedValue = translated;
+      anyNode.__translatedLang = language;
+      node.nodeValue = translated;
+    }
   });
 
   document.querySelectorAll<HTMLElement>('[title], [placeholder], [aria-label]').forEach((element) => {
     if (shouldSkipElement(element)) return;
+    const anyElement = element as any;
+    if (!anyElement.__translatedAttrs) {
+      anyElement.__translatedAttrs = {};
+    }
     ['title', 'placeholder', 'aria-label'].forEach((attribute) => {
       const value = element.getAttribute(attribute);
-      if (value) element.setAttribute(attribute, translateText(value, language));
+      if (value) {
+        if (anyElement.__translatedAttrs[attribute] === value && anyElement.__translatedLang === language) {
+          return;
+        }
+        const translated = translateText(value, language);
+        if (value !== translated) {
+          anyElement.__translatedAttrs[attribute] = translated;
+          anyElement.__translatedLang = language;
+          element.setAttribute(attribute, translated);
+        }
+      }
     });
   });
 }
@@ -384,13 +739,31 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('appLanguage', language);
-    }
+    if (typeof window === 'undefined') return;
 
-    const run = () => applyDomLanguage(language);
-    const frameId = window.requestAnimationFrame(run);
-    return () => window.cancelAnimationFrame(frameId);
+    // Run translation initially
+    applyDomLanguage(language);
+
+    // Watch for dynamic DOM changes and keep translation active
+    const observer = new MutationObserver((mutations) => {
+      observer.disconnect();
+      applyDomLanguage(language);
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => {
+      observer.disconnect();
+    };
   }, [language]);
 
   const value = useMemo<LanguageContextValue>(

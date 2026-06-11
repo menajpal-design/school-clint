@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ResponsiveTable from '@/components/shared/ResponsiveTable';
 
 const manageRoles = ["head", "assistant_head", "admin", "super_admin"];
-const bd = (date?: string) => date ? new Date(date).toLocaleDateString("bn-BD") : "-";
+const bd = (date?: string, lang?: string) => date ? new Date(date).toLocaleDateString(lang === "bn" ? "bn-BD" : "en-US") : "-";
 
 const weeklyOptions = [
   { label: "Friday + Saturday", labelBn: "শুক্রবার + শনিবার", days: [5, 6] },
@@ -32,6 +33,7 @@ const dayOptions = [
 
 export default function HolidaysPage() {
   const { user } = useAuth();
+  const { language } = useLanguage();
   const canManage = manageRoles.includes(user?.role || "");
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [weeklyMode, setWeeklyMode] = useState("friday_saturday");
@@ -201,7 +203,7 @@ export default function HolidaysPage() {
         <ResponsiveTable
           columns={["Date", "Holiday", "Type", "School Status", "Action"]}
           rows={holidays.length === 0 ? [] : holidays.map((holiday) => ([
-            <div key="date">{bd(holiday.startDate)}{holiday.endDate && new Date(holiday.startDate).toDateString() !== new Date(holiday.endDate).toDateString() ? ` - ${bd(holiday.endDate)}` : ""}</div>,
+            <div key="date">{bd(holiday.startDate, language)}{holiday.endDate && new Date(holiday.startDate).toDateString() !== new Date(holiday.endDate).toDateString() ? ` - ${bd(holiday.endDate, language)}` : ""}</div>,
             <div key="holiday"><div className="font-medium">{holiday.titleBn || holiday.title}</div><div className="text-xs text-muted-foreground">{holiday.title}</div></div>,
             <Badge key="type" variant="outline" className="capitalize">{holiday.type}</Badge>,
             <Badge key="status" variant={holiday.isEnabled !== false && holiday.isSchoolClosed ? "default" : "outline"}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "School Off" : "Open"}</Badge>,

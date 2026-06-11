@@ -169,8 +169,8 @@ export default function InstitutionProfilePage() {
   );
   const assets = useMemo(
     () => [
-      { name: 'logo' as const, label: 'লোগো (Logo)', value: values.logo },
-      { name: 'seal' as const, label: 'সিল (Seal)', value: values.seal },
+      { name: 'logo' as const, label: 'Logo', value: values.logo },
+      { name: 'seal' as const, label: 'Seal', value: values.seal },
       { name: 'headSignature' as const, label: 'প্রধান শিক্ষকের স্বাক্ষর', value: values.headSignature },
     ],
     [values.logo, values.seal, values.headSignature]
@@ -294,12 +294,12 @@ export default function InstitutionProfilePage() {
                   )} />
                   <FormField control={form.control} name="type" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ধরণ</FormLabel>
+                      <FormLabel>Type</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="school">বিদ্যালয় (School)</SelectItem>
-                          <SelectItem value="madrasah">মাদ্রাসা (Madrasah)</SelectItem>
+                          <SelectItem value="school">School</SelectItem>
+                          <SelectItem value="madrasah">Madrasah</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -307,39 +307,39 @@ export default function InstitutionProfilePage() {
                   )} />
                   <FormField control={form.control} name="phone" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ফোন নম্বর</FormLabel>
+                      <FormLabel>Phone Number</FormLabel>
                       <FormControl><Input {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="email" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ইমেইল</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl><Input type="email" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="website" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ওয়েবসাইট</FormLabel>
+                      <FormLabel>Website</FormLabel>
                       <FormControl><Input placeholder="https://www.easyschool.live" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="subdomain" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>সাবডোমেন (Subdomain)</FormLabel>
+                      <FormLabel>Subdomain</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="my-school"
-                          disabled={!!savedSubdomain}
-                          {...field}
+                           placeholder="my-school"
+                           disabled={!!savedSubdomain}
+                           {...field}
                         />
                       </FormControl>
                       <FormDescription>
                         {savedSubdomain
-                          ? 'আপনার সাবডোমেনটি লক করা আছে এবং পরিবর্তন করা যাবে না।'
-                          : 'একটি ছোট ছোট হাতের অক্ষরের নাম দিন (অক্ষর, সংখ্যা, হাইফেন)। এটি subdomain.MAIN_DOMAIN হিসেবে সেট হবে।'}
+                          ? 'Your subdomain is locked and cannot be changed.'
+                          : 'Enter a subdomain in lowercase (letters, numbers, hyphens). It will be set as subdomain.MAIN_DOMAIN.'}
                       </FormDescription>
                       <div className="mt-2 flex items-center gap-2">
                         <Button
@@ -354,7 +354,7 @@ export default function InstitutionProfilePage() {
                             setSubdomainAvailability(null);
                           }}
                         >
-                          তৈরি করুন (Generate)
+                          Generate
                         </Button>
                         <Button
                           type="button"
@@ -363,16 +363,16 @@ export default function InstitutionProfilePage() {
                           onClick={async () => {
                             const value = String(form.getValues('subdomain') || field.value || '').trim();
                             if (!value) { setSubdomainAvailability('Enter a subdomain first'); return; }
-                            setSubdomainAvailability('যাচাই করা হচ্ছে...');
+                            setSubdomainAvailability('Checking...');
                             try {
                               const res: any = await api.institution.checkSubdomain(value);
-                              setSubdomainAvailability(res?.available ? 'উপলব্ধ (Available)' : 'উপলব্ধ নয় (Not available)');
+                              setSubdomainAvailability(res?.available ? 'Available' : 'Not available');
                             } catch (err) {
-                              setSubdomainAvailability('যাচাইকরণ ব্যর্থ হয়েছে');
+                              setSubdomainAvailability('Check failed');
                             }
                           }}
                         >
-                          যাচাই করুন (Check)
+                          Check
                         </Button>
                         {subdomainAvailability ? <div className="text-sm text-muted-foreground">{subdomainAvailability}</div> : null}
                       </div>

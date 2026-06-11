@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Bell, CheckCircle2, Trash2 } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 import { api } from '@/lib/api';
 import { PieChartCard } from '@/components/charts/PieChartCard';
 
@@ -16,6 +17,7 @@ interface Message {
 }
 
 export default function NotificationsPage() {
+  const { language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -76,11 +78,11 @@ export default function NotificationsPage() {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return date.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString(language === 'bn' ? 'bn-BD' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     } else if (date.toDateString() === yesterday.toDateString()) {
       return 'গতকাল';
     } else {
-      return date.toLocaleDateString('bn-BD', { month: 'short', day: 'numeric' });
+      return date.toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', { month: 'short', day: 'numeric' });
     }
   };
 
@@ -192,7 +194,7 @@ export default function NotificationsPage() {
                       থেকে: {selectedMessage.fromUserName} ({selectedMessage.fromUserEmail})
                     </p>
                     <p className="mt-1 text-sm text-primary-foreground/80">
-                      {new Date(selectedMessage.createdAt).toLocaleDateString('bn-BD', {
+                      {new Date(selectedMessage.createdAt).toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',

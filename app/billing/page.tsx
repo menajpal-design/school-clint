@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { authManager } from '@/lib/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { calculatePlanDue, getPlanByCode, schoolPlans } from '@/lib/plans';
+import { useLanguage } from '@/lib/i18n';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -145,6 +146,7 @@ const normalizePopupPaymentResult = (result: any, fallback: { orderId: string; p
 export default function BillingPage() {
   const router = useRouter();
   const { user: authUser, isLoading: authLoading } = useAuth();
+  const { language } = useLanguage();
   const [institution, setInstitution] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
@@ -696,7 +698,7 @@ export default function BillingPage() {
             )}
             {institution.billing?.planExpiry && (
               <div className="mt-3 text-xs text-muted-foreground">
-                মেয়াদ শেষ: {new Date(institution.billing.planExpiry).toLocaleDateString('bn-BD')}
+                মেয়াদ শেষ: {new Date(institution.billing.planExpiry).toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US')}
               </div>
             )}
           </div>

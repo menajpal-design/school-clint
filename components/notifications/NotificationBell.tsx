@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
 import Link from 'next/link';
 
 interface Message {
@@ -13,6 +14,7 @@ interface Message {
 }
 
 export default function NotificationBell() {
+  const { language } = useLanguage();
   const [unreadCount, setUnreadCount] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -147,7 +149,7 @@ export default function NotificationBell() {
                         থেকে: {message.fromUserName}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(message.createdAt).toLocaleDateString('bn-BD')}
+                        {new Date(message.createdAt).toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US')}
                       </p>
                     </div>
                     {!message.isRead && (

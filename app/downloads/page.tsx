@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/lib/i18n';
 import { BarChartCard } from '@/components/charts/BarChartCard';
 
 interface Release {
@@ -18,6 +19,7 @@ interface Release {
 }
 
 export default function Downloads() {
+  const { language } = useLanguage();
   const [releases, setReleases] = useState<Release[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +69,7 @@ export default function Downloads() {
     .find((asset) => asset.name.toLowerCase().endsWith('.apk'));
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('bn-BD', {
+    return new Date(dateString).toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

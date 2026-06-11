@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Download, Eye, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 import { PageHeader } from "@/components/shared/PageHeader";
 import ResponsiveTable from '@/components/shared/ResponsiveTable';
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,7 @@ const idOf = (x: any) => String(x?._id || x?.id || x || "");
 const read = (k: string) => { try { const v = JSON.parse(localStorage.getItem(k) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } };
 const write = (k: string, v: any[]) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 const unique = (a: any[]) => Array.from(new Map(a.filter(Boolean).map((x) => [idOf(x), x])).values());
-const fmt = (d?: string) => d ? new Date(d).toLocaleDateString("bn-BD") : "-";
+const fmt = (d?: string, lang?: string) => d ? new Date(d).toLocaleDateString(lang === "bn" ? "bn-BD" : "en-US") : "-";
 const inputDate = (d?: string) => d ? new Date(d).toISOString().slice(0, 10) : "";
 const rowsFrom = (exam: any): Row[] => (exam?.subjectMarks || []).map((m: any) => ({ subjectId: idOf(m.subjectId), subjectName: m.subjectId?.name || m.subjectName || m.name || "-", subjectCode: m.subjectId?.code || m.subjectCode || m.code || "", date: inputDate(m.date), duration: Number(m.duration || 120), totalMarks: Number(m.totalMarks || 100), passingMarks: Number(m.passingMarks || 33) }));
 const ready = (exam: any) => rowsFrom(exam).length > 0 && rowsFrom(exam).every((r) => r.subjectId && r.date && r.duration);
@@ -32,6 +33,7 @@ const toast = (msg: string, type: "success" | "error" | "info" = "success") => w
 
 export default function ExamRoutinePage() {
   const { user } = useAuth();
+  const { language } = useLanguage();
   const normalizedRole = normalizeUserRole(user?.role);
   const canManage = normalizedRole ? ROLES.includes(normalizedRole) : false;
   const printRef = useRef<HTMLDivElement | null>(null);
@@ -166,7 +168,7 @@ export default function ExamRoutinePage() {
             rows={displaySaved.length === 0 ? [] : displaySaved.map((e) => ([
               <div key="exam" className="break-words font-medium">{e.name}<div className="text-xs text-muted-foreground">{e.type || 'term'}</div></div>,
               <div key="class">{e.classId?.name || e.className || '-'}</div>,
-              <div key="date">{fmt(e.startDate)} {e.endDate ? `- ${fmt(e.endDate)}` : ''}</div>,
+              <div key="date">{fmt(e.startDate, language)} {e.endDate ? `- ${fmt(e.endDate, language)}` : ''}</div>,
               <div key="subjects">{e.subjectMarks?.length || 0}</div>,
               <div key="routine"><Badge variant="outline" className={ready(e) ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}>{ready(e) ? 'Ready' : 'Incomplete'}</Badge></div>,
               <div key="publish"><Badge variant="outline" className={e.isPublished ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 bg-slate-50 text-slate-600'}>{e.isPublished ? 'Public' : 'Private'}</Badge></div>,
@@ -195,5 +197,6 @@ export default function ExamRoutinePage() {
 }
 
 function Paper({ refEl, exam, rows }: { refEl?: any; exam: any; rows: Row[] }) {
-  return <div className="overflow-x-auto rounded-lg border bg-slate-50 p-2"><div ref={refEl} id={refEl ? "exam-routine-print" : undefined} className="mx-auto w-[1050px] min-w-[1050px] rounded-lg border bg-white p-6 text-black shadow-sm"><div className="border-b-2 border-black pb-3 text-center"><h1 className="text-xl font-bold">{exam?.name || "Exam Routine"}</h1><p>Class: {exam?.classId?.name || exam?.className || "-"}</p></div><table className="mt-5 w-full table-fixed border-collapse text-center text-sm"><thead><tr><th className="w-[190px] border border-black p-2">Date & Day</th><th className="w-[260px] border border-black p-2">Subject</th><th className="w-[120px] border border-black p-2">Code</th><th className="w-[150px] border border-black p-2">Duration</th><th className="w-[120px] border border-black p-2">Full</th><th className="w-[120px] border border-black p-2">Pass</th></tr></thead><tbody>{rows.length === 0 ? <tr><td className="border border-black p-6" colSpan={6}>Subject/date add করুন।</td></tr> : rows.map((r, i) => <tr key={i}><td className="border border-black p-2">{fmt(r.date)}</td><td className="break-words border border-black p-2 font-medium">{r.subjectName}</td><td className="border border-black p-2">{r.subjectCode || "-"}</td><td className="border border-black p-2">{r.duration} min</td><td className="border border-black p-2">{r.totalMarks}</td><td className="border border-black p-2">{r.passingMarks}</td></tr>)}</tbody></table><div className="mt-16 flex justify-end"><div className="border-t border-black px-8 pt-2 text-center text-sm">Head Teacher Signature</div></div></div></div>;
+  const { language } = useLanguage();
+  return <div className="overflow-x-auto rounded-lg border bg-slate-50 p-2"><div ref={refEl} id={refEl ? "exam-routine-print" : undefined} className="mx-auto w-[1050px] min-w-[1050px] rounded-lg border bg-white p-6 text-black shadow-sm"><div className="border-b-2 border-black pb-3 text-center"><h1 className="text-xl font-bold">{exam?.name || "Exam Routine"}</h1><p>Class: {exam?.classId?.name || exam?.className || "-"}</p></div><table className="mt-5 w-full table-fixed border-collapse text-center text-sm"><thead><tr><th className="w-[190px] border border-black p-2">Date & Day</th><th className="w-[260px] border border-black p-2">Subject</th><th className="w-[120px] border border-black p-2">Code</th><th className="w-[150px] border border-black p-2">Duration</th><th className="w-[120px] border border-black p-2">Full</th><th className="w-[120px] border border-black p-2">Pass</th></tr></thead><tbody>{rows.length === 0 ? <tr><td className="border border-black p-6" colSpan={6}>Subject/date add করুন।</td></tr> : rows.map((r, i) => <tr key={i}><td className="border border-black p-2">{fmt(r.date, language)}</td><td className="break-words border border-black p-2 font-medium">{r.subjectName}</td><td className="border border-black p-2">{r.subjectCode || "-"}</td><td className="border border-black p-2">{r.duration} min</td><td className="border border-black p-2">{r.totalMarks}</td><td className="border border-black p-2">{r.passingMarks}</td></tr>)}</tbody></table><div className="mt-16 flex justify-end"><div className="border-t border-black px-8 pt-2 text-center text-sm">Head Teacher Signature</div></div></div></div>;
 }
