@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -165,7 +165,7 @@ export default function SmsMonitoringPage() {
               <div className="text-3xl font-bold text-green-600 mt-2">{stats.totalSent}</div>
             </div>
 
-            {stats.statusBreakdown.map((item) => (
+            {(stats.statusBreakdown || []).map((item) => (
               <div key={item._id} className="bg-card rounded-lg shadow-md p-6 border-l-4 border-blue-500">
                 <div className="text-sm text-slate-600 font-medium capitalize">{item._id}</div>
                 <div className="text-3xl font-bold text-blue-600 mt-2">{item.count}</div>
