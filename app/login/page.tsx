@@ -223,7 +223,12 @@ export default function LoginPage() {
                 {errors.identifier && <p className="text-sm text-red-600">{errors.identifier.message}</p>}
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Password</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium text-gray-700">Password</label>
+                  <Link href="/forgot-password" className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input {...register("password")} type={showPassword ? "text" : "password"} placeholder="Enter password" className="pl-10 pr-10" disabled={isLoading} />
