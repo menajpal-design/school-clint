@@ -49,6 +49,7 @@ export function AttendanceCalendarDialogV5({ isOpen, onClose, person, onAttendan
   const { user } = useAuth();
   const { addToast } = useToast();
   const configured = getAppControlSettings();
+  const holidaySettings = useMemo(() => getHolidaySettings(), [isOpen]);
   const statusColors: Record<string, string> = {
     present: configured.presentColor || "#bbf7d0",
     absent: configured.absentColor || "#fecaca",
@@ -86,7 +87,7 @@ export function AttendanceCalendarDialogV5({ isOpen, onClose, person, onAttendan
       const holidayData: any = await apiClient.get("/holidays", { params: { year: currentYear } });
       setHolidays(holidayData?.holidays || []);
       setWeeklyDays(normalizeWeeklyDays(holidayData?.weeklyDays));
-      setWeeklyColor(validHex(holidayData?.weeklyColor) ? String(holidayData.weeklyColor) : configured.weekendColor || "#ddd6fe");
+      setWeeklyColor(configured.weekendColor || (validHex(holidayData?.weeklyColor) ? String(holidayData.weeklyColor) : "#ddd6fe"));
     } catch (error: any) {
       addToast({ title: "Error", message: error?.message || "Failed to load attendance history", type: "error" });
     } finally {
@@ -115,15 +116,43 @@ export function AttendanceCalendarDialogV5({ isOpen, onClose, person, onAttendan
       const start = new Date(h.startDate);
       const end = new Date(h.endDate || h.startDate);
       for (let d = new Date(start.getFullYear(), start.getMonth(), start.getDate()); d <= end; d.setDate(d.getDate() + 1)) {
-        map.set(iso(d), { ...h, color: h.type === "weekend" ? weeklyColor : h.color || configured.closureColor });
+        const key = iso(d);
+        const color = h.type === "weekend"
+          ? (configured.weekendColor || weeklyColor)
+          : (h.isSchoolClosed ? (configured.closureColor || "#fed7aa") : h.color || configured.closureColor || "#fed7aa");
+        map.set(key, { ...h, color });
       }
     });
+    if (holidaySettings.enabled && holidaySettings.closureStartDate && holidaySettings.closureEndDate) {
+      const start = new Date(holidaySettings.closureStartDate);
+      const end = new Date(holidaySettings.closureEndDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && start <= end) {
+        for (let d = new Date(start.getFullYear(), start.getMonth(), start.getDate()); d <= end; d.setDate(d.getDate() + 1)) {
+          const key = iso(d);
+          map.set(key, {
+            title: holidaySettings.closureReason || "School Closed",
+            type: "school",
+            color: configured.closureColor || "#fed7aa",
+            isSchoolClosed: true,
+            isEnabled: true
+          });
+        }
+      }
+    }
     for (let d = new Date(currentYear, 0, 1); d <= new Date(currentYear, 11, 31); d.setDate(d.getDate() + 1)) {
       const key = iso(d);
-      if (weeklyDays.includes(d.getDay())) map.set(key, { title: "Weekly Holiday", type: "weekend", color: weeklyColor, isSchoolClosed: true, isEnabled: true });
+      if (weeklyDays.includes(d.getDay())) {
+        map.set(key, {
+          title: "Weekly Holiday",
+          type: "weekend",
+          color: configured.weekendColor || weeklyColor,
+          isSchoolClosed: true,
+          isEnabled: true
+        });
+      }
     }
     return map;
-  }, [holidays, weeklyDays, weeklyColor, currentYear, configured.closureColor]);
+  }, [holidays, weeklyDays, weeklyColor, currentYear, configured.closureColor, configured.weekendColor, holidaySettings.enabled, holidaySettings.closureStartDate, holidaySettings.closureEndDate, holidaySettings.closureReason]);
 
   const periodDays = useMemo(() => {
     const a = new Date(selectedStart);
