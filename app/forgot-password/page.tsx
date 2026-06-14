@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/useToast";
+import { getSubdomain } from "@/lib/utils";
 
 const forgotPasswordSchema = z.object({
   identifier: z.string().min(2, "Email, username, or phone is required"),
@@ -38,7 +39,15 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (data: ForgotPasswordForm) => {
     setIsLoading(true);
     try {
-      const response = await api.auth.forgotPassword({ identifier: data.identifier.trim() }) as { message?: string };
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+      const subdomain = getSubdomain(hostname, mainDomain);
+
+      const response = await api.auth.forgotPassword({ 
+        identifier: data.identifier.trim(),
+        subdomain: subdomain || undefined,
+        domain: hostname || undefined,
+      }) as { message?: string };
       setSubmitted(true);
       addToast({
         title: "Reset request sent",
