@@ -449,6 +449,10 @@ export async function demoRequest(method: string, url: string, data?: any): Prom
     return response({ message: 'Password reset instructions have been sent to your email address' });
   }
 
+  if (root === 'auth' && method === 'POST' && first === 'reset-password-with-code') {
+    return response({ message: 'Your password has been reset successfully. You can now login with your new password.' });
+  }
+
   if (root === 'auth' && method === 'POST' && first === 'register') {
     const role = 'head' as UserRole;
     const user = userFromRole(role);
