@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2, MailCheck, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Loader2, MailCheck, ShieldAlert, KeyRound, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -19,24 +19,46 @@ const forgotPasswordSchema = z.object({
   identifier: z.string().min(2, "Email, username, or phone is required"),
 });
 
+const resetPasswordSchema = z.object({
+  code: z.string().length(6, "Code must be exactly 6 digits"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
+type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { addToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [step, setStep] = useState<'request' | 'verify'>('request');
+  const [identifier, setIdentifier] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
+    register: registerRequest,
+    handleSubmit: handleSubmitRequest,
+    formState: { errors: errorsRequest },
   } = useForm<ForgotPasswordForm>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { identifier: "" },
   });
 
-  const onSubmit = async (data: ForgotPasswordForm) => {
+  const {
+    register: registerReset,
+    handleSubmit: handleSubmitReset,
+    formState: { errors: errorsReset },
+  } = useForm<ResetPasswordForm>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { code: "", newPassword: "", confirmPassword: "" },
+  });
+
+  const onSubmitRequest = async (data: ForgotPasswordForm) => {
     setIsLoading(true);
     try {
       const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
@@ -48,10 +70,13 @@ export default function ForgotPasswordPage() {
         subdomain: subdomain || undefined,
         domain: hostname || undefined,
       }) as { message?: string };
-      setSubmitted(true);
+      
+      setIdentifier(data.identifier.trim());
+      setStep('verify');
+      
       addToast({
-        title: "Reset request sent",
-        message: response?.message || "Password reset instructions have been sent to your email address.",
+        title: "Verification code sent",
+        message: response?.message || "A 6-digit verification code has been sent to your email address.",
         type: "success",
         duration: 5000,
       });
@@ -59,6 +84,74 @@ export default function ForgotPasswordPage() {
       const message = error?.error?.message || error?.message || "Unable to process password reset request.";
       addToast({
         title: "Reset request failed",
+        message,
+        type: "error",
+        duration: 6000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmitReset = async (data: ResetPasswordForm) => {
+    setIsLoading(true);
+    try {
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+      const subdomain = getSubdomain(hostname, mainDomain);
+
+      const response = await api.auth.resetPasswordWithCode({ 
+        identifier,
+        code: data.code.trim(),
+        newPassword: data.newPassword.trim(),
+        subdomain: subdomain || undefined,
+        domain: hostname || undefined,
+      }) as { message?: string };
+
+      addToast({
+        title: "Password reset successful",
+        message: response?.message || "Your password has been changed successfully. You can now login.",
+        type: "success",
+        duration: 5000,
+      });
+
+      router.push('/login');
+    } catch (error: any) {
+      const message = error?.error?.message || error?.message || "Unable to reset password. Please check your verification code.";
+      addToast({
+        title: "Reset failed",
+        message,
+        type: "error",
+        duration: 6000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setIsLoading(true);
+    try {
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+      const subdomain = getSubdomain(hostname, mainDomain);
+
+      const response = await api.auth.forgotPassword({ 
+        identifier,
+        subdomain: subdomain || undefined,
+        domain: hostname || undefined,
+      }) as { message?: string };
+      
+      addToast({
+        title: "Verification code sent",
+        message: response?.message || "A new 6-digit verification code has been sent to your email address.",
+        type: "success",
+        duration: 5000,
+      });
+    } catch (error: any) {
+      const message = error?.error?.message || error?.message || "Unable to resend verification code.";
+      addToast({
+        title: "Resend failed",
         message,
         type: "error",
         duration: 6000,
@@ -80,77 +173,164 @@ export default function ForgotPasswordPage() {
         </Link>
 
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
             <ShieldAlert className="h-3.5 w-3.5" />
-            Public password recovery
+            Secure OTP Verification
           </div>
-          <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-slate-950">
-            Reset access without waiting for admin support.
+          <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-slate-950 leading-tight">
+            Recover and reset your account password securely.
           </h1>
           <p className="mt-4 max-w-lg text-sm leading-7 text-slate-600">
-            Enter your email, username, or phone number. We&apos;ll generate a temporary password and send it to the email on file.
+            Enter your email, username, or phone number. We will send a 6-digit verification code to your email address. Once verified, you can choose a new password instantly.
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          After logging in, change the temporary password immediately from your profile.
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 text-sm text-slate-600">
+          <span className="font-semibold text-indigo-950">Did you know?</span> Verification codes expire after 15 minutes for your account&apos;s security.
         </div>
       </section>
 
       <section className="flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md border-border bg-card shadow-sm">
-          <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl">Forgot password?</CardTitle>
-            <CardDescription>We&apos;ll send a temporary password to the email linked to your account.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {submitted ? (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-                  <div className="mb-2 flex items-center gap-2 font-semibold">
-                    <MailCheck className="h-4 w-4" />
-                    Request sent
+        <Card className="w-full max-w-md border-border bg-card shadow-sm transition-all duration-300">
+          {step === 'request' ? (
+            <>
+              <CardHeader className="space-y-2">
+                <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">Forgot password?</CardTitle>
+                <CardDescription className="text-slate-500">We will send a 6-digit code to the email linked to your account.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmitRequest(onSubmitRequest)} className="space-y-4">
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">Email, username, or phone</span>
+                    <Input
+                      {...registerRequest("identifier")}
+                      type="text"
+                      autoComplete="username"
+                      placeholder="student@demoschool.edu"
+                      className="mt-1"
+                    />
+                    {errorsRequest.identifier && <span className="text-xs font-medium text-red-600">{errorsRequest.identifier.message}</span>}
                   </div>
-                  Check your email for the temporary password, then sign in and change it right away.
-                </div>
-                <Button type="button" className="w-full" onClick={() => router.push('/login')}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to login
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <label className="space-y-1 text-sm font-medium text-slate-700">
-                  <span>Email, username, or phone</span>
-                  <Input
-                    {...register("identifier")}
-                    type="text"
-                    autoComplete="username"
-                    placeholder="student@demoschool.edu"
-                  />
-                  {errors.identifier && <span className="text-xs font-medium text-red-600">{errors.identifier.message}</span>}
-                </label>
 
-                <Button type="submit" disabled={isLoading} className="w-full">
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending reset email
-                    </>
-                  ) : (
-                    'Send reset email'
-                  )}
-                </Button>
+                  <Button type="submit" disabled={isLoading} className="w-full mt-2">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending Code...
+                      </>
+                    ) : (
+                      'Send Verification Code'
+                    )}
+                  </Button>
 
-                <div className="text-center text-sm text-slate-600">
-                  Remembered your password?{' '}
-                  <Link href="/login" className="font-semibold text-slate-950 hover:underline">
-                    Back to login
-                  </Link>
+                  <div className="text-center text-sm text-slate-600 mt-4">
+                    Remembered your password?{' '}
+                    <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-500 hover:underline">
+                      Back to login
+                    </Link>
+                  </div>
+                </form>
+              </CardContent>
+            </>
+          ) : (
+            <>
+              <CardHeader className="space-y-2">
+                <div className="flex items-center gap-2 text-indigo-600">
+                  <MailCheck className="h-6 w-6" />
+                  <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">Verify OTP Code</CardTitle>
                 </div>
-              </form>
-            )}
-          </CardContent>
+                <CardDescription className="text-slate-500">
+                  Please enter the 6-digit code sent to your email and select your new password.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmitReset(onSubmitReset)} className="space-y-4">
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">6-Digit Code</span>
+                    <Input
+                      {...registerReset("code")}
+                      type="text"
+                      maxLength={6}
+                      placeholder="123456"
+                      className="mt-1 text-center text-lg font-bold tracking-widest placeholder:text-slate-300"
+                    />
+                    {errorsReset.code && <span className="text-xs font-medium text-red-600">{errorsReset.code.message}</span>}
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">New Password</span>
+                    <div className="relative mt-1">
+                      <Input
+                        {...registerReset("newPassword")}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {errorsReset.newPassword && <span className="text-xs font-medium text-red-600">{errorsReset.newPassword.message}</span>}
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">Confirm New Password</span>
+                    <div className="relative mt-1">
+                      <Input
+                        {...registerReset("confirmPassword")}
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {errorsReset.confirmPassword && <span className="text-xs font-medium text-red-600">{errorsReset.confirmPassword.message}</span>}
+                  </div>
+
+                  <Button type="submit" disabled={isLoading} className="w-full mt-2">
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Resetting password...
+                      </>
+                    ) : (
+                      'Reset Password'
+                    )}
+                  </Button>
+
+                  <div className="flex flex-col gap-2 mt-4 text-center text-sm">
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={handleResendCode}
+                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 hover:underline disabled:opacity-50"
+                    >
+                      Didn&apos;t receive the code? Resend OTP
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => setStep('request')}
+                      className="flex items-center justify-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+                    >
+                      <ArrowLeft className="h-3 w-3" />
+                      Back to step 1
+                    </button>
+                  </div>
+                </form>
+              </CardContent>
+            </>
+          )}
         </Card>
       </section>
     </main>
