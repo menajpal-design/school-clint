@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail } from "lucide-react";
+import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail, Building, GraduationCap, User as UserIcon, CreditCard } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -190,7 +190,44 @@ export default function LoginPage() {
       const detailMessage = getLoginFailureMessage(error);
       setLoginError(detailMessage);
       showToast(addToast, { title: "লগইন ব্যর্থ", message: detailMessage, type: "error", duration: 6000 });
-    } finally { setIsLoading(false); }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDemoLogin = (role: UserRole) => {
+    setIsLoading(true);
+    try {
+      const demoUsers = [
+        { id: 'head-user', name: 'Demo Head', email: 'head@demo.local', role: 'head' as UserRole, isActive: true, permissions: ['*'], institutionId: 'demo-institution', phone: '01700000000' },
+        { id: 'teacher-user', name: 'Demo Teacher', email: 'teacher@demo.local', role: 'teacher' as UserRole, isActive: true, permissions: ['manage:results'], institutionId: 'demo-institution', phone: '01700000000' },
+        { id: 'student-user', name: 'Demo Student', email: 'student@demo.local', role: 'student' as UserRole, isActive: true, permissions: ['view:own'], institutionId: 'demo-institution', phone: '01700000000' },
+        { id: 'finance_officer-user', name: 'Demo Finance Officer', email: 'finance@demo.local', role: 'finance_officer' as UserRole, isActive: true, permissions: ['manage:finance', 'view:payments'], institutionId: 'demo-institution', phone: '01700000000' },
+      ];
+
+      const user = demoUsers.find(u => u.role === role);
+      if (!user) return;
+
+      authManager.setDemoUser(user);
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("selectedInstitutionId", "demo-institution");
+        localStorage.setItem("selectedInstitutionName", "Demo Institution");
+      }
+
+      showToast(addToast, {
+        title: "Demo Mode Enabled",
+        message: `Logged in as ${user.name} (${user.role}). Redirecting...`,
+        type: "success",
+        duration: 1800
+      });
+
+      router.replace(getRoleRedirect(user.role));
+    } catch (error: any) {
+      showToast(addToast, { title: "Demo Mode Failed", message: error?.message || String(error), type: "error", duration: 3000 });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isChecking) return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>;
@@ -240,6 +277,55 @@ export default function LoginPage() {
                 {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : <>Sign in<ArrowRight className="ml-2 h-4 w-4" /></>}
               </Button>
             </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or explore the system</span></div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="text-center text-xs text-muted-foreground">
+                Log in instantly using a pre-configured demo account:
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDemoLogin('head')}
+                  className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
+                >
+                  <Building className="h-3.5 w-3.5" />
+                  Demo Principal
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDemoLogin('teacher')}
+                  className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
+                >
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  Demo Teacher
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDemoLogin('student')}
+                  className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
+                >
+                  <UserIcon className="h-3.5 w-3.5" />
+                  Demo Student
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDemoLogin('finance_officer')}
+                  className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
+                >
+                  <CreditCard className="h-3.5 w-3.5" />
+                  Demo Finance
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
         <p className="mt-6 text-center text-sm text-gray-600">Don&apos;t have an account? <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">Register your school</Link></p>
