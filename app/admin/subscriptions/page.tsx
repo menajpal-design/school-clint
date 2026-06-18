@@ -16,6 +16,7 @@ const money = (value: any) => formatCurrency(Number(value || 0));
 
 const statusLabels: Record<string, string> = {
   active: 'Paid and active',
+  trial: 'Trial Active',
   pending: 'Due and inactive',
   expired: 'Overdue but active',
   cancelled: 'Cancelled',
@@ -75,7 +76,7 @@ export default function AdminSubscriptionsPage() {
     setMessage('Saving subscription...');
     await api.admin.updateSchool(selected._id, {
       billing: form,
-      isActive: ['active', 'expired'].includes(form.billingStatus) || selected.isActive,
+      isActive: ['active', 'expired', 'trial'].includes(form.billingStatus) || selected.isActive,
     });
     setSelected(null);
     setMessage('');
@@ -100,6 +101,7 @@ export default function AdminSubscriptionsPage() {
             <SelectContent>
               <SelectItem value="all">All status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="trial">Trial</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="expired">Expired</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -192,6 +194,7 @@ export default function AdminSubscriptionsPage() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Paid and active</SelectItem>
+                  <SelectItem value="trial">Trial Active</SelectItem>
                   <SelectItem value="pending">Due and inactive</SelectItem>
                   <SelectItem value="expired">Overdue but active</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>

@@ -47,7 +47,7 @@ export default function AdminSchoolsPage() {
   const saveBilling = async () => {
     if (!selected) return;
     setStatus('Saving...');
-    await api.admin.updateSchool(selected._id, { billing: form, isActive: ['active', 'expired'].includes(form.billingStatus) || selected.isActive });
+    await api.admin.updateSchool(selected._id, { billing: form, isActive: ['active', 'expired', 'trial'].includes(form.billingStatus) || selected.isActive });
     setStatus('Saved.');
     setSelected(null);
     await load();
@@ -155,6 +155,7 @@ export default function AdminSchoolsPage() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Paid and active</SelectItem>
+                  <SelectItem value="trial">Trial Active</SelectItem>
                   <SelectItem value="pending">Due and inactive</SelectItem>
                   <SelectItem value="expired">Overdue but active</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
