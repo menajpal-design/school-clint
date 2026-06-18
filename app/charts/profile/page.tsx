@@ -28,8 +28,12 @@ export default function ProfileChartsPage() {
     return () => { mounted = false; };
   }, []);
 
-  const composition = Array.isArray(charts?.composition) ? charts.composition : charts || [];
-  const feeTrend = Array.isArray(charts?.feeTrend) ? charts.feeTrend : charts?.fees || [];
+  const composition = Array.isArray(charts?.composition)
+    ? charts.composition
+    : (Array.isArray(charts) ? charts : []);
+  const feeTrend = Array.isArray(charts?.feeTrend)
+    ? charts.feeTrend
+    : (Array.isArray(charts?.fees) ? charts.fees : (Array.isArray(charts) ? charts : []));
 
   return (
     <div className="p-4 md:p-6">

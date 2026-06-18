@@ -19,6 +19,8 @@ export function LineChartCard({ title, data, xKey = "name", yKey = "value" }: Li
     setMounted(true);
   }, []);
 
+  const chartData = Array.isArray(data) ? data : [];
+
   return (
     <Card className="border-border bg-card shadow-lg shadow-slate-900/5">
       <CardHeader className="pb-3">
@@ -29,9 +31,13 @@ export function LineChartCard({ title, data, xKey = "name", yKey = "value" }: Li
           <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-400 animate-pulse">
             Loading chart...
           </div>
+        ) : chartData.length === 0 ? (
+          <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-400">
+            No data available
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
+            <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.45} />
               <XAxis dataKey={xKey} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" />
               <YAxis tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" />
