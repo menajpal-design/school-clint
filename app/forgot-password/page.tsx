@@ -81,12 +81,18 @@ export default function ForgotPasswordPage() {
         duration: 5000,
       });
     } catch (error: any) {
-      const message = error?.error?.message || error?.message || "Unable to process password reset request.";
+      // The server returns { message, reason, hint } for email failures
+      const errData  = error?.error || error || {};
+      const mainMsg  = errData?.message || error?.message || 'Unable to process password reset request.';
+      const reason   = errData?.reason || '';
+      const hint     = errData?.hint || '';
+      const fullMsg  = [mainMsg, reason ? `কারণ: ${reason}` : '', hint ? `💡 ${hint}` : '']
+        .filter(Boolean).join('\n\n');
       addToast({
-        title: "Reset request failed",
-        message,
-        type: "error",
-        duration: 6000,
+        title: 'Reset request failed',
+        message: fullMsg,
+        type: 'error',
+        duration: 10000,
       });
     } finally {
       setIsLoading(false);
