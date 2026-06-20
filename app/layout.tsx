@@ -15,14 +15,70 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: 'swap',
 })
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://easyschool.live'
+const siteName = 'EASY SCHOOL'
+const siteDescription =
+  'EASY SCHOOL is a school and madrasah management system for admissions, attendance, fees, results, notices, ID cards, documents and parent communication.'
+
 export const metadata: Metadata = {
-  title: 'EASY SCHOOL - School Management System',
-  description: 'Complete School/Madrasah Management System',
+  metadataBase: new URL(siteUrl),
+  applicationName: siteName,
+  title: {
+    default: 'EASY SCHOOL - School and Madrasah Management System',
+    template: `%s | ${siteName}`,
+  },
+  description: siteDescription,
+  keywords: [
+    'school management system',
+    'madrasah management system',
+    'student attendance software',
+    'school fees management',
+    'online admission system',
+    'school result management',
+    'school ERP Bangladesh',
+  ],
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: '/',
+    siteName,
+    title: 'EASY SCHOOL - School and Madrasah Management System',
+    description: siteDescription,
+    images: [
+      {
+        url: '/icon.svg',
+        width: 512,
+        height: 512,
+        alt: siteName,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'EASY SCHOOL - School and Madrasah Management System',
+    description: siteDescription,
+    images: ['/icon.svg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
   icons: {
     icon: '/icon.svg',
     shortcut: '/icon.svg',
     apple: '/apple-icon.svg',
   },
+  manifest: '/manifest.webmanifest',
 }
 
 export default function RootLayout({
