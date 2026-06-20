@@ -39,6 +39,8 @@ export default function ForgotPasswordPage() {
   const [identifier, setIdentifier] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Structured error state — shown in a persistent on-screen box
+  const [emailError, setEmailError] = useState<{ message: string; reason?: string; hint?: string } | null>(null);
 
   const {
     register: registerRequest,
@@ -60,6 +62,7 @@ export default function ForgotPasswordPage() {
 
   const onSubmitRequest = async (data: ForgotPasswordForm) => {
     setIsLoading(true);
+    setEmailError(null);
     try {
       const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
       const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
@@ -72,6 +75,7 @@ export default function ForgotPasswordPage() {
       }) as { message?: string };
       
       setIdentifier(data.identifier.trim());
+      setEmailError(null);
       setStep('verify');
       
       addToast({
@@ -84,16 +88,10 @@ export default function ForgotPasswordPage() {
       // The server returns { message, reason, hint } for email failures
       const errData  = error?.error || error || {};
       const mainMsg  = errData?.message || error?.message || 'Unable to process password reset request.';
-      const reason   = errData?.reason || '';
-      const hint     = errData?.hint || '';
-      const fullMsg  = [mainMsg, reason ? `কারণ: ${reason}` : '', hint ? `💡 ${hint}` : '']
-        .filter(Boolean).join('\n\n');
-      addToast({
-        title: 'Reset request failed',
-        message: fullMsg,
-        type: 'error',
-        duration: 10000,
-      });
+      const reason   = errData?.reason  || '';
+      const hint     = errData?.hint    || '';
+      // Show persistent error box on screen
+      setEmailError({ message: mainMsg, reason, hint });
     } finally {
       setIsLoading(false);
     }
@@ -206,6 +204,27 @@ export default function ForgotPasswordPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmitRequest(onSubmitRequest)} className="space-y-4">
+
+                  {/* ── Persistent Email Error Box ─────────────────────── */}
+                  {emailError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 space-y-2">
+                      <div className="flex items-start gap-2 font-semibold">
+                        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                        <span>{emailError.message}</span>
+                      </div>
+                      {emailError.reason && (
+                        <div className="ml-6 rounded bg-red-100 px-3 py-2 text-xs font-mono leading-relaxed text-red-900 whitespace-pre-wrap break-words">
+                          {emailError.reason}
+                        </div>
+                      )}
+                      {emailError.hint && (
+                        <div className="ml-6 text-xs text-red-700">
+                          💡 {emailError.hint}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="space-y-1">
                     <span className="text-sm font-medium text-slate-700">Email, username, or phone</span>
                     <Input
