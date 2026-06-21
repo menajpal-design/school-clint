@@ -54,7 +54,22 @@ export default function AdminSchoolsPage() {
   };
 
   const quickStatus = async (school: any, action: 'activate' | 'suspend') => {
-    await api.admin.updateSchool(school._id, { statusAction: action });
+    if (action === 'activate') {
+      // When activating, ensure billingStatus is set to 'active' so the server
+      // calls activateBilling() and sets proper subscriptionExpiresAt, smsBalance etc.
+      const billing = school.billing || {};
+      await api.admin.updateSchool(school._id, {
+        statusAction: 'activate',
+        billing: {
+          ...billing,
+          billingStatus: 'active',
+          receivedAmount: billing.receivedAmount || billing.dueAmount || 0,
+          isPaymentReceived: true,
+        },
+      });
+    } else {
+      await api.admin.updateSchool(school._id, { statusAction: action });
+    }
     await load();
   };
 

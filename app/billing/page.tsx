@@ -934,13 +934,18 @@ export default function BillingPage() {
           </CardHeader>
           <CardContent className="grid gap-3 text-sm md:grid-cols-3">
             <div className="rounded-md border p-3"><span className="text-slate-500">অবস্থা</span><div className="font-semibold">{institution?.isActive ? 'সক্রিয়' : 'পেন্ডিং / নিষ্ক্রিয়'}</div></div>
-            <div className="rounded-md border p-3"><span className="text-slate-500">বিলিং</span><div className="font-semibold">{institution?.billing?.billingStatus === 'active' ? 'সক্রিয়' : institution?.billing?.billingStatus || 'pending'}</div></div>
+            <div className="rounded-md border p-3"><span className="text-slate-500">বিলিং</span><div className="font-semibold">
+              {institution?.isActive && institution?.billing?.billingStatus !== 'active'
+                ? '✅ সক্রিয় (অ্যাডমিন)'
+                : institution?.billing?.billingStatus === 'active' ? 'সক্রিয়' : institution?.billing?.billingStatus || 'pending'}
+            </div></div>
             <div className="rounded-md border p-3"><span className="text-slate-500">পরিশোধিত</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.receivedAmount || 0))}</div></div>
             <div className="rounded-md border p-3"><span className="text-slate-500">মূল বিল</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.baseDueAmount || 0))}</div></div>
             <div className="rounded-md border p-3"><span className="text-slate-500">এসএমএস চার্জ</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.smsChargeAmount || 0))}</div></div>
             <div className="rounded-md border p-3"><span className="text-slate-500">মাসিক মোট</span><div className="font-semibold">{formatCurrency(Number(institution?.billing?.monthlyBillAmount || institution?.billing?.dueAmount || 0))}</div></div>
           </CardContent>
         </Card>
+
 
         <Card>
           <CardHeader>
