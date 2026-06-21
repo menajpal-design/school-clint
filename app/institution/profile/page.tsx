@@ -78,6 +78,7 @@ export default function InstitutionProfilePage() {
   const [uploadingAsset, setUploadingAsset] = useState<string | null>(null);
   const [subdomainAvailability, setSubdomainAvailability] = useState<string | null>(null);
   const [savedSubdomain, setSavedSubdomain] = useState<string | null>(null);
+  const [subdomainChecking, setSubdomainChecking] = useState(false);
   const slugify = (input?: string) => String(input || '')
     .toLowerCase()
     .trim()
@@ -332,21 +333,27 @@ export default function InstitutionProfilePage() {
                       <FormControl>
                         <Input
                            placeholder="my-school"
-                           disabled={!!savedSubdomain}
                            {...field}
+                           onChange={(e) => {
+                             const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+                             field.onChange(val);
+                             setSubdomainAvailability(null);
+                           }}
                         />
                       </FormControl>
                       <FormDescription>
-                        {savedSubdomain
-                          ? 'Your subdomain is locked and cannot be changed.'
-                          : 'Enter a subdomain in lowercase (letters, numbers, hyphens). It will be set as subdomain.MAIN_DOMAIN.'}
+                        ছোট হাতের অক্ষর, সংখ্যা এবং হাইফেন ব্যবহার করুন। এটি আপনার স্কুলের লিঙ্ক হবে: subdomain.easyschool.live
                       </FormDescription>
+                      {savedSubdomain && field.value !== savedSubdomain && (
+                        <div className="mt-1 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                          ⚠️ আপনি বিদ্যমান সাবডোমেইন <strong>{savedSubdomain}</strong> পরিবর্তন করছেন। পুরানো লিঙ্কটি আর কাজ করবে না।
+                        </div>
+                      )}
                       <div className="mt-2 flex items-center gap-2">
                         <Button
                           type="button"
                           size="sm"
-                          variant="ghost"
-                          disabled={!!savedSubdomain}
+                          variant="outline"
                           onClick={() => {
                             const name = form.getValues('name') || values.name || '';
                             const slug = slugify(name || field.value || '');
@@ -354,27 +361,35 @@ export default function InstitutionProfilePage() {
                             setSubdomainAvailability(null);
                           }}
                         >
-                          Generate
+                          নাম থেকে তৈরি করুন
                         </Button>
                         <Button
                           type="button"
                           size="sm"
-                          disabled={!!savedSubdomain}
+                          disabled={subdomainChecking}
                           onClick={async () => {
                             const value = String(form.getValues('subdomain') || field.value || '').trim();
-                            if (!value) { setSubdomainAvailability('Enter a subdomain first'); return; }
-                            setSubdomainAvailability('Checking...');
+                            if (!value) { setSubdomainAvailability('প্রথমে একটি সাবডোমেইন লিখুন'); return; }
+                            setSubdomainChecking(true);
+                            setSubdomainAvailability('চেক করা হচ্ছে...');
                             try {
                               const res: any = await api.institution.checkSubdomain(value);
-                              setSubdomainAvailability(res?.available ? 'Available' : 'Not available');
+                              setSubdomainAvailability(res?.available ? '✅ পাওয়া গেছে' : '❌ ইতিমধ্যে ব্যবহৃত');
                             } catch (err) {
-                              setSubdomainAvailability('Check failed');
+                              setSubdomainAvailability('চেক করা যায়নি');
+                            } finally {
+                              setSubdomainChecking(false);
                             }
                           }}
                         >
-                          Check
+                          {subdomainChecking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Check'}
                         </Button>
-                        {subdomainAvailability ? <div className="text-sm text-muted-foreground">{subdomainAvailability}</div> : null}
+                        {subdomainAvailability ? (
+                          <span className={`text-sm font-medium ${
+                            subdomainAvailability.startsWith('✅') ? 'text-green-600' :
+                            subdomainAvailability.startsWith('❌') ? 'text-red-600' : 'text-muted-foreground'
+                          }`}>{subdomainAvailability}</span>
+                        ) : null}
                       </div>
                       {field.value && (
                         <div className="mt-2 text-xs">
