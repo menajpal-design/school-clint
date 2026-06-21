@@ -59,8 +59,6 @@ const nextConfig = {
     // New images are served via /api/images/:id (same origin — no external domain needed)
     domains: ['localhost', 'i.ibb.co', 'ibb.co'],
     remotePatterns: [
-      { protocol: 'https', hostname: '**.herokuapp.com', pathname: '/api/images/**' },
-      { protocol: 'https', hostname: 'school-server-b264c1a1fac6.herokuapp.com', pathname: '/**' },
       { protocol: 'https', hostname: 'easyschool.live', pathname: '/**' },
       { protocol: 'https', hostname: '**.easyschool.live', pathname: '/**' },
     ],
