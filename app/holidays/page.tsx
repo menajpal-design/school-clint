@@ -40,15 +40,44 @@ export default function HolidaysPage() {
   const [weeklyDays, setWeeklyDays] = useState<number[]>([5, 6]);
   const [holidays, setHolidays] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [settingsReady, setSettingsReady] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [form, setForm] = useState({ title: "", titleBn: "", type: "custom", startDate: "", endDate: "", description: "", isSchoolClosed: true });
 
-  const load = async () => {
+  // Load stored institution weeklyDays on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await apiClient.get('/settings/holiday-settings') as any;
+        const stored = data?.settings || {};
+        const storedDays: number[] = (
+          Array.isArray(stored.weeklyClosedDays) ? stored.weeklyClosedDays :
+          Array.isArray(stored.weeklyDays) ? stored.weeklyDays : []
+        ).map(Number).filter((d: number) => d >= 0 && d <= 6);
+        if (storedDays.length > 0) {
+          setWeeklyDays(storedDays);
+          const sorted = [...storedDays].sort((a, b) => a - b);
+          const key = sorted.join(',');
+          if (key === '5,6') setWeeklyMode('friday_saturday');
+          else if (key === '5') setWeeklyMode('friday');
+          else if (key === '6') setWeeklyMode('saturday');
+          else setWeeklyMode('custom');
+        }
+      } catch (_) {
+        // Keep default [5, 6] on error
+      } finally {
+        setSettingsReady(true);
+      }
+    })();
+  }, []);
+
+  const load = async (days?: number[]) => {
     setLoading(true);
     setError("");
     try {
-      const data = await apiClient.get(`/holidays?year=${year}&weeklyDays=${weeklyDays.join(",")}`) as any;
+      const activeDays = days ?? weeklyDays;
+      const data = await apiClient.get(`/holidays?year=${year}&weeklyDays=${activeDays.join(",")}`) as any;
       setHolidays(data.holidays || []);
     } catch (err: any) {
       setError(err?.message || "Failed to load holiday list.");
@@ -57,7 +86,11 @@ export default function HolidaysPage() {
     }
   };
 
-  useEffect(() => { load().catch(() => undefined); }, [year]);
+  useEffect(() => {
+    if (!settingsReady) return;
+    load().catch(() => undefined);
+  }, [year, settingsReady]);
+
 
   const summary = useMemo(() => ({
     total: holidays.length,
@@ -92,11 +125,14 @@ export default function HolidaysPage() {
     setMessage(""); setError("");
     try {
       const selectedDays = weeklyDays.length ? weeklyDays : [5, 6];
+      // Save weeklyDays to institution settings so it persists
+      await apiClient.put('/settings/holiday-settings', { weeklyClosedDays: selectedDays, weeklyDays: selectedDays }).catch(() => undefined);
       const res = await apiClient.post('/holidays/seed/bangladesh', { year: Number(year), includeWeekends: true, weeklyDays: selectedDays }) as any;
       setMessage(res.message || "Bangladesh holiday list added.");
-      await load();
+      await load(selectedDays);
     } catch (err: any) { setError(err?.message || "Failed to seed Bangladesh holidays."); }
   };
+
 
   const bulkStatus = async (isEnabled: boolean) => {
     setMessage(""); setError("");
@@ -144,7 +180,7 @@ export default function HolidaysPage() {
         icon={CalendarDays}
         status={<Badge variant="outline">{summary.total} days</Badge>}
         actions={[
-          <Button key="refresh" variant="outline" size="sm" onClick={load}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
+          <Button key="refresh" variant="outline" size="sm" onClick={() => load()}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>,
           canManage && <Button key="seed" size="sm" onClick={seedBangladesh}><Plus className="mr-2 h-4 w-4" />Update Bangladesh Holidays</Button>,
         ].filter(Boolean) as any}
       />
