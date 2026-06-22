@@ -2,7 +2,7 @@
 
 import "@/lib/attendance-api-compat";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Calendar, ClipboardCheck, Loader2, Printer, RefreshCw, Save } from "lucide-react";
+import { AlertTriangle, Calendar, ClipboardCheck, Loader2, Printer, RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ export default function AttendanceMarkTotalClient() {
   const [sectionId, setSectionId] = useState("");
   const [date, setDate] = useState(today());
   const [loading, setLoading] = useState(false);
+  const [savingIds, setSavingIds] = useState<Set<string>>(() => new Set());
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [holidayInfo, setHolidayInfo] = useState<any>(null);
@@ -102,9 +103,30 @@ export default function AttendanceMarkTotalClient() {
   useEffect(() => { checkHoliday(); }, [checkHoliday]);
   useEffect(() => { loadPeople(); }, [loadPeople]);
 
-  const setOne = (id: string, status: Status) => {
+  const saveOne = useCallback(async (person: Person, status: Exclude<Status, "">, previousStatus: Status) => {
+    const rowId = String(person._id);
+    setSavingIds((current) => new Set(current).add(rowId));
+    try {
+      const effectiveClassId = lockedClassId || classId;
+      const record = personType === "student"
+        ? { studentId: person._id, userType: "student", classId: idOf(person.classId) || effectiveClassId, sectionId: idOf(person.sectionId) || sectionId || undefined, date, status }
+        : { employeeId: person._id, userId: userIdOf(person), userType: personType, employeeType: personType, date, status };
+      await api.attendance.mark({ classId: personType === "student" ? effectiveClassId : undefined, sectionId: personType === "student" ? (sectionId || undefined) : undefined, date, records: [record] });
+      await loadPeople();
+      toast("Attendance saved", `${nameOf(person)} marked ${status}.`);
+    } catch (e: any) {
+      setPeople((rows) => rows.map((p) => p._id === person._id ? { ...p, status: previousStatus } : p));
+      toast("Attendance failed", e?.message || "Failed to save attendance", "error");
+    } finally {
+      setSavingIds((current) => { const next = new Set(current); next.delete(rowId); return next; });
+    }
+  }, [personType, lockedClassId, classId, sectionId, date, loadPeople]);
+
+  const setOne = (person: Person, status: Status) => {
     if (isClosed) return toast("School closed", "এই তারিখে স্কুল বন্ধ, attendance mark করা যাবে না।", "warning");
-    setPeople((rows) => rows.map((p) => p._id === id ? { ...p, status } : p));
+    const previousStatus = person.status || "";
+    setPeople((rows) => rows.map((p) => p._id === person._id ? { ...p, status } : p));
+    if (status) void saveOne(person, status, previousStatus);
   };
 
   const selectedRows = useMemo(() => people.filter((p) => Boolean(p.status)), [people]);
@@ -136,7 +158,7 @@ export default function AttendanceMarkTotalClient() {
     <PageHeader title="Mark Attendance" description="Mark student, teacher and staff attendance." icon={ClipboardCheck} />
     {isClosed && <div className="flex items-start gap-3 rounded-2xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-900"><AlertTriangle className="mt-0.5 h-5 w-5" /><div><b>School closed on this date.</b><div>{holidayInfo?.holiday?.title || holidayInfo?.holiday?.titleBn || "Weekly Holiday"}. Attendance marking is disabled for this date.</div></div></div>}
     <section className="rounded-2xl border bg-card p-4 shadow-sm"><div className="grid gap-3 md:grid-cols-5"><Select value={personType} onValueChange={(v) => { setPersonType(v as PersonType); setPeople([]); setLockedClassId(""); }}><SelectTrigger><SelectValue placeholder="Person Type" /></SelectTrigger><SelectContent><SelectItem value="student">Students</SelectItem><SelectItem value="teacher">Teachers</SelectItem><SelectItem value="staff">Staff</SelectItem></SelectContent></Select>{personType === "student" && <><Select value={classId || "none"} onValueChange={(v) => v !== "none" && !lockedClassId && setClassId(v)} disabled={Boolean(lockedClassId)}><SelectTrigger><SelectValue placeholder="Class" /></SelectTrigger><SelectContent><SelectItem value="none" disabled>Select Class</SelectItem>{classes.map((c) => <SelectItem key={c._id} value={c._id}>{c.name || c.grade || "Class"}</SelectItem>)}</SelectContent></Select><Select value={sectionId || "all"} onValueChange={(v) => setSectionId(v === "all" ? "" : v)}><SelectTrigger><SelectValue placeholder="Section" /></SelectTrigger><SelectContent><SelectItem value="all">All Sections</SelectItem>{sections.map((s: any) => <SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>)}</SelectContent></Select></>}<Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /><Button onClick={() => { checkHoliday(); loadPeople(); }} variant="outline" disabled={loading || holidayLoading}>{loading || holidayLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Refresh</Button></div>{lockedClassId && personType === "student" && <p className="mt-2 text-xs font-semibold text-amber-700">Class Teacher mode: only your assigned class can be marked.</p>}</section>
-    <section className="rounded-2xl border bg-card p-4 shadow-sm"><div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div className="text-sm text-muted-foreground">{label} — Total = selected month present days · Selected rows: {selectedRows.length}</div><Button onClick={save} disabled={saving || loading || isClosed || !selectedRows.length}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Save</Button></div><div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>{personType === "student" ? "Roll" : "ID"}</TableHead><TableHead>Name</TableHead><TableHead>{personType === "student" ? "Class" : "Type"}</TableHead><TableHead>{personType === "student" ? "Section" : "Designation"}</TableHead><TableHead>Total</TableHead><TableHead>Status</TableHead><TableHead>History</TableHead><TableHead>Print</TableHead></TableRow></TableHeader><TableBody>{people.map((p) => <TableRow key={p._id}><TableCell>{personType === "student" ? (p.rollNumber || "-") : (p.employeeId || p._id?.slice?.(-6) || "-")}</TableCell><TableCell>{nameOf(p)}</TableCell><TableCell>{personType === "student" ? (p.classId?.name || selectedClass?.name || "-") : label.slice(0, -1)}</TableCell><TableCell>{personType === "student" ? (p.sectionId?.name || "-") : (p.designation || p.subject || "-")}</TableCell><TableCell><b>{p.totalPresent || 0}</b></TableCell><TableCell><div className="flex flex-wrap gap-2"><Button size="sm" variant={!p.status ? "default" : "outline"} disabled={isClosed} onClick={() => setOne(p._id, "")}>-</Button>{(["present", "absent", "late", "leave"] as Status[]).filter(Boolean).map((s) => <Button key={s} size="sm" variant={p.status === s ? "default" : "outline"} disabled={isClosed} onClick={() => setOne(p._id, s)}>{s}</Button>)}</div></TableCell><TableCell><Button size="sm" variant="outline" onClick={() => setSelected({ id: personType === "student" ? p._id : userIdOf(p), name: nameOf(p), roll: personType === "student" ? p.rollNumber : p.employeeId, className: personType === "student" ? (p.classId?.name || selectedClass?.name) : label.slice(0, -1), section: personType === "student" ? p.sectionId?.name : p.designation, userType: personType, dbStudentId: personType === "student" ? p._id : undefined, dbUserId: personType !== "student" ? userIdOf(p) : undefined, dbClassId: personType === "student" ? (idOf(p.classId) || classId) : undefined, dbSectionId: personType === "student" ? (idOf(p.sectionId) || sectionId) : undefined })}><Calendar className="mr-2 h-4 w-4" />Calendar</Button></TableCell><TableCell><Button size="sm" variant="outline" onClick={() => printPerson(p)}><Printer className="mr-2 h-4 w-4" />Print</Button></TableCell></TableRow>)}</TableBody></Table></div>{!people.length && <div className="py-10 text-center text-sm text-muted-foreground">{loading ? "Loading..." : `No ${label.toLowerCase()} found.`}</div>}</section>
+    <section className="rounded-2xl border bg-card p-4 shadow-sm"><div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div className="text-sm text-muted-foreground">{label} - Total = selected month present days. Status button auto-saves instantly. Marked rows: {selectedRows.length}</div></div><div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>{personType === "student" ? "Roll" : "ID"}</TableHead><TableHead>Name</TableHead><TableHead>{personType === "student" ? "Class" : "Type"}</TableHead><TableHead>{personType === "student" ? "Section" : "Designation"}</TableHead><TableHead>Total</TableHead><TableHead>Status</TableHead><TableHead>History</TableHead><TableHead>Print</TableHead></TableRow></TableHeader><TableBody>{people.map((p) => <TableRow key={p._id}><TableCell>{personType === "student" ? (p.rollNumber || "-") : (p.employeeId || p._id?.slice?.(-6) || "-")}</TableCell><TableCell>{nameOf(p)}</TableCell><TableCell>{personType === "student" ? (p.classId?.name || selectedClass?.name || "-") : label.slice(0, -1)}</TableCell><TableCell>{personType === "student" ? (p.sectionId?.name || "-") : (p.designation || p.subject || "-")}</TableCell><TableCell><b>{p.totalPresent || 0}</b></TableCell><TableCell><div className="flex flex-wrap gap-2"><Button size="sm" variant={!p.status ? "default" : "outline"} disabled={isClosed} onClick={() => setOne(p, "")}>-</Button>{(["present", "absent", "late", "leave"] as Status[]).filter(Boolean).map((s) => <Button key={s} size="sm" variant={p.status === s ? "default" : "outline"} disabled={isClosed} onClick={() => setOne(p, s)}>{s}</Button>)}</div></TableCell><TableCell><Button size="sm" variant="outline" onClick={() => setSelected({ id: personType === "student" ? p._id : userIdOf(p), name: nameOf(p), roll: personType === "student" ? p.rollNumber : p.employeeId, className: personType === "student" ? (p.classId?.name || selectedClass?.name) : label.slice(0, -1), section: personType === "student" ? p.sectionId?.name : p.designation, userType: personType, dbStudentId: personType === "student" ? p._id : undefined, dbUserId: personType !== "student" ? userIdOf(p) : undefined, dbClassId: personType === "student" ? (idOf(p.classId) || classId) : undefined, dbSectionId: personType === "student" ? (idOf(p.sectionId) || sectionId) : undefined })}><Calendar className="mr-2 h-4 w-4" />Calendar</Button></TableCell><TableCell><Button size="sm" variant="outline" onClick={() => printPerson(p)}><Printer className="mr-2 h-4 w-4" />Print</Button></TableCell></TableRow>)}</TableBody></Table></div>{!people.length && <div className="py-10 text-center text-sm text-muted-foreground">{loading ? "Loading..." : `No ${label.toLowerCase()} found.`}</div>}</section>
     <AttendanceCalendarDialog isOpen={!!selected} person={selected} onClose={() => setSelected(null)} onAttendanceUpdated={loadPeople} />
   </div>;
 }
