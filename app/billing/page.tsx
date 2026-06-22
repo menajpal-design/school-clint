@@ -76,6 +76,17 @@ type PopupPaymentResult = {
   rawResponse?: any;
 };
 
+const hasPopupPaymentReference = (payment: PopupPaymentResult) =>
+  Boolean(payment.paymentTrxId || payment.paymentReference || payment.customerReference || payment.paymentSenderNumber);
+
+const isPopupSuccessStatus = (result: any) => {
+  const payload = result?.data || result || {};
+  const verification = result?.verification || result?.data?.verification || {};
+  const status = String(payload.status || payload.paymentStatus || verification.status || '').toLowerCase();
+  if (!status) return false;
+  return ['success', 'verified', 'paid', 'already_verified', 'manual_accepted', 'completed', 'complete'].includes(status);
+};
+
 const normalizePopupPaymentResult = (result: any, fallback: { orderId: string; paymentTime: string; amount: number; gateway: string; senderNumber?: string }): PopupPaymentResult => {
   const verification = result?.verification || result?.data?.verification || {};
   const payload = result?.data || result || {};
@@ -108,16 +119,9 @@ const normalizePopupPaymentResult = (result: any, fallback: { orderId: string; p
     payload.phone ||
     verification.payer_number ||
     verification.payerNumber ||
-    fallback.senderNumber ||
     '';
 
-  const receivedAmount = Number(
-    payload.amount ??
-    payload.paidAmount ??
-    payload.receivedAmount ??
-    verification.amount ??
-    fallback.amount
-  );
+  const receivedAmount = Number(payload.amount ?? payload.paidAmount ?? payload.receivedAmount ?? verification.amount ?? 0);
 
   const paymentTime =
     payload.verifiedAt ||
@@ -298,6 +302,11 @@ export default function BillingPage() {
         setIsPurchasingSms(true);
         setSmsPackageStatus('পেমেন্ট সম্পন্ন। SMS প্যাকেজ activate করা হচ্ছে...');
         const normalized = normalizePopupPaymentResult(result, { orderId, paymentTime, amount: pkg.price, gateway: 'popup' });
+        if (!isPopupSuccessStatus(result) || !hasPopupPaymentReference(normalized)) {
+          setSmsPackageStatus('Payment popup confirmed হয়নি। SMS package activate করা হয়নি।');
+          setIsPurchasingSms(false);
+          return;
+        }
         try {
           const response = await api.institutionSmsPurchasePackage({
             packageCode: pkg.code,
@@ -306,7 +315,7 @@ export default function BillingPage() {
             paymentTime: normalized.paymentTime || paymentTime,
             paymentTrxId: normalized.paymentTrxId || '',
             paymentSenderNumber: normalized.paymentSenderNumber || '',
-            receivedAmount: normalized.receivedAmount || pkg.price,
+            receivedAmount: normalized.receivedAmount,
             popupPaymentResponse: result,
             popupVerification: result?.verification || result?.data?.verification || {},
           }) as any;
@@ -327,6 +336,10 @@ export default function BillingPage() {
     setIsPaying(true);
     try {
       const popupAmount = Number(payment.receivedAmount || 0);
+      if (!isPopupSuccessStatus(payment.rawResponse) || !hasPopupPaymentReference(payment)) {
+        setStatus('Payment was not confirmed by the popup. No subscription activation request was submitted.');
+        return;
+      }
       if (!popupAmount || popupAmount !== Number(totalWithSms)) {
         setStatus(`Payment amount mismatch. Required amount is ${formatCurrency(totalWithSms)}.`);
         return;
@@ -371,6 +384,10 @@ export default function BillingPage() {
     setIsTopping(true);
     try {
       const popupAmount = Number(payment.receivedAmount || 0);
+      if (!isPopupSuccessStatus(payment.rawResponse) || !hasPopupPaymentReference(payment)) {
+        setStatus('SMS top-up payment was not confirmed by the popup. Nothing was credited.');
+        return;
+      }
       if (!popupAmount || popupAmount !== Number(amount)) {
         setStatus(`Top-up amount mismatch. Required amount is ${formatCurrency(amount)}.`);
         return;
