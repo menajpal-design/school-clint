@@ -24,6 +24,11 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
 const DAY_INDEX: Record<string, number> = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
 const cleanId = (id: string) => String(id || "").replace(/^(student:|user:|teacher:|staff:|user-|student-)/g, "");
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const dateOnly = (value: any) => {
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return new Date(value);
+};
 const monthStart = (year: number, month: number) => `${year}-${String(month + 1).padStart(2, "0")}-01`;
 const monthEnd = (year: number, month: number) => iso(new Date(year, month + 1, 0));
 const yearStart = (year: number) => `${year}-01-01`;
@@ -113,8 +118,9 @@ export function AttendanceCalendarDialogV5({ isOpen, onClose, person, onAttendan
   const holidayMap = useMemo(() => {
     const map = new Map<string, any>();
     holidays.forEach((h) => {
-      const start = new Date(h.startDate);
-      const end = new Date(h.endDate || h.startDate);
+      if (h.type === "weekend") return;
+      const start = dateOnly(h.startDate);
+      const end = dateOnly(h.endDate || h.startDate);
       for (let d = new Date(start.getFullYear(), start.getMonth(), start.getDate()); d <= end; d.setDate(d.getDate() + 1)) {
         const key = iso(d);
         const color = h.type === "weekend"
