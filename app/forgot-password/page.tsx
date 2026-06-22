@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   // Structured error state — shown in a persistent on-screen box
-  const [emailError, setEmailError] = useState<{ message: string; reason?: string; hint?: string } | null>(null);
+  const [emailError, setEmailError] = useState<{ message: string; errorCode?: string; reason?: string; hint?: string } | null>(null);
 
   const {
     register: registerRequest,
@@ -88,10 +88,11 @@ export default function ForgotPasswordPage() {
       // The server returns { message, reason, hint } for email failures
       const errData  = error?.error || error || {};
       const mainMsg  = errData?.message || error?.message || 'Unable to process password reset request.';
+      const errorCode = errData?.errorCode || '';
       const reason   = errData?.reason  || '';
       const hint     = errData?.hint    || '';
       // Show persistent error box on screen
-      setEmailError({ message: mainMsg, reason, hint });
+      setEmailError({ message: mainMsg, errorCode, reason, hint });
     } finally {
       setIsLoading(false);
     }
@@ -212,6 +213,11 @@ export default function ForgotPasswordPage() {
                         <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
                         <span>{emailError.message}</span>
                       </div>
+                      {emailError.errorCode && (
+                        <div className="ml-6 inline-flex rounded border border-red-200 bg-white px-2 py-1 text-xs font-semibold tracking-wide text-red-700">
+                          {emailError.errorCode}
+                        </div>
+                      )}
                       {emailError.reason && (
                         <div className="ml-6 rounded bg-red-100 px-3 py-2 text-xs font-mono leading-relaxed text-red-900 whitespace-pre-wrap break-words">
                           {emailError.reason}
