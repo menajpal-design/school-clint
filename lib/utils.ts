@@ -150,7 +150,7 @@ export type HolidaySettings = {
 };
 
 const DEFAULT_HOLIDAY_SETTINGS: HolidaySettings = {
-  weeklyClosedDays: ['Friday'],
+  weeklyClosedDays: ['Friday', 'Saturday'],
   closureStartDate: '',
   closureEndDate: '',
   closureReason: '',
