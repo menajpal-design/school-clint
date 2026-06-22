@@ -71,6 +71,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Profile Charts', href: '/charts/profile', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS] },
     { label: 'Parent Charts', href: '/charts/parent', roles: ['parent'] },
   ] },
+  { label: 'App Guide', href: '/app-guide', roles: [...PLATFORM_ADMIN, ...SCHOOL_USERS], icon: 'Route' },
   { label: 'Billing & Subscription', href: '/billing', roles: BILLING_ROLES, icon: 'CreditCard' },
   { label: 'Notice Board', href: '/notices', roles: NOTICE_VIEW, icon: 'Bell' },
   { label: 'Notifications', href: '/notifications', roles: ALL_ROLES, icon: 'Bell' },
