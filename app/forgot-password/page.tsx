@@ -30,6 +30,45 @@ const resetPasswordSchema = z.object({
 
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
+type EmailError = { message: string; errorCode?: string; reason?: string; hint?: string };
+
+const parseMaybeJson = (value: any) => {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
+const normalizeEmailError = (error: any): EmailError => {
+  const candidates = [
+    error?.error?.error,
+    error?.error,
+    error?.response?.data,
+    error,
+  ].map(parseMaybeJson).filter(Boolean);
+
+  const pick = (key: 'message' | 'errorCode' | 'reason' | 'hint') => {
+    for (const item of candidates) {
+      if (item && typeof item === 'object' && typeof item[key] === 'string' && item[key].trim()) {
+        return item[key].trim();
+      }
+    }
+    return '';
+  };
+
+  const fallbackMessage = typeof error?.message === 'string'
+    ? error.message
+    : 'Unable to process password reset request.';
+
+  return {
+    message: pick('message') || fallbackMessage,
+    errorCode: pick('errorCode'),
+    reason: pick('reason'),
+    hint: pick('hint'),
+  };
+};
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -40,7 +79,7 @@ export default function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   // Structured error state — shown in a persistent on-screen box
-  const [emailError, setEmailError] = useState<{ message: string; errorCode?: string; reason?: string; hint?: string } | null>(null);
+  const [emailError, setEmailError] = useState<EmailError | null>(null);
 
   const {
     register: registerRequest,
@@ -85,14 +124,7 @@ export default function ForgotPasswordPage() {
         duration: 5000,
       });
     } catch (error: any) {
-      // The server returns { message, reason, hint } for email failures
-      const errData  = error?.error || error || {};
-      const mainMsg  = errData?.message || error?.message || 'Unable to process password reset request.';
-      const errorCode = errData?.errorCode || '';
-      const reason   = errData?.reason  || '';
-      const hint     = errData?.hint    || '';
-      // Show persistent error box on screen
-      setEmailError({ message: mainMsg, errorCode, reason, hint });
+      setEmailError(normalizeEmailError(error));
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +186,8 @@ export default function ForgotPasswordPage() {
         duration: 5000,
       });
     } catch (error: any) {
-      const message = error?.error?.message || error?.message || "Unable to resend verification code.";
+      const normalized = normalizeEmailError(error);
+      const message = normalized.reason || normalized.message || "Unable to resend verification code.";
       addToast({
         title: "Resend failed",
         message,
