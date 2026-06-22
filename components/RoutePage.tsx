@@ -217,6 +217,7 @@ function getPageConfig(pathname: string, title: string): PageConfig {
       actions: [
         { label: "Mark", href: "/attendance/mark", icon: Plus },
         { label: "Reports", href: "/attendance/reports", icon: BarChart3 },
+        { label: "Present SMS", href: "/attendance/present-sms", icon: Users },
         { label: "My Attendance", href: "/attendance/my-attendance", icon: Users },
       ],
       columns: [

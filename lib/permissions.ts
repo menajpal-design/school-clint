@@ -139,6 +139,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'All Present Scanner', href: '/attendance/all-present', roles: ATTENDANCE_MARK },
     { label: 'Add Fingerprint', href: '/attendance/add-fingerprint', roles: ATTENDANCE_BIOMETRIC },
     { label: 'Reports', href: '/attendance/reports', roles: ATTENDANCE_MARK },
+    { label: 'Present SMS', href: '/attendance/present-sms', roles: ATTENDANCE_MARK },
     { label: 'Attendance SMS', href: '/attendance/sms-monitoring', roles: ['head', 'assistant_head', 'class_teacher'] },
     { label: 'My Attendance', href: '/attendance/my-attendance', roles: ATTENDANCE_VIEW },
   ] },

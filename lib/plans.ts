@@ -1,10 +1,30 @@
-export const schoolPlans = [
+const baseStudentPlans = [
   { code: "students_100", name: "100 Students", studentLimit: 100, monthlyPrice: 300, yearlyPrice: 3000, monthlySmsLimit: 100 },
   { code: "students_200", name: "200 Students", studentLimit: 200, monthlyPrice: 500, yearlyPrice: 5000, monthlySmsLimit: 200 },
   { code: "students_300", name: "300 Students", studentLimit: 300, monthlyPrice: 600, yearlyPrice: 6000, monthlySmsLimit: 300 },
   { code: "students_500", name: "500 Students", studentLimit: 500, monthlyPrice: 1000, yearlyPrice: 9000, monthlySmsLimit: 500 },
   { code: "students_1000", name: "1000 Students", studentLimit: 1000, monthlyPrice: 2000, yearlyPrice: 17500, monthlySmsLimit: 1000 },
-].map((plan) => ({
+];
+
+const attendanceSmsAddons = [
+  { suffix: "", nameSuffix: "", attendanceSmsMode: "none", attendanceSmsMonthlyRatePerStudent: 0 },
+  { suffix: "_attendance_daily", nameSuffix: " + Daily Present SMS", attendanceSmsMode: "daily", attendanceSmsMonthlyRatePerStudent: 12 },
+  { suffix: "_attendance_weekly", nameSuffix: " + Weekly Present SMS", attendanceSmsMode: "weekly", attendanceSmsMonthlyRatePerStudent: 5 },
+] as const;
+
+export const schoolPlans = baseStudentPlans.flatMap((base) => attendanceSmsAddons.map((addon) => {
+  const monthlyAddon = base.studentLimit * addon.attendanceSmsMonthlyRatePerStudent;
+  return {
+    ...base,
+    code: `${base.code}${addon.suffix}`,
+    name: `${base.name}${addon.nameSuffix}`,
+    monthlyPrice: base.monthlyPrice + monthlyAddon,
+    yearlyPrice: base.yearlyPrice + monthlyAddon * 12,
+    attendanceSmsMode: addon.attendanceSmsMode,
+    attendanceSmsMonthlyRatePerStudent: addon.attendanceSmsMonthlyRatePerStudent,
+    attendanceSmsMonthlyAmount: monthlyAddon,
+  };
+})).map((plan) => ({
   ...plan,
   yearlyDiscountPercent: Math.round((1 - plan.yearlyPrice / (plan.monthlyPrice * 12)) * 100),
 }));

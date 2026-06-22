@@ -86,7 +86,7 @@ export default function AttendanceReportsPage() {
     setPeople(data.people || []);
   }, [classId, personType, sectionId]);
 
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     setLoading(true);
     setMessage("");
     try {
@@ -123,7 +123,7 @@ export default function AttendanceReportsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [attendanceSettings.includeHeadAsTeacher, classId, endDate, personId, personType, sectionId, startDate]);
 
   useEffect(() => { loadLookups().catch(() => undefined); }, [loadLookups]);
   useEffect(() => { loadPeople().catch(() => setPeople([])); }, [loadPeople]);
