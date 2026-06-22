@@ -68,7 +68,7 @@ export default function AllPresentScannerPage() {
 
   const addLog = (log: ScanLog) => setLogs((current) => [log, ...current].slice(0, 50));
 
-  const loadPeople = async () => {
+  const loadPeople = useCallback(async () => {
     setLoadingPeople(true);
     try {
       if (personKind === 'student') {
@@ -111,13 +111,11 @@ export default function AllPresentScannerPage() {
     } finally {
       setLoadingPeople(false);
     }
-  };
+  }, [personKind, addToast]);
 
-  const loadPeopleCallback = useCallback(() => {
+  useEffect(() => {
     loadPeople().catch(() => undefined);
   }, [loadPeople]);
-  
-  useEffect(loadPeopleCallback, [loadPeopleCallback]);
 
   const markPresent = async (rawCode: string, mode: ScanMode = scanMode) => {
     const cleanCode = rawCode.trim();
