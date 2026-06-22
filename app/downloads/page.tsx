@@ -27,7 +27,7 @@ export default function Downloads() {
   const githubOwner = process.env.NEXT_PUBLIC_GITHUB_OWNER || 'YOUR_USERNAME';
   const githubRepo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'school_n';
   const releasesUrl = `https://api.github.com/repos/${githubOwner}/${githubRepo}/releases`;
-  const fallbackApkUrl = process.env.NEXT_PUBLIC_LOCAL_APK_URL || '/app-debug.apk';
+  const fallbackApkUrl = process.env.NEXT_PUBLIC_LOCAL_APK_URL || '/EasySchool_v1.0.0_1782102509042.apk';
 
   useEffect(() => {
     const fetchReleases = async () => {
@@ -58,7 +58,7 @@ export default function Downloads() {
     setLocalDownload(true);
     const link = document.createElement('a');
     link.href = fallbackApkUrl;
-    link.download = 'SchoolApp.apk';
+    link.download = 'EasySchool_v1.0.0_1782102509042.apk';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
