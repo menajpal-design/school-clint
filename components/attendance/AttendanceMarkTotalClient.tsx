@@ -25,6 +25,26 @@ const monthName = (date: string) => new Date(date).toLocaleDateString("en-US", {
 const normalizeClasses = (data: any) => Array.isArray(data) ? data : Array.isArray(data?.classes) ? data.classes : Array.isArray(data?.items) ? data.items : [];
 const normalizePeople = (data: any) => Array.isArray(data) ? data : Array.isArray(data?.people) ? data.people : Array.isArray(data?.students) ? data.students : Array.isArray(data?.teachers) ? data.teachers : Array.isArray(data?.staff) ? data.staff : [];
 const normalizeAttendance = (data: any) => Array.isArray(data) ? data : Array.isArray(data?.attendance) ? data.attendance : Array.isArray(data?.records) ? data.records : [];
+const keyVariants = (...values: any[]) => {
+  const keys = new Set<string>();
+  values.forEach((value) => {
+    const raw = idOf(value);
+    if (!raw) return;
+    keys.add(raw);
+    const clean = raw.replace(/^(student:|student-|user:|user-)/, "");
+    if (clean) {
+      keys.add(clean);
+      keys.add(`user-${clean}`);
+    }
+  });
+  return Array.from(keys);
+};
+const attendanceKeys = (a: any, personType: PersonType) => personType === "student"
+  ? keyVariants(a.studentId, a.studentId?._id, a.studentId?.userId, a.userId)
+  : keyVariants(a.userId, a.userId?._id, a.employeeId);
+const personKeys = (p: Person, personType: PersonType) => personType === "student"
+  ? keyVariants(p._id, p.userId, p.userId?._id)
+  : keyVariants(userIdOf(p), p._id, p.employeeId);
 
 export default function AttendanceMarkTotalClient() {
   const { addToast } = useToast();
@@ -88,12 +108,13 @@ export default function AttendanceMarkTotalClient() {
       const monthData: any = await api.attendance.getAll(monthParams);
       const dayRows = normalizeAttendance(dayData);
       const monthRows = normalizeAttendance(monthData);
-      const dayMap = new Map(dayRows.map((a: any) => [personType === "student" ? String(a.studentId?._id || a.studentId) : String(a.userId?._id || a.userId || a.employeeId), a.status]));
+      const dayMap = new Map<string, Status>();
+      dayRows.forEach((a: any) => attendanceKeys(a, personType).forEach((key) => dayMap.set(key, a.status)));
       const totalMap = new Map<string, number>();
-      monthRows.forEach((a: any) => { if (a.status === "present") { const key = personType === "student" ? String(a.studentId?._id || a.studentId) : String(a.userId?._id || a.userId || a.employeeId); totalMap.set(key, (totalMap.get(key) || 0) + 1); } });
+      monthRows.forEach((a: any) => { if (a.status === "present") attendanceKeys(a, personType).forEach((key) => totalMap.set(key, (totalMap.get(key) || 0) + 1)); });
       setPeople(rows.map((p: Person) => {
-        const key = personType === "student" ? idOf(p._id) : userIdOf(p);
-        return { ...p, userType: personType, status: (dayMap.get(key) as Status) || "", totalPresent: totalMap.get(key) || 0 };
+        const keys = personKeys(p, personType);
+        return { ...p, userType: personType, status: keys.map((key) => dayMap.get(key)).find(Boolean) || "", totalPresent: Math.max(0, ...keys.map((key) => totalMap.get(key) || 0)) };
       }));
     } catch (e: any) { toast("Attendance load failed", e?.message || "Failed to load attendance", "error"); setPeople([]); }
     finally { setLoading(false); }
