@@ -642,7 +642,7 @@ export default function InstitutionProfilePage() {
                           onChange={(event) => onUpload(asset.name, event.target.files?.[0])}
                         />
                       </label>
-                      <p className="mt-1 text-center text-xs text-muted-foreground">সর্বোচ্চ ৫এমবি · JPG, PNG, WebP</p>
+                      <p className="mt-1 text-center text-xs text-muted-foreground">সর্বোচ্চ ১৫এমবি · বড় ছবি অটো কমপ্রেস হবে · JPG, PNG, WebP</p>
                     </div>
                   ))}
                 </div>
@@ -667,7 +667,7 @@ export default function InstitutionProfilePage() {
           <CardContent>
             <div className="rounded-lg border border-border bg-card p-5 text-center shadow-sm">
               <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border bg-muted">
-                {values.logo ? <img src={values.logo} alt="" className="h-full w-full object-contain" /> : <Building2 className="h-8 w-8 text-primary" />}
+                {values.logo ? <img src={resolveImageUrl(values.logo)} alt="" className="h-full w-full object-contain" /> : <Building2 className="h-8 w-8 text-primary" />}
               </div>
               <h2 className="mt-4 text-xl font-bold">{values.name || 'প্রতিষ্ঠানের নাম'}</h2>
               <p className="mt-1 text-sm text-muted-foreground">EIIN {values.eiin || 'Not set'} · {values.type === 'school' ? 'বিদ্যালয়' : values.type === 'madrasah' ? 'মাদ্রাসা' : values.type}</p>
@@ -675,10 +675,10 @@ export default function InstitutionProfilePage() {
               <p className="mt-2 text-sm text-muted-foreground">{values.phone || 'ফোন নম্বর'} · {values.email || 'ইমেইল'}</p>
               <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-muted-foreground">
                 <div className="rounded-md border p-3">
-                  {values.seal ? <img src={values.seal} alt="" className="mx-auto h-12 object-contain" /> : 'অফিশিয়াল সিল'}
+                  {values.seal ? <img src={resolveImageUrl(values.seal)} alt="" className="mx-auto h-12 object-contain" /> : 'অফিশিয়াল সিল'}
                 </div>
                 <div className="rounded-md border p-3">
-                  {values.headSignature ? <img src={values.headSignature} alt="" className="mx-auto h-12 object-contain" /> : 'প্রধান শিক্ষকের স্বাক্ষর'}
+                  {values.headSignature ? <img src={resolveImageUrl(values.headSignature)} alt="" className="mx-auto h-12 object-contain" /> : 'প্রধান শিক্ষকের স্বাক্ষর'}
                 </div>
               </div>
             </div>

@@ -38,11 +38,12 @@ async function proxy(request: NextRequest, context: { params: { path: string[] }
   const method = request.method.toUpperCase();
 
   try {
-    const body = method === 'GET' || method === 'HEAD' ? undefined : await request.arrayBuffer();
+    const body = method === 'GET' || method === 'HEAD' ? undefined : request.body;
     const response = await fetch(targetUrl, {
       method,
       headers: buildHeaders(request),
       body,
+      ...(body ? { duplex: 'half' } as any : {}),
       redirect: 'manual',
       cache: 'no-store',
     });

@@ -5,12 +5,76 @@
 
 import { apiClient, API_URL } from './api';
 
+const UPLOAD_PROXY_SAFE_BYTES = 850 * 1024;
+const MAX_SOURCE_IMAGE_BYTES = 15 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 1200;
+const MIN_IMAGE_QUALITY = 0.58;
+
 export interface ImageUploadResult {
   url: string;
   fileId: string;
   filename: string;
   size: number;
   contentType: string;
+}
+
+function canCompressInBrowser(file: File) {
+  return typeof window !== 'undefined'
+    && typeof document !== 'undefined'
+    && /^image\/(png|jpe?g|webp)$/i.test(file.type);
+}
+
+async function loadBitmap(file: File): Promise<HTMLImageElement> {
+  const url = URL.createObjectURL(file);
+  const image = new Image();
+  image.decoding = 'async';
+  image.src = url;
+  try {
+    await image.decode();
+    return image;
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('Image compression failed.'));
+    }, type, quality);
+  });
+}
+
+async function compressImageForUpload(file: File): Promise<File> {
+  if (file.size > MAX_SOURCE_IMAGE_BYTES) {
+    throw new Error('Image is too large. Please choose an image under 15MB.');
+  }
+  if (file.size <= UPLOAD_PROXY_SAFE_BYTES || !canCompressInBrowser(file)) return file;
+
+  const image = await loadBitmap(file);
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(sourceWidth, sourceHeight));
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) return file;
+  context.drawImage(image, 0, 0, width, height);
+
+  let quality = 0.82;
+  let blob = await canvasToBlob(canvas, 'image/webp', quality);
+  while (blob.size > UPLOAD_PROXY_SAFE_BYTES && quality > MIN_IMAGE_QUALITY) {
+    quality = Math.max(MIN_IMAGE_QUALITY, quality - 0.08);
+    blob = await canvasToBlob(canvas, 'image/webp', quality);
+  }
+
+  if (blob.size >= file.size) return file;
+  const safeName = file.name.replace(/\.[^.]+$/, '') || 'image';
+  return new File([blob], `${safeName}.webp`, { type: 'image/webp', lastModified: Date.now() });
 }
 
 /**
@@ -24,8 +88,9 @@ export async function uploadImage(
   file: File,
   category = 'general'
 ): Promise<ImageUploadResult> {
+  const preparedFile = await compressImageForUpload(file);
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append('image', preparedFile);
   formData.append('category', category);
 
   const data: any = await apiClient.post('/images/upload', formData);
@@ -49,8 +114,9 @@ export async function uploadInstitutionImage(
   file: File,
   imageType: 'logo' | 'seal' | 'headSignature'
 ): Promise<{ url: string; fileId: string }> {
+  const preparedFile = await compressImageForUpload(file);
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append('image', preparedFile);
   formData.append('imageType', imageType);
 
   const data: any = await apiClient.post('/institution/upload-image', formData);

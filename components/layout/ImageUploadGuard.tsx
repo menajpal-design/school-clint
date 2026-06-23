@@ -2,10 +2,9 @@
 
 import { useEffect } from 'react';
 
-const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024; // 5MB — stored in MongoDB GridFS
-const RECOMMENDED_MIN_IMAGE_BYTES = 50 * 1024;
-const MAX_IMAGE_UPLOAD_LABEL = '5MB';
-const RECOMMENDED_IMAGE_LABEL = '50KB–5MB';
+const MAX_IMAGE_UPLOAD_BYTES = 15 * 1024 * 1024; // Large images are compressed before upload.
+const MAX_IMAGE_UPLOAD_LABEL = '15MB';
+const RECOMMENDED_IMAGE_LABEL = '50KB-15MB; large JPG/PNG images are compressed automatically.';
 
 function isImageFile(file: File) {
   return file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name);
@@ -21,7 +20,7 @@ function formatKb(bytes: number) {
 }
 
 function showImageSizeError(file: File) {
-  const message = `Image upload size limit: ${MAX_IMAGE_UPLOAD_LABEL}.\n\nSelected: ${file.name} (${formatKb(file.size)}).\nPlease compress/crop the image and keep it within ${RECOMMENDED_IMAGE_LABEL}.`;
+  const message = `Image upload size limit: ${MAX_IMAGE_UPLOAD_LABEL}.\n\nSelected: ${file.name} (${formatKb(file.size)}).\nPlease choose an image within ${RECOMMENDED_IMAGE_LABEL}.`;
   window.alert(message);
 }
 
