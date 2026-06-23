@@ -128,7 +128,22 @@ function ResultManagementView({ user }: { user: any }) {
       setClasses(nextClasses);
       setSubjects(nextSubjects);
       setExams(nextExams);
-      const firstClass = queryClassId || nextClasses[0]?._id || "";
+      let firstClass = queryClassId;
+      if (!firstClass && queryExamId) {
+        const foundExam = nextExams.find((exam) => exam._id === queryExamId);
+        if (foundExam && foundExam.classId) {
+          firstClass = typeof foundExam.classId === "object" ? foundExam.classId._id : String(foundExam.classId);
+        }
+      }
+      if (!firstClass && querySubjectId) {
+        const foundSubject = nextSubjects.find((subject) => subject._id === querySubjectId);
+        if (foundSubject && foundSubject.classId) {
+          firstClass = typeof foundSubject.classId === "object" ? foundSubject.classId._id : String(foundSubject.classId);
+        }
+      }
+      if (!firstClass) {
+        firstClass = nextClasses[0]?._id || "";
+      }
       const firstExam = queryExamId || nextExams.find((exam) => exam.classId?._id === firstClass || String(exam.classId as any) === firstClass)?._id || nextExams[0]?._id || "";
       const firstSubject = querySubjectId || nextSubjects.find((subject) => subject.classId?._id === firstClass || String(subject.classId as any) === firstClass)?._id || nextSubjects[0]?._id || "";
       setClassId((current) => current || firstClass);
