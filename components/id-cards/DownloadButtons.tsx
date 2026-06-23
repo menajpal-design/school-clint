@@ -3,11 +3,11 @@
 import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
 import { Button } from '@/components/ui/button'
 import { Download, FileText, Printer, Mail } from 'lucide-react'
 import { api } from '@/lib/api'
 import { downloadBlob } from '@/lib/utils'
+import { downloadElementPdf, printElement } from '@/lib/export-utils'
 
 export function DownloadButtons({ targetRef, formData, filename = 'id-card', cardId, printTitle = 'Print ID Card', emailSubject = 'ID Card' }: { targetRef: React.RefObject<HTMLElement> | null; formData?: any; filename?: string; cardId?: string; printTitle?: string; emailSubject?: string }) {
   const hasPreviewTarget = Boolean(targetRef?.current)
@@ -125,32 +125,20 @@ export function DownloadButtons({ targetRef, formData, filename = 'id-card', car
       downloadBlob(blob, `${filename}.pdf`)
       return
     }
-    const captured = await captureElement()
-    if (!captured) return
-    const orientation = captured.width >= captured.height ? 'landscape' : 'portrait'
-    const pdf = new jsPDF({ orientation, unit: 'px', format: [captured.width, captured.height], compress: true })
-    pdf.addImage(captured.canvas.toDataURL('image/png'), 'PNG', 0, 0, captured.width, captured.height, undefined, 'FAST')
-    pdf.save(`${filename}.pdf`)
+    const card = findCardElement()
+    if (!card) return
+    await downloadElementPdf(card, `${filename}.pdf`)
   }
 
   const print = async () => {
     if (hasFormData) {
-      api.idCards.renderPdf(formData).then((blob: Blob) => {
-        const url = URL.createObjectURL(blob)
-        const popup = window.open(url, '_blank')
-        if (popup) { popup.focus(); setTimeout(() => { try { popup.print() } catch {} }, 1200) }
-        setTimeout(() => URL.revokeObjectURL(url), 30000)
-      }).catch(() => undefined)
+      const blob = await api.idCards.renderPdf(formData)
+      downloadBlob(blob, `${filename}.pdf`)
       return
     }
-    const captured = await captureElement()
-    if (!captured) return
-    const dataUrl = captured.canvas.toDataURL('image/png')
-    const popup = window.open('', '_blank')
-    if (!popup) return
-    popup.document.write(`<!doctype html><html><head><title>${printTitle}</title><style>@page{size:auto;margin:0}html,body{margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0}.wrap img{width:${captured.width}px;height:${captured.height}px;max-width:100vw;max-height:100vh;object-fit:contain}</style></head><body><div class="wrap"><img src="${dataUrl}" /></div></body></html>`)
-    popup.document.close()
-    setTimeout(() => { popup.focus(); popup.print() }, 500)
+    const card = findCardElement()
+    if (!card) return
+    await printElement(card, printTitle)
   }
 
   const email = async () => {

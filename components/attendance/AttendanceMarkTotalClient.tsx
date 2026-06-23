@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import "@/lib/attendance-api-compat";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/useToast";
 import { api, apiClient } from "@/lib/api";
+import { downloadHtmlAsPdf } from "@/lib/export-utils";
 import { AttendanceCalendarDialogV5 as AttendanceCalendarDialog } from "@/components/attendance/AttendanceCalendarDialogV5";
 
 type Status = "present" | "absent" | "late" | "leave" | "";
@@ -144,7 +145,7 @@ export default function AttendanceMarkTotalClient() {
   }, [personType, lockedClassId, classId, sectionId, date, loadPeople]);
 
   const setOne = (person: Person, status: Status) => {
-    if (isClosed) return toast("School closed", "এই তারিখে স্কুল বন্ধ, attendance mark করা যাবে না।", "warning");
+    if (isClosed) return toast("School closed", "à¦à¦‡ à¦¤à¦¾à¦°à¦¿à¦–à§‡ à¦¸à§à¦•à§à¦² à¦¬à¦¨à§à¦§, attendance mark à¦•à¦°à¦¾ à¦¯à¦¾à¦¬à§‡ à¦¨à¦¾à¥¤", "warning");
     const previousStatus = person.status || "";
     setPeople((rows) => rows.map((p) => p._id === person._id ? { ...p, status } : p));
     if (status) void saveOne(person, status, previousStatus);
@@ -153,8 +154,8 @@ export default function AttendanceMarkTotalClient() {
   const selectedRows = useMemo(() => people.filter((p) => Boolean(p.status)), [people]);
 
   const save = async () => {
-    if (isClosed) return toast("School closed", "এই তারিখে weekly holiday/holiday আছে। Attendance save করা যাবে না।", "warning");
-    if (!selectedRows.length) return toast("No status selected", "কমপক্ষে একজনের status select করুন।", "warning");
+    if (isClosed) return toast("School closed", "à¦à¦‡ à¦¤à¦¾à¦°à¦¿à¦–à§‡ weekly holiday/holiday à¦†à¦›à§‡à¥¤ Attendance save à¦•à¦°à¦¾ à¦¯à¦¾à¦¬à§‡ à¦¨à¦¾à¥¤", "warning");
+    if (!selectedRows.length) return toast("No status selected", "à¦•à¦®à¦ªà¦•à§à¦·à§‡ à¦à¦•à¦œà¦¨à§‡à¦° status select à¦•à¦°à§à¦¨à¥¤", "warning");
     setSaving(true);
     try {
       const effectiveClassId = lockedClassId || classId;
@@ -166,14 +167,11 @@ export default function AttendanceMarkTotalClient() {
     finally { setSaving(false); }
   };
 
-  const printPerson = (p: Person) => {
+  const printPerson = async (p: Person) => {
     const title = personType === "student" ? "Student" : personType === "teacher" ? "Teacher" : "Staff";
-    const html = `<!doctype html><html><head><title>Attendance Details</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#111827}.header{text-align:center;border-bottom:2px solid #111827;padding-bottom:12px;margin-bottom:22px}h1{margin:0;font-size:24px}.sub{font-size:13px;color:#4b5563;margin-top:6px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.box{border:1px solid #d1d5db;border-radius:10px;padding:12px}.label{font-size:11px;text-transform:uppercase;color:#6b7280}.value{font-size:18px;font-weight:700;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:22px}td,th{border:1px solid #d1d5db;padding:10px;text-align:left}th{background:#f3f4f6}.status{text-transform:capitalize;font-weight:700}@media print{button{display:none}body{padding:14px}.box{break-inside:avoid}}</style></head><body><div class="header"><h1>${title} Attendance Details Report</h1><div class="sub">Month: ${monthName(date)} · Date: ${date}</div></div><div class="grid"><div class="box"><div class="label">Name</div><div class="value">${nameOf(p)}</div></div><div class="box"><div class="label">ID/Roll</div><div class="value">${personType === "student" ? (p.rollNumber || "-") : (p.employeeId || p._id || "-")}</div></div><div class="box"><div class="label">Type</div><div class="value">${title}</div></div><div class="box"><div class="label">Designation/Class</div><div class="value">${personType === "student" ? (p.classId?.name || selectedClass?.name || "-") : (p.designation || p.subject || "-")}</div></div><div class="box"><div class="label">Monthly Total Present</div><div class="value">${p.totalPresent || 0} days</div></div><div class="box"><div class="label">Selected Date Status</div><div class="value status">${p.status || "not selected"}</div></div></div><table><tbody><tr><th>Record ID</th><td>${p._id}</td></tr><tr><th>Generated At</th><td>${new Date().toLocaleString()}</td></tr></tbody></table><script>window.onload=function(){window.print();}</script></body></html>`;
-    const win = window.open("", "_blank", "width=900,height=700");
-    if (!win) return toast("Popup blocked", "Please allow popup to print attendance details.", "warning");
-    win.document.open(); win.document.write(html); win.document.close();
+    const body = `<div class="header"><h1>${title} Attendance Details Report</h1><div class="sub">Month: ${monthName(date)} · Date: ${date}</div></div><div class="grid"><div class="box"><div class="label">Name</div><div class="value">${nameOf(p)}</div></div><div class="box"><div class="label">ID/Roll</div><div class="value">${personType === "student" ? (p.rollNumber || "-") : (p.employeeId || p._id || "-")}</div></div><div class="box"><div class="label">Type</div><div class="value">${title}</div></div><div class="box"><div class="label">Designation/Class</div><div class="value">${personType === "student" ? (p.classId?.name || selectedClass?.name || "-") : (p.designation || p.subject || "-")}</div></div><div class="box"><div class="label">Monthly Total Present</div><div class="value">${p.totalPresent || 0} days</div></div><div class="box"><div class="label">Selected Date Status</div><div class="value status">${p.status || "not selected"}</div></div></div><table><tbody><tr><th>Record ID</th><td>${p._id}</td></tr><tr><th>Generated At</th><td>${new Date().toLocaleString()}</td></tr></tbody></table>`;
+    await downloadHtmlAsPdf(`${title} Attendance Details`, body, `.header{text-align:center;border-bottom:2px solid #111827;padding-bottom:12px;margin-bottom:22px}h1{margin:0;font-size:24px}.sub{font-size:13px;color:#4b5563;margin-top:6px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.box{border:1px solid #d1d5db;border-radius:10px;padding:12px;break-inside:avoid}.label{font-size:11px;text-transform:uppercase;color:#6b7280}.value{font-size:18px;font-weight:700;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:22px}td,th{border:1px solid #d1d5db;padding:10px;text-align:left}th{background:#f3f4f6}.status{text-transform:capitalize;font-weight:700}`, `attendance-${p.rollNumber || p.employeeId || p._id}.pdf`);
   };
-
   const label = personType === "student" ? "Students" : personType === "teacher" ? "Teachers" : "Staff";
   return <div className="space-y-5 p-4 md:p-6">
     <PageHeader title="Mark Attendance" description="Mark student, teacher and staff attendance." icon={ClipboardCheck} />

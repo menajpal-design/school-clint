@@ -71,8 +71,8 @@ const IDCardGenerator = () => {
   const [showTeacherModal, setShowTeacherModal] = useState(false)
   const [showAdmitModal, setShowAdmitModal] = useState(false)
 
-  const handlePrint = () => {
-    window.print()
+  const handlePrint = async () => {
+    await handleDownload()
   }
 
   const handleDownload = async () => {

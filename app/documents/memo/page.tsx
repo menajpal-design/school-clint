@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, FileText, ImageDown, Printer, RefreshCw } from "lucide-react";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { authManager } from "@/lib/auth";
+import { downloadElementPdf, printElement } from "@/lib/export-utils";
 import { downloadBlob } from "@/lib/utils";
 
 type MemoForm = {
@@ -37,8 +37,6 @@ type MemoForm = {
 
 const today = () => new Date().toISOString().slice(0, 10);
 const safeFilename = (value: string) => String(value || "memo").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "memo";
-const isMobileBrowser = () => typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-
 const initialValues: MemoForm = {
   memoNo: `MEMO-${new Date().getFullYear()}-001`,
   date: today(),
@@ -168,23 +166,7 @@ export default function MemoPage() {
     setExporting("pdf");
     setMessage("");
     try {
-      const canvas = await captureA4(previewRef.current);
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgData = canvas.toDataURL("image/png");
-      const imgHeight = (canvas.height * pageWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight, undefined, "FAST");
-      heightLeft -= pageHeight;
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight, undefined, "FAST");
-        heightLeft -= pageHeight;
-      }
-      pdf.save(`${filename}.pdf`);
+      await downloadElementPdf(previewRef.current, `${filename}.pdf`);
       setMessage("Professional memo PDF downloaded successfully.");
     } finally {
       setExporting("");
@@ -210,24 +192,8 @@ export default function MemoPage() {
     setExporting("print");
     setMessage("");
     try {
-      if (isMobileBrowser()) {
-        await downloadPDF();
-        setMessage("Mobile browser detected. PDF downloaded for printing.");
-        return;
-      }
-      const cloned = previewRef.current.cloneNode(true) as HTMLElement;
-      await inlineImages(cloned);
-      const popup = window.open("", "_blank", "width=1000,height=900");
-      if (!popup) {
-        await downloadPDF();
-        return;
-      }
-      popup.document.open();
-      popup.document.write(`<!doctype html><html><head><meta charset="utf-8" /><title>${values.memoNo}</title><style>@page{size:A4;margin:0}html,body{margin:0;background:#fff;font-family:Arial,Helvetica,sans-serif}.memo-print-wrapper{width:210mm;min-height:297mm;margin:0 auto;background:#fff}*{box-sizing:border-box}</style></head><body><main class="memo-print-wrapper">${cloned.outerHTML}</main></body></html>`);
-      popup.document.close();
-      popup.focus();
-      setTimeout(() => { try { popup.print(); } catch {} }, 500);
-      setMessage("Print window opened.");
+      await printElement(previewRef.current, values.memoNo || "memo");
+      setMessage("PDF generated for consistent printing.");
     } finally {
       setExporting("");
     }

@@ -5,10 +5,12 @@
 
 import { apiClient, API_URL } from './api';
 
-const UPLOAD_PROXY_SAFE_BYTES = 600 * 1024;
+const MIN_UPLOAD_IMAGE_BYTES = 50 * 1024;
+const MAX_UPLOAD_IMAGE_BYTES = 500 * 1024;
 const MAX_SOURCE_IMAGE_BYTES = 15 * 1024 * 1024;
-const MAX_IMAGE_DIMENSION = 1200;
+const MAX_IMAGE_DIMENSION = 1100;
 const MIN_IMAGE_QUALITY = 0.46;
+const MAX_IMAGE_QUALITY = 0.92;
 
 export interface ImageUploadResult {
   url: string;
@@ -51,9 +53,11 @@ async function renderCompressedBlob(
   image: HTMLImageElement,
   sourceWidth: number,
   sourceHeight: number,
-  maxDimension: number
+  maxDimension: number,
+  quality: number,
+  type = 'image/webp'
 ) {
-  const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+  const scale = maxDimension / Math.max(sourceWidth, sourceHeight);
   const width = Math.max(1, Math.round(sourceWidth * scale));
   const height = Math.max(1, Math.round(sourceHeight * scale));
   const canvas = document.createElement('canvas');
@@ -63,38 +67,63 @@ async function renderCompressedBlob(
   if (!context) return null;
   context.drawImage(image, 0, 0, width, height);
 
-  let quality = 0.82;
-  let blob = await canvasToBlob(canvas, 'image/webp', quality);
-  while (blob.size > UPLOAD_PROXY_SAFE_BYTES && quality > MIN_IMAGE_QUALITY) {
-    quality = Math.max(MIN_IMAGE_QUALITY, quality - 0.08);
-    blob = await canvasToBlob(canvas, 'image/webp', quality);
-  }
-  return blob;
+  return canvasToBlob(canvas, type, quality);
 }
 
 async function compressImageForUpload(file: File): Promise<File> {
   if (file.size > MAX_SOURCE_IMAGE_BYTES) {
     throw new Error('Image is too large. Please choose an image under 15MB.');
   }
-  if (file.size <= UPLOAD_PROXY_SAFE_BYTES || !canCompressInBrowser(file)) return file;
+  if (!canCompressInBrowser(file)) {
+    if (file.size < MIN_UPLOAD_IMAGE_BYTES || file.size > MAX_UPLOAD_IMAGE_BYTES) {
+      throw new Error('Image must be between 50KB and 500KB.');
+    }
+    return file;
+  }
 
   const image = await loadBitmap(file);
   const sourceWidth = image.naturalWidth || image.width;
   const sourceHeight = image.naturalHeight || image.height;
   let maxDimension = MAX_IMAGE_DIMENSION;
-  let blob = await renderCompressedBlob(image, sourceWidth, sourceHeight, maxDimension);
-  while (blob && blob.size > UPLOAD_PROXY_SAFE_BYTES && maxDimension > 480) {
-    maxDimension = Math.max(480, Math.round(maxDimension * 0.78));
-    blob = await renderCompressedBlob(image, sourceWidth, sourceHeight, maxDimension);
+  let quality = file.size < MIN_UPLOAD_IMAGE_BYTES ? MAX_IMAGE_QUALITY : 0.82;
+  let blob = await renderCompressedBlob(image, sourceWidth, sourceHeight, maxDimension, quality);
+
+  while (blob && blob.size > MAX_UPLOAD_IMAGE_BYTES && quality > MIN_IMAGE_QUALITY) {
+    quality = Math.max(MIN_IMAGE_QUALITY, quality - 0.08);
+    blob = await renderCompressedBlob(image, sourceWidth, sourceHeight, maxDimension, quality);
+  }
+  while (blob && blob.size > MAX_UPLOAD_IMAGE_BYTES && maxDimension > 420) {
+    maxDimension = Math.max(420, Math.round(maxDimension * 0.78));
+    blob = await renderCompressedBlob(image, sourceWidth, sourceHeight, maxDimension, MIN_IMAGE_QUALITY);
+  }
+  while (blob && blob.size < MIN_UPLOAD_IMAGE_BYTES && maxDimension < 1600) {
+    maxDimension = Math.min(1600, Math.round(maxDimension * 1.25));
+    blob = await renderCompressedBlob(image, sourceWidth, sourceHeight, maxDimension, MAX_IMAGE_QUALITY);
+  }
+  if (blob && blob.size < MIN_UPLOAD_IMAGE_BYTES) {
+    const pngBlob = await renderCompressedBlob(image, sourceWidth, sourceHeight, Math.max(maxDimension, 1600), 1, 'image/png');
+    if (pngBlob && pngBlob.size >= MIN_UPLOAD_IMAGE_BYTES && pngBlob.size <= MAX_UPLOAD_IMAGE_BYTES) {
+      blob = pngBlob;
+    }
   }
 
   if (!blob) return file;
-  if (blob.size > UPLOAD_PROXY_SAFE_BYTES) {
-    throw new Error('Image is still too large after compression. Please crop or choose a smaller image.');
+  if (blob.size < MIN_UPLOAD_IMAGE_BYTES || blob.size > MAX_UPLOAD_IMAGE_BYTES) {
+    throw new Error('Image must be between 50KB and 500KB after compression. Please crop or choose a different image.');
   }
-  if (blob.size >= file.size) return file;
   const safeName = file.name.replace(/\.[^.]+$/, '') || 'image';
-  return new File([blob], `${safeName}.webp`, { type: 'image/webp', lastModified: Date.now() });
+  const extension = blob.type === 'image/png' ? 'png' : 'webp';
+  return new File([blob], `${safeName}.${extension}`, { type: blob.type || 'image/webp', lastModified: Date.now() });
+}
+
+export async function imageFileToDataUrl(file: File): Promise<string> {
+  const preparedFile = await compressImageForUpload(file);
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = reject;
+    reader.readAsDataURL(preparedFile);
+  });
 }
 
 /**

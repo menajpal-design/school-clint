@@ -457,7 +457,7 @@ export default function AttendanceReportsPage() {
           })()}
           <div className="flex gap-2 justify-end border-t pt-4">
             <Button variant="outline" onClick={() => setDetailPersonId(null)}>Close</Button>
-            {detailPersonId && <Button variant="outline" onClick={() => window.print()}>Print</Button>}
+            {detailPersonId && <Button variant="outline" onClick={() => exportPersonPdf(detailPersonId)}>Print</Button>}
             {detailPersonId && <Button variant="outline" onClick={() => exportPersonCsv(detailPersonId)}>Download CSV</Button>}
             {detailPersonId && <Button variant="outline" onClick={() => exportPersonPdf(detailPersonId)}>Download PDF</Button>}
           </div>

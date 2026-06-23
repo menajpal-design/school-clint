@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { api } from '@/lib/api';
+import { imageFileToDataUrl } from '@/lib/imageUpload';
 
 type StaffRecord = { _id?: string; employeeId?: string; designation?: string; department?: string; salary?: number; joiningDate?: string; userId?: { _id?: string; name?: string; username?: string; email?: string; phone?: string; avatar?: string; gender?: string } };
 type StaffForm = { name: string; email: string; phone: string; department: string; salary: string; joiningDate: string; photo: string; gender: string; autoIdCard: boolean };
@@ -17,7 +18,7 @@ type StaffForm = { name: string; email: string; phone: string; department: strin
 const emptyForm: StaffForm = { name: '', email: '', phone: '', department: 'General', salary: '', joiningDate: new Date().toISOString().slice(0, 10), photo: '', gender: '', autoIdCard: true };
 const toast = (title: string, message: string, type: 'success' | 'error' = 'success') => window.dispatchEvent(new CustomEvent('app-toast', { detail: { title, message, type, duration: type === 'success' ? 4500 : 6000 } }));
 const userRows = (users: any[]): StaffRecord[] => users.filter((u) => u?.role === 'staff').map((u, index) => ({ _id: `user-${u._id}`, employeeId: u.employeeId || `S-${String(index + 1).padStart(3, '0')}`, designation: u.designation || 'Staff', department: u.department || 'General', salary: Number(u.salary || 0), joiningDate: u.createdAt, userId: { _id: u._id, name: u.name, username: u.username, email: u.email, phone: u.phone, avatar: u.avatar, gender: u.gender } }));
-const fileToDataUrl = (file: File) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(file); });
+const fileToDataUrl = (file: File) => imageFileToDataUrl(file);
 
 export default function InstitutionStaffPage() {
   const [staff, setStaff] = useState<StaffRecord[]>([]);

@@ -3,7 +3,6 @@
 import { downloadFile } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
 
-const isMobileBrowser = () => typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 const safeFilename = (value: string) => String(value || "print").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "print";
 const A4_WIDTH_PX = 1123;
 const A4_MIN_HEIGHT_PX = 794;
@@ -151,7 +150,6 @@ const stampQrsOnCanvas = async (canvas: HTMLCanvasElement, root: HTMLElement, sc
 
 const printCss = `@page{size:A4;margin:10mm}*{box-sizing:border-box}html,body{margin:0;color:#0f172a;font-family:Arial,Helvetica,sans-serif;background:#fff;print-color-adjust:exact;-webkit-print-color-adjust:exact}body{width:100%;overflow:visible}main,.print-card,.pdf-safe-page{max-width:100%;overflow:visible}table{width:100%;border-collapse:collapse;table-layout:auto;page-break-inside:auto}thead{display:table-header-group}tr{page-break-inside:avoid;break-inside:avoid}th,td{border:1px solid #cbd5e1;padding:7px;font-size:11px;text-align:left;white-space:normal;word-break:break-word;overflow-wrap:anywhere}th{background:#e2e8f0;font-weight:700;color:#0f172a}.institution-header{display:flex;align-items:center;justify-content:space-between;gap:14px;border-radius:16px;background:linear-gradient(135deg,#0f172a 0%,#0f766e 100%);color:#fff;padding:14px 16px;margin-bottom:14px;box-shadow:0 10px 24px rgba(15,23,42,.18);break-inside:avoid}.institution-logo{width:58px;height:58px;border:1px solid rgba(255,255,255,.25);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;overflow:hidden;background:rgba(255,255,255,.08);flex:0 0 auto}.institution-logo img{width:100%;height:100%;object-fit:contain;padding:4px;background:#fff}.institution-info{flex:1;min-width:0}.institution-info h1{margin:0;font-size:21px;line-height:1.15;color:#fff}.institution-info p{margin:3px 0 0;font-size:12px;color:rgba(255,255,255,.84)}.print-card{border:1px solid #cbd5e1;border-radius:16px;padding:16px;background:#fff}.print-title{font-size:22px;font-weight:700;margin:0 0 4px}.print-muted{color:#64748b;font-size:12px}.print-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.print-row{border-bottom:1px solid #e2e8f0;padding:6px 0;font-size:13px;overflow-wrap:anywhere}.print-row strong{display:inline-block;min-width:120px}.signature{margin-top:42px;display:flex;justify-content:space-between;gap:40px;font-size:12px;break-inside:avoid}.signature div{flex:1;border-top:1px solid #334155;padding-top:6px;text-align:center}.print-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px;break-inside:avoid}.print-qr{display:inline-flex;flex-direction:column;align-items:center;gap:4px;color:#475569;font-size:10px;font-weight:700;text-transform:uppercase}.print-qr img{width:82px;height:82px;border:1px solid #cbd5e1;border-radius:6px;padding:4px;background:#fff}.print-footer{margin-top:16px;padding-top:10px;border-top:1px dashed #cbd5e1;color:#64748b;font-size:11px;display:flex;justify-content:space-between;gap:12px}`;
 const fixedReceiptCss = `@page{size:A4 landscape;margin:6mm}html,body{width:1123px!important;min-width:1123px!important;max-width:none!important;margin:0!important;background:#fff!important;overflow:visible!important}.pdf-fixed-shell{width:1060px!important;min-width:1060px!important;max-width:none!important;margin:0 auto!important;padding:24px!important;background:#fff!important;overflow:visible!important}.pdf-fixed-shell .premium-receipt{width:${FIXED_RECEIPT_WIDTH_PX}px!important;min-width:${FIXED_RECEIPT_WIDTH_PX}px!important;max-width:none!important;margin:0 auto!important;transform:none!important;zoom:1!important}.pdf-fixed-shell .premium-receipt *{max-width:none}@media print{.pdf-fixed-shell{padding:0!important}.pdf-fixed-shell .premium-receipt{transform:scale(.82)!important;transform-origin:top center!important;margin:0 auto!important}}`;
-const pageShell = (title: string, body: string, styles = "") => `<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=1123,initial-scale=1"/><title>${escapeHtml(title)}</title><style>${printCss}${styles}</style></head><body>${body}</body></html>`;
 
 export const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 export function downloadCsv(filename: string, rows: unknown[][]) { downloadFile(`\uFEFF${rows.map((r) => r.map(csvCell).join(",")).join("\r\n")}`, filename, "text/csv;charset=utf-8"); }
@@ -213,17 +211,31 @@ async function saveCanvasAsPdf(canvas: HTMLCanvasElement, filename: string, land
     pdf.save(filename);
     return;
   }
-  const imgWidth = maxWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  let remaining = imgHeight;
-  let y = marginY;
-  pdf.addImage(data, "PNG", marginX, y, imgWidth, imgHeight, undefined, "FAST");
-  remaining -= maxHeight;
-  while (remaining > 2) {
-    pdf.addPage();
-    y = marginY - (imgHeight - remaining);
-    pdf.addImage(data, "PNG", marginX, y, imgWidth, imgHeight, undefined, "FAST");
-    remaining -= maxHeight;
+
+  const sliceHeightPx = Math.max(1, Math.floor((canvas.width * maxHeight) / maxWidth));
+  const sliceCanvas = document.createElement("canvas");
+  const sliceCtx = sliceCanvas.getContext("2d");
+  if (!sliceCtx) {
+    pdf.addImage(data, "PNG", marginX, marginY, maxWidth, (canvas.height * maxWidth) / canvas.width, undefined, "FAST");
+    pdf.save(filename);
+    return;
+  }
+
+  let sourceY = 0;
+  let pageIndex = 0;
+  while (sourceY < canvas.height) {
+    const currentSliceHeight = Math.min(sliceHeightPx, canvas.height - sourceY);
+    sliceCanvas.width = canvas.width;
+    sliceCanvas.height = currentSliceHeight;
+    sliceCtx.clearRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+    sliceCtx.fillStyle = "#ffffff";
+    sliceCtx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+    sliceCtx.drawImage(canvas, 0, sourceY, canvas.width, currentSliceHeight, 0, 0, canvas.width, currentSliceHeight);
+    if (pageIndex > 0) pdf.addPage();
+    const imgHeight = (currentSliceHeight * maxWidth) / canvas.width;
+    pdf.addImage(sliceCanvas.toDataURL("image/png", 1), "PNG", marginX, marginY, maxWidth, imgHeight, undefined, "FAST");
+    sourceY += currentSliceHeight;
+    pageIndex += 1;
   }
   pdf.save(filename);
 }
@@ -313,15 +325,7 @@ export async function downloadElementPdf(target: HTMLElement | null, filename: s
 
 export async function printElement(target: HTMLElement | null, title = "Print") {
   if (!target) return;
-  if (isMobileBrowser()) { await downloadElementPdf(target, `${safeFilename(title)}.pdf`); return; }
-  await document.fonts?.ready?.catch(() => undefined);
-  const cloned = target.cloneNode(true) as HTMLElement;
-  copyComputedStyles(cloned, target);
-  preparePdfNode(cloned, Math.ceil(Math.max(target.scrollWidth, target.offsetWidth, target.getBoundingClientRect().width, 900)));
-  await inlineImages(cloned);
-  const popup = window.open("", "_blank", "width=1200,height=900");
-  if (!popup) { await downloadElementPdf(target, `${safeFilename(title)}.pdf`); return; }
-  popup.document.open(); popup.document.write(pageShell(title, `<main style="padding:12mm;background:#fff;overflow:visible;">${cloned.outerHTML}</main>`)); popup.document.close(); popup.focus(); setTimeout(() => { try { popup.print(); } catch {} }, 600);
+  await downloadElementPdf(target, `${safeFilename(title)}.pdf`);
 }
 
 export async function printHtml(title: string, bodyHtml: string, styles = "", qrValue?: string) {
@@ -329,9 +333,5 @@ export async function printHtml(title: string, bodyHtml: string, styles = "", qr
   const isFixedReceipt = /premium-receipt/.test(bodyHtml);
   const bodyWithQr = bodyHtml.replace('<main class="print-card">', `<main class="print-card">${institutionHeader()}<div class="print-heading"><div>`).replace('<div class="print-grid"', `</div>${qrBlock(qrDataUrl)}</div><div class="print-grid"`);
   const finalStyles = `${isFixedReceipt ? fixedReceiptCss : ""}${styles}`;
-  if (isFixedReceipt) { await downloadHtmlAsPdf(title, bodyWithQr, finalStyles, `${safeFilename(title)}.pdf`); return; }
-  if (isMobileBrowser()) { await downloadHtmlAsPdf(title, bodyWithQr, finalStyles, `${safeFilename(title)}.pdf`); return; }
-  const popup = window.open("", "_blank", "width=1000,height=900");
-  if (!popup) { await downloadHtmlAsPdf(title, bodyWithQr, finalStyles, `${safeFilename(title)}.pdf`); return; }
-  popup.document.open(); popup.document.write(pageShell(title, bodyWithQr, finalStyles)); popup.document.close(); popup.focus(); setTimeout(() => { try { popup.print(); } catch {} }, 600);
+  await downloadHtmlAsPdf(title, bodyWithQr, finalStyles, `${safeFilename(title)}.pdf`);
 }

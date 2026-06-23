@@ -8,6 +8,7 @@ import { ProfessionalIDCard } from "@/components/id-cards/ProfessionalIDCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { imageFileToDataUrl } from "@/lib/imageUpload";
 import { findStudentForUser } from "@/lib/student-normalizer";
 
 const cleanRole = (role?: string) => String(role || "user").toLowerCase().replace(/[\s-]+/g, "_").replace("principal", "head").replace("guardian", "parent");
@@ -66,7 +67,7 @@ export default function ProfilePage() {
     salary: valueOf(profile.salary, user?.salary),
   };
 
-  const uploadAvatar = (file?: File) => { if (!file) return; const reader = new FileReader(); reader.onload = () => setAvatar(String(reader.result)); reader.readAsDataURL(file); };
+  const uploadAvatar = async (file?: File) => { if (!file) return; setAvatar(await imageFileToDataUrl(file)); };
   const saveProfile = async () => { const data = await api.auth.updateProfile({ name, phone, avatar }) as any; setUser((current: any) => ({ ...current, ...(data.user || {}), name, phone, avatar })); setEditing(false); };
 
   return <div className="space-y-5">
