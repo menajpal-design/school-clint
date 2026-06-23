@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CalendarClock, Edit2, Eye, EyeOff, Plus, RefreshCw, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { CalendarClock, ClipboardList, Edit2, Eye, EyeOff, FileText, Plus, RefreshCw, Trash2 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -140,6 +141,8 @@ export default function ExamsPage() {
   };
 
   const formRoutineReady = form.subjectMarks.length > 0 && form.subjectMarks.every((mark) => mark.subjectId && mark.date && mark.duration);
+  const firstSubjectId = (exam: ExamItem) => idOf(exam.subjectMarks?.find((mark) => idOf(mark.subjectId))?.subjectId);
+  const resultEntryHref = (exam: ExamItem) => `/academic/results?classId=${idOf(exam.classId)}&examId=${exam._id}&subjectId=${firstSubjectId(exam)}`;
 
   const normalizeExamForList = (exam: any, fallbackForm?: ExamForm): ExamItem => {
     const classObj = typeof exam?.classId === "object" ? exam.classId : classes.find((item) => item._id === (exam?.classId || fallbackForm?.classId));
@@ -437,7 +440,7 @@ export default function ExamsPage() {
                 <TableCell>{exam.endDate ? formatDate(exam.endDate) : "-"}</TableCell>
                 <TableCell>{exam.approvalRequired ? "Yes" : "No"}</TableCell>
                 <TableCell><Badge variant="outline">{exam.status || "scheduled"}</Badge></TableCell>
-                {canManage && <TableCell className="text-right"><div className="flex flex-wrap justify-end gap-2"><Button size="sm" variant="outline" onClick={() => togglePublicRoutine(exam)} disabled={publishingExamId === exam._id}>{exam.isPublished ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}{exam.isPublished ? "Make private" : "Make public"}</Button><Button size="sm" variant="outline" onClick={() => openEditModal(exam)}><Edit2 className="mr-2 h-4 w-4" />Edit</Button><Button size="sm" variant="destructive" onClick={() => setDeleteTarget(exam)}><Trash2 className="mr-2 h-4 w-4" />Delete</Button></div></TableCell>}
+                {canManage && <TableCell className="text-right"><div className="flex flex-wrap justify-end gap-2"><Link href={`/academic/exams/${exam._id}`}><Button size="sm" variant="outline"><ClipboardList className="mr-2 h-4 w-4" />Progress</Button></Link><Link href={resultEntryHref(exam)}><Button size="sm" variant="outline" disabled={!firstSubjectId(exam)}><FileText className="mr-2 h-4 w-4" />Results</Button></Link><Button size="sm" variant="outline" onClick={() => togglePublicRoutine(exam)} disabled={publishingExamId === exam._id}>{exam.isPublished ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}{exam.isPublished ? "Make private" : "Make public"}</Button><Button size="sm" variant="outline" onClick={() => openEditModal(exam)}><Edit2 className="mr-2 h-4 w-4" />Edit</Button><Button size="sm" variant="destructive" onClick={() => setDeleteTarget(exam)}><Trash2 className="mr-2 h-4 w-4" />Delete</Button></div></TableCell>}
               </TableRow>
             ))}
           </TableBody>

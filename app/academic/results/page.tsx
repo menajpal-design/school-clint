@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AlertCircle, CheckCircle2, ClipboardCheck, Plus, RefreshCw, Save, Send, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +52,7 @@ export default function ResultsPage() {
 }
 
 function ResultManagementView({ user }: { user: any }) {
+  const searchParams = useSearchParams();
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [subjects, setSubjects] = useState<SubjectItem[]>([]);
   const [exams, setExams] = useState<ExamItem[]>([]);
@@ -71,6 +73,12 @@ function ResultManagementView({ user }: { user: any }) {
   const [addForm, setAddForm] = useState<AddResultForm>(emptyAddForm);
   const [addStudents, setAddStudents] = useState<StudentOption[]>([]);
   const [addLoading, setAddLoading] = useState(false);
+  const [autoOpenedAdd, setAutoOpenedAdd] = useState(false);
+  const queryClassId = searchParams.get("classId") || "";
+  const querySectionId = searchParams.get("sectionId") || "";
+  const queryExamId = searchParams.get("examId") || "";
+  const querySubjectId = searchParams.get("subjectId") || "";
+  const shouldOpenAdd = searchParams.get("openAdd") === "1";
 
   const normalizedRole = normalizeUserRole(user?.role);
   const isLearner = normalizedRole === "student" || normalizedRole === "parent" || user?.role === "student" || user?.role === "parent";
@@ -120,10 +128,11 @@ function ResultManagementView({ user }: { user: any }) {
       setClasses(nextClasses);
       setSubjects(nextSubjects);
       setExams(nextExams);
-      const firstClass = nextClasses[0]?._id || "";
-      const firstExam = nextExams.find((exam) => exam.classId?._id === firstClass || String(exam.classId as any) === firstClass)?._id || nextExams[0]?._id || "";
-      const firstSubject = nextSubjects.find((subject) => subject.classId?._id === firstClass || String(subject.classId as any) === firstClass)?._id || nextSubjects[0]?._id || "";
+      const firstClass = queryClassId || nextClasses[0]?._id || "";
+      const firstExam = queryExamId || nextExams.find((exam) => exam.classId?._id === firstClass || String(exam.classId as any) === firstClass)?._id || nextExams[0]?._id || "";
+      const firstSubject = querySubjectId || nextSubjects.find((subject) => subject.classId?._id === firstClass || String(subject.classId as any) === firstClass)?._id || nextSubjects[0]?._id || "";
       setClassId((current) => current || firstClass);
+      setSectionId((current) => current || querySectionId);
       setExamId((current) => current || firstExam);
       setSubjectId((current) => current || firstSubject);
     } catch (err: any) {
@@ -131,7 +140,7 @@ function ResultManagementView({ user }: { user: any }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryClassId, queryExamId, querySectionId, querySubjectId]);
 
   const loadRows = useCallback(async () => {
     if (!classId || !examId || !subjectId) {
@@ -173,6 +182,13 @@ function ResultManagementView({ user }: { user: any }) {
   useEffect(() => { loadLookups(); }, [loadLookups]);
   useEffect(() => { loadRows(); }, [loadRows]);
   useEffect(() => { if (addOpen) loadAddStudents(addForm); }, [addOpen, addForm, loadAddStudents]);
+  useEffect(() => {
+    if (!shouldOpenAdd || autoOpenedAdd || addOpen || !canEntry || !classId || !examId || !subjectId) return;
+    setAddForm({ classId, sectionId, examId, subjectId, studentId: "", marksObtained: "", remarks: "" });
+    setAddStudents([]);
+    setAddOpen(true);
+    setAutoOpenedAdd(true);
+  }, [addOpen, autoOpenedAdd, canEntry, classId, examId, sectionId, shouldOpenAdd, subjectId]);
 
   const updateClass = (nextClassId: string) => {
     setClassId(nextClassId);
