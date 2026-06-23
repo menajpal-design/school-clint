@@ -13,6 +13,12 @@ import { api } from "@/lib/api";
 type ClassItem = { _id: string; name: string; sections?: Array<{ _id: string; name: string; isActive?: boolean }> };
 
 const today = () => new Date().toISOString().slice(0, 10);
+const normalizeClasses = (data: any): ClassItem[] => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.classes)) return data.classes;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+};
 
 export default function AttendancePresentSmsPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
@@ -30,8 +36,8 @@ export default function AttendancePresentSmsPage() {
   const sections = useMemo(() => selectedClass?.sections?.filter((item) => item.isActive !== false) || [], [selectedClass]);
 
   const loadClasses = useCallback(async () => {
-    const data = await api.academic.classes.getAll() as { classes?: ClassItem[] };
-    setClasses(data.classes || []);
+    const data = await api.academic.classes.getAll();
+    setClasses(normalizeClasses(data));
   }, []);
 
   useEffect(() => {
