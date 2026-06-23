@@ -4,6 +4,8 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
+import { useAuth } from '@/hooks/useAuth';
+import { normalizeUserRole } from '@/lib/permissions';
 
 interface Message {
   _id: string;
@@ -19,11 +21,65 @@ interface Message {
 
 export default function InboxPage() {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'inbox' | 'sent'>('inbox');
   const [selectedRole, setSelectedRole] = useState<'all' | 'head' | 'teacher' | 'parent' | 'staff'>('all');
+
+  const normalizedRole = normalizeUserRole(user?.role);
+  const canSendSms = ['head', 'assistant_head', 'admin', 'super_admin'].includes(normalizedRole || '');
+
+  // Custom SMS State
+  const [showSmsModal, setShowSmsModal] = useState(false);
+  const [smsPhone, setSmsPhone] = useState('');
+  const [smsMessage, setSmsMessage] = useState('');
+  const [smsName, setSmsName] = useState('');
+  const [smsType, setSmsType] = useState<'guardian' | 'teacher' | 'staff' | 'other'>('guardian');
+  const [smsSending, setSmsSending] = useState(false);
+  const [smsError, setSmsError] = useState('');
+  const [smsSuccess, setSmsSuccess] = useState('');
+
+  const handleSendCustomSms = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSmsError('');
+    setSmsSuccess('');
+
+    const phoneDigits = smsPhone.replace(/\D/g, '');
+    if (!phoneDigits || phoneDigits.length < 10) {
+      setSmsError(language === 'bn' ? 'সঠিক মোবাইল নাম্বার প্রদান করুন' : 'Please enter a valid mobile number');
+      return;
+    }
+    if (!smsMessage.trim()) {
+      setSmsError(language === 'bn' ? 'এসএমএস বার্তা লিখুন' : 'Please enter the message body');
+      return;
+    }
+
+    try {
+      setSmsSending(true);
+      await api.messages.sendCustomSms({
+        phone: phoneDigits,
+        message: smsMessage,
+        recipientName: smsName || undefined,
+        recipientType: smsType,
+      });
+      setSmsSuccess(language === 'bn' ? 'এসএমএস সফলভাবে পাঠানো হয়েছে!' : 'SMS sent successfully!');
+      setSmsPhone('');
+      setSmsMessage('');
+      setSmsName('');
+      setTimeout(() => {
+        setShowSmsModal(false);
+        setSmsSuccess('');
+        setSmsError('');
+      }, 2000);
+    } catch (err: any) {
+      console.error('Custom SMS error:', err);
+      setSmsError(err?.message || (language === 'bn' ? 'এসএমএস পাঠাতে ব্যর্থ হয়েছে' : 'Failed to send SMS'));
+    } finally {
+      setSmsSending(false);
+    }
+  };
 
   useEffect(() => {
     fetchMessages();
@@ -118,12 +174,22 @@ export default function InboxPage() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="bg-card rounded-lg shadow-md p-6 mb-6 border border-border">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">বার্তা</h1>
-          {selectedTab === 'inbox' && unreadCount > 0 && (
-            <p className="text-sm text-red-600">
-              {unreadCount} টি অপড়া বার্তা
-            </p>
+        <div className="bg-card rounded-lg shadow-md p-6 mb-6 border border-border flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">বার্তা</h1>
+            {selectedTab === 'inbox' && unreadCount > 0 && (
+              <p className="text-sm text-red-600">
+                {unreadCount} টি অপড়া বার্তা
+              </p>
+            )}
+          </div>
+          {canSendSms && (
+            <button
+              onClick={() => setShowSmsModal(true)}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition text-sm md:text-base"
+            >
+              {language === 'bn' ? 'কাস্টম এসএমএস পাঠান' : 'Send Custom SMS'}
+            </button>
           )}
         </div>
 
@@ -214,6 +280,128 @@ export default function InboxPage() {
           )}
         </div>
       </div>
+
+      {/* Custom SMS Modal */}
+      {showSmsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden border border-gray-150 text-foreground">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-5 flex justify-between items-center">
+              <h2 className="text-lg font-bold">
+                {language === 'bn' ? 'কাস্টম এসএমএস পাঠান' : 'Send Custom SMS'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSmsModal(false);
+                  setSmsError('');
+                  setSmsSuccess('');
+                }}
+                className="text-2xl font-light hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSendCustomSms} className="p-5 space-y-4">
+              {smsError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {smsError}
+                </div>
+              )}
+              {smsSuccess && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                  {smsSuccess}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  {language === 'bn' ? 'মোবাইল নাম্বার *' : 'Mobile Number *'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 01700000000"
+                  value={smsPhone}
+                  onChange={(e) => setSmsPhone(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                  disabled={smsSending}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  {language === 'bn' ? 'প্রাপকের নাম' : 'Recipient Name'}
+                </label>
+                <input
+                  type="text"
+                  placeholder={language === 'bn' ? 'ঐচ্ছিক' : 'Optional'}
+                  value={smsName}
+                  onChange={(e) => setSmsName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                  disabled={smsSending}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  {language === 'bn' ? 'প্রাপকের ধরণ' : 'Recipient Type'}
+                </label>
+                <select
+                  value={smsType}
+                  onChange={(e) => setSmsType(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-white"
+                  disabled={smsSending}
+                >
+                  <option value="guardian">{language === 'bn' ? 'অভিভাবক (Guardian)' : 'Guardian'}</option>
+                  <option value="teacher">{language === 'bn' ? 'শিক্ষক (Teacher)' : 'Teacher'}</option>
+                  <option value="staff">{language === 'bn' ? 'কর্মচারী (Staff)' : 'Staff'}</option>
+                  <option value="other">{language === 'bn' ? 'অন্যান্য (Other)' : 'Other'}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  {language === 'bn' ? 'বার্তা *' : 'Message *'}
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  maxLength={160}
+                  placeholder={language === 'bn' ? 'আপনার বার্তাটি লিখুন (সর্বোচ্চ ১৬০ টি অক্ষর)...' : 'Type your message (Max 160 characters)...'}
+                  value={smsMessage}
+                  onChange={(e) => setSmsMessage(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                  disabled={smsSending}
+                />
+                <div className="text-right text-[10px] text-gray-400 mt-1">
+                  {smsMessage.length}/160
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSmsModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm disabled:opacity-50"
+                  disabled={smsSending}
+                >
+                  {language === 'bn' ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold transition disabled:bg-gray-400"
+                  disabled={smsSending}
+                >
+                  {smsSending ? (language === 'bn' ? 'পাঠানো হচ্ছে...' : 'Sending...') : (language === 'bn' ? 'এসএমএস পাঠান' : 'Send SMS')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
