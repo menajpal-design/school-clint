@@ -8,7 +8,7 @@ import { ProfessionalIDCard } from "@/components/id-cards/ProfessionalIDCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { imageFileToDataUrl } from "@/lib/imageUpload";
+import { uploadImage } from "@/lib/imageUpload";
 import { findStudentForUser } from "@/lib/student-normalizer";
 
 const cleanRole = (role?: string) => String(role || "user").toLowerCase().replace(/[\s-]+/g, "_").replace("principal", "head").replace("guardian", "parent");
@@ -28,6 +28,9 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileStatus, setProfileStatus] = useState("");
   const previewRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -67,15 +70,43 @@ export default function ProfilePage() {
     salary: valueOf(profile.salary, user?.salary),
   };
 
-  const uploadAvatar = async (file?: File) => { if (!file) return; setAvatar(await imageFileToDataUrl(file)); };
-  const saveProfile = async () => { const data = await api.auth.updateProfile({ name, phone, avatar }) as any; setUser((current: any) => ({ ...current, ...(data.user || {}), name, phone, avatar })); setEditing(false); };
+  const uploadAvatar = async (file?: File) => {
+    if (!file) return;
+    setUploadingAvatar(true);
+    setProfileStatus("Uploading image...");
+    try {
+      const result = await uploadImage(file, "avatar");
+      setAvatar(result.url);
+      setProfileStatus(`Image ready (${Math.round(result.size / 1024)}KB).`);
+    } catch (err: any) {
+      setProfileStatus(err?.message || "Image upload failed.");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+  const saveProfile = async () => {
+    setSavingProfile(true);
+    setProfileStatus("");
+    try {
+      const data = await api.auth.updateProfile({ name, phone, avatar }) as any;
+      const nextUser = { ...user, ...(data.user || {}), name, phone, avatar };
+      setUser((current: any) => ({ ...current, ...nextUser }));
+      setAvatar(nextUser.avatar || "");
+      setEditing(false);
+      setProfileStatus("Profile updated successfully.");
+    } catch (err: any) {
+      setProfileStatus(err?.message || "Profile update failed.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   return <div className="space-y-5">
     <PageHeader title="My Profile" description="Personal account, contact, institution and ID card information." icon={UserRound} actions={[{ label: "Edit Profile", icon: Edit, href: "/profile" }, { label: "My ID Card", icon: CreditCard, href: "/id-cards/my-card" }, { label: "Change Password", icon: KeyRound, href: "/profile/change-password" }]} />
     <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
       <section className="rounded-lg border border-border bg-card p-5 text-center shadow-sm">
         <div className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-slate-100">{(editing ? avatar : user?.avatar) ? <img src={editing ? avatar : user.avatar} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-12 w-12 text-slate-500" />}</div>
-        {editing ? <div className="mt-4 space-y-3 text-left"><input className="h-10 w-full rounded-md border px-3 text-sm" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" /><input className="h-10 w-full rounded-md border px-3 text-sm" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" /><input className="block w-full text-sm" type="file" accept="image/*" onChange={(e) => uploadAvatar(e.target.files?.[0])} /><div className="flex gap-2"><Button type="button" onClick={saveProfile}>Save</Button><Button type="button" variant="outline" onClick={() => setEditing(false)}>Cancel</Button></div></div> : <h2 className="mt-4 text-xl font-semibold text-slate-950">{matchedStudent?.name || user?.name || "User"}</h2>}
+        {editing ? <div className="mt-4 space-y-3 text-left"><input className="h-10 w-full rounded-md border px-3 text-sm" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" /><input className="h-10 w-full rounded-md border px-3 text-sm" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" /><input className="block w-full text-sm" type="file" accept="image/*" disabled={uploadingAvatar || savingProfile} onChange={(e) => uploadAvatar(e.target.files?.[0])} />{profileStatus && <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">{profileStatus}</p>}<div className="flex gap-2"><Button type="button" onClick={saveProfile} disabled={uploadingAvatar || savingProfile}>{savingProfile ? "Saving..." : uploadingAvatar ? "Uploading..." : "Save"}</Button><Button type="button" variant="outline" disabled={savingProfile} onClick={() => { setEditing(false); setAvatar(user?.avatar || ""); setProfileStatus(""); }}>Cancel</Button></div></div> : <h2 className="mt-4 text-xl font-semibold text-slate-950">{matchedStudent?.name || user?.name || "User"}</h2>}
         <p className="mt-1 text-sm capitalize text-slate-500">{roleLabel(user?.role)}</p>
         <div className="mt-5 grid gap-2"><Button type="button" variant="outline" onClick={() => setEditing(true)}><Edit className="mr-2 h-4 w-4" />Edit Profile</Button><Button asChild><Link href="/id-cards/my-card"><CreditCard className="mr-2 h-4 w-4" />My ID Card</Link></Button><Button asChild variant="outline"><Link href="/profile/change-password"><KeyRound className="mr-2 h-4 w-4" />Change Password</Link></Button></div>
       </section>
