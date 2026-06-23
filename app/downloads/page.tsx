@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/i18n';
 import { BarChartCard } from '@/components/charts/BarChartCard';
-import { resolveAndroidTargetUrl } from '@/lib/android-app';
 
 interface Release {
   id: number;
@@ -25,17 +24,10 @@ export default function Downloads() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [localDownload, setLocalDownload] = useState(false);
-  const [androidTarget, setAndroidTarget] = useState(() => resolveAndroidTargetUrl());
   const githubOwner = process.env.NEXT_PUBLIC_GITHUB_OWNER || 'YOUR_USERNAME';
   const githubRepo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'school_n';
   const releasesUrl = `https://api.github.com/repos/${githubOwner}/${githubRepo}/releases`;
   const fallbackApkUrl = process.env.NEXT_PUBLIC_LOCAL_APK_URL || '/EasySchool_v1.0.0_1782102509042.apk';
-  const dynamicApkName = `EasySchool-${androidTarget.fileSuffix}.apk`;
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setAndroidTarget(resolveAndroidTargetUrl(window.location.hostname, window.location.protocol));
-  }, []);
 
   useEffect(() => {
     const fetchReleases = async () => {
@@ -65,11 +57,7 @@ export default function Downloads() {
   const handleLocalDownload = () => {
     setLocalDownload(true);
     const link = document.createElement('a');
-    const url = new URL(fallbackApkUrl, window.location.origin);
-    url.searchParams.set('target', androidTarget.loginUrl);
-    if (androidTarget.subdomain) url.searchParams.set('subdomain', androidTarget.subdomain);
-    link.href = url.toString();
-    link.download = dynamicApkName;
+    link.href = fallbackApkUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -111,11 +99,6 @@ export default function Downloads() {
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">অ্যাপ ডাউনলোড করুন</h1>
           <p className="text-lg text-gray-600">স্কুল ম্যানেজমেন্ট সিস্টেম - নেটিভ এন্ড্রয়েড অ্যাপ</p>
-          <div className="mx-auto mt-4 max-w-2xl rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-            App target: <strong>{androidTarget.loginUrl}</strong>
-            <br />
-            {androidTarget.subdomain ? 'এই সাবডোমেইন থেকে ডাউনলোড করলে school-specific dynamic app target ব্যবহার হবে।' : 'Main domain থেকে ডাউনলোড করলে original EasySchool app target থাকবে।'}
-          </div>
         </div>
 
         {/* Featured Download */}
