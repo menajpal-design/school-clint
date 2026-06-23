@@ -7,13 +7,30 @@ import { useLanguage } from "@/lib/i18n";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BarChartCard } from '@/components/charts/BarChartCard';
+import { BarChartCard } from "@/components/charts/BarChartCard";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-import ResponsiveTable from '@/components/shared/ResponsiveTable';
+import ResponsiveTable from "@/components/shared/ResponsiveTable";
 
 const manageRoles = ["head", "assistant_head", "admin", "super_admin"];
-const bd = (date?: string, lang?: string) => date ? new Date(date).toLocaleDateString(lang === "bn" ? "bn-BD" : "en-US") : "-";
+
+const dateKey = (date?: string) => {
+  if (!date) return "";
+  const match = String(date).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+  const parsed = new Date(date);
+  return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
+};
+
+const bd = (date?: string, lang?: string) => {
+  const key = dateKey(date);
+  if (!key) return "-";
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString(lang === "bn" ? "bn-BD" : "en-US");
+};
+
+const hasBrokenEncoding = (value?: string) => /(?:à|Â|ð|�)/.test(String(value || ""));
+const text = (value?: string, fallback = "") => (value && !hasBrokenEncoding(value) ? value : fallback);
 
 const weeklyOptions = [
   { label: "Friday + Saturday", labelBn: "শুক্রবার + শনিবার", days: [5, 6] },
@@ -21,6 +38,7 @@ const weeklyOptions = [
   { label: "Saturday only", labelBn: "শুধু শনিবার", days: [6] },
   { label: "Custom", labelBn: "কাস্টম", days: [] },
 ];
+
 const dayOptions = [
   { value: 0, label: "Sunday", labelBn: "রবিবার" },
   { value: 1, label: "Monday", labelBn: "সোমবার" },
@@ -45,27 +63,26 @@ export default function HolidaysPage() {
   const [error, setError] = useState("");
   const [form, setForm] = useState({ title: "", titleBn: "", type: "custom", startDate: "", endDate: "", description: "", isSchoolClosed: true });
 
-  // Load stored institution weeklyDays on mount
   useEffect(() => {
     (async () => {
       try {
-        const data = await apiClient.get('/settings/holiday-settings') as any;
+        const data = await apiClient.get("/site-settings/holiday-settings") as any;
         const stored = data?.settings || {};
         const storedDays: number[] = (
           Array.isArray(stored.weeklyClosedDays) ? stored.weeklyClosedDays :
           Array.isArray(stored.weeklyDays) ? stored.weeklyDays : []
-        ).map(Number).filter((d: number) => d >= 0 && d <= 6);
+        ).map(Number).filter((day: number) => day >= 0 && day <= 6);
+
         if (storedDays.length > 0) {
           setWeeklyDays(storedDays);
-          const sorted = [...storedDays].sort((a, b) => a - b);
-          const key = sorted.join(',');
-          if (key === '5,6') setWeeklyMode('friday_saturday');
-          else if (key === '5') setWeeklyMode('friday');
-          else if (key === '6') setWeeklyMode('saturday');
-          else setWeeklyMode('custom');
+          const key = [...storedDays].sort((a, b) => a - b).join(",");
+          if (key === "5,6") setWeeklyMode("friday_saturday");
+          else if (key === "5") setWeeklyMode("friday");
+          else if (key === "6") setWeeklyMode("saturday");
+          else setWeeklyMode("custom");
         }
       } catch (_) {
-        // Keep default [5, 6] on error
+        // Keep the default Friday + Saturday setting if saved settings cannot load.
       } finally {
         setSettingsReady(true);
       }
@@ -91,7 +108,6 @@ export default function HolidaysPage() {
     load().catch(() => undefined);
   }, [year, settingsReady]);
 
-
   const summary = useMemo(() => ({
     total: holidays.length,
     closed: holidays.filter((item) => item.isEnabled !== false && item.isSchoolClosed).length,
@@ -101,16 +117,19 @@ export default function HolidaysPage() {
 
   const holidaysByMonth = useMemo(() => {
     const map: Record<string, number> = {};
-    holidays.forEach((h) => {
-      const d = h.startDate ? new Date(h.startDate) : null;
-      const m = d ? d.toLocaleString('default', { month: 'short' }) : 'Unknown';
-      map[m] = (map[m] || 0) + 1;
+    holidays.forEach((holiday) => {
+      const key = dateKey(holiday.startDate);
+      const date = key ? new Date(`${key}T00:00:00`) : null;
+      const month = date ? date.toLocaleString("default", { month: "short" }) : "Unknown";
+      map[month] = (map[month] || 0) + 1;
     });
-    return Object.keys(map).map((k) => ({ name: k, value: map[k] }));
+    return Object.keys(map).map((name) => ({ name, value: map[name] }));
   }, [holidays]);
 
   const selectWeeklyMode = (mode: string) => {
     setWeeklyMode(mode);
+    const option = weeklyOptions.find((item) => item.label.toLowerCase().replace(/[^a-z]+/g, "_").replace(/^_|_$/g, "") === mode);
+    if (option?.days.length) setWeeklyDays(option.days);
     if (mode === "friday_saturday") setWeeklyDays([5, 6]);
     if (mode === "friday") setWeeklyDays([5]);
     if (mode === "saturday") setWeeklyDays([6]);
@@ -122,61 +141,74 @@ export default function HolidaysPage() {
   };
 
   const seedBangladesh = async () => {
-    setMessage(""); setError("");
+    setMessage("");
+    setError("");
     try {
       const selectedDays = weeklyDays.length ? weeklyDays : [5, 6];
-      // Save weeklyDays to institution settings so it persists
-      await apiClient.put('/settings/holiday-settings', { weeklyClosedDays: selectedDays, weeklyDays: selectedDays }).catch(() => undefined);
-      const res = await apiClient.post('/holidays/seed/bangladesh', { year: Number(year), includeWeekends: true, weeklyDays: selectedDays }) as any;
-      setMessage(res.message || "Bangladesh holiday list added.");
+      await apiClient.put("/site-settings/holiday-settings", { weeklyClosedDays: selectedDays, weeklyDays: selectedDays }).catch(() => undefined);
+      const res = await apiClient.post("/holidays/seed/bangladesh", { year: Number(year), includeWeekends: true, weeklyDays: selectedDays }) as any;
+      setMessage(res.message || "Bangladesh holiday list updated.");
       await load(selectedDays);
-    } catch (err: any) { setError(err?.message || "Failed to seed Bangladesh holidays."); }
+    } catch (err: any) {
+      setError(err?.message || "Failed to seed Bangladesh holidays.");
+    }
   };
 
-
   const bulkStatus = async (isEnabled: boolean) => {
-    setMessage(""); setError("");
+    setMessage("");
+    setError("");
     try {
-      const res = await apiClient.patch('/holidays/bulk-status', { year: Number(year), isEnabled }) as any;
+      const res = await apiClient.patch("/holidays/bulk-status", { year: Number(year), isEnabled }) as any;
       setMessage(res.message || (isEnabled ? "All holidays enabled." : "All holidays disabled."));
       await load();
-    } catch (err: any) { setError(err?.message || "Failed to update all holidays."); }
+    } catch (err: any) {
+      setError(err?.message || "Failed to update all holidays.");
+    }
   };
 
   const saveHoliday = async () => {
-    setMessage(""); setError("");
+    setMessage("");
+    setError("");
     try {
       if (!form.title || !form.startDate) throw new Error("Title and start date required.");
-      await apiClient.post('/holidays', { ...form, endDate: form.endDate || form.startDate, academicYear: year });
-      setMessage("Holiday added. এই দিন স্কুল off থাকবে এবং attendance present/absent হবে না।");
+      await apiClient.post("/holidays", { ...form, endDate: form.endDate || form.startDate, academicYear: year });
+      setMessage("Holiday added. এই দিনে স্কুল বন্ধ থাকবে এবং attendance present/absent হবে না।");
       setForm({ title: "", titleBn: "", type: "custom", startDate: "", endDate: "", description: "", isSchoolClosed: true });
       await load();
-    } catch (err: any) { setError(err?.message || "Failed to save holiday."); }
+    } catch (err: any) {
+      setError(err?.message || "Failed to save holiday.");
+    }
   };
 
   const updateClosed = async (holiday: any, isSchoolClosed: boolean) => {
-    setMessage(""); setError("");
+    setMessage("");
+    setError("");
     try {
       await apiClient.put(`/holidays/${holiday._id}`, { isSchoolClosed, isEnabled: isSchoolClosed });
       setMessage(isSchoolClosed ? "School closed enabled for this holiday." : "School open/disabled for this holiday.");
       await load();
-    } catch (err: any) { setError(err?.message || "Failed to update holiday."); }
+    } catch (err: any) {
+      setError(err?.message || "Failed to update holiday.");
+    }
   };
 
   const removeHoliday = async (id: string) => {
-    setMessage(""); setError("");
+    setMessage("");
+    setError("");
     try {
       await apiClient.delete(`/holidays/${id}`);
-      setMessage("Holiday disabled/opened for this institution.");
+      setMessage("Holiday deleted for this institution.");
       await load();
-    } catch (err: any) { setError(err?.message || "Failed to delete holiday."); }
+    } catch (err: any) {
+      setError(err?.message || "Failed to delete holiday.");
+    }
   };
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Holiday List"
-        description="বাংলাদেশের নিয়ম অনুযায়ী ছুটির তালিকা। ডিফল্ট সাপ্তাহিক ছুটি শুক্রবার + শনিবার; প্রয়োজন হলে একদিন করা যাবে।"
+        description="বাংলাদেশের নিয়ম অনুযায়ী ছুটির তালিকা। ডিফল্ট সাপ্তাহিক ছুটি শুক্রবার + শনিবার; প্রয়োজন হলে প্রতিষ্ঠান অনুযায়ী বদলানো যাবে।"
         icon={CalendarDays}
         status={<Badge variant="outline">{summary.total} days</Badge>}
         actions={[
@@ -203,53 +235,73 @@ export default function HolidaysPage() {
         <div className="grid gap-4 lg:grid-cols-[140px_1fr] lg:items-start">
           <div>
             <label className="mb-2 block text-sm font-medium">Year</label>
-            <input value={year} onChange={(e) => setYear(e.target.value)} className="h-10 w-32 rounded-md border px-3 text-sm" />
+            <input value={year} onChange={(event) => setYear(event.target.value)} className="h-10 w-32 rounded-md border px-3 text-sm" />
           </div>
           <div>
             <p className="mb-2 text-sm font-medium">Weekly Holiday Setting</p>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="flex items-center gap-2 rounded-md border p-3 text-sm"><input type="radio" checked={weeklyMode === "friday_saturday"} onChange={() => selectWeeklyMode("friday_saturday")} /> শুক্রবার + শনিবার</label>
-              <label className="flex items-center gap-2 rounded-md border p-3 text-sm"><input type="radio" checked={weeklyMode === "friday"} onChange={() => selectWeeklyMode("friday")} /> শুধু শুক্রবার</label>
-              <label className="flex items-center gap-2 rounded-md border p-3 text-sm"><input type="radio" checked={weeklyMode === "saturday"} onChange={() => selectWeeklyMode("saturday")} /> শুধু শনিবার</label>
-              <label className="flex items-center gap-2 rounded-md border p-3 text-sm"><input type="radio" checked={weeklyMode === "custom"} onChange={() => setWeeklyMode("custom")} /> কাস্টম</label>
+              <WeeklyRadio label="শুক্রবার + শনিবার" checked={weeklyMode === "friday_saturday"} onChange={() => selectWeeklyMode("friday_saturday")} />
+              <WeeklyRadio label="শুধু শুক্রবার" checked={weeklyMode === "friday"} onChange={() => selectWeeklyMode("friday")} />
+              <WeeklyRadio label="শুধু শনিবার" checked={weeklyMode === "saturday"} onChange={() => selectWeeklyMode("saturday")} />
+              <WeeklyRadio label="কাস্টম" checked={weeklyMode === "custom"} onChange={() => setWeeklyMode("custom")} />
             </div>
-            {weeklyMode === "custom" && <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{dayOptions.map((day) => <label key={day.value} className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"><input type="checkbox" checked={weeklyDays.includes(day.value)} onChange={() => toggleCustomDay(day.value)} /> {day.labelBn}</label>)}</div>}
+            {weeklyMode === "custom" && (
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {dayOptions.map((day) => (
+                  <label key={day.value} className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                    <input type="checkbox" checked={weeklyDays.includes(day.value)} onChange={() => toggleCustomDay(day.value)} /> {day.labelBn}
+                  </label>
+                ))}
+              </div>
+            )}
             <p className="mt-2 text-sm text-muted-foreground">Update Bangladesh Holidays চাপলে এই weekly setting অনুযায়ী সাপ্তাহিক ছুটি তৈরি হবে।</p>
           </div>
         </div>
-        {canManage && <div className="mt-4 flex flex-wrap gap-2 border-t pt-4"><Button onClick={seedBangladesh}>Apply Weekly Holiday & Update List</Button><Button variant="outline" onClick={() => bulkStatus(true)}>Enable All Holidays</Button><Button variant="destructive" onClick={() => bulkStatus(false)}>Disable All Holidays</Button></div>}
+        {canManage && (
+          <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+            <Button onClick={seedBangladesh}>Apply Weekly Holiday & Update List</Button>
+            <Button variant="outline" onClick={() => bulkStatus(true)}>Enable All Holidays</Button>
+            <Button variant="destructive" onClick={() => bulkStatus(false)}>Disable All Holidays</Button>
+          </div>
+        )}
       </section>
 
-      {canManage && <section className="rounded-lg border bg-card p-4 shadow-sm">
-        <h2 className="mb-3 font-semibold">Add Custom Holiday</h2>
-        <div className="grid gap-3 md:grid-cols-3">
-          <input placeholder="Title English" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-10 rounded-md border px-3 text-sm" />
-          <input placeholder="Title Bangla" value={form.titleBn} onChange={(e) => setForm({ ...form, titleBn: e.target.value })} className="h-10 rounded-md border px-3 text-sm" />
-          <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="h-10 rounded-md border px-3 text-sm"><option value="custom">Custom</option><option value="school">School</option><option value="government">Government</option><option value="religious">Religious</option><option value="weekend">Weekend</option></select>
-          <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="h-10 rounded-md border px-3 text-sm" />
-          <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className="h-10 rounded-md border px-3 text-sm" />
-          <label className="flex items-center gap-2 rounded-md border px-3 text-sm"><input type="checkbox" checked={form.isSchoolClosed} onChange={(e) => setForm({ ...form, isSchoolClosed: e.target.checked })} /> School closed</label>
-        </div>
-        <textarea placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-3 min-h-20 w-full rounded-md border p-3 text-sm" />
-        <Button className="mt-3" onClick={saveHoliday}><Save className="mr-2 h-4 w-4" />Save Holiday</Button>
-      </section>}
+      {canManage && (
+        <section className="rounded-lg border bg-card p-4 shadow-sm">
+          <h2 className="mb-3 font-semibold">Add Custom Holiday</h2>
+          <div className="grid gap-3 md:grid-cols-3">
+            <input placeholder="Title English" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="h-10 rounded-md border px-3 text-sm" />
+            <input placeholder="Title Bangla" value={form.titleBn} onChange={(event) => setForm({ ...form, titleBn: event.target.value })} className="h-10 rounded-md border px-3 text-sm" />
+            <select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="h-10 rounded-md border px-3 text-sm"><option value="custom">Custom</option><option value="school">School</option><option value="government">Government</option><option value="religious">Religious</option><option value="weekend">Weekend</option></select>
+            <input type="date" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} className="h-10 rounded-md border px-3 text-sm" />
+            <input type="date" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} className="h-10 rounded-md border px-3 text-sm" />
+            <label className="flex items-center gap-2 rounded-md border px-3 text-sm"><input type="checkbox" checked={form.isSchoolClosed} onChange={(event) => setForm({ ...form, isSchoolClosed: event.target.checked })} /> School closed</label>
+          </div>
+          <textarea placeholder="Description" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="mt-3 min-h-20 w-full rounded-md border p-3 text-sm" />
+          <Button className="mt-3" onClick={saveHoliday}><Save className="mr-2 h-4 w-4" />Save Holiday</Button>
+        </section>
+      )}
 
       <section className="rounded-lg border bg-card p-4 shadow-sm">
         <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">Holiday List</h2><Badge variant="outline">{loading ? "Loading" : `${holidays.length} records`}</Badge></div>
         <ResponsiveTable
           columns={["Date", "Holiday", "Type", "School Status", "Action"]}
           rows={holidays.length === 0 ? [] : holidays.map((holiday) => ([
-            <div key="date">{bd(holiday.startDate, language)}{holiday.endDate && new Date(holiday.startDate).toDateString() !== new Date(holiday.endDate).toDateString() ? ` - ${bd(holiday.endDate, language)}` : ""}</div>,
-            <div key="holiday"><div className="font-medium">{holiday.titleBn || holiday.title}</div><div className="text-xs text-muted-foreground">{holiday.title}</div></div>,
+            <div key="date">{bd(holiday.startDate, language)}{holiday.endDate && dateKey(holiday.startDate) !== dateKey(holiday.endDate) ? ` - ${bd(holiday.endDate, language)}` : ""}</div>,
+            <div key="holiday"><div className="font-medium">{text(holiday.titleBn, holiday.title)}</div><div className="text-xs text-muted-foreground">{holiday.title}</div></div>,
             <Badge key="type" variant="outline" className="capitalize">{holiday.type}</Badge>,
             <Badge key="status" variant={holiday.isEnabled !== false && holiday.isSchoolClosed ? "default" : "outline"}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "School Off" : "Open"}</Badge>,
-            <div key="action" className="flex gap-2">{canManage && <><Button size="sm" variant="outline" onClick={() => updateClosed(holiday, !(holiday.isEnabled !== false && holiday.isSchoolClosed))}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "Open" : "Close"}</Button><Button size="sm" variant="destructive" onClick={() => removeHoliday(holiday._id)}><Trash2 className="h-4 w-4" /></Button></>}</div>
+            <div key="action" className="flex gap-2">{canManage && <><Button size="sm" variant="outline" onClick={() => updateClosed(holiday, !(holiday.isEnabled !== false && holiday.isSchoolClosed))}>{holiday.isEnabled !== false && holiday.isSchoolClosed ? "Open" : "Close"}</Button><Button size="sm" variant="destructive" onClick={() => removeHoliday(holiday._id)}><Trash2 className="h-4 w-4" /></Button></>}</div>,
           ]))}
           empty="No holidays found. Click 'Update Bangladesh Holidays'."
         />
       </section>
     </div>
   );
+}
+
+function WeeklyRadio({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
+  return <label className="flex items-center gap-2 rounded-md border p-3 text-sm"><input type="radio" checked={checked} onChange={onChange} /> {label}</label>;
 }
 
 function Stat({ label, value }: { label: string; value: any }) {
