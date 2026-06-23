@@ -5,10 +5,10 @@
 
 import { apiClient, API_URL } from './api';
 
-const UPLOAD_PROXY_SAFE_BYTES = 850 * 1024;
+const UPLOAD_PROXY_SAFE_BYTES = 600 * 1024;
 const MAX_SOURCE_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_IMAGE_DIMENSION = 1200;
-const MIN_IMAGE_QUALITY = 0.58;
+const MIN_IMAGE_QUALITY = 0.46;
 
 export interface ImageUploadResult {
   url: string;
@@ -19,9 +19,10 @@ export interface ImageUploadResult {
 }
 
 function canCompressInBrowser(file: File) {
+  const hasCompressibleExtension = /\.(png|jpe?g|webp)$/i.test(file.name || '');
   return typeof window !== 'undefined'
     && typeof document !== 'undefined'
-    && /^image\/(png|jpe?g|webp)$/i.test(file.type);
+    && (/^image\/(png|jpe?g|webp)$/i.test(file.type) || hasCompressibleExtension);
 }
 
 async function loadBitmap(file: File): Promise<HTMLImageElement> {
@@ -46,6 +47,31 @@ function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) 
   });
 }
 
+async function renderCompressedBlob(
+  image: HTMLImageElement,
+  sourceWidth: number,
+  sourceHeight: number,
+  maxDimension: number
+) {
+  const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+  context.drawImage(image, 0, 0, width, height);
+
+  let quality = 0.82;
+  let blob = await canvasToBlob(canvas, 'image/webp', quality);
+  while (blob.size > UPLOAD_PROXY_SAFE_BYTES && quality > MIN_IMAGE_QUALITY) {
+    quality = Math.max(MIN_IMAGE_QUALITY, quality - 0.08);
+    blob = await canvasToBlob(canvas, 'image/webp', quality);
+  }
+  return blob;
+}
+
 async function compressImageForUpload(file: File): Promise<File> {
   if (file.size > MAX_SOURCE_IMAGE_BYTES) {
     throw new Error('Image is too large. Please choose an image under 15MB.');
@@ -55,23 +81,17 @@ async function compressImageForUpload(file: File): Promise<File> {
   const image = await loadBitmap(file);
   const sourceWidth = image.naturalWidth || image.width;
   const sourceHeight = image.naturalHeight || image.height;
-  const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(sourceWidth, sourceHeight));
-  const width = Math.max(1, Math.round(sourceWidth * scale));
-  const height = Math.max(1, Math.round(sourceHeight * scale));
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext('2d');
-  if (!context) return file;
-  context.drawImage(image, 0, 0, width, height);
-
-  let quality = 0.82;
-  let blob = await canvasToBlob(canvas, 'image/webp', quality);
-  while (blob.size > UPLOAD_PROXY_SAFE_BYTES && quality > MIN_IMAGE_QUALITY) {
-    quality = Math.max(MIN_IMAGE_QUALITY, quality - 0.08);
-    blob = await canvasToBlob(canvas, 'image/webp', quality);
+  let maxDimension = MAX_IMAGE_DIMENSION;
+  let blob = await renderCompressedBlob(image, sourceWidth, sourceHeight, maxDimension);
+  while (blob && blob.size > UPLOAD_PROXY_SAFE_BYTES && maxDimension > 480) {
+    maxDimension = Math.max(480, Math.round(maxDimension * 0.78));
+    blob = await renderCompressedBlob(image, sourceWidth, sourceHeight, maxDimension);
   }
 
+  if (!blob) return file;
+  if (blob.size > UPLOAD_PROXY_SAFE_BYTES) {
+    throw new Error('Image is still too large after compression. Please crop or choose a smaller image.');
+  }
   if (blob.size >= file.size) return file;
   const safeName = file.name.replace(/\.[^.]+$/, '') || 'image';
   return new File([blob], `${safeName}.webp`, { type: 'image/webp', lastModified: Date.now() });
