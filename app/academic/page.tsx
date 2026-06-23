@@ -70,9 +70,9 @@ const quickLinks = [
     tone: "bg-emerald-50 text-emerald-700",
   },
   {
-    title: "Exams",
-    description: "Create exam types, subjects, marks and schedules.",
-    href: "/academic/exams",
+    title: "Exam Management",
+    description: "Create exams, manage subject marks, publish routines and update status.",
+    href: "/academic/exam-management",
     icon: CalendarClock,
     tone: "bg-amber-50 text-amber-700",
   },
@@ -274,9 +274,9 @@ export default function AcademicPage() {
             </Link>
           </Button>,
           <Button key="exams" variant="outline" size="sm" asChild>
-            <Link href="/academic/exams">
+            <Link href="/academic/exam-management">
               <CalendarClock className="mr-2 h-4 w-4" />
-              Exams
+              Exam Management
             </Link>
           </Button>,
           <Button key="exam-routine" variant="outline" size="sm" asChild>

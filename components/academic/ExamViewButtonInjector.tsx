@@ -8,7 +8,7 @@ const normalize = (value: string) => String(value || "").trim().toLowerCase();
 export function ExamViewButtonInjector() {
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!window.location.pathname.startsWith("/academic/exams") || window.location.pathname !== "/academic/exams") return;
+    if (!["/academic/exams", "/academic/exam-management"].includes(window.location.pathname)) return;
     let disposed = false;
     let exams: any[] = [];
 

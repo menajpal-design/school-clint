@@ -118,7 +118,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Class Routine', href: '/academic/class-routine', roles: ACADEMIC_VIEW },
     { label: 'Class Routine Overview', href: '/class-routine', roles: ACADEMIC_VIEW },
     { label: 'Exam Routine', href: '/academic/exam-routine', roles: ACADEMIC_VIEW },
-    { label: 'Exams', href: '/academic/exams', roles: ACADEMIC_VIEW },
+    { label: 'Exam Management', href: '/academic/exam-management', roles: ACADEMIC_VIEW },
     { label: 'Results', href: '/academic/results', roles: [...RESULT_ENTRY, ...STUDENT_PARENT] },
     { label: 'Final Promotion', href: '/academic/promotions', roles: ['head', 'assistant_head', 'class_teacher'] },
     { label: 'Report Card', href: '/academic/report-card', roles: ['head', 'assistant_head', 'class_teacher', 'student', 'parent'] },
