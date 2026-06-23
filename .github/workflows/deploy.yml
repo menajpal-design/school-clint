@@ -75,8 +75,17 @@ jobs:
           git remote -v
           git fetch origin main
           git checkout main
+
+          echo "Stopping running client before source cleanup..."
+          pm2_stop_if_exists school-client
+          pm2_stop_if_exists school-clint
+          pkill -f "next start" || true
+          pkill -f "next-server" || true
+          sleep 2
+
+          clean_next_build
           git reset --hard origin/main
-          git clean -fdx -e node_modules/
+          git clean -fdx -e node_modules/ -e .next/ -e .next.tmp/ -e out/
 
           echo "Current deployed commit:"
           git rev-parse HEAD
@@ -92,13 +101,6 @@ jobs:
           echo "Node and npm version:"
           node -v
           npm -v
-
-          echo "Stopping running client before build..."
-          pm2_stop_if_exists school-client
-          pm2_stop_if_exists school-clint
-          pkill -f "next start" || true
-          pkill -f "next-server" || true
-          sleep 2
 
           echo "Installing dependencies..."
           rm -rf node_modules/.cache || true
