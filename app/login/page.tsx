@@ -15,7 +15,8 @@ import { API_URL, apiClient, api } from "@/lib/api";
 import { authManager } from "@/lib/auth";
 import { User, UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
-import { getSubdomain } from "@/lib/utils";
+import { canShowDemoMode, getSubdomain } from "@/lib/utils";
+import { clearDemoSession, DEMO_MODE_KEY } from "@/lib/demo-store";
 import SchoolNotFound from "@/components/SchoolNotFound";
 
 const loginSchema = z.object({
@@ -144,9 +145,20 @@ export default function LoginPage() {
   const [isSubdomain, setIsSubdomain] = useState(false);
   const [subdomainName, setSubdomainName] = useState("");
   const [isValidSubdomain, setIsValidSubdomain] = useState(true);
+  const [showDemoMode, setShowDemoMode] = useState(false);
 
   useEffect(() => {
+    let cleanup = () => {};
     if (typeof window !== "undefined") {
+      const refreshDemoVisibility = () => {
+        const allowed = canShowDemoMode();
+        setShowDemoMode(allowed);
+        if (!allowed && window.localStorage.getItem(DEMO_MODE_KEY) === "demo") clearDemoSession();
+      };
+      refreshDemoVisibility();
+      window.addEventListener("resize", refreshDemoVisibility);
+      cleanup = () => window.removeEventListener("resize", refreshDemoVisibility);
+
       const hostname = window.location.hostname;
       const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || "easyschool.live";
       const sub = getSubdomain(hostname, mainDomain);
@@ -157,15 +169,16 @@ export default function LoginPage() {
           .then((res: any) => setIsValidSubdomain((res.schools || []).length > 0))
           .catch(() => setIsValidSubdomain(false))
           .finally(() => setIsChecking(false));
-        return;
+        return cleanup;
       }
     }
     const user = authManager.getUser();
     if (authManager.isAuthenticated()) {
       router.replace(getLoginRedirect(user));
-      return;
+      return cleanup;
     }
     setIsChecking(false);
+    return cleanup;
   }, [router]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
@@ -196,6 +209,11 @@ export default function LoginPage() {
   };
 
   const handleDemoLogin = (role: UserRole) => {
+    if (!canShowDemoMode()) {
+      if (typeof window !== "undefined" && window.localStorage.getItem(DEMO_MODE_KEY) === "demo") clearDemoSession();
+      showToast(addToast, { title: "Demo unavailable", message: "Demo mode is not available on subdomain or mobile devices.", type: "warning", duration: 3000 });
+      return;
+    }
     setIsLoading(true);
     try {
       const demoUsers = [
@@ -278,54 +296,58 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or explore the system</span></div>
-            </div>
+            {showDemoMode && (
+              <>
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or explore the system</span></div>
+                </div>
 
-            <div className="space-y-3">
-              <div className="text-center text-xs text-muted-foreground">
-                Log in instantly using a pre-configured demo account:
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDemoLogin('head')}
-                  className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
-                >
-                  <Building className="h-3.5 w-3.5" />
-                  Demo Principal
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDemoLogin('teacher')}
-                  className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
-                >
-                  <GraduationCap className="h-3.5 w-3.5" />
-                  Demo Teacher
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDemoLogin('student')}
-                  className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
-                >
-                  <UserIcon className="h-3.5 w-3.5" />
-                  Demo Student
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDemoLogin('finance_officer')}
-                  className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
-                >
-                  <CreditCard className="h-3.5 w-3.5" />
-                  Demo Finance
-                </Button>
-              </div>
-            </div>
+                <div className="space-y-3">
+                  <div className="text-center text-xs text-muted-foreground">
+                    Log in instantly using a pre-configured demo account:
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDemoLogin('head')}
+                      className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
+                    >
+                      <Building className="h-3.5 w-3.5" />
+                      Demo Principal
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDemoLogin('teacher')}
+                      className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
+                    >
+                      <GraduationCap className="h-3.5 w-3.5" />
+                      Demo Teacher
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDemoLogin('student')}
+                      className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
+                    >
+                      <UserIcon className="h-3.5 w-3.5" />
+                      Demo Student
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDemoLogin('finance_officer')}
+                      className="justify-start gap-2 h-9 border-indigo-100 hover:bg-indigo-50/50 hover:text-indigo-600"
+                    >
+                      <CreditCard className="h-3.5 w-3.5" />
+                      Demo Finance
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
         <p className="mt-6 text-center text-sm text-gray-600">Don&apos;t have an account? <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">Register your school</Link></p>

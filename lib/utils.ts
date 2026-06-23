@@ -279,3 +279,15 @@ export function getSubdomain(hostname: string, mainDomainEnv?: string): string {
   return '';
 }
 
+export function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = window.navigator?.userAgent || '';
+  return /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(ua) || window.innerWidth < 768;
+}
+
+export function canShowDemoMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  const mainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'easyschool.live';
+  return !getSubdomain(hostname, mainDomain) && !isMobileDevice();
+}

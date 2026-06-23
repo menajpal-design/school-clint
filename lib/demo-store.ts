@@ -1,4 +1,5 @@
 import { User, UserRole } from '@/types';
+import { canShowDemoMode } from './utils';
 
 export const DEMO_MODE_KEY = 'easy-school:mode';
 export const DEMO_STATE_KEY = 'easy-school:demo:state';
@@ -37,6 +38,15 @@ const collectionNames: DemoCollectionName[] = [
 const getStorage = () => {
   if (typeof window === 'undefined') return null;
   return window.localStorage;
+};
+
+const clearDemoStorage = (): void => {
+  const storage = getStorage();
+  if (!storage) return;
+  [DEMO_SESSION_KEY, DEMO_STATE_KEY, DEMO_MODE_KEY].forEach((key) => storage.removeItem(key));
+  for (const key of collectionNames.map((name) => `easy-school:demo:${name}`)) {
+    storage.removeItem(key);
+  }
 };
 
 const now = () => new Date().toISOString();
@@ -190,13 +200,19 @@ function seedState(): DemoState {
 
 export const getDemoMode = (): boolean => {
   const storage = getStorage();
-  return storage?.getItem(DEMO_MODE_KEY) === 'demo';
+  if (!storage) return false;
+  if (storage.getItem(DEMO_MODE_KEY) !== 'demo') return false;
+  if (!canShowDemoMode()) {
+    clearDemoStorage();
+    return false;
+  }
+  return true;
 };
 
 export const setDemoMode = (enabled: boolean): void => {
   const storage = getStorage();
   if (!storage) return;
-  if (enabled) storage.setItem(DEMO_MODE_KEY, 'demo');
+  if (enabled && canShowDemoMode()) storage.setItem(DEMO_MODE_KEY, 'demo');
   else storage.removeItem(DEMO_MODE_KEY);
 };
 
@@ -239,6 +255,10 @@ export const getDemoUser = (): User | null => {
 export const setDemoUser = (user: User): void => {
   const storage = getStorage();
   if (!storage) return;
+  if (!canShowDemoMode()) {
+    clearDemoStorage();
+    return;
+  }
   storage.setItem(DEMO_SESSION_KEY, JSON.stringify(user));
   setDemoMode(true);
 };
@@ -246,11 +266,9 @@ export const setDemoUser = (user: User): void => {
 export const clearDemoSession = (): void => {
   const storage = getStorage();
   if (!storage) return;
+  clearDemoStorage();
   const keysToRemove = [DEMO_SESSION_KEY, DEMO_STATE_KEY, DEMO_MODE_KEY, 'token', 'user', 'selectedInstitutionId', 'selectedInstitutionName'];
   keysToRemove.forEach((key) => storage.removeItem(key));
-  for (const key of collectionNames.map((name) => `easy-school:demo:${name}`)) {
-    storage.removeItem(key);
-  }
 };
 
 export const getCollection = (name: DemoCollectionName): any[] => {
