@@ -31,11 +31,11 @@ export default function BillingValidityPanel() {
 
   const info = useMemo(() => {
     const billing = institution?.billing || {};
-    const plan = getPlanByCode(billing.planCode || "students_100");
+    const plan = getPlanByCode(billing.planCode || "students_100_free");
     const expiry = getDateValue(billing);
     const remainingDays = daysBetween(expiry);
     const cycle = billing.billingCycle === "yearly" ? "yearly" : "monthly";
-    const due = calculatePlanDue(billing.planCode || "students_100", cycle, billing.useEasySchoolStorage !== false);
+    const due = calculatePlanDue(billing.planCode || "students_100_free", cycle, billing.useEasySchoolStorage !== false);
     const smsChargeAmount = Number(billing.smsChargeAmount || 0);
     const paid = Number(billing.receivedAmount || 0);
     const paidDays = Number(billing.paidDays || (cycle === "yearly" ? 365 : 30));

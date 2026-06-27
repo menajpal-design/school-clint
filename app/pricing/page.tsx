@@ -143,7 +143,7 @@ export default function PricingPage() {
             <Input value={trxId} onChange={(e) => setTrxId(e.target.value)} placeholder="Transaction ID" />
             <Input value={senderNumber} onChange={(e) => setSenderNumber(e.target.value)} placeholder="Sender number" />
             <Button asChild className="w-full">
-              <Link href={`/register?plan=${payPlan?.code || "students_100"}&billingCycle=${billingCycle}&amount=${amount}&trxId=${encodeURIComponent(trxId)}&sender=${encodeURIComponent(senderNumber)}`}>
+              <Link href={`/register?plan=${payPlan?.code || "students_100_free"}&billingCycle=${billingCycle}&amount=${amount}&trxId=${encodeURIComponent(trxId)}&sender=${encodeURIComponent(senderNumber)}`}>
                 Continue Signup
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

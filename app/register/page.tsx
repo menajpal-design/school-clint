@@ -37,7 +37,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { addToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPlanCode, setSelectedPlanCode] = useState('students_100');
+  const [selectedPlanCode, setSelectedPlanCode] = useState('students_100_free');
   const [selectedBillingCycle, setSelectedBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [isSubdomain, setIsSubdomain] = useState(false);
   const [subdomainName, setSubdomainName] = useState('');
@@ -49,7 +49,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: 'head', planCode: 'students_100', billingCycle: 'monthly' },
+    defaultValues: { role: 'head', planCode: 'students_100_free', billingCycle: 'monthly' },
   });
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function RegisterPage() {
     }
 
     const params = new URLSearchParams(window.location.search);
-    const planCode = params.get('plan') || 'students_100';
+    const planCode = params.get('plan') || 'students_100_free';
     const billingCycle = params.get('billingCycle') === 'yearly' ? 'yearly' : 'monthly';
     setSelectedPlanCode(planCode);
     setSelectedBillingCycle(billingCycle);
