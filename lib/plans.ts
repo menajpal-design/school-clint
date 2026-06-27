@@ -1,5 +1,5 @@
 const baseStudentPlans = [
-  { code: "students_100", name: "100 Students", studentLimit: 100, monthlyPrice: 300, yearlyPrice: 3000, monthlySmsLimit: 100 },
+  { code: "students_100", name: "100 Students", studentLimit: 100, monthlyPrice: 0, yearlyPrice: 0, monthlySmsLimit: 100 },
   { code: "students_200", name: "200 Students", studentLimit: 200, monthlyPrice: 500, yearlyPrice: 5000, monthlySmsLimit: 200 },
   { code: "students_300", name: "300 Students", studentLimit: 300, monthlyPrice: 600, yearlyPrice: 6000, monthlySmsLimit: 300 },
   { code: "students_500", name: "500 Students", studentLimit: 500, monthlyPrice: 1000, yearlyPrice: 9000, monthlySmsLimit: 500 },
@@ -13,7 +13,7 @@ const attendanceSmsAddons = [
 ] as const;
 
 export const schoolPlans = baseStudentPlans.flatMap((base) => attendanceSmsAddons.map((addon) => {
-  const monthlyAddon = base.studentLimit * addon.attendanceSmsMonthlyRatePerStudent;
+  const monthlyAddon = base.code === "students_100" ? 0 : base.studentLimit * addon.attendanceSmsMonthlyRatePerStudent;
   return {
     ...base,
     code: `${base.code}${addon.suffix}`,
@@ -26,7 +26,7 @@ export const schoolPlans = baseStudentPlans.flatMap((base) => attendanceSmsAddon
   };
 })).map((plan) => ({
   ...plan,
-  yearlyDiscountPercent: Math.round((1 - plan.yearlyPrice / (plan.monthlyPrice * 12)) * 100),
+  yearlyDiscountPercent: plan.monthlyPrice === 0 ? 0 : Math.round((1 - plan.yearlyPrice / (plan.monthlyPrice * 12)) * 100),
 }));
 
 export const easySchoolStorageMonthlyPrice = 100;
@@ -36,7 +36,7 @@ export const getPlanByCode = (code?: string) => schoolPlans.find((plan) => plan.
 export const calculatePlanDue = (code?: string, cycle: "monthly" | "yearly" = "monthly", useEasySchoolStorage = true, extraAmount = 0) => {
   const plan = getPlanByCode(code);
   const baseAmount = cycle === "yearly" ? plan.yearlyPrice : plan.monthlyPrice;
-  const storageAmount = useEasySchoolStorage ? easySchoolStorageMonthlyPrice * (cycle === "yearly" ? 12 : 1) : 0;
+  const storageAmount = useEasySchoolStorage && plan.monthlyPrice > 0 ? easySchoolStorageMonthlyPrice * (cycle === "yearly" ? 12 : 1) : 0;
   const extra = Number(extraAmount || 0);
   return { plan, baseAmount, storageAmount, extraAmount: extra, total: baseAmount + storageAmount + extra };
 };
