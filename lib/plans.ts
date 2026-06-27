@@ -14,6 +14,9 @@ const attendanceSmsAddons = [
 ] as const;
 
 export const schoolPlans = baseStudentPlans.flatMap((base) => attendanceSmsAddons.map((addon) => {
+  if (base.code === "students_100_free" && addon.attendanceSmsMode !== "none") {
+    return null;
+  }
   const monthlyAddon = base.code === "students_100_free" ? 0 : base.studentLimit * addon.attendanceSmsMonthlyRatePerStudent;
   return {
     ...base,
@@ -25,7 +28,7 @@ export const schoolPlans = baseStudentPlans.flatMap((base) => attendanceSmsAddon
     attendanceSmsMonthlyRatePerStudent: addon.attendanceSmsMonthlyRatePerStudent,
     attendanceSmsMonthlyAmount: monthlyAddon,
   };
-})).map((plan) => ({
+})).filter(Boolean).map((plan: any) => ({
   ...plan,
   yearlyDiscountPercent: plan.monthlyPrice === 0 ? 0 : Math.round((1 - plan.yearlyPrice / (plan.monthlyPrice * 12)) * 100),
 }));
