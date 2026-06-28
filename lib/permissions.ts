@@ -6,6 +6,7 @@ interface MenuItemConfig {
   icon?: string;
   roles: UserRole[];
   children?: MenuItemConfig[];
+  locked?: boolean;
 }
 
 const ALL_ROLES: UserRole[] = ['admin', 'super_admin', 'head', 'assistant_head', 'class_teacher', 'subject_teacher', 'teacher', 'finance_officer', 'staff', 'student', 'parent', 'committee_member'];
@@ -232,6 +233,7 @@ export function isFreeLifetimePlan(user?: User | null | any) {
 
 const FREE_PLAN_RESTRICTED_PATHS = [
   '/charts',
+  '/analytics',
   '/id-cards',
   '/messages',
   '/sms-monitoring',
@@ -249,8 +251,16 @@ export function isFreePlanRestrictedPath(path: string) {
   return FREE_PLAN_RESTRICTED_PATHS.some((target) => cleanPath === target || cleanPath.startsWith(`${target}/`));
 }
 
+export function isPlanLockedForUser(user: User | null | undefined, path: string) {
+  return isFreeLifetimePlan(user) && isFreePlanRestrictedPath(path);
+}
+
 function canShowMenuItem(user: User | null | undefined, item: MenuItemConfig) {
-  return hasRole(user, item.roles) && !(isFreeLifetimePlan(user) && isFreePlanRestrictedPath(item.href));
+  return hasRole(user, item.roles);
+}
+
+function withPlanLock(user: User | null | undefined, item: MenuItemConfig): MenuItemConfig {
+  return { ...item, locked: isPlanLockedForUser(user, item.href) };
 }
 
 export const permissionActions = {
@@ -267,8 +277,8 @@ export function getAllowedMenu(user?: User | null) {
   return menuConfig
     .filter((item) => canShowMenuItem(user, item))
     .map((item) => {
-      const children = item.children?.filter((child) => canShowMenuItem(user, child));
-      return { ...item, children };
+      const children = item.children?.filter((child) => canShowMenuItem(user, child)).map((child) => withPlanLock(user, child));
+      return withPlanLock(user, { ...item, children });
     })
     .filter((item) => !item.children || item.children.length > 0 || !item.href.endsWith('-menu'));
 }
@@ -282,7 +292,6 @@ export function canAccessPath(user: User | null | undefined, path: string): bool
   const normalized = normalizeUserRole(user.role) || user.role;
   if (normalized === 'super_admin') return true;
   const cleanPath = path.split('?')[0].replace(/\/$/, '') || '/';
-  if (isFreeLifetimePlan(user) && isFreePlanRestrictedPath(cleanPath)) return false;
   if (hasRole(user, QUESTION_MANAGE) && isPathInList(cleanPath, ['/question-generate', '/ai-manage', '/mcq-manage'])) return true;
   if (hasRole(user, MCQ_PRACTICE) && isPathInList(cleanPath, ['/mcq-practice'])) return true;
   const allowed = getAllowedMenu(user);

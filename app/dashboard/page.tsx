@@ -12,12 +12,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LineChartCard } from "@/components/charts/LineChartCard";
 import { BarChartCard } from "@/components/charts/BarChartCard";
 import { PieChartCard } from "@/components/charts/PieChartCard";
+import { PlanLockedFeature } from "@/components/shared/PlanLockedFeature";
 import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/types";
-import { canAccessPath, isFreeLifetimePlan, normalizeUserRole } from "@/lib/permissions";
+import { canAccessPath, isFreeLifetimePlan, isPlanLockedForUser, normalizeUserRole } from "@/lib/permissions";
 import { api, apiClient } from "@/lib/api";
 
-type QuickAction = { label: string; href: string; icon: typeof UserRound; description: string; };
+type QuickAction = { label: string; href: string; icon: typeof UserRound; description: string; locked?: boolean; };
 function roleLabel(role?: string) { if (!role) return "Guest"; return role.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" "); }
 
 const STUDENT_QUICK_ACTIONS: QuickAction[] = [
@@ -58,7 +59,9 @@ export default function Dashboard() {
   const normalizedRole = normalizeUserRole(rawRole);
   const canUseAnalytics = !isFreeLifetimePlan(user);
   const quickActions = useMemo(
-    () => getDashboardQuickActions(rawRole).filter((action) => canAccessPath(user, action.href)),
+    () => getDashboardQuickActions(rawRole)
+      .filter((action) => canAccessPath(user, action.href))
+      .map((action) => ({ ...action, locked: isPlanLockedForUser(user, action.href) })),
     [rawRole, user]
   );
   const [stats, setStats] = useState<any>(null);
@@ -139,5 +142,5 @@ export default function Dashboard() {
     return null;
   };
 
-  return <div className="space-y-6 p-4 md:p-6"><PageHeader title="Dashboard" description={`Role-based dashboard for ${roleLabel(normalizedRole)}. Only permitted actions are shown here.`} icon={ShieldCheck} status={<Badge variant="outline" className="border-teal-200 bg-teal-50 text-teal-700">{roleLabel(normalizedRole)}</Badge>} />{!loading && renderDashboardStats()}<Card className="border-slate-200/80 shadow-sm bg-white"><CardHeader className="pb-3 border-b border-slate-100"><CardTitle className="text-base font-semibold text-slate-800">Quick Actions</CardTitle><CardDescription>Actions are filtered by your role and permission.</CardDescription></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pt-5">{quickActions.map((action) => { const Icon = action.icon; return <Button key={`${action.label}-${action.href}`} asChild variant="outline" className="h-auto justify-start rounded-xl p-4 text-left border-slate-200/70 hover:border-teal-300 hover:bg-slate-50 transition-colors shadow-sm"><Link href={action.href} className="flex w-full items-start gap-3"><span className="rounded-lg bg-teal-50 p-2 text-teal-600"><Icon className="h-5 w-5" /></span><span><span className="block font-semibold text-slate-800">{action.label}</span><span className="mt-1 block text-xs font-normal text-slate-500 leading-normal">{action.description}</span></span></Link></Button>; })}</CardContent></Card>{canUseAnalytics && <div className="space-y-4"><div className="flex items-center gap-2 border-b border-slate-200 pb-2"><TrendingUp className="h-5 w-5 text-teal-600" /><h2 className="text-lg font-bold text-slate-800">Analytics Overview</h2></div>{loading ? <div className="h-64 rounded-xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-slate-500 gap-2"><RefreshCw className="h-6 w-6 animate-spin text-teal-600" />Loading analytics dashboard...</div> : renderDashboardCharts()}</div>}</div>;
+  return <div className="space-y-6 p-4 md:p-6"><PageHeader title="Dashboard" description={`Role-based dashboard for ${roleLabel(normalizedRole)}. Only permitted actions are shown here.`} icon={ShieldCheck} status={<Badge variant="outline" className="border-teal-200 bg-teal-50 text-teal-700">{roleLabel(normalizedRole)}</Badge>} />{!loading && renderDashboardStats()}<Card className="border-slate-200/80 shadow-sm bg-white"><CardHeader className="pb-3 border-b border-slate-100"><CardTitle className="text-base font-semibold text-slate-800">Quick Actions</CardTitle><CardDescription>Actions are filtered by your role and permission.</CardDescription></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pt-5">{quickActions.map((action) => { const Icon = action.icon; return <Button key={`${action.label}-${action.href}`} asChild variant="outline" className={`h-auto justify-start rounded-xl p-4 text-left border-slate-200/70 hover:border-teal-300 hover:bg-slate-50 transition-colors shadow-sm ${action.locked ? "border-amber-200 bg-amber-50/40" : ""}`}><Link href={action.href} className="flex w-full items-start gap-3"><span className={`rounded-lg p-2 ${action.locked ? "bg-amber-100 text-amber-700" : "bg-teal-50 text-teal-600"}`}><Icon className="h-5 w-5" /></span><span className="min-w-0 flex-1"><span className={`block font-semibold text-slate-800 ${action.locked ? "blur-[1px]" : ""}`}>{action.label}</span><span className="mt-1 block text-xs font-normal text-slate-500 leading-normal">{action.locked ? "এই action paid package-এ চালু হবে। আপডেট করলে ব্যবহার করতে পারবেন।" : action.description}</span></span>{action.locked && <Badge variant="outline" className="border-amber-300 bg-white text-amber-700">Upgrade</Badge>}</Link></Button>; })}</CardContent></Card><div className="space-y-4"><div className="flex items-center gap-2 border-b border-slate-200 pb-2"><TrendingUp className="h-5 w-5 text-teal-600" /><h2 className="text-lg font-bold text-slate-800">Analytics Overview</h2></div>{canUseAnalytics ? (loading ? <div className="h-64 rounded-xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-slate-500 gap-2"><RefreshCw className="h-6 w-6 animate-spin text-teal-600" />Loading analytics dashboard...</div> : renderDashboardCharts()) : <PlanLockedFeature featureName="Analytics Overview" description="Dashboard analytics, charts, profile charts এবং visit analytics paid subscription ছাড়া চালু হবে না। প্যাকেজ আপডেট করলে এই অংশের সব chart দেখা যাবে।" />}</div></div>;
 }

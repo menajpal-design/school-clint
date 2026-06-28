@@ -7,7 +7,8 @@ import { Sidebar } from './Sidebar';
 import { ShellProvider } from './ShellContext';
 import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from '@/lib/api';
-import { isRouteAllowed, normalizeUserRole } from '@/lib/permissions';
+import { isPlanLockedForUser, isRouteAllowed, normalizeUserRole } from '@/lib/permissions';
+import { PlanLockedFeature } from '@/components/shared/PlanLockedFeature';
 
 const publicPrefixes = ['/login', '/register', '/forgot-password', '/reset-password', '/pricing', '/result', '/admission', '/public'];
 const financeCollectionRoles = ['head', 'assistant_head', 'finance_officer', 'class_teacher'];
@@ -48,7 +49,8 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
 
   const role = normalizeUserRole(user.role) || user.role;
   const financeCollectionAllowed = isFinanceCollectionPage(pathname) && financeCollectionRoles.includes(String(role));
-  const allowed = financeCollectionAllowed || isRouteAllowed(user, pathname);
+  const planLocked = isPlanLockedForUser(user, pathname);
+  const allowed = financeCollectionAllowed || planLocked || isRouteAllowed(user, pathname);
 
   return (
     <ShellProvider>
@@ -58,7 +60,14 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
           <main className={`min-w-0 flex-1 p-3 pb-20 md:p-4 lg:p-6 mobile-main-content transition-all duration-300`}>
             <div className="mx-auto w-full max-w-[1600px] min-w-0">
-              {allowed ? children : (
+              {planLocked ? (
+                <PlanLockedFeature
+                  fullPage
+                  featureName="এই পেজ"
+                  title="এই পেজটি আপনার বর্তমান সাবস্ক্রিপশনে নেই"
+                  description="পেজের preview blur করে দেখানো হলো। পুরো ফিচার ব্যবহার করতে paid package active করুন; Free Lifetime প্যাকেজে এই অংশ চালু থাকবে না।"
+                />
+              ) : allowed ? children : (
                 <div className="min-h-[50vh] flex items-center justify-center p-4">
                   <div className="max-w-md w-full text-center space-y-4 bg-white p-8 rounded-xl border shadow-sm">
                     <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">

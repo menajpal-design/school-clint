@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronDown, Lock, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { getMenuForUser } from '@/lib/permissions';
@@ -166,6 +166,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             const active = itemIsActive(item);
             const expanded = expandedItems.has(item.href);
             const accent = accentColors[index % accentColors.length];
+            const locked = Boolean(item.locked);
 
             const itemBase: React.CSSProperties = {
               borderRadius: '0.75rem',
@@ -194,7 +195,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     aria-expanded={expanded}
                     className={cn(
                       'w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium group',
-                      collapsed && 'justify-center px-2'
+                      collapsed && 'justify-center px-2',
+                      locked && 'opacity-60'
                     )}
                     style={active ? activeStyle : inactiveStyle}
                     onMouseEnter={(e) => {
@@ -225,6 +227,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </span>
                       )}
                     </div>
+                    {locked && !collapsed && (
+                      <span className="ml-auto mr-2 inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+                        <Lock className="h-3 w-3" />
+                        Upgrade
+                      </span>
+                    )}
                     {!collapsed && (
                       <ChevronDown
                         className={cn('h-3.5 w-3.5 transition-transform duration-200', expanded && 'rotate-180')}
@@ -239,7 +247,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     title={t(item.label)}
                     className={cn(
                       'w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium group',
-                      collapsed && 'justify-center px-2 gap-0'
+                      collapsed && 'justify-center px-2 gap-0',
+                      locked && 'opacity-60'
                     )}
                     style={active ? activeStyle : inactiveStyle}
                     onMouseEnter={(e) => {
@@ -263,9 +272,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     >
                       <Icon className="h-4 w-4" />
                     </div>
-                    {!collapsed && (
-                      <span style={{ color: active ? accent.text : 'rgba(255,255,255,0.75)' }}>
-                        {t(item.label)}
+                      {!collapsed && (
+                      <span className={cn('min-w-0 flex-1 truncate', locked && 'blur-[1px]')} style={{ color: active ? accent.text : 'rgba(255,255,255,0.75)' }}>
+                          {t(item.label)}
+                        </span>
+                      )}
+                    {locked && !collapsed && (
+                      <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+                        <Lock className="h-3 w-3" />
+                        Upgrade
                       </span>
                     )}
                     {active && !collapsed && (
@@ -284,12 +299,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   >
                     {item.children?.map((child) => {
                       const childActive = isSameOrChild(pathname || '/', child.href);
+                      const childLocked = Boolean(child.locked);
                       return (
                         <Link
                           key={child.href}
                           href={child.href}
                           onClick={onClose}
-                          className="block w-full rounded-lg px-3 py-2 text-sm transition-all duration-150"
+                          className={cn(
+                            'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-150',
+                            childLocked && 'opacity-60'
+                          )}
                           style={{
                             color: childActive ? accent.text : 'rgba(255,255,255,0.55)',
                             background: childActive ? accent.bg : 'transparent',
@@ -308,7 +327,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                             }
                           }}
                         >
-                          {t(child.label)}
+                          <span className={cn('min-w-0 flex-1 truncate', childLocked && 'blur-[1px]')}>{t(child.label)}</span>
+                          {childLocked && <Lock className="h-3.5 w-3.5 shrink-0 text-amber-200" />}
                         </Link>
                       );
                     })}
