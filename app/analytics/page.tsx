@@ -7,12 +7,13 @@ import { BarChartCard } from "@/components/charts/BarChartCard";
 import { LineChartCard } from "@/components/charts/LineChartCard";
 import { PieChartCard } from "@/components/charts/PieChartCard";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { PlanLockedFeature } from "@/components/shared/PlanLockedFeature";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { apiClient } from "@/lib/api";
+import { apiClient, isPlanRestrictedApiError } from "@/lib/api";
 import { normalizeUserRole } from "@/lib/permissions";
 
 const number = (value: any) => Number(value || 0).toLocaleString();
@@ -43,25 +44,28 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
+  const [planLocked, setPlanLocked] = useState(false);
 
   const load = async () => {
     if (!canView) return;
     setLoading(true);
     setError("");
+    setPlanLocked(false);
     try {
       const params = new URLSearchParams({ days });
       if (isPlatformAdmin) {
         if (search.trim()) params.set("search", search.trim());
         params.set("limit", "100");
-        const res = await apiClient.get(`/analytics/schools-overview?${params.toString()}`);
+        const res = await apiClient.get(`/analytics/schools-overview?${params.toString()}`, { skipToast: true });
         setData(res);
       } else {
         if (roleFilter) params.set("role", roleFilter);
-        const res = await apiClient.get(`/analytics/my-school/visits?${params.toString()}`);
+        const res = await apiClient.get(`/analytics/my-school/visits?${params.toString()}`, { skipToast: true });
         setData(res);
       }
     } catch (err: any) {
-      setError(err?.message || "Failed to load analytics.");
+      if (isPlanRestrictedApiError(err)) setPlanLocked(true);
+      else setError(err?.message || "Failed to load analytics.");
       setData(null);
     } finally {
       setLoading(false);
@@ -112,9 +116,17 @@ export default function AnalyticsPage() {
         ]}
       />
 
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+      {planLocked && (
+        <PlanLockedFeature
+          fullPage
+          featureName="Visit Analytics"
+          description="Visit Analytics, dashboard charts এবং profile charts Free Lifetime প্যাকেজে চালু নয়। Paid package active করলে এই analytics report দেখা যাবে।"
+        />
+      )}
 
-      {isPlatformAdmin ? (
+      {!planLocked && error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+      {!planLocked ? (isPlatformAdmin ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Total Views" value={number(summary.totalViews)} icon={Eye} />
@@ -189,7 +201,7 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </>
-      )}
+      )) : null}
     </div>
   );
 }

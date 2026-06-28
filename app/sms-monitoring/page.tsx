@@ -11,7 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import ResponsiveTable from '@/components/shared/ResponsiveTable';
+import { PlanLockedFeature } from "@/components/shared/PlanLockedFeature";
 import { normalizeUserRole } from '@/lib/permissions';
+import { isPlanRestrictedApiError } from "@/lib/api";
 
 const gatewayOrigin = 'https://payment-gateway-server-ten.vercel.app';
 const paymentWidgetUrl = `${gatewayOrigin}/widget.js`;
@@ -37,6 +39,7 @@ export default function SmsMonitoringPage() {
   const [sendingResult, setSendingResult] = useState(false);
   const [widgetReady, setWidgetReady] = useState(false);
   const [status, setStatus] = useState('');
+  const [planLocked, setPlanLocked] = useState(false);
   const [buyQty, setBuyQty] = useState(100);
   const [buyPhone, setBuyPhone] = useState('');
   const [buyNote, setBuyNote] = useState('');
@@ -44,11 +47,11 @@ export default function SmsMonitoringPage() {
   const isDenied = normalizedRole === 'student' || normalizedRole === 'parent';
   const buyAmount = unitPrice > 0 ? buyQty * unitPrice : 0;
 
-  const loadTopups = async () => { try { const result: any = await apiClient.get('/sms-monitoring/purchases', { skipToast: true }); setTopups(Array.isArray(result?.requests) ? result.requests : []); setUnitPrice(Number(result?.unitPrice || 0)); } catch { setTopups([]); } };
-  const loadData = async () => { if (isDenied) return; setLoading(true); try { setData(await apiClient.get(`/sms/head/monthly?month=${month}`)); } catch { setData(null); } finally { await loadTopups(); setLoading(false); } };
+  const loadTopups = async () => { try { const result: any = await apiClient.get('/sms-monitoring/purchases', { skipToast: true }); setTopups(Array.isArray(result?.requests) ? result.requests : []); setUnitPrice(Number(result?.unitPrice || 0)); } catch (error: any) { if (isPlanRestrictedApiError(error)) setPlanLocked(true); setTopups([]); } };
+  const loadData = async () => { if (isDenied) return; setLoading(true); setPlanLocked(false); try { setData(await apiClient.get(`/sms/head/monthly?month=${month}`, { skipToast: true })); } catch (error: any) { if (isPlanRestrictedApiError(error)) setPlanLocked(true); setData(null); } finally { await loadTopups(); setLoading(false); } };
   useEffect(() => { if (!isDenied) loadData(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [month, isDenied]);
 
-  const savePaidRecharge = async (payment: any) => { await apiClient.post('/sms-monitoring/purchases', { quantity: buyQty, contactNumber: buyPhone, paymentMethod: 'popup', notes: buyNote, unitPrice, totalAmount: buyAmount, ...payment, popupPaymentResponse: payment.rawResponse, popupVerification: payment.popupVerification }); setBuyNote(''); await loadTopups(); await loadData(); setStatus('SMS recharge payment successful. Balance updated.'); };
+  const savePaidRecharge = async (payment: any) => { await apiClient.post('/sms-monitoring/purchases', { quantity: buyQty, contactNumber: buyPhone, paymentMethod: 'popup', notes: buyNote, unitPrice, totalAmount: buyAmount, ...payment, popupPaymentResponse: payment.rawResponse, popupVerification: payment.popupVerification }, { skipToast: true }); setBuyNote(''); await loadTopups(); await loadData(); setStatus('SMS recharge payment successful. Balance updated.'); };
   const openPopup = () => {
     if (buyQty <= 0) { setStatus('SMS quantity must be positive'); return; }
     if (!buyPhone.trim()) { setStatus('Custom contact number is required'); return; }
@@ -65,11 +68,12 @@ export default function SmsMonitoringPage() {
     setSendingMonthly(true);
     setStatus('Monthly guardian SMS পাঠানো হচ্ছে...');
     try {
-      const result: any = await apiClient.post('/sms/head/monthly-send', { month });
+      const result: any = await apiClient.post('/sms/head/monthly-send', { month }, { skipToast: true });
       setStatus(result?.message || `Monthly SMS completed. Sent ${result?.sent || 0}, failed ${result?.failed || 0}.`);
       await loadData();
     } catch (error: any) {
-      setStatus(error?.message || 'Monthly guardian SMS পাঠাতে সমস্যা হয়েছে।');
+      if (isPlanRestrictedApiError(error)) setPlanLocked(true);
+      else setStatus(error?.message || 'Monthly guardian SMS পাঠাতে সমস্যা হয়েছে।');
     } finally {
       setSendingMonthly(false);
     }
@@ -81,11 +85,12 @@ export default function SmsMonitoringPage() {
     setSendingResult(true);
     setStatus('Published result SMS পাঠানো হচ্ছে...');
     try {
-      const result: any = await apiClient.post('/sms/head/published-result-send', { month });
+      const result: any = await apiClient.post('/sms/head/published-result-send', { month }, { skipToast: true });
       setStatus(result?.message || `Published result SMS completed. Sent ${result?.sent || 0}, failed ${result?.failed || 0}.`);
       await loadData();
     } catch (error: any) {
-      setStatus(error?.message || 'Published result SMS পাঠাতে সমস্যা হয়েছে।');
+      if (isPlanRestrictedApiError(error)) setPlanLocked(true);
+      else setStatus(error?.message || 'Published result SMS পাঠাতে সমস্যা হয়েছে।');
     } finally {
       setSendingResult(false);
     }
@@ -96,6 +101,7 @@ export default function SmsMonitoringPage() {
   const sentRecipients = useMemo(() => recipients.filter((item: any) => item.smsSent), [recipients]);
   const notSentRecipients = useMemo(() => recipients.filter((item: any) => !item.smsSent), [recipients]);
   if (isDenied) return <div className="flex min-h-[50vh] items-center justify-center p-6 text-center bg-slate-50"><div className="rounded-2xl border border-red-200 bg-red-50 p-6 max-w-md shadow-sm"><XCircle className="mx-auto h-12 w-12 text-red-600 mb-3" /><h2 className="text-xl font-bold text-red-950">Access Denied</h2><p className="mt-2 text-sm text-red-700">You do not have permission to access the SMS Monitoring logs.</p></div></div>;
+  if (planLocked) return <div className="p-4 md:p-6"><PlanLockedFeature fullPage featureName="SMS Monitoring" description="SMS Monitoring, guardian monthly SMS, result SMS এবং SMS recharge Free Lifetime প্যাকেজে চালু নয়। Paid package active করলে এই পেজের সব SMS feature ব্যবহার করতে পারবেন।" /></div>;
   const stats = [{ label: "Monthly SMS Limit", value: data?.limit?.monthlySmsLimit || 0, icon: MessageSquare }, { label: "Used This Month", value: data?.limit?.usedThisMonth || 0, icon: Send }, { label: "Remaining", value: data?.limit?.remainingThisMonth || 0, icon: CheckCircle2 }, { label: "Not Sent", value: data?.summary?.notSentRecipients || 0, icon: XCircle }];
   return <div className="min-h-screen bg-slate-50 p-3 md:p-6"><Script src={paymentWidgetUrl} strategy="afterInteractive" onLoad={() => { window.GATEWAY_WIDGET_URL = gatewayOrigin; setWidgetReady(true); }} /><div className="mx-auto max-w-7xl space-y-5 md:space-y-6">
     <div className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between md:p-6"><div><h1 className="text-2xl font-bold text-slate-900 md:text-3xl">{t("SMS Monitoring")}</h1><p className="mt-1 text-sm leading-6 text-slate-600">{t("View who received SMS this month and who did not. Logs are automatically deleted after one month.")}</p></div><div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"><div className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2"><CalendarDays className="h-4 w-4 text-slate-500" /><input type="month" value={month} onChange={(event) => setMonth(event.target.value)} className="w-full bg-transparent text-sm outline-none" /></div><Button onClick={sendMonthlyGuardianSms} disabled={sendingMonthly || loading} className="w-full bg-emerald-600 hover:bg-emerald-700 sm:w-auto"><Send className={`mr-2 h-4 w-4 ${sendingMonthly ? 'animate-pulse' : ''}`} />{sendingMonthly ? 'Sending...' : 'সব Guardian-কে Monthly SMS পাঠান'}</Button><Button onClick={sendPublishedResultSms} disabled={sendingResult || loading} className="w-full bg-indigo-600 hover:bg-indigo-700 sm:w-auto"><Send className={`mr-2 h-4 w-4 ${sendingResult ? 'animate-pulse' : ''}`} />{sendingResult ? 'Sending Result...' : 'Published Result SMS পাঠান'}</Button><Button onClick={loadData} disabled={loading} className="w-full sm:w-auto"><RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />{t("Refresh")}</Button></div></div>
