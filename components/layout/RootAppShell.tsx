@@ -6,6 +6,7 @@ import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { ShellProvider } from './ShellContext';
 import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/lib/api';
 import { isRouteAllowed, normalizeUserRole } from '@/lib/permissions';
 
 const publicPrefixes = ['/login', '/register', '/forgot-password', '/reset-password', '/pricing', '/result', '/admission', '/public'];
@@ -24,6 +25,18 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '/';
   const { user, isLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (isLoading || !user || isPublicRoute(pathname)) return;
+    const timer = window.setTimeout(() => {
+      apiClient.post('/analytics/page-view', {
+        path: pathname,
+        title: document.title,
+        referrer: document.referrer,
+      }, { skipToast: true }).catch(() => undefined);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [isLoading, pathname, user]);
 
   if (isPublicRoute(pathname)) return <>{children}</>;
 

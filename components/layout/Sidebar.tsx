@@ -12,6 +12,7 @@ import { useLanguage } from '@/lib/i18n';
 
 const iconMap: { [key: string]: any } = {
   LayoutGrid:    Icons.LayoutGrid,
+  BarChart3:     Icons.BarChart3,
   CreditCard:    Icons.CreditCard,
   Building2:     Icons.Building2,
   BookOpen:      Icons.BookOpen,
