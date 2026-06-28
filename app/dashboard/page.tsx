@@ -14,7 +14,7 @@ import { BarChartCard } from "@/components/charts/BarChartCard";
 import { PieChartCard } from "@/components/charts/PieChartCard";
 import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/types";
-import { normalizeUserRole } from "@/lib/permissions";
+import { canAccessPath, isFreeLifetimePlan, normalizeUserRole } from "@/lib/permissions";
 import { api, apiClient } from "@/lib/api";
 
 type QuickAction = { label: string; href: string; icon: typeof UserRound; description: string; };
@@ -56,7 +56,11 @@ export default function Dashboard() {
   const { user } = useAuth();
   const rawRole = user?.role || "";
   const normalizedRole = normalizeUserRole(rawRole);
-  const quickActions = getDashboardQuickActions(rawRole);
+  const canUseAnalytics = !isFreeLifetimePlan(user);
+  const quickActions = useMemo(
+    () => getDashboardQuickActions(rawRole).filter((action) => canAccessPath(user, action.href)),
+    [rawRole, user]
+  );
   const [stats, setStats] = useState<any>(null);
   const [chartsData, setChartsData] = useState<any>(null);
   const [parentPortal, setParentPortal] = useState<any>(null);
@@ -72,14 +76,17 @@ export default function Dashboard() {
           const portalRes: any = await api.parent.portal();
           if (mounted) setParentPortal(portalRes?.portal || portalRes || null);
         }
-        const [statsRes, chartsRes] = await Promise.all([apiClient.get("/dashboard/stats").catch(() => null), api.dashboard.charts().catch(() => null)]);
+        const [statsRes, chartsRes] = await Promise.all([
+          apiClient.get("/dashboard/stats").catch(() => null),
+          canUseAnalytics ? api.dashboard.charts().catch(() => null) : Promise.resolve(null)
+        ]);
         if (mounted) { setStats(statsRes); setChartsData(chartsRes); }
       } catch (err) { console.warn("Failed to load dashboard statistics", err); }
       finally { if (mounted) setLoading(false); }
     }
     loadDashboardData();
     return () => { mounted = false; };
-  }, [normalizedRole, rawRole]);
+  }, [canUseAnalytics, normalizedRole, rawRole]);
 
   const leaderCompositionData = useMemo(() => {
     if (chartsData?.composition && Array.isArray(chartsData.composition) && chartsData.composition.length) return chartsData.composition.map((item: any) => ({ name: item.name || item._id || "Category", value: Number(item.value || item.count || 0) }));
@@ -132,5 +139,5 @@ export default function Dashboard() {
     return null;
   };
 
-  return <div className="space-y-6 p-4 md:p-6"><PageHeader title="Dashboard" description={`Role-based dashboard for ${roleLabel(normalizedRole)}. Only permitted actions are shown here.`} icon={ShieldCheck} status={<Badge variant="outline" className="border-teal-200 bg-teal-50 text-teal-700">{roleLabel(normalizedRole)}</Badge>} />{!loading && renderDashboardStats()}<Card className="border-slate-200/80 shadow-sm bg-white"><CardHeader className="pb-3 border-b border-slate-100"><CardTitle className="text-base font-semibold text-slate-800">Quick Actions</CardTitle><CardDescription>Actions are filtered by your role and permission.</CardDescription></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pt-5">{quickActions.map((action) => { const Icon = action.icon; return <Button key={`${action.label}-${action.href}`} asChild variant="outline" className="h-auto justify-start rounded-xl p-4 text-left border-slate-200/70 hover:border-teal-300 hover:bg-slate-50 transition-colors shadow-sm"><Link href={action.href} className="flex w-full items-start gap-3"><span className="rounded-lg bg-teal-50 p-2 text-teal-600"><Icon className="h-5 w-5" /></span><span><span className="block font-semibold text-slate-800">{action.label}</span><span className="mt-1 block text-xs font-normal text-slate-500 leading-normal">{action.description}</span></span></Link></Button>; })}</CardContent></Card><div className="space-y-4"><div className="flex items-center gap-2 border-b border-slate-200 pb-2"><TrendingUp className="h-5 w-5 text-teal-600" /><h2 className="text-lg font-bold text-slate-800">Analytics Overview</h2></div>{loading ? <div className="h-64 rounded-xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-slate-500 gap-2"><RefreshCw className="h-6 w-6 animate-spin text-teal-600" />Loading analytics dashboard...</div> : renderDashboardCharts()}</div></div>;
+  return <div className="space-y-6 p-4 md:p-6"><PageHeader title="Dashboard" description={`Role-based dashboard for ${roleLabel(normalizedRole)}. Only permitted actions are shown here.`} icon={ShieldCheck} status={<Badge variant="outline" className="border-teal-200 bg-teal-50 text-teal-700">{roleLabel(normalizedRole)}</Badge>} />{!loading && renderDashboardStats()}<Card className="border-slate-200/80 shadow-sm bg-white"><CardHeader className="pb-3 border-b border-slate-100"><CardTitle className="text-base font-semibold text-slate-800">Quick Actions</CardTitle><CardDescription>Actions are filtered by your role and permission.</CardDescription></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pt-5">{quickActions.map((action) => { const Icon = action.icon; return <Button key={`${action.label}-${action.href}`} asChild variant="outline" className="h-auto justify-start rounded-xl p-4 text-left border-slate-200/70 hover:border-teal-300 hover:bg-slate-50 transition-colors shadow-sm"><Link href={action.href} className="flex w-full items-start gap-3"><span className="rounded-lg bg-teal-50 p-2 text-teal-600"><Icon className="h-5 w-5" /></span><span><span className="block font-semibold text-slate-800">{action.label}</span><span className="mt-1 block text-xs font-normal text-slate-500 leading-normal">{action.description}</span></span></Link></Button>; })}</CardContent></Card>{canUseAnalytics && <div className="space-y-4"><div className="flex items-center gap-2 border-b border-slate-200 pb-2"><TrendingUp className="h-5 w-5 text-teal-600" /><h2 className="text-lg font-bold text-slate-800">Analytics Overview</h2></div>{loading ? <div className="h-64 rounded-xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-slate-500 gap-2"><RefreshCw className="h-6 w-6 animate-spin text-teal-600" />Loading analytics dashboard...</div> : renderDashboardCharts()}</div>}</div>;
 }
