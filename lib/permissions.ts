@@ -61,6 +61,7 @@ export const menuConfig: MenuItemConfig[] = [
     { label: 'Accounting', href: '/admin/accounting', roles: PLATFORM_ADMIN },
     { label: 'SMS Usage', href: '/admin/sms-usage', roles: PLATFORM_ADMIN },
     { label: 'Admin SMS Monitoring', href: '/admin/sms-monitoring', roles: PLATFORM_ADMIN },
+    { label: 'Login Logs', href: '/admin/login-logs', roles: PLATFORM_ADMIN },
     { label: 'Select School', href: '/admin/select-school', roles: PLATFORM_ADMIN },
     { label: 'User Management', href: '/admin/users', roles: PLATFORM_ADMIN },
     { label: 'Backup & Restore', href: '/admin/backup', roles: ['super_admin'] },
