@@ -14,8 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { api } from '@/lib/api';
+import { api, apiClient } from '@/lib/api';
 import AdmissionFields from '@/components/admission/AdmissionFields';
+import { useAuth } from '@/hooks/useAuth';
+import { isFreeLifetimePlan } from '@/lib/permissions';
+import { PlanLockedFeature } from '@/components/shared/PlanLockedFeature';
 
 const admissionSchema = z.object({
   name: z.string().min(2, 'Student name is required'),
@@ -42,6 +45,9 @@ type AcademicClassOption = { _id: string; name: string; sections?: Array<{ _id: 
 const steps = ['Student personal info', 'Academic info', 'Parent/guardian info', 'Auto account and ID card'];
 
 export default function InstitutionAdmissionPage() {
+  const { user } = useAuth();
+  const isFree = isFreeLifetimePlan(user);
+  const [totalStudents, setTotalStudents] = useState(0);
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState('');
   const [applications, setApplications] = useState<any[]>([]);
@@ -53,8 +59,39 @@ export default function InstitutionAdmissionPage() {
 
   const loadApplications = () => { api.admissions.getAll().then((data: any) => setApplications(data.applications || [])).catch(() => setApplications([])); };
   const loadAcademicClasses = () => { api.academic.classes.getAll().then((data: any) => setAcademicClasses(data.classes || [])).catch(() => setAcademicClasses([])); };
+  
+  useEffect(() => {
+    if (isFree) {
+      apiClient.get("/dashboard/stats")
+        .then((stats: any) => {
+          if (stats && typeof stats.totalStudents === "number") {
+            setTotalStudents(stats.totalStudents);
+          }
+        })
+        .catch(() => undefined);
+    }
+  }, [isFree]);
+
   useEffect(loadApplications, []);
   useEffect(loadAcademicClasses, []);
+
+  const isLimitReached = isFree && totalStudents >= 100;
+
+  if (isLimitReached) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold tracking-tight">Student Admission</h1>
+        </div>
+        <PlanLockedFeature
+          title="১০০ জন স্টুডেন্ট লিমিট পূর্ণ হয়েছে"
+          description="আপনার প্রতিষ্ঠানটি ফ্রি লাইফটাইম প্যাকেজে আছে, যেখানে সর্বোচ্চ ১০০ জন স্টুডেন্ট এড করা যাবে। আরও স্টুডেন্ট ভর্তি করতে দয়া করে প্যাকেজ আপডেট করুন।"
+          featureName="Student Limit Upgrade"
+          fullPage
+        />
+      </div>
+    );
+  }
 
   const selectedClassName = form.watch('className');
   const selectedClass = academicClasses.find((item) => item.name === selectedClassName);

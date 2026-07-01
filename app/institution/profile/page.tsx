@@ -469,27 +469,29 @@ export default function InstitutionProfilePage() {
                           <FormMessage />
                         </FormItem>
                       )} />
-                      <FormField control={form.control} name="smsProvider" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>প্রোভাইডার</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="smsApiUrl" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>এপিআই ইউআরএল</FormLabel>
-                          <FormControl><Input placeholder="https://anoncify.xyz/api/sms" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="smsApiKey" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>এপিআই কি</FormLabel>
-                          <FormControl><Input type="password" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
+                      <div className="hidden">
+                        <FormField control={form.control} name="smsProvider" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>প্রোভাইডার</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name="smsApiUrl" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>এপিআই ইউআরএল</FormLabel>
+                            <FormControl><Input placeholder="https://anoncify.xyz/api/sms" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name="smsApiKey" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>এপিআই কি</FormLabel>
+                            <FormControl><Input type="password" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
                     </CardContent>
                   </Card>
                 </RoleGuard>

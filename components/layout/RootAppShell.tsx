@@ -66,7 +66,9 @@ export function RootAppShell({ children }: { children: React.ReactNode }) {
                   featureName="এই পেজ"
                   title="এই পেজটি আপনার বর্তমান সাবস্ক্রিপশনে নেই"
                   description="পেজের preview blur করে দেখানো হলো। পুরো ফিচার ব্যবহার করতে paid package active করুন; Free Lifetime প্যাকেজে এই অংশ চালু থাকবে না।"
-                />
+                >
+                  {children}
+                </PlanLockedFeature>
               ) : allowed ? children : (
                 <div className="min-h-[50vh] flex items-center justify-center p-4">
                   <div className="max-w-md w-full text-center space-y-4 bg-white p-8 rounded-xl border shadow-sm">

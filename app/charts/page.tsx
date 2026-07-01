@@ -7,8 +7,13 @@ import { PieChartCard } from "@/components/charts/PieChartCard";
 import { AttendanceChart } from "@/components/charts/AttendanceChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { isFreeLifetimePlan } from "@/lib/permissions";
+import { PlanLockedFeature } from "@/components/shared/PlanLockedFeature";
 
 export default function ChartsPage() {
+  const { user } = useAuth();
+  const isFree = isFreeLifetimePlan(user);
   const [chartsData, setChartsData] = useState<any>(null);
   const [composition, setComposition] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,6 +88,19 @@ export default function ChartsPage() {
       { name: "Class 10", value: 94 }
     ];
   }, [chartsData]);
+
+  if (isFree) {
+    return (
+      <div className="p-4 md:p-6">
+        <PlanLockedFeature
+          title="Charts এবং Visual Analytics লক করা আছে"
+          description="স্টুডেন্টদের দৈনিক ট্রেন্ড এবং রিপোর্ট চার্ট দেখতে দয়া করে paid সাবস্ক্রিপশন চালু করুন।"
+          featureName="Analytics Charts"
+          fullPage
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-6">

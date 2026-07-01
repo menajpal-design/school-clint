@@ -30,6 +30,7 @@ const iconMap: { [key: string]: any } = {
   User:          Icons.User,
   Settings:      Icons.Settings,
   ShieldCheck:   Icons.ShieldCheck,
+  TrendingUp:    Icons.TrendingUp,
 };
 
 /* Each menu item gets a colour accent cycling through the palette */
@@ -196,7 +197,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     className={cn(
                       'w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium group',
                       collapsed && 'justify-center px-2',
-                      locked && 'opacity-60'
+                      locked && 'opacity-60 blur-[1px]'
                     )}
                     style={active ? activeStyle : inactiveStyle}
                     onMouseEnter={(e) => {
@@ -222,7 +223,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <Icon className="h-4 w-4" />
                       </div>
                       {!collapsed && (
-                        <span style={{ color: active ? accent.text : 'rgba(255,255,255,0.75)' }}>
+                        <span className={cn(locked && 'blur-[1px]')} style={{ color: active ? accent.text : 'rgba(255,255,255,0.75)' }}>
                           {t(item.label)}
                         </span>
                       )}
@@ -242,13 +243,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   </button>
                 ) : (
                   <Link
-                    href={item.href}
+                    href={locked ? '/billing' : item.href}
                     onClick={onClose}
                     title={t(item.label)}
                     className={cn(
                       'w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium group',
                       collapsed && 'justify-center px-2 gap-0',
-                      locked && 'opacity-60'
+                      locked && 'opacity-60 blur-[1px]'
                     )}
                     style={active ? activeStyle : inactiveStyle}
                     onMouseEnter={(e) => {
@@ -303,11 +304,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       return (
                         <Link
                           key={child.href}
-                          href={child.href}
+                          href={childLocked ? '/billing' : child.href}
                           onClick={onClose}
                           className={cn(
                             'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-150',
-                            childLocked && 'opacity-60'
+                            childLocked && 'opacity-60 blur-[1px]'
                           )}
                           style={{
                             color: childActive ? accent.text : 'rgba(255,255,255,0.55)',
