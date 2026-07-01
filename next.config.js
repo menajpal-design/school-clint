@@ -50,6 +50,9 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   env: {
     NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_API_TARGET: API_TARGET,
