@@ -25,6 +25,23 @@ export default function AdminSmsUsagePage() {
   const [month, setMonth] = useState(currentMonth());
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [triggering, setTriggering] = useState(false);
+
+  const triggerPreviousMonthSms = async () => {
+    if (!confirm("Are you sure you want to send the previous month's summary SMS to all active paid institutions?")) {
+      return;
+    }
+    setTriggering(true);
+    try {
+      const res: any = await apiClient.post("/sms/admin/send-previous-month");
+      alert(res.message || "Successfully triggered monthly SMS sending!");
+      loadData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to trigger monthly SMS sending.");
+    } finally {
+      setTriggering(false);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -76,6 +93,10 @@ export default function AdminSmsUsagePage() {
             <Button onClick={loadData} disabled={loading}>
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               Refresh
+            </Button>
+            <Button onClick={triggerPreviousMonthSms} disabled={triggering} variant="default" className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Send className="mr-2 h-4 w-4" />
+              Send Last Month SMS
             </Button>
           </div>
         </div>
