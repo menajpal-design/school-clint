@@ -698,6 +698,77 @@
   }
 }
 
+  /* ── App-wide color utilities & layout elements ───────────────────── */
+  @layer components {
+
+    /* App shell */
+    .app-shell, body[data-app='easy-school'] {
+      background: var(--brand-background) !important;
+      color: var(--brand-text) !important;
+      transition: background 0.25s ease, color 0.2s ease;
+    }
+
+    /* Header / Navbar */
+    header, .navbar, .app-header, .topbar {
+      background: var(--gradient-primary);
+      color: #fff;
+      box-shadow: 0 6px 24px rgba(15,23,42,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    header a, .navbar a { color: rgba(255,255,255,0.95); }
+    header a:hover, .navbar a:hover { color: rgba(255,255,255,1); filter: brightness(1.05); }
+
+    /* Sidebar */
+    .sidebar, .app-sidebar {
+      background: linear-gradient(180deg, rgba(30,27,75,0.95), rgba(49,46,129,0.95));
+      color: #e6e9ff;
+      border-right: 1px solid rgba(255,255,255,0.03);
+    }
+
+    /* Footer */
+    footer, .app-footer {
+      background: var(--brand-surface);
+      color: var(--brand-muted);
+      border-top: 1px solid rgba(15,23,42,0.04);
+    }
+
+    /* Links */
+    a { color: var(--brand-primary); transition: color 0.15s ease, opacity 0.15s ease; }
+    a:hover { color: var(--brand-accent); text-decoration: underline; }
+
+    /* Brand buttons */
+    .btn-brand, button.btn-brand, a.btn-brand {
+      background: var(--gradient-primary) !important;
+      color: #fff !important;
+      border: none !important;
+      box-shadow: 0 8px 25px rgba(99,102,241,0.18) !important;
+    }
+    .btn-ghost, .btn-outline {
+      background: transparent !important;
+      color: var(--brand-primary) !important;
+      border: 1px solid rgba(99,102,241,0.12) !important;
+    }
+
+    /* Headings use brand text for stronger identity */
+    h1, h2, h3, h4 { color: var(--brand-text); }
+
+    /* Form accents */
+    input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 6px rgba(99,102,241,0.09) !important; }
+
+    /* Small helpers */
+    .muted { color: var(--brand-muted) !important; }
+    .surface { background: var(--brand-surface) !important; color: var(--brand-text) !important; }
+  }
+
+  /* Dark-mode overrides for app-wide utilities */
+  .dark {
+    --brand-background: #0b1020;
+    --brand-surface: #0f1724;
+    --brand-text: #e6eef8;
+    --brand-muted: #94a3b8;
+    --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+  }
+
 /* ── Print Styles ────────────────────────────────────── */
 @media print {
   @page { size: A4; margin: 12mm 14mm; }
