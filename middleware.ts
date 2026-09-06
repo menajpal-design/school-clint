@@ -60,6 +60,17 @@ function applyRateLimit(req: NextRequest): NextResponse | null {
  * and returns the subdomain string if one is present.
  */
 function extractSubdomain(hostname: string): string | null {
+  if (process.env.NEXT_PUBLIC_ENABLE_SUBDOMAINS === 'false') return null;
+  const cleanHost = (hostname || '').split(':')[0].toLowerCase();
+  if (
+    cleanHost.includes('vercel.app') ||
+    cleanHost.includes('onrender.com') ||
+    cleanHost.includes('herokuapp.com') ||
+    cleanHost.includes('railway.app')
+  ) {
+    return null;
+  }
+
   // Local dev support: foo.localhost or foo.127.0.0.1
   const isLocalhost =
     hostname === 'localhost' ||

@@ -243,19 +243,32 @@ export function setAppControlSettings(settings: AppControlSettings) {
 }
 
 export function getSubdomain(hostname: string, mainDomainEnv?: string): string {
-  const mainDomain = mainDomainEnv || 'easyschool.live';
-  const isLocal = /^(localhost|127\.0\.0\.1)$/i.test(hostname);
-  const hostParts = hostname.split('.').filter(Boolean);
+  if (process.env.NEXT_PUBLIC_ENABLE_SUBDOMAINS === 'false') return '';
+  if (!hostname) return '';
+
+  const cleanHost = hostname.split(':')[0].toLowerCase();
+  if (
+    cleanHost.includes('vercel.app') ||
+    cleanHost.includes('onrender.com') ||
+    cleanHost.includes('herokuapp.com') ||
+    cleanHost.includes('railway.app')
+  ) {
+    return '';
+  }
+
+  const mainDomain = (mainDomainEnv || 'easyschool.live').toLowerCase();
+  const isLocal = /^(localhost|127\.0\.0\.1)$/i.test(cleanHost);
+  const hostParts = cleanHost.split('.').filter(Boolean);
 
   let sub = '';
-  if (hostname.endsWith(mainDomain) && hostname !== mainDomain) {
+  if (cleanHost.endsWith(mainDomain) && cleanHost !== mainDomain) {
     const suffix = mainDomain.split('.').length;
     if (hostParts.length > suffix) {
       sub = hostParts.slice(0, hostParts.length - suffix).join('.');
     }
-  } else if (hostname.endsWith('localhost') && hostname !== 'localhost') {
+  } else if (cleanHost.endsWith('localhost') && cleanHost !== 'localhost') {
     sub = hostParts.slice(0, -1).join('.');
-  } else if (hostname.endsWith('127.0.0.1') && hostname !== '127.0.0.1') {
+  } else if (cleanHost.endsWith('127.0.0.1') && cleanHost !== '127.0.0.1') {
     if (hostParts.length > 4) {
       sub = hostParts.slice(0, hostParts.length - 4).join('.');
     }
