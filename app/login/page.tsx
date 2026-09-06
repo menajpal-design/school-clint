@@ -198,7 +198,12 @@ export default function LoginPage() {
         if (response.user.institution?.name) localStorage.setItem("selectedInstitutionName", response.user.institution.name);
       }
       showToast(addToast, { title: "Login successful", message: "Redirecting to your workspace.", type: "success", duration: 1800 });
-      router.replace(getLoginRedirect(response.user));
+      const target = getLoginRedirect(response.user);
+      if (typeof window !== "undefined") {
+        window.location.href = target;
+      } else {
+        router.replace(target);
+      }
     } catch (error: any) {
       const detailMessage = getLoginFailureMessage(error);
       setLoginError(detailMessage);
