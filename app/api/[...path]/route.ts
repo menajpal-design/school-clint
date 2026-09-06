@@ -3,7 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const BACKEND_URL = (process.env.API_TARGET || process.env.NEXT_PUBLIC_API_TARGET || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '').replace(/\/api$/, '');
+const getBackendUrl = () => {
+  const envUrl = process.env.API_TARGET || process.env.NEXT_PUBLIC_API_TARGET || process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl && (!envUrl.includes('localhost') || process.env.NODE_ENV !== 'production')) {
+    return envUrl.replace(/\/$/, '').replace(/\/api$/, '');
+  }
+  return (process.env.NODE_ENV === 'production' || process.env.VERCEL)
+    ? 'https://school-server-rho.vercel.app'
+    : 'http://localhost:5000';
+};
+
+const BACKEND_URL = getBackendUrl();
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
   'keep-alive',

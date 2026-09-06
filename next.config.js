@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
-const API_TARGET = process.env.API_TARGET || process.env.NEXT_PUBLIC_API_TARGET || 'http://localhost:5000';
+const defaultTarget = (process.env.NODE_ENV === 'production' || process.env.VERCEL)
+  ? 'https://school-server-rho.vercel.app'
+  : 'http://localhost:5000';
+const API_TARGET = process.env.API_TARGET || process.env.NEXT_PUBLIC_API_TARGET || defaultTarget;
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || `${API_TARGET.replace(/\/$/, '')}/api`;
 
 const isDev = process.env.NODE_ENV !== 'production';
