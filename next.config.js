@@ -60,10 +60,12 @@ const nextConfig = {
   images: {
     // i.ibb.co and ibb.co kept for backward compat (old imgBB images still display)
     // New images are served via /api/images/:id (same origin — no external domain needed)
-    domains: ['localhost', 'i.ibb.co', 'ibb.co'],
+    domains: ['localhost', 'i.ibb.co', 'ibb.co', 'school-server-rho.vercel.app'],
     remotePatterns: [
       { protocol: 'https', hostname: 'easyschool.live', pathname: '/**' },
       { protocol: 'https', hostname: '**.easyschool.live', pathname: '/**' },
+      { protocol: 'https', hostname: 'school-server-rho.vercel.app', pathname: '/**' },
+      { protocol: 'https', hostname: '**.vercel.app', pathname: '/**' },
       { protocol: 'https', hostname: 'i.ibb.co', pathname: '/**' },
       { protocol: 'https', hostname: '**.ibb.co', pathname: '/**' },
     ],
