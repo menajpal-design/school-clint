@@ -64,6 +64,8 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'easyschool.live', pathname: '/**' },
       { protocol: 'https', hostname: '**.easyschool.live', pathname: '/**' },
+      { protocol: 'https', hostname: 'i.ibb.co', pathname: '/**' },
+      { protocol: 'https', hostname: '**.ibb.co', pathname: '/**' },
     ],
   },
   async headers() {
